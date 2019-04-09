@@ -1,8 +1,0 @@
-../obj/cpu.o: En la función `cpu_init':
-cpu.c:(.text+0x12d1): referencia a `m6502_init' sin definir
-../obj/cpu.o: En la función `cpu_6502_run':
-cpu.c:(.text+0x1): referencia a `m6502_execute' sin definir
-../obj/cpu.o: En la función `cpu_6502_reset':
-cpu.c:(.text+0x13): referencia a `m6502_reset' sin definir
-collect2: error: ld returned 1 exit status
-make: *** [clc88] Error 1
