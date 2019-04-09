@@ -25,13 +25,10 @@
 /* 13.September 2000 PeT N2A03 jmp indirect */
 
 #include <stdio.h>
-#include "driver.h"
-#include "state.h"
-#include "mamedbg.h"
 #include "m6502.h"
 #include "ops02.h"
 #include "ill02.h"
-
+#include "../../emu.h"
 
 #define M6502_NMI_VEC	0xfffa
 #define M6502_RST_VEC	0xfffc
@@ -91,7 +88,7 @@ extern void m6502_runtime_loader_init(void)
 #endif
 
 /* Layout of the registers in the debugger */
-static UINT8 m6502_reg_layout[] = {
+static 	 m6502_reg_layout[] = {
 	M6502_PC, M6502_S, M6502_P, M6502_A, M6502_X, M6502_Y, -1,
 	M6502_EA, M6502_ZP, M6502_NMI_STATE, M6502_IRQ_STATE, M6502_SO_STATE, 0
 };

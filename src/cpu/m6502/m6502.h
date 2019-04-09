@@ -25,9 +25,6 @@
 #ifndef _M6502_H
 #define _M6502_H
 
-#include "cpuintrf.h"
-#include "osd_cpu.h"
-
 #ifdef RUNTIME_LOADER
 # ifdef __cplusplus
 	extern "C" void m6502_runtime_loader_init(void);

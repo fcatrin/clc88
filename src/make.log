@@ -1,0 +1,985 @@
+../obj/cpu.o: En la función `op_cb':
+cpu.c:(.text+0x4b6d): referencia a `cpu_readop' sin definir
+../obj/cpu.o: En la función `op_dd':
+cpu.c:(.text+0x4bbd): referencia a `cpu_readop' sin definir
+../obj/cpu.o: En la función `op_ed':
+cpu.c:(.text+0x4c0d): referencia a `cpu_readop' sin definir
+../obj/cpu.o: En la función `op_fd':
+cpu.c:(.text+0x4c5d): referencia a `cpu_readop' sin definir
+../obj/cpu.o: En la función `ARG16':
+cpu.c:(.text+0x4ca8): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0x4cb6): referencia a `cpu_readop_arg' sin definir
+../obj/cpu.o: En la función `op_06':
+cpu.c:(.text+0x4da6): referencia a `cpu_readop_arg' sin definir
+../obj/cpu.o: En la función `op_0e':
+cpu.c:(.text+0x4dd6): referencia a `cpu_readop_arg' sin definir
+../obj/cpu.o: En la función `op_16':
+cpu.c:(.text+0x4e06): referencia a `cpu_readop_arg' sin definir
+../obj/cpu.o:cpu.c:(.text+0x4e36): más referencias a `cpu_readop_arg' sin definir a continuación
+../obj/cpu.o: En la función `WM16':
+cpu.c:(.text+0x5372): referencia a `cpu_writemem16' sin definir
+../obj/cpu.o: En la función `op_36':
+cpu.c:(.text+0x5816): referencia a `cpu_readop_arg' sin definir
+../obj/cpu.o: En la función `dd_77':
+cpu.c:(.text+0x5931): referencia a `cpu_readop_arg' sin definir
+../obj/cpu.o: En la función `dd_75':
+cpu.c:(.text+0x5981): referencia a `cpu_readop_arg' sin definir
+../obj/cpu.o: En la función `dd_74':
+cpu.c:(.text+0x59d1): referencia a `cpu_readop_arg' sin definir
+../obj/cpu.o: En la función `dd_73':
+cpu.c:(.text+0x5a21): referencia a `cpu_readop_arg' sin definir
+../obj/cpu.o:cpu.c:(.text+0x5a71): más referencias a `cpu_readop_arg' sin definir a continuación
+../obj/cpu.o: En la función `op_0a':
+cpu.c:(.text+0x5e3c): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `op_1a':
+cpu.c:(.text+0x5e5c): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `RM16':
+cpu.c:(.text+0x5e7f): referencia a `cpu_readmem16' sin definir
+cpu.c:(.text+0x5e8d): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `ed_4d':
+cpu.c:(.text+0x614b): referencia a `change_pc16' sin definir
+../obj/cpu.o: En la función `op_34':
+cpu.c:(.text+0x62ec): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `op_35':
+cpu.c:(.text+0x633c): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `op_3a':
+cpu.c:(.text+0x6393): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `op_46':
+cpu.c:(.text+0x63bc): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `op_4e':
+cpu.c:(.text+0x63dc): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o:cpu.c:(.text+0x63fc): más referencias a `cpu_readmem16' sin definir a continuación
+../obj/cpu.o: En la función `dd_be':
+cpu.c:(.text+0x9d41): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0x9d55): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `dd_b6':
+cpu.c:(.text+0x9db1): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0x9dc5): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `dd_ae':
+cpu.c:(.text+0x9e11): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0x9e25): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `dd_a6':
+cpu.c:(.text+0x9e71): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0x9e85): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `dd_9e':
+cpu.c:(.text+0x9ed6): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0x9efb): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `dd_96':
+cpu.c:(.text+0x9f61): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0x9f81): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `dd_8e':
+cpu.c:(.text+0x9fd6): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0x9ffb): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `dd_86':
+cpu.c:(.text+0xa051): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0xa071): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `dd_7e':
+cpu.c:(.text+0xa0c1): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0xa0d5): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `dd_6e':
+cpu.c:(.text+0xa111): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0xa125): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `dd_66':
+cpu.c:(.text+0xa161): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0xa175): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `dd_5e':
+cpu.c:(.text+0xa1b1): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0xa1c5): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `dd_56':
+cpu.c:(.text+0xa201): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0xa215): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `dd_4e':
+cpu.c:(.text+0xa251): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0xa265): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `dd_46':
+cpu.c:(.text+0xa2a1): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0xa2b5): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `dd_35':
+cpu.c:(.text+0xa2f1): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0xa305): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `dd_34':
+cpu.c:(.text+0xa361): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0xa375): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `ed_6f':
+cpu.c:(.text+0xa3b9): referencia a `cpu_readmem16' sin definir
+cpu.c:(.text+0xa3dc): referencia a `cpu_writemem16' sin definir
+../obj/cpu.o: En la función `ed_67':
+cpu.c:(.text+0xa429): referencia a `cpu_readmem16' sin definir
+cpu.c:(.text+0xa44f): referencia a `cpu_writemem16' sin definir
+../obj/cpu.o: En la función `fd_be':
+cpu.c:(.text+0xa4b1): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0xa4c5): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `fd_b6':
+cpu.c:(.text+0xa521): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0xa535): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `fd_ae':
+cpu.c:(.text+0xa581): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0xa595): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `fd_a6':
+cpu.c:(.text+0xa5e1): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0xa5f5): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `fd_9e':
+cpu.c:(.text+0xa646): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0xa66b): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `fd_96':
+cpu.c:(.text+0xa6d1): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0xa6f1): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `fd_8e':
+cpu.c:(.text+0xa746): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0xa76b): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `fd_86':
+cpu.c:(.text+0xa7c1): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0xa7e1): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `fd_7e':
+cpu.c:(.text+0xa831): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0xa845): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `fd_6e':
+cpu.c:(.text+0xa881): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0xa895): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `fd_66':
+cpu.c:(.text+0xa8d1): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0xa8e5): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `fd_5e':
+cpu.c:(.text+0xa921): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0xa935): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `fd_56':
+cpu.c:(.text+0xa971): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0xa985): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `fd_4e':
+cpu.c:(.text+0xa9c1): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0xa9d5): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `fd_46':
+cpu.c:(.text+0xaa11): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0xaa25): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `fd_35':
+cpu.c:(.text+0xaa61): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0xaa75): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `fd_34':
+cpu.c:(.text+0xaad1): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0xaae5): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `op_d3':
+cpu.c:(.text+0xab36): referencia a `cpu_readop_arg' sin definir
+../obj/cpu.o: En la función `ed_ab':
+cpu.c:(.text+0xab6e): referencia a `cpu_readmem16' sin definir
+cpu.c:(.text+0xab88): referencia a `cpu_writeport16' sin definir
+../obj/cpu.o: En la función `ed_a3':
+cpu.c:(.text+0xac0e): referencia a `cpu_readmem16' sin definir
+cpu.c:(.text+0xac28): referencia a `cpu_writeport16' sin definir
+../obj/cpu.o: En la función `op_db':
+cpu.c:(.text+0xada6): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0xadba): referencia a `cpu_readport16' sin definir
+../obj/cpu.o: En la función `ed_aa':
+cpu.c:(.text+0xadde): referencia a `cpu_readport16' sin definir
+cpu.c:(.text+0xadf6): referencia a `cpu_writemem16' sin definir
+../obj/cpu.o: En la función `ed_a2':
+cpu.c:(.text+0xae7e): referencia a `cpu_readport16' sin definir
+cpu.c:(.text+0xae96): referencia a `cpu_writemem16' sin definir
+../obj/cpu.o: En la función `ed_78':
+cpu.c:(.text+0xaf1c): referencia a `cpu_readport16' sin definir
+../obj/cpu.o: En la función `ed_70':
+cpu.c:(.text+0xaf5c): referencia a `cpu_readport16' sin definir
+../obj/cpu.o: En la función `ed_68':
+cpu.c:(.text+0xaf9c): referencia a `cpu_readport16' sin definir
+../obj/cpu.o: En la función `ed_60':
+cpu.c:(.text+0xafdc): referencia a `cpu_readport16' sin definir
+../obj/cpu.o: En la función `ed_58':
+cpu.c:(.text+0xb01c): referencia a `cpu_readport16' sin definir
+../obj/cpu.o:cpu.c:(.text+0xb05c): más referencias a `cpu_readport16' sin definir a continuación
+../obj/cpu.o: En la función `illegal_1':
+cpu.c:(.text+0xb11e): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xb132): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xb13b): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `dd_1a':
+cpu.c:(.text+0xc511): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `dd_0a':
+cpu.c:(.text+0xc721): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `op_c3':
+cpu.c:(.text+0xcaa6): referencia a `change_pc16' sin definir
+cpu.c:(.text+0xcad4): referencia a `cpu_readop' sin definir
+../obj/cpu.o: En la función `op_10':
+cpu.c:(.text+0xcdf5): referencia a `cpu_readop_arg' sin definir
+../obj/cpu.o: En la función `op_18':
+cpu.c:(.text+0xce43): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0xce58): referencia a `change_pc16' sin definir
+cpu.c:(.text+0xce84): referencia a `cpu_readop' sin definir
+../obj/cpu.o: En la función `op_20.part.13':
+cpu.c:(.text+0xcf76): referencia a `cpu_readop_arg' sin definir
+../obj/cpu.o: En la función `op_28.part.14':
+cpu.c:(.text+0xd016): referencia a `cpu_readop_arg' sin definir
+../obj/cpu.o: En la función `op_30.part.15':
+cpu.c:(.text+0xd0b6): referencia a `cpu_readop_arg' sin definir
+../obj/cpu.o: En la función `op_38.part.16':
+cpu.c:(.text+0xd156): referencia a `cpu_readop_arg' sin definir
+../obj/cpu.o: En la función `op_c0.part.28':
+cpu.c:(.text+0xd756): referencia a `change_pc16' sin definir
+../obj/cpu.o: En la función `op_c8.part.29':
+cpu.c:(.text+0xd7f6): referencia a `change_pc16' sin definir
+../obj/cpu.o: En la función `op_d0.part.30':
+cpu.c:(.text+0xd896): referencia a `change_pc16' sin definir
+../obj/cpu.o: En la función `op_d8.part.31':
+cpu.c:(.text+0xd936): referencia a `change_pc16' sin definir
+../obj/cpu.o: En la función `op_e0.part.32':
+cpu.c:(.text+0xd9d6): referencia a `change_pc16' sin definir
+../obj/cpu.o:cpu.c:(.text+0xda76): más referencias a `change_pc16' sin definir a continuación
+../obj/cpu.o: En la función `op_fb':
+cpu.c:(.text+0xdda1): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xddde): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xde48): referencia a `cpu_readop' sin definir
+../obj/cpu.o: En la función `ed_75':
+cpu.c:(.text+0xdef6): referencia a `change_pc16' sin definir
+../obj/cpu.o: En la función `ed_65':
+cpu.c:(.text+0xdf56): referencia a `change_pc16' sin definir
+../obj/cpu.o: En la función `ed_55':
+cpu.c:(.text+0xdfb6): referencia a `change_pc16' sin definir
+../obj/cpu.o: En la función `ed_45':
+cpu.c:(.text+0xe016): referencia a `change_pc16' sin definir
+../obj/cpu.o: En la función `op_f0.part.40':
+cpu.c:(.text+0xe076): referencia a `change_pc16' sin definir
+../obj/cpu.o:cpu.c:(.text+0xe116): más referencias a `change_pc16' sin definir a continuación
+../obj/cpu.o: En la función `ed_b9':
+cpu.c:(.text+0xe19c): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `ed_b8':
+cpu.c:(.text+0xe269): referencia a `cpu_readmem16' sin definir
+cpu.c:(.text+0xe27a): referencia a `cpu_writemem16' sin definir
+../obj/cpu.o: En la función `ed_b1':
+cpu.c:(.text+0xe2fc): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `ed_b0':
+cpu.c:(.text+0xe3c9): referencia a `cpu_readmem16' sin definir
+cpu.c:(.text+0xe3da): referencia a `cpu_writemem16' sin definir
+../obj/cpu.o: En la función `ed_a9':
+cpu.c:(.text+0xe45c): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `ed_bb':
+cpu.c:(.text+0xe4fe): referencia a `cpu_readmem16' sin definir
+cpu.c:(.text+0xe518): referencia a `cpu_writeport16' sin definir
+../obj/cpu.o: En la función `ed_b3':
+cpu.c:(.text+0xe5be): referencia a `cpu_readmem16' sin definir
+cpu.c:(.text+0xe5d8): referencia a `cpu_writeport16' sin definir
+../obj/cpu.o: En la función `ed_ba':
+cpu.c:(.text+0xe67e): referencia a `cpu_readport16' sin definir
+cpu.c:(.text+0xe696): referencia a `cpu_writemem16' sin definir
+../obj/cpu.o: En la función `ed_b2':
+cpu.c:(.text+0xe73e): referencia a `cpu_readport16' sin definir
+cpu.c:(.text+0xe756): referencia a `cpu_writemem16' sin definir
+../obj/cpu.o: En la función `ed_ef':
+cpu.c:(.text+0xec4f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xec58): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_ed':
+cpu.c:(.text+0xf19f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xf1a8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_ec':
+cpu.c:(.text+0xf1df): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xf1e8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_ee':
+cpu.c:(.text+0xf21f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xf228): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_04':
+cpu.c:(.text+0xf25f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xf268): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_24':
+cpu.c:(.text+0xf29f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xf2a8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_03':
+cpu.c:(.text+0xf2df): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xf2e8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_23':
+cpu.c:(.text+0xf31f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xf328): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_9c':
+cpu.c:(.text+0xf35f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xf368): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_e0':
+cpu.c:(.text+0xf39f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xf3a8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_b4':
+cpu.c:(.text+0xf3df): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xf3e8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_bc':
+cpu.c:(.text+0xf41f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xf428): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_a6':
+cpu.c:(.text+0xf45f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xf468): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_a4':
+cpu.c:(.text+0xf49f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xf4a8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_c0':
+cpu.c:(.text+0xf4df): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xf4e8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_cc':
+cpu.c:(.text+0xf51f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xf528): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_c4':
+cpu.c:(.text+0xf55f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xf568): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_ca':
+cpu.c:(.text+0xf59f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xf5a8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_c2':
+cpu.c:(.text+0xf5df): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xf5e8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_b7':
+cpu.c:(.text+0xf61f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xf628): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_c8':
+cpu.c:(.text+0xf65f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xf668): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_da':
+cpu.c:(.text+0xf69f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xf6a8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_dc':
+cpu.c:(.text+0xf6df): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xf6e8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_ad':
+cpu.c:(.text+0xf71f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xf728): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_d4':
+cpu.c:(.text+0xf75f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xf768): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_bf':
+cpu.c:(.text+0xf79f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xf7a8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_d2':
+cpu.c:(.text+0xf7df): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xf7e8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_af':
+cpu.c:(.text+0xf81f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xf828): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_d0':
+cpu.c:(.text+0xf85f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xf868): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_bd':
+cpu.c:(.text+0xf89f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xf8a8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_be':
+cpu.c:(.text+0xf8df): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xf8e8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_9f':
+cpu.c:(.text+0xf91f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xf928): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_b6':
+cpu.c:(.text+0xf95f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xf968): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_ae':
+cpu.c:(.text+0xf99f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xf9a8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_b5':
+cpu.c:(.text+0xf9df): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xf9e8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_cd':
+cpu.c:(.text+0xfa1f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xfa28): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_d8':
+cpu.c:(.text+0xfa5f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xfa68): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_a5':
+cpu.c:(.text+0xfa9f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xfaa8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_9e':
+cpu.c:(.text+0xfadf): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xfae8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_c5':
+cpu.c:(.text+0xfb1f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xfb28): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_ac':
+cpu.c:(.text+0xfb5f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xfb68): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_9d':
+cpu.c:(.text+0xfb9f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xfba8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_a7':
+cpu.c:(.text+0xfbdf): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xfbe8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_c3':
+cpu.c:(.text+0xfc1f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xfc28): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_eb':
+cpu.c:(.text+0xfc5f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xfc68): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_fb':
+cpu.c:(.text+0xfc9f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xfca8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_e7':
+cpu.c:(.text+0xfcdf): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xfce8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_c9':
+cpu.c:(.text+0xfd1f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xfd28): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_ea':
+cpu.c:(.text+0xfd5f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xfd68): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_d3':
+cpu.c:(.text+0xfd9f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xfda8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_f9':
+cpu.c:(.text+0xfddf): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xfde8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_19':
+cpu.c:(.text+0xfe1f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xfe28): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_e6':
+cpu.c:(.text+0xfe5f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xfe68): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_d7':
+cpu.c:(.text+0xfe9f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xfea8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_ce':
+cpu.c:(.text+0xfedf): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xfee8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_21':
+cpu.c:(.text+0xff1f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xff28): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_d5':
+cpu.c:(.text+0xff5f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xff68): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_e3':
+cpu.c:(.text+0xff9f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xffa8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_07':
+cpu.c:(.text+0xffdf): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0xffe8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_e2':
+cpu.c:(.text+0x1001f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10028): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_df':
+cpu.c:(.text+0x1005f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10068): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_c6':
+cpu.c:(.text+0x1009f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x100a8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_0f':
+cpu.c:(.text+0x100df): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x100e8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_e5':
+cpu.c:(.text+0x1011f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10128): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_db':
+cpu.c:(.text+0x1015f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10168): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_fd':
+cpu.c:(.text+0x1019f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x101a8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_17':
+cpu.c:(.text+0x101df): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x101e8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_e1':
+cpu.c:(.text+0x1021f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10228): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_11':
+cpu.c:(.text+0x1025f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10268): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_c1':
+cpu.c:(.text+0x1029f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x102a8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_1f':
+cpu.c:(.text+0x102df): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x102e8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_d9':
+cpu.c:(.text+0x1031f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10328): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_fe':
+cpu.c:(.text+0x1035f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10368): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_3b':
+cpu.c:(.text+0x1039f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x103a8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_fc':
+cpu.c:(.text+0x103df): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x103e8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_cf':
+cpu.c:(.text+0x1041f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10428): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_ff':
+cpu.c:(.text+0x1045f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10468): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_33':
+cpu.c:(.text+0x1049f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x104a8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_f8':
+cpu.c:(.text+0x104df): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x104e8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_cb':
+cpu.c:(.text+0x1051f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10528): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_f5':
+cpu.c:(.text+0x1055f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10568): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_2f':
+cpu.c:(.text+0x1059f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x105a8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_fa':
+cpu.c:(.text+0x105df): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x105e8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_37':
+cpu.c:(.text+0x1061f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10628): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_de':
+cpu.c:(.text+0x1065f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10668): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_1b':
+cpu.c:(.text+0x1069f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x106a8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_f1':
+cpu.c:(.text+0x106df): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x106e8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_dd':
+cpu.c:(.text+0x1071f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10728): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_f3':
+cpu.c:(.text+0x1075f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10768): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_27':
+cpu.c:(.text+0x1079f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x107a8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_f2':
+cpu.c:(.text+0x107df): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x107e8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_29':
+cpu.c:(.text+0x1081f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10828): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_d6':
+cpu.c:(.text+0x1085f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10868): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_0b':
+cpu.c:(.text+0x1089f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x108a8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_f4':
+cpu.c:(.text+0x108df): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x108e8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_c7':
+cpu.c:(.text+0x1091f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10928): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_f7':
+cpu.c:(.text+0x1095f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10968): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_2b':
+cpu.c:(.text+0x1099f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x109a8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_f6':
+cpu.c:(.text+0x109df): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x109e8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_31':
+cpu.c:(.text+0x10a1f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10a28): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_d1':
+cpu.c:(.text+0x10a5f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10a68): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_13':
+cpu.c:(.text+0x10a9f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10aa8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_14':
+cpu.c:(.text+0x10adf): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10ae8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_16':
+cpu.c:(.text+0x10b1f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10b28): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_18':
+cpu.c:(.text+0x10b5f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10b68): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_2a':
+cpu.c:(.text+0x10b9f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10ba8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_1c':
+cpu.c:(.text+0x10bdf): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10be8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_1e':
+cpu.c:(.text+0x10c1f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10c28): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_20':
+cpu.c:(.text+0x10c5f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10c68): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_3a':
+cpu.c:(.text+0x10c9f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10ca8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_08':
+cpu.c:(.text+0x10cdf): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10ce8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_0a':
+cpu.c:(.text+0x10d1f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10d28): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_12':
+cpu.c:(.text+0x10d5f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10d68): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_06':
+cpu.c:(.text+0x10d9f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10da8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_22':
+cpu.c:(.text+0x10ddf): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10de8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_0c':
+cpu.c:(.text+0x10e1f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10e28): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_0e':
+cpu.c:(.text+0x10e5f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10e68): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_10':
+cpu.c:(.text+0x10e9f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10ea8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_32':
+cpu.c:(.text+0x10edf): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10ee8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_1a':
+cpu.c:(.text+0x10f1f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10f28): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_3f':
+cpu.c:(.text+0x10f5f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10f68): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_99':
+cpu.c:(.text+0x10f9f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10fa8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_26':
+cpu.c:(.text+0x10fdf): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x10fe8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_15':
+cpu.c:(.text+0x1101f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x11028): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_28':
+cpu.c:(.text+0x1105f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x11068): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_05':
+cpu.c:(.text+0x1109f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x110a8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_95':
+cpu.c:(.text+0x110df): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x110e8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_2d':
+cpu.c:(.text+0x1111f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x11128): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_2c':
+cpu.c:(.text+0x1115f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x11168): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_8f':
+cpu.c:(.text+0x1119f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x111a8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_2e':
+cpu.c:(.text+0x111df): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x111e8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_35':
+cpu.c:(.text+0x1121f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x11228): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_30':
+cpu.c:(.text+0x1125f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x11268): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_25':
+cpu.c:(.text+0x1129f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x112a8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_91':
+cpu.c:(.text+0x112df): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x112e8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_39':
+cpu.c:(.text+0x1131f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x11328): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_34':
+cpu.c:(.text+0x1135f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x11368): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_87':
+cpu.c:(.text+0x1139f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x113a8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_36':
+cpu.c:(.text+0x113df): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x113e8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_9b':
+cpu.c:(.text+0x1141f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x11428): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_38':
+cpu.c:(.text+0x1145f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x11468): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_97':
+cpu.c:(.text+0x1149f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x114a8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_83':
+cpu.c:(.text+0x114df): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x114e8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_1d':
+cpu.c:(.text+0x1151f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x11528): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_3c':
+cpu.c:(.text+0x1155f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x11568): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_8b':
+cpu.c:(.text+0x1159f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x115a8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_3d':
+cpu.c:(.text+0x115df): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x115e8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_0d':
+cpu.c:(.text+0x1161f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x11628): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_3e':
+cpu.c:(.text+0x1165f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x11668): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_93':
+cpu.c:(.text+0x1169f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x116a8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_89':
+cpu.c:(.text+0x116df): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x116e8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_09':
+cpu.c:(.text+0x1171f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x11728): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_00':
+cpu.c:(.text+0x1175f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x11768): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_f0':
+cpu.c:(.text+0x1179f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x117a8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_80':
+cpu.c:(.text+0x117df): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x117e8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_82':
+cpu.c:(.text+0x1181f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x11828): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_84':
+cpu.c:(.text+0x1185f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x11868): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_8a':
+cpu.c:(.text+0x1189f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x118a8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_7f':
+cpu.c:(.text+0x118df): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x118e8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_81':
+cpu.c:(.text+0x1191f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x11928): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_8c':
+cpu.c:(.text+0x1195f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x11968): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_92':
+cpu.c:(.text+0x1199f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x119a8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_88':
+cpu.c:(.text+0x119df): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x119e8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_8d':
+cpu.c:(.text+0x11a1f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x11a28): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_94':
+cpu.c:(.text+0x11a5f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x11a68): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_9a':
+cpu.c:(.text+0x11a9f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x11aa8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_86':
+cpu.c:(.text+0x11adf): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x11ae8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_85':
+cpu.c:(.text+0x11b1f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x11b28): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_e8':
+cpu.c:(.text+0x11b5f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x11b68): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_e4':
+cpu.c:(.text+0x11b9f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x11ba8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_90':
+cpu.c:(.text+0x11bdf): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x11be8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_8e':
+cpu.c:(.text+0x11c1f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x11c28): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_98':
+cpu.c:(.text+0x11c5f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x11c68): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_77':
+cpu.c:(.text+0x11c9f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x11ca8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_96':
+cpu.c:(.text+0x11cdf): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x11ce8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_01':
+cpu.c:(.text+0x11d1f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x11d28): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_02':
+cpu.c:(.text+0x11d5f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x11d68): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_e9':
+cpu.c:(.text+0x11d9f): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x11da8): referencia a `cpu_getactivecpu' sin definir
+../obj/cpu.o: En la función `ed_a0':
+cpu.c:(.text+0x12039): referencia a `cpu_readmem16' sin definir
+cpu.c:(.text+0x1204a): referencia a `cpu_writemem16' sin definir
+../obj/cpu.o: En la función `ed_a8':
+cpu.c:(.text+0x120b9): referencia a `cpu_readmem16' sin definir
+cpu.c:(.text+0x120ca): referencia a `cpu_writemem16' sin definir
+../obj/cpu.o: En la función `ed_a1':
+cpu.c:(.text+0x1213c): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `fd_0a':
+cpu.c:(.text+0x122c1): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `fd_1a':
+cpu.c:(.text+0x12331): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `fd_3a':
+cpu.c:(.text+0x13018): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `dd_3a':
+cpu.c:(.text+0x13048): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `fd_16':
+cpu.c:(.text+0x133cb): referencia a `cpu_readop_arg' sin definir
+../obj/cpu.o: En la función `fd_1e':
+cpu.c:(.text+0x133fb): referencia a `cpu_readop_arg' sin definir
+../obj/cpu.o: En la función `fd_0e':
+cpu.c:(.text+0x1342b): referencia a `cpu_readop_arg' sin definir
+../obj/cpu.o: En la función `fd_3e':
+cpu.c:(.text+0x1345b): referencia a `cpu_readop_arg' sin definir
+../obj/cpu.o: En la función `fd_06':
+cpu.c:(.text+0x1348b): referencia a `cpu_readop_arg' sin definir
+../obj/cpu.o:cpu.c:(.text+0x134d2): más referencias a `cpu_readop_arg' sin definir a continuación
+../obj/cpu.o: En la función `op_0b':
+cpu.c:(.text+0x14096): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x140aa): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x140d6): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x140ea): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x14187): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0x1419c): referencia a `cpu_readop_arg' sin definir
+../obj/cpu.o: En la función `op_1b':
+cpu.c:(.text+0x142d6): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x142ea): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x14316): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x1432a): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x143c7): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0x143dc): referencia a `cpu_readop_arg' sin definir
+../obj/cpu.o: En la función `op_2b':
+cpu.c:(.text+0x14516): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x1452a): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x14556): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x1456a): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x14607): referencia a `cpu_readop_arg' sin definir
+cpu.c:(.text+0x1461c): referencia a `cpu_readop_arg' sin definir
+../obj/cpu.o: En la función `xycb_40':
+cpu.c:(.text+0x146f8): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `xycb_75':
+cpu.c:(.text+0x14748): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `xycb_6c':
+cpu.c:(.text+0x14798): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `xycb_7a':
+cpu.c:(.text+0x147e8): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `xycb_71':
+cpu.c:(.text+0x14838): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o:cpu.c:(.text+0x14888): más referencias a `cpu_readmem16' sin definir a continuación
+../obj/cpu.o: En la función `z80_execute':
+cpu.c:(.text+0x1561d): referencia a `cpu_readop' sin definir
+cpu.c:(.text+0x1589f): referencia a `change_pc16' sin definir
+cpu.c:(.text+0x167ef): referencia a `cpu_readmem16' sin definir
+cpu.c:(.text+0x1687f): referencia a `cpu_writemem16' sin definir
+cpu.c:(.text+0x1689d): referencia a `cpu_writemem16' sin definir
+cpu.c:(.text+0x168bb): referencia a `cpu_writemem16' sin definir
+cpu.c:(.text+0x168d9): referencia a `cpu_writemem16' sin definir
+cpu.c:(.text+0x168f7): referencia a `cpu_writemem16' sin definir
+../obj/cpu.o:cpu.c:(.text+0x16915): más referencias a `cpu_writemem16' sin definir a continuación
+../obj/cpu.o: En la función `z80_execute':
+cpu.c:(.text+0x1695c): referencia a `cpu_readmem16' sin definir
+cpu.c:(.text+0x169f8): referencia a `cpu_readmem16' sin definir
+cpu.c:(.text+0x16a9b): referencia a `cpu_readmem16' sin definir
+cpu.c:(.text+0x16b34): referencia a `cpu_readmem16' sin definir
+cpu.c:(.text+0x16bc5): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o:cpu.c:(.text+0x16c5e): más referencias a `cpu_readmem16' sin definir a continuación
+../obj/cpu.o: En la función `z80_execute':
+cpu.c:(.text+0x1720b): referencia a `cpu_writemem16' sin definir
+cpu.c:(.text+0x172f7): referencia a `cpu_readmem16' sin definir
+cpu.c:(.text+0x173ec): referencia a `cpu_writemem16' sin definir
+../obj/cpu.o: En la función `z80_get_reg':
+cpu.c:(.text+0x17988): referencia a `cpu_readmem16' sin definir
+cpu.c:(.text+0x17996): referencia a `cpu_readmem16' sin definir
+../obj/cpu.o: En la función `z80_set_reg':
+cpu.c:(.text+0x17c40): referencia a `cpu_writemem16' sin definir
+../obj/cpu.o: En la función `z80_dasm':
+cpu.c:(.text+0x181a8): referencia a `cpu_readop' sin definir
+../obj/cpu.o: En la función `cpu_init':
+cpu.c:(.text+0x18201): referencia a `m6502_init' sin definir
+../obj/cpu.o: En la función `dd_e9':
+cpu.c:(.text+0x4b06): referencia a `change_pc16' sin definir
+../obj/cpu.o: En la función `op_e9':
+cpu.c:(.text+0x4b1f): referencia a `change_pc16' sin definir
+../obj/cpu.o: En la función `fd_e9':
+cpu.c:(.text+0x4b46): referencia a `change_pc16' sin definir
+../obj/cpu.o: En la función `op_02':
+cpu.c:(.text+0x532f): referencia a `cpu_writemem16' sin definir
+../obj/cpu.o: En la función `op_12':
+cpu.c:(.text+0x534f): referencia a `cpu_writemem16' sin definir
+../obj/cpu.o: En la función `WM16':
+cpu.c:(.text+0x5387): referencia a `cpu_writemem16' sin definir
+../obj/cpu.o: En la función `op_c7':
+cpu.c:(.text+0x53ff): referencia a `change_pc16' sin definir
+../obj/cpu.o: En la función `op_cd':
+cpu.c:(.text+0x544d): referencia a `change_pc16' sin definir
+../obj/cpu.o: En la función `op_cf':
+cpu.c:(.text+0x5492): referencia a `change_pc16' sin definir
+../obj/cpu.o: En la función `op_d7':
+cpu.c:(.text+0x54f2): referencia a `change_pc16' sin definir
+../obj/cpu.o: En la función `op_df':
+cpu.c:(.text+0x5592): referencia a `change_pc16' sin definir
+../obj/cpu.o:cpu.c:(.text+0x55f2): más referencias a `change_pc16' sin definir a continuación
+../obj/cpu.o: En la función `op_32':
+cpu.c:(.text+0x57ee): referencia a `cpu_writemem16' sin definir
+../obj/cpu.o: En la función `op_36':
+cpu.c:(.text+0x5829): referencia a `cpu_writemem16' sin definir
+../obj/cpu.o: En la función `op_70':
+cpu.c:(.text+0x583f): referencia a `cpu_writemem16' sin definir
+../obj/cpu.o: En la función `op_71':
+cpu.c:(.text+0x585f): referencia a `cpu_writemem16' sin definir
+../obj/cpu.o: En la función `op_72':
+cpu.c:(.text+0x587f): referencia a `cpu_writemem16' sin definir
+../obj/cpu.o:cpu.c:(.text+0x589f): más referencias a `cpu_writemem16' sin definir a continuación
+../obj/cpu.o: En la función `op_c9':
+cpu.c:(.text+0x5f1a): referencia a `change_pc16' sin definir
+../obj/cpu.o: En la función `op_34':
+cpu.c:(.text+0x6320): referencia a `cpu_writemem16' sin definir
+../obj/cpu.o: En la función `op_35':
+cpu.c:(.text+0x6370): referencia a `cpu_writemem16' sin definir
+../obj/cpu.o: En la función `cb_fe':
+cpu.c:(.text+0x6702): referencia a `cpu_writemem16' sin definir
+../obj/cpu.o: En la función `cb_f6':
+cpu.c:(.text+0x6732): referencia a `cpu_writemem16' sin definir
+../obj/cpu.o: En la función `cb_ee':
+cpu.c:(.text+0x6762): referencia a `cpu_writemem16' sin definir
+../obj/cpu.o:cpu.c:(.text+0x6792): más referencias a `cpu_writemem16' sin definir a continuación
+../obj/cpu.o: En la función `op_d3':
+cpu.c:(.text+0xab50): referencia a `cpu_writeport16' sin definir
+../obj/cpu.o: En la función `ed_79':
+cpu.c:(.text+0xacaf): referencia a `cpu_writeport16' sin definir
+../obj/cpu.o: En la función `ed_71':
+cpu.c:(.text+0xacca): referencia a `cpu_writeport16' sin definir
+../obj/cpu.o: En la función `ed_69':
+cpu.c:(.text+0xacdf): referencia a `cpu_writeport16' sin definir
+../obj/cpu.o: En la función `ed_61':
+cpu.c:(.text+0xacff): referencia a `cpu_writeport16' sin definir
+../obj/cpu.o:cpu.c:(.text+0xad1f): más referencias a `cpu_writeport16' sin definir a continuación
+../obj/cpu.o: En la función `dd_12':
+cpu.c:(.text+0xc62c): referencia a `cpu_writemem16' sin definir
+../obj/cpu.o: En la función `dd_02':
+cpu.c:(.text+0xc85c): referencia a `cpu_writemem16' sin definir
+../obj/cpu.o: En la función `cpu_6502_run':
+cpu.c:(.text+0xc891): referencia a `m6502_execute' sin definir
+../obj/cpu.o: En la función `cpu_6502_reset':
+cpu.c:(.text+0xc8a3): referencia a `m6502_reset' sin definir
+../obj/cpu.o: En la función `op_c2.part.2':
+cpu.c:(.text+0xca37): referencia a `change_pc16' sin definir
+../obj/cpu.o: En la función `op_10':
+cpu.c:(.text+0xce1f): referencia a `change_pc16' sin definir
+../obj/cpu.o: En la función `op_20.part.13':
+cpu.c:(.text+0xcfa0): referencia a `change_pc16' sin definir
+../obj/cpu.o: En la función `op_28.part.14':
+cpu.c:(.text+0xd040): referencia a `change_pc16' sin definir
+../obj/cpu.o: En la función `op_30.part.15':
+cpu.c:(.text+0xd0e0): referencia a `change_pc16' sin definir
+../obj/cpu.o:cpu.c:(.text+0xd180): más referencias a `change_pc16' sin definir a continuación
+../obj/cpu.o: En la función `fd_12':
+cpu.c:(.text+0x1227c): referencia a `cpu_writemem16' sin definir
+../obj/cpu.o: En la función `fd_02':
+cpu.c:(.text+0x1231c): referencia a `cpu_writemem16' sin definir
+../obj/cpu.o: En la función `fd_32':
+cpu.c:(.text+0x12ff3): referencia a `cpu_writemem16' sin definir
+../obj/cpu.o: En la función `dd_32':
+cpu.c:(.text+0x13083): referencia a `cpu_writemem16' sin definir
+../obj/cpu.o: En la función `fd_10':
+cpu.c:(.text+0x134fc): referencia a `change_pc16' sin definir
+../obj/cpu.o: En la función `dd_10':
+cpu.c:(.text+0x135bc): referencia a `change_pc16' sin definir
+../obj/cpu.o: En la función `fd_f7':
+cpu.c:(.text+0x138f7): referencia a `change_pc16' sin definir
+../obj/cpu.o: En la función `fd_df':
+cpu.c:(.text+0x13937): referencia a `change_pc16' sin definir
+../obj/cpu.o: En la función `fd_e7':
+cpu.c:(.text+0x13977): referencia a `change_pc16' sin definir
+../obj/cpu.o:cpu.c:(.text+0x139b4): más referencias a `change_pc16' sin definir a continuación
+../obj/cpu.o: En la función `z80_set_reg':
+cpu.c:(.text+0x17c54): referencia a `cpu_writemem16' sin definir
+collect2: error: ld returned 1 exit status
+make: *** [clc88] Error 1
