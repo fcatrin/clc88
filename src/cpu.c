@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "cpu.h"
 #include "emu.h"
+#include "bus.h"
 #include "cpu/m6502/m6502.h"
 #include "cpu/z80/z80.h"
 #include "cpu/cpu_interface.h"
@@ -54,20 +55,22 @@ v_cpu v_z80 = {
 };
 
 UINT8 cpu_readop(UINT16 pc) {
-	return 0;
+	return bus_read16(pc);
 }
 UINT8 cpu_readop_arg(UINT16 pc) {
-	return 0;
+	return bus_read16(pc);
 }
 UINT8 cpu_readmem16(UINT16 addr) {
-	return 0;
+	return bus_read16(addr);
 }
 void  cpu_writemem16(UINT16 addr, UINT8 value) {
+	bus_write16(addr, value);
 }
 UINT8 cpu_readport16(UINT16 addr) {
-	return 0;
+	return bus_read16(addr);
 }
 void  cpu_writeport16(UINT16 addr, UINT8 value) {
+	bus_write16(addr, value);
 }
 
 int   cpu_getactivecpu() {

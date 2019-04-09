@@ -15,6 +15,8 @@ OBJDIR= ../obj
 OBJS = $(addprefix $(OBJDIR)/, \
 	clc88.o \
 	cpu.o \
+	bus.o \
+	memory.o \
 	cpu/z80/z80.o \
 	cpu/m6502/m6502.o \
 	)
