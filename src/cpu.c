@@ -54,28 +54,3 @@ v_cpu v_z80 = {
 		cpu_z80_run
 };
 
-UINT8 cpu_readop(UINT16 pc) {
-	return bus_read16(pc);
-}
-UINT8 cpu_readop_arg(UINT16 pc) {
-	return bus_read16(pc);
-}
-UINT8 cpu_readmem16(UINT16 addr) {
-	return bus_read16(addr);
-}
-void  cpu_writemem16(UINT16 addr, UINT8 value) {
-	bus_write16(addr, value);
-}
-UINT8 cpu_readport16(UINT16 addr) {
-	return bus_read16(addr);
-}
-void  cpu_writeport16(UINT16 addr, UINT8 value) {
-	bus_write16(addr, value);
-}
-
-int   cpu_getactivecpu() {
-	return 1;
-}
-void  change_pc16(UINT16 addr) {
-
-}

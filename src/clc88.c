@@ -20,8 +20,14 @@ UINT8 test_code_z80[] = {0x3e, 0x29, 0x32, 0x02, 0x07, 0xc3, 0x00, 0x00};
  *   JMP LOOP
  */
 
+MachineDef *Machine;
 
 int main(int argc, char *argv[]) {
+
+	MachineDef clc88;
+	Machine = &clc88;
+
+	clc88.sample_rate = 44100;
 
 	mem_write(0x600, test_code_6502, 8);
 	mem_write(0x000, test_code_z80,  8);

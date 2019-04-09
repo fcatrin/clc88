@@ -1,6 +1,11 @@
 #ifndef _CPU_INTERFACE_H
 #define _CPU_INTERFACE_H
 
+#include "emu.h"
+#include "memory.h"
+
+#define MAX_CPU 1
+
 enum
 {
         /* line states */
@@ -66,12 +71,66 @@ void  cpu_writemem16(UINT16 addr, UINT8 value);
 UINT8 cpu_readport16(UINT16 addr);
 void  cpu_writeport16(UINT16 addr, UINT8 value);
 
-int   cpu_getactivecpu();
-void  change_pc16(UINT16 addr); // callback to inform PC was updated?
+int    cpu_getactivecpu();
+int    cpu_getexecutingcpu();
+void   change_pc16(UINT16 addr); // callback to inform PC was updated?
+UINT16 activecpu_get_pc();
+int    activecpu_get_icount();
 
 #define state_save_register_INT16(A, B, C, D, E)
 #define state_save_register_INT8(A, B, C, D, E)
 #define state_save_register_UINT16(A, B, C, D, E)
 #define state_save_register_UINT8(A, B, C, D, E)
+
+struct cpu_interface
+{
+	/* index (used to make sure we mach the enum above */
+	unsigned	cpu_num;
+
+	/* table of core functions */
+	void		(*init)(void);
+	void		(*reset)(void *param);
+	void		(*exit)(void);
+	int			(*execute)(int cycles);
+	void		(*burn)(int cycles);
+	unsigned	(*get_context)(void *reg);
+	void		(*set_context)(void *reg);
+	const void *(*get_cycle_table)(int which);
+	void		(*set_cycle_table)(int which, void *new_table);
+	unsigned	(*get_reg)(int regnum);
+	void		(*set_reg)(int regnum, unsigned val);
+	void		(*set_irq_line)(int irqline, int linestate);
+	void		(*set_irq_callback)(int(*callback)(int irqline));
+	const char *(*cpu_info)(void *context,int regnum);
+	unsigned	(*cpu_dasm)(char *buffer,unsigned pc);
+
+	/* IRQ and clock information */
+	unsigned	num_irqs;
+	int			default_vector;
+	int *		icount;
+	double		overclock;
+
+	/* memory information */
+	int			databus_width;
+	mem_read_handler memory_read;
+	mem_write_handler memory_write;
+	mem_read_handler internal_read;
+	mem_write_handler internal_write;
+	offs_t		pgm_memory_base;
+	void		(*set_op_base)(offs_t pc);
+	int			address_shift;
+	unsigned	address_bits;
+	unsigned	endianess;
+	unsigned	align_unit;
+	unsigned	max_inst_len;
+};
+
+/* return a the total number of registered CPUs */
+static INLINE int cpu_gettotalcpu(void)
+{
+	extern int totalcpu;
+	return totalcpu;
+}
+
 
 #endif

@@ -26,5 +26,10 @@ typedef union {
         UINT32 d;
 }       PAIR;
 
+typedef struct  {
+	int sample_rate;
+} MachineDef;
+
+extern MachineDef *Machine;
 
 #endif
