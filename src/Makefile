@@ -14,14 +14,15 @@ OBJDIR= ../obj
 
 OBJS = $(addprefix $(OBJDIR)/, \
 	clc88.o \
-	cpu.o)
+	cpu.o \
+	cpu/z80/z80.o \
+	cpu/m6502/m6502.o \
+	)
 	
-all: prepare $(FINALTARGET)	
-
-prepare:
-	mkdir -p $(OBJDIR)
+all: $(FINALTARGET)	
 
 $(OBJDIR)/%.o: %.c
+	@mkdir -p $(dir $@) 2> /dev/null 
 	$(CC) -c -o $@ $(DEFS) -I. $(CFLAGS) $<
 
 $(TARGET): $(OBJS)

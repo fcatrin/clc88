@@ -29,6 +29,7 @@
 #include "ops02.h"
 #include "ill02.h"
 #include "../../emu.h"
+#include "../cpu_interface.h"
 
 #define M6502_NMI_VEC	0xfffa
 #define M6502_RST_VEC	0xfffc
@@ -88,7 +89,7 @@ extern void m6502_runtime_loader_init(void)
 #endif
 
 /* Layout of the registers in the debugger */
-static 	 m6502_reg_layout[] = {
+static 	 int m6502_reg_layout[] = {
 	M6502_PC, M6502_S, M6502_P, M6502_A, M6502_X, M6502_Y, -1,
 	M6502_EA, M6502_ZP, M6502_NMI_STATE, M6502_IRQ_STATE, M6502_SO_STATE, 0
 };
@@ -167,7 +168,7 @@ static m6502_Regs m6502;
 
 static void m6502_state_register(const char *type)
 {
-	int cpu = cpu_getactivecpu();
+	// int cpu = cpu_getactivecpu();
 
 	state_save_register_UINT16(type, cpu, "PC", &m6502.pc.w.l, 2);
 	state_save_register_UINT16(type, cpu, "SP", &m6502.sp.w.l, 2);
@@ -319,7 +320,7 @@ int m6502_execute(int cycles)
 		UINT8 op;
 		PPC = PCD;
 
-		CALL_MAME_DEBUG;
+		/* CALL_MAME_DEBUG; */
 
 #if 1
 		/* if an irq is pending, take it now */

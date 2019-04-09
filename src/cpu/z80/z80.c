@@ -78,6 +78,7 @@
  *		http://www.msxnet.org/tech/z80-documented.pdf
  *****************************************************************************/
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "../../emu.h"
