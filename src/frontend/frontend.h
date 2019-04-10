@@ -2,8 +2,8 @@
 #define _FRONTEND_H
 
 
-int  osd_start_audio_stream(int stereo);
-void osd_stop_audio_stream();
-int  osd_update_audio_stream(INT16 *buffer);
+int  frontend_start_audio_stream(int stereo);
+void frontend_stop_audio_stream();
+int  frontend_update_audio_stream(INT16 *buffer);
 
 #endif

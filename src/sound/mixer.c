@@ -671,7 +671,7 @@ int mixer_sh_start(void)
 	memset(left_accum, 0, sizeof(left_accum));
 	memset(right_accum, 0, sizeof(right_accum));
 
-	samples_this_frame = osd_start_audio_stream(is_stereo);
+	samples_this_frame = frontend_start_audio_stream(is_stereo);
 
 	mixer_sound_enabled = 1;
 
@@ -688,7 +688,7 @@ void mixer_sh_stop(void)
 	struct mixer_channel_data *channel;
 	int i;
 
-	osd_stop_audio_stream();
+	frontend_stop_audio_stream();
 
 	for (i = 0, channel = mixer_channel; i < MIXER_MAX_CHANNELS; i++, channel++)
 	{
@@ -801,7 +801,7 @@ void mixer_sh_update(void)
 	}
 
 	/* play the result */
-	samples_this_frame = osd_update_audio_stream(mix_buffer);
+	samples_this_frame = frontend_update_audio_stream(mix_buffer);
 
 	accum_base = accum_pos;
 

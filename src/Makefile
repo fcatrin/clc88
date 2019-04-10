@@ -22,9 +22,14 @@ OBJS = $(addprefix $(OBJDIR)/, \
 	sound/filter.o \
 	sound/mixer.o \
 	sound/streams.o \
+	sound/sound_interface.o \
 	cpu/z80/z80.o \
 	cpu/m6502/m6502.o \
 	sound/pokey/pokey.o \
+	)
+
+OBJS += $(addprefix $(OBJDIR)/, \
+	frontend/linux/frontend.o \
 	)
 	
 all: $(FINALTARGET)	
