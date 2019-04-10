@@ -1,10 +1,12 @@
 #include <stdio.h>
-#include "cpu.h"
 #include "emu.h"
 #include "bus.h"
 #include "cpu/m6502/m6502.h"
 #include "cpu/z80/z80.h"
 #include "cpu/cpu_interface.h"
+#include "cpu.h"
+
+UINT16 cpu_pc;
 
 v_cpu v_6502;
 v_cpu v_z80;
@@ -76,6 +78,23 @@ void  cpu_writeport16(UINT16 addr, UINT8 value) {
 int   cpu_getactivecpu() {
 	return 1;
 }
-void  change_pc16(UINT16 addr) {
 
+void  change_pc16(UINT16 addr) {
+	cpu_pc = addr;
 }
+
+UINT16 activecpu_get_pc() {
+	return cpu_pc;
+}
+
+long cpunum_get_localtime(int activecpu) {
+	return 0;
+}
+int  get_resource_tag() {
+	return 0;
+}
+int  cpu_getexecutingcpu() {
+	return 0;
+}
+void activecpu_abort_timeslice(){}
+

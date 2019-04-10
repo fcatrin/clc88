@@ -26,5 +26,43 @@ typedef union {
         UINT32 d;
 }       PAIR;
 
+/*
+ * Versions of GNU C earlier that 2.7 appear to have problems with the
+ * __attribute__ definition of UNUSEDARG, so we act as if it was not a
+ * GNU compiler.
+ */
+
+#ifdef __GNUC__
+#if (__GNUC__ < 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ <= 7))
+#define UNUSEDARG
+#else
+#define UNUSEDARG __attribute__((__unused__))
+#endif
+#else
+#define UNUSEDARG
+#endif
+
+
+
+/*
+ * Use __builtin_expect on GNU C 3.0 and above
+ */
+#ifdef __GNUC__
+#if (__GNUC__ < 3)
+#define UNEXPECTED(exp)	(exp)
+#else
+#define UNEXPECTED(exp)	 __builtin_expect((exp), 0)
+#endif
+#else
+#define UNEXPECTED(exp)	(exp)
+#endif
+
+#if defined(MIXER_USE_CLIPPING)
+#define MAME_CLAMP_SAMPLE(a) \
+   if ((int16_t)a != a) \
+      a = (a >> 31) ^ 0x7FFF
+#else
+#define MAME_CLAMP_SAMPLE(a) ((void)0)
+#endif
 
 #endif

@@ -2,6 +2,7 @@
 #include "emu.h"
 #include "cpu.h"
 #include "memory.h"
+#include "machine.h"
 
 UINT8 test_code_6502[] = { 0xA9, 0x92, 0x8D, 0x01, 0x07, 0x4C, 0x00, 0x06};
 /*   * = 0x600
@@ -22,6 +23,7 @@ UINT8 test_code_z80[] = {0x3e, 0x29, 0x32, 0x02, 0x07, 0xc3, 0x00, 0x00};
 
 
 int main(int argc, char *argv[]) {
+	machine_init();
 
 	mem_write(0x600, test_code_6502, 8);
 	mem_write(0x000, test_code_z80,  8);

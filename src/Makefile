@@ -17,8 +17,14 @@ OBJS = $(addprefix $(OBJDIR)/, \
 	cpu.o \
 	bus.o \
 	memory.o \
+	machine.o \
+	timer.o \
+	sound/filter.o \
+	sound/mixer.o \
+	sound/streams.o \
 	cpu/z80/z80.o \
 	cpu/m6502/m6502.o \
+	sound/pokey/pokey.o \
 	)
 	
 all: $(FINALTARGET)	
