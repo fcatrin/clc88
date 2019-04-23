@@ -4,6 +4,15 @@
 #include "chroni.h"
 #include "trace.h"
 
+/*
+ * This is the main Video Processor Unit
+ *
+ * The name comes from "Chroni, partners in time" (with the CPU)
+ * Suggested by Stuart Law from "Cronie, partners in crime"
+ *
+ */
+
+
 #define VRAM_MAX 128*1024
 
 UINT8 vram[VRAM_MAX];
