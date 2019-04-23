@@ -1,3 +1,5 @@
+FRONTEND = linux
+
 CC = gcc
 
 DEFS = -DHAVE_CONFIG_H -DINLINE=inline
@@ -28,9 +30,16 @@ OBJS = $(addprefix $(OBJDIR)/, \
 	sound/pokey/pokey.o \
 	)
 
+ifeq ($(FRONTEND), linux)
+
 OBJS += $(addprefix $(OBJDIR)/, \
 	frontend/linux/frontend.o \
 	)
+	
+CFLAGS += $(shell pkg-config --cflags sdl2)
+LIBS += $(shell pkg-config --libs sdl2)
+
+endif
 	
 all: $(FINALTARGET)	
 

@@ -51,7 +51,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include "../driver.h"
+#include "../../driver.h"
 #include "pokey.h"
 
 
