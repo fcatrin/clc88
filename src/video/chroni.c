@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "../emu.h"
 #include "screen.h"
+#include "chroni.h"
 #include "trace.h"
 
 #define VRAM_MAX 128*1024
@@ -24,12 +25,12 @@ static UINT8 pixel_color_r;
 static UINT8 pixel_color_g;
 static UINT8 pixel_color_b;
 
-void cvpu_vram_write(UINT16 index, UINT8 value) {
+void chroni_vram_write(UINT16 index, UINT8 value) {
 	LOGV("vram write %04X = %02X", index, value);
 	vram[page * PAGE_SIZE + index] = value;
 }
 
-UINT8 cvpu_vram_read(UINT16 index) {
+UINT8 chroni_vram_read(UINT16 index) {
 	return vram[page * PAGE_SIZE + index];
 }
 
@@ -41,8 +42,8 @@ static void reg_high(UINT16 *reg, UINT8 value) {
 	*reg = (*reg & 0x00FF) | (value << 8);
 }
 
-void cvpu_register_write(UINT8 index, UINT8 value) {
-	LOGV("cvpu reg write: %04X = %02X", index, value);
+void chroni_register_write(UINT8 index, UINT8 value) {
+	LOGV("chroni reg write: %04X = %02X", index, value);
 	switch (index) {
 	case 0:
 		reg_low(&dl, value);
@@ -173,6 +174,6 @@ static void do_screen() {
 
 }
 
-void cvpu_run() {
+void chroni_run() {
 	do_screen();
 }

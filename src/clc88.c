@@ -6,8 +6,8 @@
 #include "memory.h"
 #include "machine.h"
 #include "video/screen.h"
-#include "video/cvpu.h"
 #include "utils.h"
+#include "video/chroni.h"
 
 int main(int argc, char *argv[]) {
 	if (frontend_init(argc, argv)) return 1;
@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
 
 	// utils_dump_mem(0xA000, 0x0FF);
 
-	cvpu_run();
+	chroni_run();
 	screen_update();
 
 	frontend_sleep(5);
