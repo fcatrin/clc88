@@ -2,7 +2,7 @@ FRONTEND = linux
 
 CC = gcc
 
-DEFS = -DHAVE_CONFIG_H -DINLINE=inline
+DEFS = -DHAVE_CONFIG_H -DINLINE=inline -DTRACE
 LIBS = -lm -lz 
 
 TARGET_BASE_NAME = clc88
@@ -21,6 +21,7 @@ OBJS = $(addprefix $(OBJDIR)/, \
 	memory.o \
 	machine.o \
 	timer.o \
+	utils.o \
 	sound/filter.o \
 	sound/mixer.o \
 	sound/streams.o \
