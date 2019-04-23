@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include "emu.h"
 #include "frontend/frontend.h"
 #include "cpu.h"
