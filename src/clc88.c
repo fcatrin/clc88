@@ -6,6 +6,7 @@
 #include "memory.h"
 #include "machine.h"
 #include "video/screen.h"
+#include "video/cvpu.h"
 #include "utils.h"
 
 int main(int argc, char *argv[]) {
@@ -21,9 +22,12 @@ int main(int argc, char *argv[]) {
 
 	cpu = cpu_init(CPU_M6502);
 	cpu.reset();
-	// cpu.run(100);
+	cpu.run(1000);
 
-	utils_dump_mem(0xF000, 0x0FFF);
+	// utils_dump_mem(0xA000, 0x0FF);
+
+	cvpu_run();
+	screen_update();
 
 	frontend_sleep(5);
 	frontend_done();

@@ -2,7 +2,7 @@
 #include <string.h>
 #include <errno.h>
 #include "emu.h"
-#include "memory.h"
+#include "bus.h"
 #include "trace.h"
 
 void utils_load_xex(char *filename) {
@@ -26,7 +26,7 @@ void utils_load_xex(char *filename) {
 		LOGV("reading offset %04X size: %04X", offset, size);
 		fread(buffer, size, 1, f);
 
-		mem_write(offset, buffer, size);
+		bus_write(offset, buffer, size);
 	}
 
 	fclose(f);
@@ -39,7 +39,7 @@ void utils_dump_mem(UINT16 offset, UINT16 size) {
 	do {
 		printf("%04X: ", address);
 		for(int i=0; i<16; i++) {
-			printf("%02X ", mem_readmem16(address + i));
+			printf("%02X ", bus_read16(address + i));
 		}
 		printf("\n");
 		address+=16;

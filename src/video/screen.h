@@ -14,6 +14,7 @@ extern int screen_pitch;
 extern UINT8 *screen;
 
 void screen_init();
+void screen_update();
 void screen_done();
 
 #endif

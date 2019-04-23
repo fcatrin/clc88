@@ -30,6 +30,7 @@ OBJS = $(addprefix $(OBJDIR)/, \
 	cpu/m6502/m6502.o \
 	sound/pokey/pokey.o \
 	video/screen.o \
+	video/cvpu.o \
 	)
 
 ifeq ($(FRONTEND), linux)

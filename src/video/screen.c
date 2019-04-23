@@ -24,6 +24,10 @@ void screen_init() {
 	screen[screen_pitch * 20 + 80*3 + 2] = 0xFF;
 }
 
+void screen_update() {
+	frontend_update_screen(screen);
+}
+
 void screen_done() {
 	free(screen);
 }
