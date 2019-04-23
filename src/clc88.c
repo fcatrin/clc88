@@ -5,6 +5,7 @@
 #include "cpu.h"
 #include "memory.h"
 #include "machine.h"
+#include "video/screen.h"
 
 UINT8 test_code_6502[] = { 0xA9, 0x92, 0x8D, 0x01, 0x07, 0x4C, 0x00, 0x06};
 /*   * = 0x600
@@ -23,25 +24,11 @@ UINT8 test_code_z80[] = {0x3e, 0x29, 0x32, 0x02, 0x07, 0xc3, 0x00, 0x00};
  *   JMP LOOP
  */
 
-int screen_width  = 320 + 40*2;
-int screen_height = 240 + 11*2;
-int screen_pitch;
-
-UINT8 *screen;
 
 int main(int argc, char *argv[]) {
 	if (frontend_init(argc, argv)) return 1;
-	frontend_init_screen(screen_width, screen_height);
 
-	screen_pitch = screen_width * 3;
-
-	screen = malloc(screen_pitch * screen_height);
-
-	screen[screen_pitch * 20 + 80*3 + 0] = 0xFF;
-	screen[screen_pitch * 20 + 80*3 + 1] = 0xFF;
-	screen[screen_pitch * 20 + 80*3 + 2] = 0xFF;
-
-	frontend_update_screen(screen);
+	screen_init();
 
 	machine_init();
 
@@ -68,6 +55,5 @@ int main(int argc, char *argv[]) {
 	frontend_sleep(5);
 	frontend_done();
 
-	free(screen);
 	return 0;
 }
