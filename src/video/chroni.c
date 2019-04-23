@@ -8,7 +8,15 @@
  * This is the main Video Processor Unit
  *
  * The name comes from "Chroni, partners in time" (with the CPU)
- * Suggested by Stuart Law from "Cronie, partners in crime"
+ * Suggested by Stuart Law from "Cronie, partners in crime" a popular english saying
+ *
+ *
+ * There is no need for a memory map
+ * This is a recommended map
+ *
+ * 00000 -
+ * 1F000 - 1F3FF : Charset
+ * 1F800 - 1FFFF : Main Color palettes (256 * 2bytes RGB565)
  *
  */
 
@@ -17,7 +25,7 @@
 
 UINT8 vram[VRAM_MAX];
 
-#define PAGE_SIZE 0x2000
+#define PAGE_OFFSET 0x0400
 
 static UINT16 scanline;
 static UINT8  page;
@@ -36,11 +44,11 @@ static UINT8 pixel_color_b;
 
 void chroni_vram_write(UINT16 index, UINT8 value) {
 	LOGV("vram write %04X = %02X", index, value);
-	vram[page * PAGE_SIZE + index] = value;
+	vram[page * PAGE_OFFSET + index] = value;
 }
 
 UINT8 chroni_vram_read(UINT16 index) {
-	return vram[page * PAGE_SIZE + index];
+	return vram[page * PAGE_OFFSET + index];
 }
 
 static void reg_low(UINT16 *reg, UINT8 value) {
@@ -73,7 +81,7 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 		reg_high(&palette, value);
 		break;
 	case 6:
-		page = value;
+		page = value & 0x7F;  // page offset in KB
 		break;
 
 	case 16:

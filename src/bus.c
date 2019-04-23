@@ -5,7 +5,18 @@
 #include "video/chroni.h"
 
 /*
- * right now there are no other devices connected to the bus, only memory
+ * system memory map
+ *
+ * 6502:
+ *   0000 - 00FF : Page Zero
+ *   0100 - 01FF : Stack
+ *   0200 - 8FFF : Free memory
+ *   9000 - 9FFF : Memory Mapped Registers (see below) (4KB)
+ *   A000 - DFFF : VRAM Window (16KB)
+ *   E000 - FFFF : OS ROM (8KB)
+ *
+ *   9000 - 907F : Chroni registers
+ *
  */
 
 UINT8 bus_read16(UINT16 addr) {
