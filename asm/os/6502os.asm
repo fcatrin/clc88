@@ -69,8 +69,8 @@ screen:
 charset:
 	ins '../../res/charset.bin'
 palette:
-	.byte 0, 0, 0
-	.byte 0x40, 0x40, 0xff
-	.byte 0xff, 0xff, 0xff
+	.word 0
+	.word 0x421f
+	.word 0xffff
 	
 	

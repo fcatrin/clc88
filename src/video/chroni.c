@@ -38,6 +38,7 @@ static UINT16 palette;
 
 static UINT16 charset;
 
+static UINT8 rgb565[0x10000 * 3];
 static UINT8 pixel_color_r;
 static UINT8 pixel_color_g;
 static UINT8 pixel_color_b;
@@ -94,9 +95,11 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 }
 
 static inline void set_pixel_color(UINT8 color) {
-	pixel_color_b = vram[palette + color*3 + 0];
-	pixel_color_g = vram[palette + color*3 + 1];
-	pixel_color_r = vram[palette + color*3 + 2];
+	UINT16 pixel_color_rgb565 = vram[palette + color*2 + 0] + (vram[palette + color*2 + 1] << 8);
+
+	pixel_color_r = rgb565[pixel_color_rgb565*3 + 0];
+	pixel_color_g = rgb565[pixel_color_rgb565*3 + 1];
+	pixel_color_b = rgb565[pixel_color_rgb565*3 + 2];
 }
 
 static void do_scan_blank() {
@@ -191,6 +194,19 @@ static void do_screen() {
 
 }
 
+static void init_rgb565_table() {
+	for(int c=0; c<0x10000; c++) {
+		UINT8 r = ((c & 0xF800) >> 11) * (256 / 32);
+		UINT8 g = ((c & 0X07E0) >> 5)  * (256 / 64);
+		UINT8 b = (c & 0X001F) * (256 / 32);
+
+		rgb565[c*3 + 0] = b;
+		rgb565[c*3 + 1] = g;
+		rgb565[c*3 + 2] = r;
+	}
+}
+
 void chroni_run() {
+	init_rgb565_table();
 	do_screen();
 }
