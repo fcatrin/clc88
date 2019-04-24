@@ -18,6 +18,21 @@
  * 1F000 - 1F3FF : Charset
  * 1F800 - 1FFFF : Main Color palettes (256 * 2bytes RGB565)
  *
+ * Registers:
+ * 00 : WORD Display List pointer
+ * 02 : WORD Charset pointer
+ * 04 : WORD Palette pointer
+ * 05 : BYTE 16KB page mapped on system memory. 1KB granularity
+ * 10 : BYTE Border color
+ * 11 : BYTE Simple Text mode background
+ * 12 : BYTE Simple Text mode foreround
+ *
+ * The pallete is a 256 16 bit RGB565 colors array
+ *
+ * The Simple text mode is a 40 chars wide text mode
+ * with single foreground / background colors.
+ * This is similar to ANTIC 2 mode
+ *
  */
 
 
