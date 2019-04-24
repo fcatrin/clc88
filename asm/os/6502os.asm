@@ -30,9 +30,9 @@ boot:
 	
 	lda #0
 	sta VCOLOR0
-	lda #$98
+	lda #$94
 	sta VCOLOR1
-	lda #$0F
+	lda #$9A
 	sta VCOLOR2
 	
 	ldx #0
