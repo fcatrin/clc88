@@ -30,9 +30,9 @@ boot:
 	
 	lda #0
 	sta VCOLOR0
-	lda #1
+	lda #$98
 	sta VCOLOR1
-	lda #2
+	lda #$0F
 	sta VCOLOR2
 	
 	ldx #0
@@ -68,9 +68,8 @@ screen:
 	org $a400
 charset:
 	ins '../../res/charset.bin'
+
 palette:
-	.word 0
-	.word 0x421f
-	.word 0xffff
+   icl 'palette_atari_ntsc.asm'
 	
 	
