@@ -27,7 +27,10 @@
  * 11 : BYTE Simple Text mode background
  * 12 : BYTE Simple Text mode foreround
  *
- * The pallete is a 256 16 bit RGB565 colors array
+ * The pallete is a 256 16 bit RGB565 colors array (512 bytes)
+ *
+ * A color is 1 byte index over the palette So color 0x23 will use
+ * the RGB565 built from palette[0x23 * 2] and the next byte
  *
  * The Simple text mode is a 40 chars wide text mode
  * with single foreground / background colors.
@@ -53,6 +56,7 @@ static UINT16 palette;
 
 static UINT16 charset;
 
+// this is an RGB565 -> RGB888 conversion array for emulation only
 static UINT8 rgb565[0x10000 * 3];
 static UINT8 pixel_color_r;
 static UINT8 pixel_color_g;
