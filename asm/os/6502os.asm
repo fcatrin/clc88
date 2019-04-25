@@ -48,6 +48,7 @@ copy:
 	ldy #0
 stop:
 	lda VCOUNT
+	asl
 	sta WSYNC
 	sta VCOLOR0
 	jmp stop

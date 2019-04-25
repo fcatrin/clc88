@@ -247,7 +247,9 @@ static void do_screen() {
 	 *
 	 */
 	for(ypos = 0; ypos <8; ypos++) {
-		CPU_GO(114);
+		CPU_GO(114 - 8);
+		CPU_RESUME();
+		CPU_GO(8);
 	}
 	scanline = 0;
 
@@ -285,7 +287,9 @@ static void do_screen() {
 		}
 	}
 	for(;ypos <262; ypos++) {
-		CPU_GO(114);
+		CPU_GO(114 - 8);
+		CPU_RESUME();
+		CPU_GO(8);
 	}
 }
 
