@@ -9,12 +9,12 @@ atari_palette_ntsc:
     .word $39c7
     .word $630c
     .word $630c
+    .word $8410
+    .word $8410
     .word $a514
     .word $a514
     .word $c638
     .word $c638
-    .word $a514
-    .word $a514
     .word $ffff
     .word $ffff
     .word $1800
