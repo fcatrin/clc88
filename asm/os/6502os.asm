@@ -43,7 +43,10 @@ copy:
 	sta screen, x
 	inx
 	bne copy
+	ldy #0
 stop:
+	iny
+	sty VCOLOR0
 	jmp stop
 	
 message:
@@ -57,7 +60,7 @@ dli:
 	.rept 23
 	.byte 2
 	.endr
-	.byte 112
+	.byte 112, 112, 112
 	.byte 65
 	.word dli - vram
 screen:

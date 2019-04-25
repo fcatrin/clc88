@@ -1,5 +1,7 @@
 #include <stdio.h>
-#include "../emu.h"
+#include "emu.h"
+#include "cpu.h"
+#include "cpuexec.h"
 #include "screen.h"
 #include "chroni.h"
 #include "trace.h"
@@ -167,14 +169,18 @@ static inline void set_pixel_color(UINT8 color) {
 }
 
 static void do_scan_blank() {
-	set_pixel_color(colors[0]);
+	CPU_GO(22);
 
 	int start = scanline * screen_pitch;
 	for(int i=0; i<screen_width; i++) {
+		set_pixel_color(colors[0]);
 		screen[start + i*3 + 0] = pixel_color_r;
 		screen[start + i*3 + 1] = pixel_color_g;
 		screen[start + i*3 + 2] = pixel_color_b;
+
+		if ((i & 3) == 0) CPU_GO(1);
 	}
+	CPU_GO(8);
 }
 
 static void do_scan_text(UINT8 line) {
@@ -220,6 +226,10 @@ static void do_scan_text(UINT8 line) {
 }
 
 static void do_screen() {
+	/* 0-7 scanlines are not displayed because of vblank
+	 *
+	 */
+	CPU_GO(8 * 114);
 	scanline = 0;
 
 	UINT8 instruction;

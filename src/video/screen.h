@@ -4,8 +4,8 @@
 #define SCREEN_XRES 320
 #define SCREEN_YRES 240
 
-#define SCREEN_XBORDER 40
-#define SCREEN_YBORDER 11
+#define SCREEN_XBORDER 8
+#define SCREEN_YBORDER 0
 
 extern int screen_width;
 extern int screen_height;

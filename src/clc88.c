@@ -24,12 +24,6 @@ int main(int argc, char *argv[]) {
 	cpu = cpu_init(CPU_M6502);
 	cpuexec_init(cpu);
 
-	for(int i=0; i<1000; i++) {
-		cpuexec_run(1);
-	}
-
-	// utils_dump_mem(0xA000, 0x0FF);
-
 	chroni_run();
 	screen_update();
 
