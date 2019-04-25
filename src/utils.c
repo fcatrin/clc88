@@ -5,25 +5,27 @@
 #include "bus.h"
 #include "trace.h"
 
+#define LOGTAG "UTILS"
+
 void utils_load_xex(char *filename) {
 	UINT8 buffer[0x1000];
 
 	FILE *f = fopen(filename, "rb");
 	if (!f) {
-		LOGE("Error opening %s: %s", filename, strerror(errno));
+		LOGE(LOGTAG, "Error opening %s: %s", filename, strerror(errno));
 		return;
 	}
 
 	int n=0;
 	while((n = fread(buffer, 2, 1, f))) {
 		if (buffer[0] & (buffer[1] == 0xFF)) {
-			LOGV("skipping header");
+			LOGV(LOGTAG, "skipping header");
 			continue;
 		}
 		UINT16 offset = buffer[0] + (buffer[1] << 8);
 		fread(buffer, 2, 1, f);
 		UINT16 size = buffer[0] + (buffer[1] << 8) - offset + 1;
-		LOGV("reading offset %04X size: %04X", offset, size);
+		LOGV(LOGTAG, "reading offset %04X size: %04X", offset, size);
 		fread(buffer, size, 1, f);
 
 		bus_write(offset, buffer, size);

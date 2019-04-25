@@ -82,6 +82,7 @@
  *
  */
 
+#define LOGTAG "CRONI"
 
 #define VRAM_MAX 128*1024
 
@@ -107,7 +108,7 @@ static UINT8 pixel_color_g;
 static UINT8 pixel_color_b;
 
 void chroni_vram_write(UINT16 index, UINT8 value) {
-	LOGV("vram write %04X = %02X", index, value);
+	LOGV(LOGTAG, "vram write %04X = %02X", index, value);
 	vram[page * PAGE_OFFSET + index] = value;
 }
 
@@ -124,7 +125,7 @@ static void reg_high(UINT16 *reg, UINT8 value) {
 }
 
 void chroni_register_write(UINT8 index, UINT8 value) {
-	LOGV("chroni reg write: %04X = %02X", index, value);
+	LOGV(LOGTAG, "chroni reg write: %04X = %02X", index, value);
 	switch (index) {
 	case 0:
 		reg_low(&dl, value);
@@ -177,7 +178,7 @@ static void do_scan_blank() {
 }
 
 static void do_scan_text(UINT8 line) {
-	LOGV("do_scan_text line %d", line);
+	LOGV(LOGTAG, "do_scan_text line %d", line);
 	set_pixel_color(colors[0]);
 
 	int start = scanline * screen_pitch;
@@ -195,8 +196,6 @@ static void do_scan_text(UINT8 line) {
 		if (i % 8 == 0) {
 			UINT8 c = vram[lms + offset];
 			row = vram[charset + c*8 + line];
-			LOGV("read char %04X = %02X row %04X = %02X", lms + offset, c,
-					charset + c*8 + line, row);
 			offset++;
 		}
 
@@ -227,11 +226,11 @@ static void do_screen() {
 	int dlpos = 0;
 	while(scanline < screen_height) {
 		instruction = vram[dl + dlpos];
-		LOGV("DL instruction %04X = %02X", dl + dlpos, instruction);
+		LOGV(LOGTAG, "DL instruction %04X = %02X", dl + dlpos, instruction);
 		dlpos++;
 		if ((instruction & 7) == 0) { // blank lines
 			UINT8 lines = 1 + ((instruction & 0x70) >> 4);
-			LOGV("do_scan_blank lines %d", lines);
+			LOGV(LOGTAG, "do_scan_blank lines %d", lines);
 			for(int line=0; line<lines; line++) {
 				do_scan_blank();
 				scanline++;
@@ -242,7 +241,7 @@ static void do_screen() {
 				lms = vram[dl + dlpos++];
 				lms += 256*vram[dl + dlpos++];
 			}
-			LOGV("do_scan_text lms: %04X", lms);
+			LOGV(LOGTAG, "do_scan_text lms: %04X", lms);
 			for(int line=0; line<8; line++) {
 				do_scan_text(line);
 				scanline++;

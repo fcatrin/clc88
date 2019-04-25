@@ -4,12 +4,12 @@
 #ifdef TRACE
 	#ifdef __ANDROID__
 		#include <android/log.h>
-		#define LOGV(...)   __android_log_print((int)ANDROID_LOG_INFO, "Compy", __VA_ARGS__)
-		#define LOGE(...)   __android_log_print((int)ANDROID_LOG_ERROR, "Compy", __VA_ARGS__)
+		#define LOGV(TAG, ...)   __android_log_print((int)ANDROID_LOG_INFO, TAG, __VA_ARGS__)
+		#define LOGE(TAG, ...)   __android_log_print((int)ANDROID_LOG_ERROR, TAG, __VA_ARGS__)
 	#else
 		#include <stdarg.h>
-		#define LOGV(...)   fprintf(stdout, __VA_ARGS__); printf("\n")
-		#define LOGE(...)   fprintf(stderr, __VA_ARGS__); printf("\n")
+		#define LOGV(TAG, ...)   fprintf(stdout, "[%s] ", TAG); fprintf(stdout, __VA_ARGS__); fprintf(stdout, "\n")
+		#define LOGE(TAG, ...)   fprintf(stderr, "[%s] ", TAG); fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n")
 	#endif
 #else
 	#define LOGV(...)
