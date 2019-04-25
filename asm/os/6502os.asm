@@ -2,6 +2,7 @@ VDLI     = $9000
 VCHARSET = $9002
 VPALETTE = $9004
 VCOUNT   = $9007
+WSYNC    = $9008
 VCOLOR0  = $9010
 VCOLOR1  = $9011
 VCOLOR2  = $9012
@@ -47,11 +48,8 @@ copy:
 	ldy #0
 stop:
 	lda VCOUNT
-	clc
-	adc #16
+	sta WSYNC
 	sta VCOLOR0
-	iny
-	sty VCOLOR1
 	jmp stop
 	
 message:

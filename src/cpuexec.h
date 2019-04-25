@@ -2,8 +2,8 @@
 #define _CPUEXEC_H
 
 #define CPU_GO(cycles) cpuexec_run(cycles)
-#define CPU_HALT cpuexec_halt(true)
-#define CPU_PROCEED cpuexec_halt(false)
+#define CPU_HALT() cpuexec_halt(1)
+#define CPU_RESUME() cpuexec_halt(0)
 
 void cpuexec_init(v_cpu vcpu);
 void cpuexec_run(int cycles);

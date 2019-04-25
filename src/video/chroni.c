@@ -151,6 +151,9 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 	case 6:
 		page = value & 0x7F;  // page offset in KB
 		break;
+	case 8:
+		CPU_HALT();
+		break;
 
 	case 16:
 	case 17:
@@ -188,6 +191,7 @@ static void do_scan_blank() {
 
 		if ((i & 3) == 0) CPU_GO(1);
 	}
+	CPU_RESUME();
 	CPU_GO(8);
 }
 
@@ -234,6 +238,7 @@ static void do_scan_text(UINT8 line) {
 		if ((x & 3) == 0) CPU_GO(1);
 		x++;
 	}
+	CPU_RESUME();
 	CPU_GO(8);
 }
 
