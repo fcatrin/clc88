@@ -11,17 +11,21 @@ static v_cpu cpu;
 static long cycles;
 static int  cycles_acum;
 static int  cycles_stolen;
+static int  halt;
 
 void cpuexec_init(v_cpu vcpu) {
 	cpu = vcpu;
 	cpu.reset();
 
+	halt   = 0;
 	cycles = 0;
 	cycles_acum   = 0;
 	cycles_stolen = 0;
 }
 
 void cpuexec_run(int cycles_to_add) {
+	if (halt) return;
+
 	cycles_acum += cycles_to_add;
 
 	int cycles_to_run = cycles_acum - cycles_stolen;
@@ -31,5 +35,9 @@ void cpuexec_run(int cycles_to_add) {
 	cycles += cycles_ran;
 	cycles_stolen = cycles_ran - cycles_to_run;
 	cycles_acum = 0;
+}
+
+void cpuexec_halt(int halted) {
+	halt = halted;
 }
 

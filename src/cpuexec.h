@@ -3,5 +3,6 @@
 
 void cpuexec_init(v_cpu vcpu);
 void cpuexec_run(int cycles);
+void cpuexec_halt(int halted);
 
 #endif
