@@ -1,6 +1,7 @@
 VDLI     = $9000
 VCHARSET = $9002
 VPALETTE = $9004
+VCOUNT   = $9007
 VCOLOR0  = $9010
 VCOLOR1  = $9011
 VCOLOR2  = $9012
@@ -45,8 +46,12 @@ copy:
 	bne copy
 	ldy #0
 stop:
+	lda VCOUNT
+	clc
+	adc #16
+	sta VCOLOR0
 	iny
-	sty VCOLOR0
+	sty VCOLOR1
 	jmp stop
 	
 message:

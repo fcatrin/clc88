@@ -97,6 +97,7 @@ static UINT8  page;
 
 static UINT16 dl;
 static UINT16 lms = 0;
+static UINT16 ypos;
 
 static UINT8 colors[4];
 static UINT16 palette;
@@ -160,6 +161,13 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 	}
 }
 
+UINT8 chroni_register_read(UINT8 index) {
+	switch(index) {
+	case 7: return ypos >> 1;
+	}
+	return 0;
+}
+
 static inline void set_pixel_color(UINT8 color) {
 	UINT16 pixel_color_rgb565 = vram[palette + color*2 + 0] + (vram[palette + color*2 + 1] << 8);
 
@@ -185,14 +193,16 @@ static void do_scan_blank() {
 
 static void do_scan_text(UINT8 line) {
 	LOGV(LOGTAG, "do_scan_text line %d", line);
-	set_pixel_color(colors[0]);
+	CPU_GO(22);
 
 	int start = scanline * screen_pitch;
 	int x = 0;
 	for(int i=0; i<SCREEN_XBORDER; i++) {
+		set_pixel_color(colors[0]);
 		screen[start + x*3 + 0] = pixel_color_r;
 		screen[start + x*3 + 1] = pixel_color_g;
 		screen[start + x*3 + 2] = pixel_color_b;
+		if ((x & 3) == 0) CPU_GO(1);
 		x++;
 	}
 
@@ -211,25 +221,29 @@ static void do_scan_text(UINT8 line) {
 		screen[start + x*3 + 1] = pixel_color_g;
 		screen[start + x*3 + 2] = pixel_color_b;
 
+		if ((x & 3) == 0) CPU_GO(1);
 		x++;
 		row *= 2;
 	}
 
-	set_pixel_color(colors[0]);
 	for(int i=0; i<SCREEN_XBORDER; i++) {
+		set_pixel_color(colors[0]);
 		screen[start + x*3 + 0] = pixel_color_r;
 		screen[start + x*3 + 1] = pixel_color_g;
 		screen[start + x*3 + 2] = pixel_color_b;
+		if ((x & 3) == 0) CPU_GO(1);
 		x++;
 	}
-
+	CPU_GO(8);
 }
 
 static void do_screen() {
 	/* 0-7 scanlines are not displayed because of vblank
 	 *
 	 */
-	CPU_GO(8 * 114);
+	for(ypos = 0; ypos <8; ypos++) {
+		CPU_GO(114);
+	}
 	scanline = 0;
 
 	UINT8 instruction;
@@ -244,6 +258,7 @@ static void do_screen() {
 			for(int line=0; line<lines; line++) {
 				do_scan_blank();
 				scanline++;
+				ypos++;
 				if (scanline == screen_height) return;
 			}
 		} else if ((instruction & 7) == 2) {
@@ -255,6 +270,7 @@ static void do_screen() {
 			for(int line=0; line<8; line++) {
 				do_scan_text(line);
 				scanline++;
+				ypos++;
 				if (scanline == screen_height) return;
 			}
 
@@ -263,7 +279,9 @@ static void do_screen() {
 			break;
 		}
 	}
-
+	for(;ypos <262; ypos++) {
+		CPU_GO(114);
+	}
 }
 
 static void init_rgb565_table() {

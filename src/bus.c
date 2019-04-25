@@ -23,7 +23,9 @@
 
 UINT8 bus_read16(UINT16 addr) {
 	LOGV(LOGTAG, "bus read %04X", addr);
-	if (addr >= CHRONI_MEM_START && addr <= CHRONI_MEM_END) {
+	if (addr >= CHRONI_START && addr <= CHRONI_END) {
+		return chroni_register_read(addr - CHRONI_START);
+	} else if (addr >= CHRONI_MEM_START && addr <= CHRONI_MEM_END) {
 		return chroni_vram_read(addr - CHRONI_MEM_START);
 	}
 	return mem_readmem16(addr);
