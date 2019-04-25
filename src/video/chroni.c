@@ -36,6 +36,50 @@
  * with single foreground / background colors.
  * This is similar to ANTIC 2 mode
  *
+ *
+ * Timings (using Atari 800 as a reference)
+ * (https://www.atarimax.com/jindroush.atari.org/atanttim.html)
+ *
+ * Horizontal Timings
+ * ------------------
+ *
+ * 0 start HSYNC
+ * 14 end HSYNC
+ * 32 end HBLANK - Start Wide
+ * 34 Start Display
+ * 44 Start Displayed wide
+ * 48 Start Normal & start HSCROL
+ * 64 Start Narrow
+ * 128 Center
+ * 192 End Narrow
+ * 208 End WSYNC & end Normal
+ * 220 End Displayed wide
+ * 222 Start HBLANK - Inc VCOUNT - End Display
+ * 224 End wide
+ *
+ * Atari 800 emulator display is
+ * 0  - 32  : Never displayed
+ * 32 - 44  : Black overscan
+ * 44 - 48  : Border
+ * 48 - 208 : Visible 160 clocks (320 pixels high res)
+ * 208 - 212 : Border
+ * 212 - 224 : Black overscan
+ *
+ *
+ * Vertical Timings
+ * ----------------
+ *
+ * 0 Reset VCOUNT
+ * 8 Display start
+ * 248 Display end (start VSYNC)
+ * 274 Set VSYNC (PAL)
+ * 278 reset VSYNC (PAL)
+ *
+ * Notes by DEBRO at http://atariage.com/forums/topic/24852-max-ntsc-resolution-of-atari-8-bit-and-2600/
+ * PAL 312 (3-VSYNC/45-VBLANK/228-Kernel/36-overscan) and NTSC 262 (3-VSYNC/37-VBLANK/192-Kernel/30-overscan)
+ *
+ *
+ *
  */
 
 
