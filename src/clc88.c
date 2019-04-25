@@ -3,6 +3,7 @@
 #include "emu.h"
 #include "frontend/frontend.h"
 #include "cpu.h"
+#include "cpuexec.h"
 #include "memory.h"
 #include "machine.h"
 #include "video/screen.h"
@@ -21,8 +22,11 @@ int main(int argc, char *argv[]) {
 	v_cpu cpu;
 
 	cpu = cpu_init(CPU_M6502);
-	cpu.reset();
-	cpu.run(1000);
+	cpuexec_init(cpu);
+
+	for(int i=0; i<1000; i++) {
+		cpuexec_run(1);
+	}
 
 	// utils_dump_mem(0xA000, 0x0FF);
 

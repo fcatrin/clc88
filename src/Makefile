@@ -22,6 +22,7 @@ OBJS = $(addprefix $(OBJDIR)/, \
 	machine.o \
 	timer.o \
 	utils.o \
+	cpuexec.o \
 	sound/filter.o \
 	sound/mixer.o \
 	sound/streams.o \
