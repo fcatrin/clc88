@@ -86,6 +86,11 @@
 
 #define LOGTAG "CRONI"
 
+#define CPU_RUN(X) for(int nx=0; nx<X; nx++) CPU_GO(1)
+#define CPU_SCANLINE() CPU_RUN(144-8);CPU_RESUME();CPU_RUN(8)
+#define CPU_XPOS() if ((xpos++ & 3) == 0) CPU_GO(1)
+
+
 #define VRAM_MAX 128*1024
 
 UINT8 vram[VRAM_MAX];
@@ -97,7 +102,7 @@ static UINT8  page;
 
 static UINT16 dl;
 static UINT16 lms = 0;
-static UINT16 ypos;
+static UINT16 ypos, xpos;
 
 static UINT8 colors[4];
 static UINT16 palette;
@@ -180,40 +185,34 @@ static inline void set_pixel_color(UINT8 color) {
 }
 
 static void do_scan_blank() {
-	for(int i=0; i<22; i++) {
-		CPU_GO(1);
-	}
+	CPU_RUN(22);
 
 	int start = scanline * screen_pitch;
+	xpos = 0;
 	for(int i=0; i<screen_width; i++) {
 		set_pixel_color(colors[0]);
-		screen[start + i*3 + 0] = pixel_color_r;
-		screen[start + i*3 + 1] = pixel_color_g;
-		screen[start + i*3 + 2] = pixel_color_b;
+		screen[start + xpos*3 + 0] = pixel_color_r;
+		screen[start + xpos*3 + 1] = pixel_color_g;
+		screen[start + xpos*3 + 2] = pixel_color_b;
 
-		if ((i & 3) == 0) CPU_GO(1);
+		CPU_XPOS();
 	}
 	CPU_RESUME();
-	for(int i=0; i<8; i++) {
-		CPU_GO(1);
-	}
+	CPU_RUN(8);
 }
 
 static void do_scan_text(UINT8 line) {
 	LOGV(LOGTAG, "do_scan_text line %d", line);
-	for(int i=0; i<22; i++) {
-		CPU_GO(1);
-	}
+	CPU_RUN(22);
 
 	int start = scanline * screen_pitch;
-	int x = 0;
+	xpos = 0;
 	for(int i=0; i<SCREEN_XBORDER; i++) {
 		set_pixel_color(colors[0]);
-		screen[start + x*3 + 0] = pixel_color_r;
-		screen[start + x*3 + 1] = pixel_color_g;
-		screen[start + x*3 + 2] = pixel_color_b;
-		if ((x & 3) == 0) CPU_GO(1);
-		x++;
+		screen[start + xpos*3 + 0] = pixel_color_r;
+		screen[start + xpos*3 + 1] = pixel_color_g;
+		screen[start + xpos*3 + 2] = pixel_color_b;
+		CPU_XPOS();
 	}
 
 	UINT8 row;
@@ -227,27 +226,23 @@ static void do_scan_text(UINT8 line) {
 
 		set_pixel_color(colors[row & 0x80 ? 2 : 1]);
 
-		screen[start + x*3 + 0] = pixel_color_r;
-		screen[start + x*3 + 1] = pixel_color_g;
-		screen[start + x*3 + 2] = pixel_color_b;
+		screen[start + xpos*3 + 0] = pixel_color_r;
+		screen[start + xpos*3 + 1] = pixel_color_g;
+		screen[start + xpos*3 + 2] = pixel_color_b;
 
-		if ((x & 3) == 0) CPU_GO(1);
-		x++;
+		CPU_XPOS();
 		row *= 2;
 	}
 
 	for(int i=0; i<SCREEN_XBORDER; i++) {
 		set_pixel_color(colors[0]);
-		screen[start + x*3 + 0] = pixel_color_r;
-		screen[start + x*3 + 1] = pixel_color_g;
-		screen[start + x*3 + 2] = pixel_color_b;
-		if ((x & 3) == 0) CPU_GO(1);
-		x++;
+		screen[start + xpos*3 + 0] = pixel_color_r;
+		screen[start + xpos*3 + 1] = pixel_color_g;
+		screen[start + xpos*3 + 2] = pixel_color_b;
+		CPU_XPOS();
 	}
 	CPU_RESUME();
-	for(int i=0; i<8; i++) {
-		CPU_GO(1);
-	}
+	CPU_RUN(8);
 }
 
 static void do_screen() {
@@ -255,13 +250,7 @@ static void do_screen() {
 	 *
 	 */
 	for(ypos = 0; ypos <8; ypos++) {
-		for(int i=0; i<114-8; i++) {
-			CPU_GO(1);
-		}
-		CPU_RESUME();
-		for(int i=0; i<8; i++) {
-			CPU_GO(1);
-		}
+		CPU_SCANLINE();
 	}
 	scanline = 0;
 
@@ -299,13 +288,7 @@ static void do_screen() {
 		}
 	}
 	for(;ypos <262; ypos++) {
-		for(int i=0; i<114-8; i++) {
-			CPU_GO(1);
-		}
-		CPU_RESUME();
-		for(int i=0; i<8; i++) {
-			CPU_GO(1);
-		}
+		CPU_SCANLINE();
 	}
 }
 
