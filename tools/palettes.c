@@ -2,7 +2,8 @@
 #include <string.h>
 
 int main(int argc, char *argv[]) {
-	FILE *f = fopen("../res/palettes/atari800_ntsc.txt", "rt");
+	// FILE *f = fopen("../res/palettes/atari800_ntsc.txt", "rt");
+	FILE *f = fopen("../res/palettes/spectrum.txt", "rt");
 	if (!f) return 1;
 
 	char buffer[100];
@@ -26,7 +27,7 @@ int main(int argc, char *argv[]) {
 		int rgb565 = (nr) << 11 | (ng <<5) | nb;
 
 		printf("    .word $%04x\n", rgb565);
-		printf("    .word $%04x\n", rgb565);
+		// printf("    .word $%04x\n", rgb565);
 
 	} while (!feof(f));
 

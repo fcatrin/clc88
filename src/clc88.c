@@ -29,6 +29,7 @@ int main(int argc, char *argv[]) {
 		chroni_run_frame();
 		screen_update();
 		frontend_process_events();
+
 	}
 	frontend_done();
 

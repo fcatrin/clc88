@@ -20,14 +20,14 @@ boot:
 	lda #>(charset - VRAM)
 	sta VCHARSET+1
 	
-	lda #<(dli - VRAM)
+	lda #<(dl_attr - VRAM)
 	sta VDLI
-	lda #>(dli - VRAM)
+	lda #>(dl_attr - VRAM)
 	sta VDLI+1
 	
-	lda #<(palette - VRAM)
+	lda #<(spectrum_palette - VRAM)
 	sta VPALETTE
-	lda #>(palette - VRAM)
+	lda #>(spectrum_palette - VRAM)
 	sta VPALETTE+1
 	
 	lda #0
@@ -42,15 +42,10 @@ copy:
 	lda message, x
 	cmp #255
 	beq stop
-	sta screen, x
+	sta screen_attr, x
 	inx
 	bne copy
-	ldy #0
 stop:
-	lda VCOUNT
-	asl
-	sta WSYNC
-	sta VCOLOR0
 	jmp stop
 	
 message:
@@ -72,11 +67,31 @@ screen:
 	.byte 0
 	.endr
 
-	org $a400
+dl_attr:
+	.byte 112, 112, 112, 67
+	.word screen_attr - vram
+	.word attr - vram
+	.rept 23
+	.byte 3
+	.endr
+	.byte 112, 112, 112
+	.byte 65
+	.word dl_attr - vram
+screen_attr:
+	.rept 40*24
+	.byte 0
+	.endr
+attr:
+	.rept 40
+	.byte 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17
+	.endr
+
+	org $b000
 charset:
 	ins '../../res/charset.bin'
 
-palette:
    icl 'palette_atari_ntsc.asm'
+
+   icl 'palette_spectrum.asm'
 	
 	

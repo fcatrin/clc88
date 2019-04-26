@@ -84,7 +84,7 @@
  *
  */
 
-#define LOGTAG "CRONI"
+#define LOGTAG "CHRONI"
 
 #define CPU_RUN(X) for(int nx=0; nx<X; nx++) CPU_GO(1)
 #define CPU_SCANLINE() CPU_RUN(144-8);CPU_RESUME();CPU_RUN(8)
@@ -102,6 +102,7 @@ static UINT8  page;
 
 static UINT16 dl;
 static UINT16 lms = 0;
+static UINT16 attribs = 0;
 static UINT16 ypos, xpos;
 
 static UINT8 colors[4];
@@ -245,6 +246,56 @@ static void do_scan_text(UINT8 line) {
 	CPU_RUN(8);
 }
 
+static void do_scan_text_attribs(UINT8 line) {
+	LOGV(LOGTAG, "do_scan_text_attribs line %d", line);
+	CPU_RUN(22);
+
+	int start = scanline * screen_pitch;
+	xpos = 0;
+	for(int i=0; i<SCREEN_XBORDER; i++) {
+		set_pixel_color(colors[0]);
+		screen[start + xpos*3 + 0] = pixel_color_r;
+		screen[start + xpos*3 + 1] = pixel_color_g;
+		screen[start + xpos*3 + 2] = pixel_color_b;
+		CPU_XPOS();
+	}
+
+	UINT8 row;
+	UINT8 foreground, background;
+	int offset = 0;
+	for(int i=0; i<SCREEN_XRES; i++) {
+		if (i % 8 == 0) {
+			UINT8 attrib = vram[attribs + offset];
+			foreground = (attrib & 0xF0) >> 4;
+			background = attrib & 0x0F;
+
+			UINT8 c = vram[lms + offset];
+			row = vram[charset + c*8 + line];
+			offset++;
+		}
+
+		set_pixel_color(row & 0x80 ? foreground : background);
+
+		screen[start + xpos*3 + 0] = pixel_color_r;
+		screen[start + xpos*3 + 1] = pixel_color_g;
+		screen[start + xpos*3 + 2] = pixel_color_b;
+
+		CPU_XPOS();
+		row *= 2;
+	}
+
+	for(int i=0; i<SCREEN_XBORDER; i++) {
+		set_pixel_color(colors[0]);
+		screen[start + xpos*3 + 0] = pixel_color_r;
+		screen[start + xpos*3 + 1] = pixel_color_g;
+		screen[start + xpos*3 + 2] = pixel_color_b;
+		CPU_XPOS();
+	}
+	CPU_RESUME();
+	CPU_RUN(8);
+}
+
+
 static void do_screen() {
 	/* 0-7 scanlines are not displayed because of vblank
 	 *
@@ -283,6 +334,23 @@ static void do_screen() {
 			}
 
 			lms += 40;
+		} else if ((instruction & 7) == 3) {
+			if (instruction & 64) {
+				lms = vram[dl + dlpos++];
+				lms += 256*vram[dl + dlpos++];
+				attribs = vram[dl + dlpos++];
+				attribs += 256*vram[dl + dlpos++];
+			}
+			LOGV(LOGTAG, "do_scan_text_attrib lms: %04X attrib: %04X", lms, attribs);
+			for(int line=0; line<8; line++) {
+				do_scan_text_attribs(line);
+				scanline++;
+				ypos++;
+				if (scanline == screen_height) return;
+			}
+
+			lms += 40;
+			attribs += 40;
 		} else if (instruction == 0x41) {
 			break;
 		}
