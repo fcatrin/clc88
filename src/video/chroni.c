@@ -356,7 +356,9 @@ static void do_screen() {
 		}
 	}
 	for(;ypos <262; ypos++) {
-		CPU_SCANLINE();
+		do_scan_blank();
+		scanline++;
+		if (scanline == screen_height) return;
 	}
 }
 
