@@ -7,6 +7,7 @@ static SDL_Window *window;
 static SDL_Renderer *renderer;
 static int screen_width;
 static int screen_height;
+static int closed;
 
 int  frontend_start_audio_stream(int stereo) {
 	return 0;
@@ -46,6 +47,19 @@ void frontend_update_screen(void *pixels) {
 	SDL_DestroyTexture(texture);
 }
 
+void frontend_process_events() {
+	SDL_Event event;
+	while (SDL_PollEvent(&event)) {
+		switch (event.type) {
+		case SDL_WINDOWEVENT:
+			if (event.window.event == SDL_WINDOWEVENT_CLOSE) {
+				closed = 1;
+			}
+			break;
+		}
+	}
+}
+
 int  frontend_init_screen(int width, int height) {
 	window = SDL_CreateWindow("CLC88 Compy", 100, 100, width*2, height*2, SDL_WINDOW_SHOWN);
 	if (window == NULL){
@@ -70,6 +84,7 @@ int  frontend_init_screen(int width, int height) {
 
 
 int frontend_init(int argc, char *argv[]) {
+	closed = 0;
 	if (SDL_Init(SDL_INIT_VIDEO) != 0){
 		printf("SDL_Init Error: %s", SDL_GetError());
 		return 1;
@@ -82,5 +97,9 @@ void frontend_done() {
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
 	SDL_Quit();
+}
+
+int frontend_running() {
+	return !closed;
 }
 

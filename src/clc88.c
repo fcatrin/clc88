@@ -24,10 +24,12 @@ int main(int argc, char *argv[]) {
 	cpu = cpu_init(CPU_M6502);
 	cpuexec_init(cpu);
 
-	chroni_run();
-	screen_update();
-
-	frontend_sleep(5);
+	chroni_init();
+	while(frontend_running()) {
+		chroni_run_frame();
+		screen_update();
+		frontend_process_events();
+	}
 	frontend_done();
 
 	return 0;

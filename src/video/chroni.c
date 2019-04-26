@@ -305,7 +305,10 @@ static void init_rgb565_table() {
 	}
 }
 
-void chroni_run() {
+void chroni_init() {
 	init_rgb565_table();
+}
+
+void chroni_run_frame() {
 	do_screen();
 }

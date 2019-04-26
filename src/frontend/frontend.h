@@ -9,7 +9,9 @@ int  frontend_update_audio_stream(INT16 *buffer);
 int  frontend_init(int argc, char *argv[]);
 int  frontend_init_screen(int width, int height);
 void frontend_update_screen(void *pixels);
+void frontend_process_events();
 void frontend_done();
+int  frontend_running();
 
 void frontend_sleep(int seconds);
 
