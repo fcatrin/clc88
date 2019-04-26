@@ -124,8 +124,13 @@ set_video_mode_1:
 	lda #>TEXT_SCREEN_SIZE
 	sta COPY_SIZE+1
 	
-	lda #$F2
+	lda #$F3
 	jsr mem_set_bytes
+
+	lda #<(VRAM_PAL_ZX - VRAM)
+	sta VPALETTE
+	lda #>(VRAM_PAL_ZX - VRAM)
+	sta VPALETTE+1
 	
 clear_text_screen:
 	lda #<TEXT_SCREEN_SIZE
@@ -138,7 +143,7 @@ clear_text_screen:
 	lda TEXT_START+1
 	sta COPY_DST_ADDR+1
 	
-	lda #1
+	lda #0
 	jmp mem_set_bytes
 
 set_video_mode_text:
@@ -157,6 +162,10 @@ set_video_mode_text:
 	sta TEXT_START+1
 	lda #>(VRAM_SCREEN + TEXT_SCREEN_DLIST_SIZE - VRAM)
 	sta VRAM_SCREEN+5
+	
+	cpy #3
+	beq with_attributes
+
 	ldx #0
 	tya
 create_dl_mode_0:	
@@ -167,6 +176,27 @@ create_dl_mode_0:
 	lda #$41
 	sta VRAM_SCREEN+6, x
 	jmp set_video_mode_dl
+	
+with_attributes:
+	clc
+	lda VRAM_SCREEN+4
+	adc #<TEXT_SCREEN_SIZE
+	sta VRAM_SCREEN+6
+	lda VRAM_SCREEN+5
+	adc #>TEXT_SCREEN_SIZE
+	sta VRAM_SCREEN+7
+
+	ldx #0
+	tya
+create_dl_mode_1:	
+	sta VRAM_SCREEN+8, x
+	inx
+	cpx #23
+	bne create_dl_mode_1
+	lda #$41
+	sta VRAM_SCREEN+8, x
+	jmp set_video_mode_dl
+	
 	
 set_video_mode_dl:
 	lda #<(VRAM_SCREEN - VRAM)

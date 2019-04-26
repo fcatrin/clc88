@@ -19,6 +19,7 @@ int main(int argc, char *argv[]) {
 
 	utils_load_xex("../asm/os/6502os.xex");
 	utils_load_xex("../asm/os/test_atari.xex");
+	//utils_load_xex("../asm/os/test_spectrum.xex");
 
 	v_cpu cpu;
 
@@ -27,11 +28,14 @@ int main(int argc, char *argv[]) {
 
 	chroni_init();
 	int i=0;
-	while(frontend_running() && i<2) {
+	while(frontend_running() && i<3) {
 		chroni_run_frame();
 		screen_update();
 		frontend_process_events();
+
 	}
+	utils_dump_mem(0, 256);
+	utils_dump_mem(0xa000, 0x2000);
 	frontend_done();
 
 	return 0;
