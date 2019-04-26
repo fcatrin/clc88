@@ -180,7 +180,9 @@ static inline void set_pixel_color(UINT8 color) {
 }
 
 static void do_scan_blank() {
-	CPU_GO(22);
+	for(int i=0; i<22; i++) {
+		CPU_GO(1);
+	}
 
 	int start = scanline * screen_pitch;
 	for(int i=0; i<screen_width; i++) {
@@ -192,12 +194,16 @@ static void do_scan_blank() {
 		if ((i & 3) == 0) CPU_GO(1);
 	}
 	CPU_RESUME();
-	CPU_GO(8);
+	for(int i=0; i<8; i++) {
+		CPU_GO(1);
+	}
 }
 
 static void do_scan_text(UINT8 line) {
 	LOGV(LOGTAG, "do_scan_text line %d", line);
-	CPU_GO(22);
+	for(int i=0; i<22; i++) {
+		CPU_GO(1);
+	}
 
 	int start = scanline * screen_pitch;
 	int x = 0;
@@ -239,7 +245,9 @@ static void do_scan_text(UINT8 line) {
 		x++;
 	}
 	CPU_RESUME();
-	CPU_GO(8);
+	for(int i=0; i<8; i++) {
+		CPU_GO(1);
+	}
 }
 
 static void do_screen() {
@@ -247,9 +255,13 @@ static void do_screen() {
 	 *
 	 */
 	for(ypos = 0; ypos <8; ypos++) {
-		CPU_GO(114 - 8);
+		for(int i=0; i<114-8; i++) {
+			CPU_GO(1);
+		}
 		CPU_RESUME();
-		CPU_GO(8);
+		for(int i=0; i<8; i++) {
+			CPU_GO(1);
+		}
 	}
 	scanline = 0;
 
@@ -287,9 +299,13 @@ static void do_screen() {
 		}
 	}
 	for(;ypos <262; ypos++) {
-		CPU_GO(114 - 8);
+		for(int i=0; i<114-8; i++) {
+			CPU_GO(1);
+		}
 		CPU_RESUME();
-		CPU_GO(8);
+		for(int i=0; i<8; i++) {
+			CPU_GO(1);
+		}
 	}
 }
 
