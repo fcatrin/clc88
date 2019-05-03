@@ -13,9 +13,11 @@ TEXT_SCREEN_SIZE = 40*24
 TEXT_SCREEN_DLIST_SIZE = 32
 
 
-	org $FFFC
+	org $FFFA
 
+   .word nmi
 	.word boot
+	.word irq
 
 	org OS_CALL
 	
@@ -31,6 +33,15 @@ TEXT_SCREEN_DLIST_SIZE = 32
 	jmp (OS_VECTOR)
 	
 boot:
+; init interrupt vectors
+   ldx #0
+copy_vector:
+   lda interrupt_vectors, x
+   sta NMI_VECTOR, x
+   inx
+   cpx #8
+   bne copy_vector
+
 	lda #<copy_params_vectors
 	sta COPY_PARAMS
 	lda #>copy_params_vectors
@@ -72,6 +83,47 @@ boot:
 	
 	jmp BOOTADDR
 
+interrupt_vectors:
+   .word nmi_os
+   .word irq_os
+   .word vblank_os
+   .word hblank_os
+
+nmi_os:
+   cld
+   pha
+   lda VSTATUS
+   and #VBLANK_STATUS
+   beq nmi_check_hblank
+   pla
+   jmp (VBLANK_VECTOR)
+nmi_check_hblank:
+   lda VSTATUS
+   and #HBLANK_STATUS
+   beq nmi_done
+   pla
+   jmp (HBLANK_VECTOR)
+nmi_done:
+   pla
+   rti
+
+irq_os:
+   rti
+
+hblank_os:
+   rti
+
+vblank_os:
+   pha
+   lda FRAMECOUNT
+   adc #1
+   sta FRAMECOUNT
+   lda FRAMECOUNT+1
+   adc #0
+   sta FRAMECOUNT+1
+   pla
+   rti   
+    
 set_video_mode:
 	cmp #$00
 	beq set_video_mode_0
@@ -270,6 +322,11 @@ mem_set_bytes_end:
 	rts
 
 
+nmi:
+   jmp (NMI_VECTOR)
+irq:
+   jmp (IRQ_VECTOR)
+   
 charset:
 	ins '../../res/charset.bin'
 	icl 'palette_atari_ntsc.asm'

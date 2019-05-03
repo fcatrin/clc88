@@ -32,10 +32,8 @@ int main(int argc, char *argv[]) {
 		chroni_run_frame();
 		screen_update();
 		frontend_process_events();
-
+		utils_dump_mem(0, 32);
 	}
-	utils_dump_mem(0, 256);
-	utils_dump_mem(0xa000, 0x2000);
 	frontend_done();
 
 	return 0;

@@ -8,6 +8,8 @@ enum CpuType {CPU_M6502, CPU_Z80};
 typedef struct {
 	void (*reset)();
 	int  (*run)(int cycles);
+	void (*irq)(int do_interrupt);
+	void (*nmi)(int do_interrupt);
 } v_cpu;
 
 v_cpu cpu_init(enum CpuType cpuType);

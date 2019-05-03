@@ -8,5 +8,7 @@
 void cpuexec_init(v_cpu vcpu);
 void cpuexec_run(int cycles);
 void cpuexec_halt(int halted);
+void cpuexec_irq(int do_interrupt);
+void cpuexec_nmi(int do_interrupt);
 
 #endif

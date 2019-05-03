@@ -116,6 +116,11 @@ static UINT8 pixel_color_r;
 static UINT8 pixel_color_g;
 static UINT8 pixel_color_b;
 
+#define STATUS_VBLANK 1
+#define STATUS_HBLANK 2
+
+static UINT8 status;
+
 void chroni_vram_write(UINT16 index, UINT8 value) {
 	LOGV(LOGTAG, "vram write %04X = %02X", index, value);
 	vram[page * PAGE_OFFSET + index] = value;
@@ -160,7 +165,6 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 	case 8:
 		CPU_HALT();
 		break;
-
 	case 16:
 	case 17:
 	case 18:
@@ -173,6 +177,7 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 UINT8 chroni_register_read(UINT8 index) {
 	switch(index) {
 	case 7: return ypos >> 1;
+	case 9: return status;
 	}
 	return 0;
 }
@@ -303,6 +308,10 @@ static void do_screen() {
 	for(ypos = 0; ypos <8; ypos++) {
 		CPU_SCANLINE();
 	}
+	cpuexec_nmi(0);
+	status &= !STATUS_VBLANK;
+	LOGV(LOGTAG, "9009 set status %02X", status);
+
 	scanline = 0;
 
 	UINT8 instruction;
@@ -318,7 +327,7 @@ static void do_screen() {
 				do_scan_blank();
 				scanline++;
 				ypos++;
-				if (scanline == screen_height) return;
+				if (ypos == screen_height) return;
 			}
 		} else if ((instruction & 7) == 2) {
 			if (instruction & 64) {
@@ -330,7 +339,7 @@ static void do_screen() {
 				do_scan_text(line);
 				scanline++;
 				ypos++;
-				if (scanline == screen_height) return;
+				if (ypos == screen_height) return;
 			}
 
 			lms += 40;
@@ -346,7 +355,7 @@ static void do_screen() {
 				do_scan_text_attribs(line);
 				scanline++;
 				ypos++;
-				if (scanline == screen_height) return;
+				if (ypos == screen_height) return;
 			}
 
 			lms += 40;
@@ -358,7 +367,8 @@ static void do_screen() {
 	for(;ypos <262; ypos++) {
 		do_scan_blank();
 		scanline++;
-		if (scanline == screen_height) return;
+		ypos++;
+		if (ypos == screen_height) return;
 	}
 }
 
@@ -380,4 +390,7 @@ void chroni_init() {
 
 void chroni_run_frame() {
 	do_screen();
+	status |= STATUS_VBLANK;
+	LOGV(LOGTAG, "9009 set status %02X", status);
+	cpuexec_nmi(1);
 }

@@ -22,13 +22,16 @@
 #define LOGTAG "BUS"
 
 UINT8 bus_read16(UINT16 addr) {
-	LOGV(LOGTAG, "bus read %04X", addr);
+	UINT8 retvalue = 0;
 	if (addr >= CHRONI_START && addr <= CHRONI_END) {
-		return chroni_register_read(addr - CHRONI_START);
+		retvalue = chroni_register_read(addr - CHRONI_START);
 	} else if (addr >= CHRONI_MEM_START && addr <= CHRONI_MEM_END) {
-		return chroni_vram_read(addr - CHRONI_MEM_START);
+		retvalue = chroni_vram_read(addr - CHRONI_MEM_START);
+	} else {
+		retvalue = mem_readmem16(addr);
 	}
-	return mem_readmem16(addr);
+	LOGV(LOGTAG, "bus read %04X = %02X", addr, retvalue);
+	return retvalue;
 }
 void  bus_write16(UINT16 addr, UINT8 value) {
 	LOGV(LOGTAG, "bus write %04X = %02X", addr, value);

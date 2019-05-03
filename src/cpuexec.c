@@ -41,3 +41,10 @@ void cpuexec_halt(int halted) {
 	halt = halted;
 }
 
+void cpuexec_irq(int do_interrupt) {
+	cpu.irq(do_interrupt);
+}
+
+void cpuexec_nmi(int do_interrupt) {
+	cpu.nmi(do_interrupt);
+}

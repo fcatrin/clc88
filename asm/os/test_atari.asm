@@ -10,15 +10,18 @@
 copy:
 	lda message, y
 	cmp #255
-	beq stop
+	beq rainbow
 	sta (TEXT_START), y
 	iny
 	bne copy
-stop:
+	ldx #0
+rainbow:
+   clc
 	lda VCOUNT
+	adc FRAMECOUNT
 	sta WSYNC
 	sta VCOLOR0
-	jmp stop
+	jmp rainbow
 	
 message:
 	.byte 40, 101, 108, 108, 111, 0, 55, 111, 114, 108, 100, 1, 1, 1, 1, 255
