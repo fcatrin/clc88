@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
 	machine_init();
 
 	utils_load_xex("../asm/os/6502os.xex");
-	utils_load_xex("../asm/os/test_atari.xex");
+	utils_load_xex("../asm/test/test_atari.xex");
 	//utils_load_xex("../asm/os/test_spectrum.xex");
 
 	v_cpu cpu;

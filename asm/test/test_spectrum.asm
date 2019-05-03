@@ -1,4 +1,4 @@
-	icl 'symbols.asm'
+	icl '../os/symbols.asm'
 	
 	org BOOTADDR
 	

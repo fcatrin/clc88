@@ -310,7 +310,7 @@ static void do_screen() {
 	}
 	cpuexec_nmi(0);
 	status &= !STATUS_VBLANK;
-	LOGV(LOGTAG, "9009 set status %02X", status);
+	LOGV(LOGTAG, "set status %02X", status);
 
 	scanline = 0;
 
@@ -391,6 +391,6 @@ void chroni_init() {
 void chroni_run_frame() {
 	do_screen();
 	status |= STATUS_VBLANK;
-	LOGV(LOGTAG, "9009 set status %02X", status);
+	LOGV(LOGTAG, "set status %02X", status);
 	cpuexec_nmi(1);
 }

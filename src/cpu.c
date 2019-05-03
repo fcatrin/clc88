@@ -96,7 +96,7 @@ int   cpu_getactivecpu() {
 
 void  change_pc16(UINT16 addr) {
 	cpu_pc = addr;
-	LOGV(LOGTAG, "9009 PC %04X", addr);
+	LOGV(LOGTAG, "PC %04X", addr);
 }
 
 UINT16 activecpu_get_pc() {
