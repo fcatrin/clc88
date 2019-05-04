@@ -18,10 +18,6 @@ void screen_init() {
 	screen_pitch = screen_width * 3;
 
 	screen = malloc(screen_pitch * screen_height);
-
-	screen[screen_pitch * 20 + 80*3 + 0] = 0xFF;
-	screen[screen_pitch * 20 + 80*3 + 1] = 0xFF;
-	screen[screen_pitch * 20 + 80*3 + 2] = 0xFF;
 }
 
 void screen_update() {

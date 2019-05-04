@@ -335,7 +335,7 @@ static void do_screen() {
 
 	UINT8 instruction;
 	int dlpos = 0;
-	while(scanline < screen_height) {
+	while(ypos < screen_height) {
 		instruction = vram[dl + dlpos];
 		int scan_post_dli = instruction & 0x80;
 		LOGV(LOGTAG, "DL instruction %04X = %02X", dl + dlpos, instruction);
@@ -389,11 +389,9 @@ static void do_screen() {
 			break;
 		}
 	}
-	for(;ypos <262; ypos++) {
+	for(;scanline <screen_height; scanline++) {
 		do_scan_blank();
-		scanline++;
 		ypos++;
-		if (ypos == screen_height) return;
 	}
 }
 
