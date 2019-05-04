@@ -24,7 +24,15 @@
  * 00 : WORD Display List pointer
  * 02 : WORD Charset pointer
  * 04 : WORD Palette pointer
- * 05 : BYTE 16KB page mapped on system memory. 1KB granularity
+ * 06 : BYTE 16KB page mapped on system memory. 1KB granularity
+ * 07 : BYTE VCount (vertical line count / 2)
+ * 08 : BYTE WSYNC. Any write will halt the CPU until next HBLANK
+ * 09 : BYTE Status:
+ *      ?????XXX
+ *             |--- VBLANK active (read only)
+ *            |---- HBLANK active (read only)
+ *           |----- Interrupts enabled
+ *
  * 10 : BYTE Border color
  * 11 : BYTE Simple Text mode background
  * 12 : BYTE Simple Text mode foreround
@@ -79,6 +87,41 @@
  *
  * Notes by DEBRO at http://atariage.com/forums/topic/24852-max-ntsc-resolution-of-atari-8-bit-and-2600/
  * PAL 312 (3-VSYNC/45-VBLANK/228-Kernel/36-overscan) and NTSC 262 (3-VSYNC/37-VBLANK/192-Kernel/30-overscan)
+ *
+ *
+ * Sprites
+ * -------
+ * - 32 sprites
+ * - 16x16 pixels
+ * - 15 colors from the global 256 color palette
+ * - 0 is transparent
+ * - X range: from 0 to 384.
+ *   24 is start of left border, 32 is start of display screen
+ *   352 is start of right border
+ *   340 is out of the visible screen
+ * - Y range: from 0 to 262
+ *   16 is the first scan linea
+ *   246 is out of the visible screen
+ *
+ * Sprite memory
+ * - 2048 bytes linear bitmap of 64 bytes per sprite: 8 bytes per scanline, 16 scanlines
+ * - 64 bytes x position. 2 bytes per sprite
+ * - 64 bytes y position. 2 bytes per sprite
+ * - 64 attribute bytes. 2 byte per sprite:
+ *   xxxxxxxxXXXXXXXX
+ *                  |--- visible
+ *             |||||---- color palette index
+ *   ||||||||||--------- reserved for future use (scaling? rotating?)
+ * - 32*16 bytes: 32 palettes of 16 indexed colrs
+ *   Each index point to the global palette entries
+ *
+ * Sprite memory map
+ * 0000 Sprite bitmaps
+ * 0800 X position
+ * 0840 Y position
+ * 0880 attributes
+ * 08C0 color palette
+ * 0CC0 end of sprite memory
  *
  *
  *
