@@ -28,12 +28,13 @@ int main(int argc, char *argv[]) {
 
 	chroni_init();
 	int i=0;
-	while(frontend_running() && i<3) {
+	while(frontend_running() && i<4) {
 		chroni_run_frame();
 		screen_update();
 		frontend_process_events();
-		utils_dump_mem(0, 32);
+		// i++;
 	}
+	utils_dump_mem(0, 256);
 	frontend_done();
 
 	return 0;

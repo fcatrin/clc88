@@ -81,6 +81,10 @@ copy_vector:
 	lda #$9A
 	sta VCOLOR2
 	
+	lda VSTATUS
+	ora #VINTEN_STATUS
+	sta VSTATUS
+	
 	jmp BOOTADDR
 
 interrupt_vectors:
@@ -93,14 +97,13 @@ nmi_os:
    cld
    pha
    lda VSTATUS
-   and #VBLANK_STATUS
-   beq nmi_check_hblank
+   ror
+   bcc nmi_check_hblank
    pla
    jmp (VBLANK_VECTOR)
 nmi_check_hblank:
-   lda VSTATUS
-   and #HBLANK_STATUS
-   beq nmi_done
+   ror
+   bcc nmi_done
    pla
    jmp (HBLANK_VECTOR)
 nmi_done:
@@ -253,8 +256,10 @@ create_dl_mode_1:
 set_video_mode_dl:
 	lda #<(VRAM_SCREEN - VRAM)
 	sta VDLIST
+	sta DLIST
 	lda #>(VRAM_SCREEN - VRAM)
 	sta VDLIST+1
+	STA DLIST+1
 	rts
 
 os_vector_table

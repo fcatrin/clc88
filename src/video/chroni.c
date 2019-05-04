@@ -118,8 +118,10 @@ static UINT8 pixel_color_b;
 
 #define STATUS_VBLANK 1
 #define STATUS_HBLANK 2
+#define STATUS_INTEN  4
 
 static UINT8 status;
+static UINT8 post_dli = 0;
 
 void chroni_vram_write(UINT16 index, UINT8 value) {
 	LOGV(LOGTAG, "vram write %04X = %02X", index, value);
@@ -165,6 +167,9 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 	case 8:
 		CPU_HALT();
 		break;
+	case 9:
+		status = (status & 0x3) | (value & 0xFC);
+		break;
 	case 16:
 	case 17:
 	case 18:
@@ -190,8 +195,26 @@ static inline void set_pixel_color(UINT8 color) {
 	pixel_color_b = rgb565[pixel_color_rgb565*3 + 2];
 }
 
-static void do_scan_blank() {
+static void do_scan_start() {
+	status |= STATUS_HBLANK;
+	if (post_dli && (status & STATUS_INTEN)) {
+		LOGV(LOGTAG, "do_scan_start fire DLI");
+		cpuexec_nmi(1);
+	}
+	post_dli = 0;
+
 	CPU_RUN(22);
+	status &= (255 - STATUS_HBLANK);
+	cpuexec_nmi(0);
+}
+
+static void do_scan_end() {
+	CPU_RESUME();
+	CPU_RUN(8);
+}
+
+static void do_scan_blank() {
+	do_scan_start();
 
 	int start = scanline * screen_pitch;
 	xpos = 0;
@@ -203,13 +226,12 @@ static void do_scan_blank() {
 
 		CPU_XPOS();
 	}
-	CPU_RESUME();
-	CPU_RUN(8);
+	do_scan_end();
 }
 
 static void do_scan_text(UINT8 line) {
 	LOGV(LOGTAG, "do_scan_text line %d", line);
-	CPU_RUN(22);
+	do_scan_start();
 
 	int start = scanline * screen_pitch;
 	xpos = 0;
@@ -247,13 +269,12 @@ static void do_scan_text(UINT8 line) {
 		screen[start + xpos*3 + 2] = pixel_color_b;
 		CPU_XPOS();
 	}
-	CPU_RESUME();
-	CPU_RUN(8);
+	do_scan_end();
 }
 
 static void do_scan_text_attribs(UINT8 line) {
 	LOGV(LOGTAG, "do_scan_text_attribs line %d", line);
-	CPU_RUN(22);
+	do_scan_start();
 
 	int start = scanline * screen_pitch;
 	xpos = 0;
@@ -296,10 +317,8 @@ static void do_scan_text_attribs(UINT8 line) {
 		screen[start + xpos*3 + 2] = pixel_color_b;
 		CPU_XPOS();
 	}
-	CPU_RESUME();
-	CPU_RUN(8);
+	do_scan_end();
 }
-
 
 static void do_screen() {
 	/* 0-7 scanlines are not displayed because of vblank
@@ -309,7 +328,7 @@ static void do_screen() {
 		CPU_SCANLINE();
 	}
 	cpuexec_nmi(0);
-	status &= !STATUS_VBLANK;
+	status &= (255 - STATUS_VBLANK);
 	LOGV(LOGTAG, "set status %02X", status);
 
 	scanline = 0;
@@ -318,12 +337,14 @@ static void do_screen() {
 	int dlpos = 0;
 	while(scanline < screen_height) {
 		instruction = vram[dl + dlpos];
+		int scan_post_dli = instruction & 0x80;
 		LOGV(LOGTAG, "DL instruction %04X = %02X", dl + dlpos, instruction);
 		dlpos++;
 		if ((instruction & 7) == 0) { // blank lines
 			UINT8 lines = 1 + ((instruction & 0x70) >> 4);
 			LOGV(LOGTAG, "do_scan_blank lines %d", lines);
 			for(int line=0; line<lines; line++) {
+				if (line == lines - 1) post_dli = scan_post_dli;
 				do_scan_blank();
 				scanline++;
 				ypos++;
@@ -335,7 +356,9 @@ static void do_screen() {
 				lms += 256*vram[dl + dlpos++];
 			}
 			LOGV(LOGTAG, "do_scan_text lms: %04X", lms);
-			for(int line=0; line<8; line++) {
+			int lines = 8;
+			for(int line=0; line<lines; line++) {
+				if (line == lines - 1) post_dli = scan_post_dli;
 				do_scan_text(line);
 				scanline++;
 				ypos++;
@@ -351,7 +374,9 @@ static void do_screen() {
 				attribs += 256*vram[dl + dlpos++];
 			}
 			LOGV(LOGTAG, "do_scan_text_attrib lms: %04X attrib: %04X", lms, attribs);
+			int lines = 8;
 			for(int line=0; line<8; line++) {
+				if (line == lines - 1) post_dli = scan_post_dli;
 				do_scan_text_attribs(line);
 				scanline++;
 				ypos++;
@@ -391,6 +416,5 @@ void chroni_init() {
 void chroni_run_frame() {
 	do_screen();
 	status |= STATUS_VBLANK;
-	LOGV(LOGTAG, "set status %02X", status);
-	cpuexec_nmi(1);
+	if (status & STATUS_INTEN) cpuexec_nmi(1);
 }
