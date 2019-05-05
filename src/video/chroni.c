@@ -104,7 +104,7 @@
  *   246 is out of the visible screen
  *
  * Sprite memory
- * - 4006 bytes linear bitmap of 128 bytes per sprite: 8 bytes per scanline, 16 scanlines
+ * - 64 bytes sprite pointer. 2 bytes per sprite. Location is pointer*2
  * - 64 bytes x position. 2 bytes per sprite
  * - 64 bytes y position. 2 bytes per sprite
  * - 64 attribute bytes. 2 byte per sprite:
@@ -116,12 +116,12 @@
  *   Each index point to the global palette entries
  *
  * Sprite memory map
- * 0000 Sprite bitmaps
- * 1000 X position
- * 1040 Y position
- * 1080 attributes
- * 10C0 color palette
- * 14C0 end of sprite memory
+ * 0000 Sprite pointers
+ * 0040 X position
+ * 0080 Y position
+ * 00C0 attributes
+ * 0100 color palette
+ * 01FF end of sprite memory
  *
  *
  *
@@ -264,13 +264,12 @@ static void do_scan_end() {
 }
 
 #define SPRITE_ATTR_ENABLED 0x10
-#define SPRITE_DATA_SIZE (8*16)
 
 #define SPRITES_MAX   32
-#define SPRITES_X     (SPRITES_MAX * SPRITE_DATA_SIZE)
-#define SPRITES_Y     (SPRITES_X    + SPRITES_MAX * 2)
-#define SPRITES_ATTR  (SPRITES_Y    + SPRITES_MAX * 2)
-#define SPRITES_COLOR (SPRITES_ATTR + SPRITES_MAX * 2)
+#define SPRITES_X     (SPRITES_MAX * 2)
+#define SPRITES_Y     (SPRITES_MAX * 2 + SPRITES_X)
+#define SPRITES_ATTR  (SPRITES_MAX * 2 + SPRITES_Y)
+#define SPRITES_COLOR (SPRITES_MAX * 2 + SPRITES_ATTR)
 
 
 static void do_scan_blank() {
@@ -298,7 +297,11 @@ static void do_scan_blank() {
 			int sprite_pixel_x = xpos - sprite_x;
 			if (sprite_pixel_x < 0 || sprite_pixel_x >=16) continue;
 
-			sprite_data = vram[sprites + s*SPRITE_DATA_SIZE
+			int sprite_pointer =
+					(vram[sprites + s*2] +
+					(vram[sprites + s*2+1] << 8)) << 1;
+
+			sprite_data = vram[sprite_pointer
 					+ (sprite_scanline << 3)
 					+ (sprite_pixel_x  >> 1)];
 			sprite_data = (sprite_pixel_x & 1) == 0 ?

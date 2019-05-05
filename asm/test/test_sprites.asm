@@ -6,9 +6,9 @@
 	ldx #OS_SET_VIDEO_MODE
 	jsr OS_CALL
 	
-	lda #<(sprites - VRAM)
+	lda #<(sprites_base - VRAM)
 	sta VSPRITES
-	lda #>(sprites - VRAM)
+	lda #>(sprites_base - VRAM)
 	sta VSPRITES+1
 	
 	lda #$0F
@@ -26,8 +26,7 @@ end:
    jmp end
 
    org $C000
-sprites:
-   
+sprite_0:
    .byte $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF
    .byte $F0, $00, $00, $00, $00, $00, $00, $0F
    .byte $0F, $00, $11, $22, $22, $11, $00, $F0
@@ -45,6 +44,7 @@ sprites:
    .byte $F0, $00, $00, $00, $00, $00, $00, $0F
    .byte $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF
 
+sprite_1:
    .byte $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF
    .byte $FF, $AA, $AA, $BB, $BB, $AA, $AA, $FF
    .byte $FF, $AA, $AA, $BB, $BB, $AA, $AA, $FF
@@ -61,21 +61,26 @@ sprites:
    .byte $FF, $AA, $AA, $BB, $BB, $AA, $AA, $FF
    .byte $FF, $AA, $AA, $BB, $BB, $AA, $AA, $FF
    .byte $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF
+
+   org $C100
+ sprites_base:
+   .word [sprite_0 - VRAM] / 2
+   .word [sprite_1 - VRAM] / 2
    
-   org $D000
+   org $C140
  sprites_x:
    .word $0019, $001E
    
-   org $D040
+   org $C180
  sprites_y:
    .word $0014, $0011
    
-   org $D080
+   org $C1C0
 sprites_attr:   
    .word $0011, $0010
    
 sprites_colors:   
-   org $D0C0
+   org $C200
    .byte $00, $06, $08, $0C, $16, $18, $1A, $1B, $26, $28, $2A, $2C, $2F, $34, $36, $38
    .byte $00, $66, $68, $6C, $76, $78, $7A, $7B, $86, $88, $8A, $8C, $8F, $94, $96, $98
    
