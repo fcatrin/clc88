@@ -32,7 +32,7 @@
  *             |--- VBLANK active (read only)
  *            |---- HBLANK active (read only)
  *           |----- Interrupts enabled
- *
+ * 0A : WORD Sprites base address
  * 10 : BYTE Border color
  * 11 : BYTE Simple Text mode background
  * 12 : BYTE Simple Text mode foreround
@@ -100,28 +100,28 @@
  *   352 is start of right border
  *   340 is out of the visible screen
  * - Y range: from 0 to 262
- *   16 is the first scan linea
+ *   16 is the first scan line
  *   246 is out of the visible screen
  *
  * Sprite memory
- * - 2048 bytes linear bitmap of 64 bytes per sprite: 8 bytes per scanline, 16 scanlines
+ * - 4006 bytes linear bitmap of 128 bytes per sprite: 8 bytes per scanline, 16 scanlines
  * - 64 bytes x position. 2 bytes per sprite
  * - 64 bytes y position. 2 bytes per sprite
  * - 64 attribute bytes. 2 byte per sprite:
  *   xxxxxxxxXXXXXXXX
- *                  |--- visible
- *             |||||---- color palette index
- *   ||||||||||--------- reserved for future use (scaling? rotating?)
- * - 32*16 bytes: 32 palettes of 16 indexed colrs
+ *               ||||---- color palette index
+ *              |--- visible
+ *   |||||||||||-------- reserved for future use (scaling? rotating?)
+ * - 32*16 bytes: 32 palettes of 16 indexed colors
  *   Each index point to the global palette entries
  *
  * Sprite memory map
  * 0000 Sprite bitmaps
- * 0800 X position
- * 0840 Y position
- * 0880 attributes
- * 08C0 color palette
- * 0CC0 end of sprite memory
+ * 1000 X position
+ * 1040 Y position
+ * 1080 attributes
+ * 10C0 color palette
+ * 14C0 end of sprite memory
  *
  *
  *
@@ -152,6 +152,7 @@ static UINT8 colors[4];
 static UINT16 palette;
 
 static UINT16 charset;
+static UINT16 sprites;
 
 // this is an RGB565 -> RGB888 conversion array for emulation only
 static UINT8 rgb565[0x10000 * 3];
@@ -213,6 +214,12 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 	case 9:
 		status = (status & 0x3) | (value & 0xFC);
 		break;
+	case 0xa:
+		reg_low(&sprites, value);
+		break;
+	case 0xb:
+		reg_high(&sprites, value);
+		break;
 	case 16:
 	case 17:
 	case 18:
@@ -256,13 +263,57 @@ static void do_scan_end() {
 	CPU_RUN(8);
 }
 
+#define SPRITE_ATTR_ENABLED 0x10
+#define SPRITE_DATA_SIZE (8*16)
+
+#define SPRITES_MAX   32
+#define SPRITES_X     (SPRITES_MAX * SPRITE_DATA_SIZE)
+#define SPRITES_Y     (SPRITES_X    + SPRITES_MAX * 2)
+#define SPRITES_ATTR  (SPRITES_Y    + SPRITES_MAX * 2)
+#define SPRITES_COLOR (SPRITES_ATTR + SPRITES_MAX * 2)
+
+
 static void do_scan_blank() {
 	do_scan_start();
 
 	int start = scanline * screen_pitch;
 	xpos = 0;
 	for(int i=0; i<screen_width; i++) {
-		set_pixel_color(colors[0]);
+		UINT8 dot_color   = 0;
+		UINT8 sprite_data = 0;
+		for(int s=SPRITES_MAX-1; s>=0; s--) {
+			UINT16 sprite_attrib = vram[sprites + SPRITES_ATTR + s*2];
+			if ((sprite_attrib & SPRITE_ATTR_ENABLED) == 0) continue;
+
+			int sprite_y =
+				   vram[sprites + SPRITES_Y + s*2]
+				+ (vram[sprites + SPRITES_Y + s*2+1] << 8) - 16;
+
+			int sprite_scanline = scanline - sprite_y;
+			if (sprite_scanline< 0 || sprite_scanline >=16) continue;
+
+			int sprite_x =
+				   vram[sprites + SPRITES_X + s*2]
+				+ (vram[sprites + SPRITES_X + s*2+1] << 8) - 24;
+			int sprite_pixel_x = xpos - sprite_x;
+			if (sprite_pixel_x < 0 || sprite_pixel_x >=16) continue;
+
+			sprite_data = vram[sprites + s*SPRITE_DATA_SIZE
+					+ (sprite_scanline << 3)
+					+ (sprite_pixel_x  >> 1)];
+			sprite_data = (sprite_pixel_x & 1) == 0 ?
+					sprite_data >> 4 :
+					sprite_data & 0xF;
+			if (sprite_data == 0) continue;
+
+			int sprite_palette = sprite_attrib & 0x0F;
+
+			dot_color = vram[sprites + SPRITES_COLOR + sprite_palette*16 + sprite_data];
+			break;
+		}
+
+		if (sprite_data == 0) dot_color = colors[0];
+		set_pixel_color(dot_color);
 		screen[start + xpos*3 + 0] = pixel_color_r;
 		screen[start + xpos*3 + 1] = pixel_color_g;
 		screen[start + xpos*3 + 2] = pixel_color_b;

@@ -2,7 +2,7 @@ FRONTEND = linux
 
 CC = gcc
 
-DEFS = -DHAVE_CONFIG_H -DINLINE=inline -DTRACEX
+DEFS = -DHAVE_CONFIG_H -DINLINE=inline -DTRACE
 LIBS = -lm -lz 
 
 TARGET_BASE_NAME = clc88
