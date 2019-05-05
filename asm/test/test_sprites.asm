@@ -15,9 +15,15 @@
 	sta VCOLOR0
 	
 end:
-   jmp end	
-	
-
+   lda FRAMECOUNT
+   clc
+   ror
+   sta sprites_x
+   clc
+   ror
+   adc #50
+   sta sprites_x+2
+   jmp end
 
    org $C000
 sprites:
@@ -57,14 +63,18 @@ sprites:
    .byte $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF
    
    org $D000
+ sprites_x:
    .word $0019, $001E
    
    org $D040
-   .word $0011, $0011
+ sprites_y:
+   .word $0014, $0011
    
    org $D080
+sprites_attr:   
    .word $0011, $0010
    
+sprites_colors:   
    org $D0C0
    .byte $00, $06, $08, $0C, $16, $18, $1A, $1B, $26, $28, $2A, $2C, $2F, $34, $36, $38
    .byte $00, $66, $68, $6C, $76, $78, $7A, $7B, $86, $88, $8A, $8C, $8F, $94, $96, $98
