@@ -133,6 +133,10 @@
 #define CPU_SCANLINE() CPU_RUN(144-8);CPU_RESUME();CPU_RUN(8)
 #define CPU_XPOS() if ((xpos++ & 3) == 0) CPU_GO(1)
 
+#define VRAM_WORD(addr) (WORD(vram[addr], vram[addr+1]))
+#define VRAM_PTR(addr) (VRAM_WORD(addr) << 1)
+
+
 
 #define VRAM_MAX 128*1024
 
@@ -284,22 +288,17 @@ static void do_scan_blank() {
 			UINT16 sprite_attrib = vram[sprites + SPRITES_ATTR + s*2];
 			if ((sprite_attrib & SPRITE_ATTR_ENABLED) == 0) continue;
 
-			int sprite_y =
-				   vram[sprites + SPRITES_Y + s*2]
-				+ (vram[sprites + SPRITES_Y + s*2+1] << 8) - 16;
+			int sprite_y = VRAM_WORD(sprites + SPRITES_Y + s*2) - 16;
 
 			int sprite_scanline = scanline - sprite_y;
 			if (sprite_scanline< 0 || sprite_scanline >=16) continue;
 
-			int sprite_x =
-				   vram[sprites + SPRITES_X + s*2]
-				+ (vram[sprites + SPRITES_X + s*2+1] << 8) - 24;
+			int sprite_x = VRAM_WORD(sprites + SPRITES_X + s*2) - 24;
+
 			int sprite_pixel_x = xpos - sprite_x;
 			if (sprite_pixel_x < 0 || sprite_pixel_x >=16) continue;
 
-			int sprite_pointer =
-					(vram[sprites + s*2] +
-					(vram[sprites + s*2+1] << 8)) << 1;
+			int sprite_pointer = VRAM_PTR(sprites + s*2);
 
 			sprite_data = vram[sprite_pointer
 					+ (sprite_scanline << 3)
