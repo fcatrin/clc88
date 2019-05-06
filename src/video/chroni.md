@@ -134,10 +134,10 @@ The **tiles_attribute register** points to the color attributes for each tile on
 * 64 bytes y position. 2 bytes per sprite
 * 64 attribute bytes. 2 byte per sprite:
 
-     xxxxxxxxXXXXXXXX
-                 ||||---- color palette index
-                |-------- visible
-     |||||||||||--------. reserved for future use (scaling? rotating?)
+      xxxxxxxxXXXXXXXX
+                  ||||---- color palette index
+                 |-------- visible
+      |||||||||||--------. reserved for future use (scaling? rotating?)
     
  * 32*16 bytes: 32 palettes of 16 indexed colors
      * Each index point to the global palette entries
