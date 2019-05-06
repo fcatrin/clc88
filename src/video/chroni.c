@@ -249,6 +249,17 @@ static inline void set_pixel_color(UINT8 color) {
 	pixel_color_b = rgb565[pixel_color_rgb565*3 + 2];
 }
 
+#define SPRITE_ATTR_ENABLED 0x10
+#define SPRITE_SCAN_INVALID 0xFF
+
+#define SPRITES_MAX   32
+#define SPRITES_X     (SPRITES_MAX * 2)
+#define SPRITES_Y     (SPRITES_MAX * 2 + SPRITES_X)
+#define SPRITES_ATTR  (SPRITES_MAX * 2 + SPRITES_Y)
+#define SPRITES_COLOR (SPRITES_MAX * 2 + SPRITES_ATTR)
+
+static UINT8 sprite_scanlines[SPRITES_MAX];
+
 static void do_scan_start() {
 	status |= STATUS_HBLANK;
 	if (post_dli && (status & STATUS_INTEN)) {
@@ -260,6 +271,23 @@ static void do_scan_start() {
 	CPU_RUN(22);
 	status &= (255 - STATUS_HBLANK);
 	cpuexec_nmi(0);
+
+	/*
+	 * check all sprites and write the scan to be drawn
+	 * assume that the sprite will not be drawn
+	 */
+	for(int s=0; s < SPRITES_MAX; s++) {
+		sprite_scanlines[s] = SPRITE_SCAN_INVALID; // asume invalid sprite for this scan
+
+		UINT16 sprite_attrib = vram[sprites + SPRITES_ATTR + s*2];
+		if ((sprite_attrib & SPRITE_ATTR_ENABLED) == 0) continue;
+
+		int sprite_y = VRAM_WORD(sprites + SPRITES_Y + s*2) - 16;
+
+		int sprite_scanline = scanline - sprite_y;
+		if (sprite_scanline< 0 || sprite_scanline >=16) continue;
+		sprite_scanlines[s] = sprite_scanline;
+	}
 }
 
 static void do_scan_end() {
@@ -267,60 +295,62 @@ static void do_scan_end() {
 	CPU_RUN(8);
 }
 
-#define SPRITE_ATTR_ENABLED 0x10
+static inline PAIR do_sprites() {
+	UINT8 dot_color   = 0;
+	UINT8 sprite_data = 0;
+	for(int s=SPRITES_MAX-1; s>=0; s--) {
+		UINT8 sprite_scanline = sprite_scanlines[s];
+		if (sprite_scanline == SPRITE_SCAN_INVALID) continue;
 
-#define SPRITES_MAX   32
-#define SPRITES_X     (SPRITES_MAX * 2)
-#define SPRITES_Y     (SPRITES_MAX * 2 + SPRITES_X)
-#define SPRITES_ATTR  (SPRITES_MAX * 2 + SPRITES_Y)
-#define SPRITES_COLOR (SPRITES_MAX * 2 + SPRITES_ATTR)
+		int sprite_x = VRAM_WORD(sprites + SPRITES_X + s*2) - 24;
 
+		int sprite_pixel_x = xpos - sprite_x;
+		if (sprite_pixel_x < 0) continue; // not yet
+		if (sprite_pixel_x >=16) { // not anymore
+			sprite_scanlines[s] = SPRITE_SCAN_INVALID;
+			continue;
+		}
+
+		int sprite_pointer = VRAM_PTR(sprites + s*2);
+
+		sprite_data = vram[sprite_pointer
+				+ (sprite_scanline << 3)
+				+ (sprite_pixel_x  >> 1)];
+		sprite_data = (sprite_pixel_x & 1) == 0 ?
+				sprite_data >> 4 :
+				sprite_data & 0xF;
+		if (sprite_data == 0) continue;
+
+		UINT16 sprite_attrib = vram[sprites + SPRITES_ATTR + s*2];
+		int sprite_palette = sprite_attrib & 0x0F;
+
+		dot_color = vram[sprites + SPRITES_COLOR + sprite_palette*16 + sprite_data];
+		break;
+	}
+	PAIR result;
+	result.b.l = dot_color;
+	result.b.h = sprite_data;
+	return result;
+}
+
+static void inline put_pixel(int offset, UINT8 color) {
+	PAIR sprite = do_sprites();
+	UINT8 dot_color = sprite.b.h == 0 ? color : sprite.b.l;
+
+	set_pixel_color(dot_color);
+	screen[offset + xpos*3 + 0] = pixel_color_r;
+	screen[offset + xpos*3 + 1] = pixel_color_g;
+	screen[offset + xpos*3 + 2] = pixel_color_b;
+	CPU_XPOS();
+}
 
 static void do_scan_blank() {
 	do_scan_start();
 
-	int start = scanline * screen_pitch;
+	int offset = scanline * screen_pitch;
 	xpos = 0;
 	for(int i=0; i<screen_width; i++) {
-		UINT8 dot_color   = 0;
-		UINT8 sprite_data = 0;
-		for(int s=SPRITES_MAX-1; s>=0; s--) {
-			UINT16 sprite_attrib = vram[sprites + SPRITES_ATTR + s*2];
-			if ((sprite_attrib & SPRITE_ATTR_ENABLED) == 0) continue;
-
-			int sprite_y = VRAM_WORD(sprites + SPRITES_Y + s*2) - 16;
-
-			int sprite_scanline = scanline - sprite_y;
-			if (sprite_scanline< 0 || sprite_scanline >=16) continue;
-
-			int sprite_x = VRAM_WORD(sprites + SPRITES_X + s*2) - 24;
-
-			int sprite_pixel_x = xpos - sprite_x;
-			if (sprite_pixel_x < 0 || sprite_pixel_x >=16) continue;
-
-			int sprite_pointer = VRAM_PTR(sprites + s*2);
-
-			sprite_data = vram[sprite_pointer
-					+ (sprite_scanline << 3)
-					+ (sprite_pixel_x  >> 1)];
-			sprite_data = (sprite_pixel_x & 1) == 0 ?
-					sprite_data >> 4 :
-					sprite_data & 0xF;
-			if (sprite_data == 0) continue;
-
-			int sprite_palette = sprite_attrib & 0x0F;
-
-			dot_color = vram[sprites + SPRITES_COLOR + sprite_palette*16 + sprite_data];
-			break;
-		}
-
-		if (sprite_data == 0) dot_color = colors[0];
-		set_pixel_color(dot_color);
-		screen[start + xpos*3 + 0] = pixel_color_r;
-		screen[start + xpos*3 + 1] = pixel_color_g;
-		screen[start + xpos*3 + 2] = pixel_color_b;
-
-		CPU_XPOS();
+		put_pixel(offset, colors[0]);
 	}
 	do_scan_end();
 }
