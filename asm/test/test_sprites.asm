@@ -19,10 +19,12 @@ end:
    clc
    ror
    sta sprites_x
+   sta sprites_y
    clc
    ror
    adc #50
    sta sprites_x+2
+   sta sprites_y+2
    jmp end
 
    org $C000

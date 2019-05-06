@@ -344,14 +344,18 @@ static void inline put_pixel(int offset, UINT8 color) {
 	CPU_XPOS();
 }
 
+static void inline do_border(int offset, int size) {
+	for(int i=0; i<size; i++) {
+		put_pixel(offset, colors[0]);
+	}
+}
+
 static void do_scan_blank() {
 	do_scan_start();
 
 	int offset = scanline * screen_pitch;
 	xpos = 0;
-	for(int i=0; i<screen_width; i++) {
-		put_pixel(offset, colors[0]);
-	}
+	do_border(offset, screen_width);
 	do_scan_end();
 }
 
@@ -359,42 +363,24 @@ static void do_scan_text(UINT8 line) {
 	LOGV(LOGTAG, "do_scan_text line %d", line);
 	do_scan_start();
 
-	int start = scanline * screen_pitch;
+	int offset = scanline * screen_pitch;
 	xpos = 0;
-	for(int i=0; i<SCREEN_XBORDER; i++) {
-		set_pixel_color(colors[0]);
-		screen[start + xpos*3 + 0] = pixel_color_r;
-		screen[start + xpos*3 + 1] = pixel_color_g;
-		screen[start + xpos*3 + 2] = pixel_color_b;
-		CPU_XPOS();
-	}
+	do_border(offset, SCREEN_XBORDER);
 
 	UINT8 row;
-	int offset = 0;
+	int char_offset = 0;
 	for(int i=0; i<SCREEN_XRES; i++) {
 		if (i % 8 == 0) {
-			UINT8 c = vram[lms + offset];
+			UINT8 c = vram[lms + char_offset];
 			row = vram[charset + c*8 + line];
-			offset++;
+			char_offset++;
 		}
 
-		set_pixel_color(colors[row & 0x80 ? 2 : 1]);
-
-		screen[start + xpos*3 + 0] = pixel_color_r;
-		screen[start + xpos*3 + 1] = pixel_color_g;
-		screen[start + xpos*3 + 2] = pixel_color_b;
-
-		CPU_XPOS();
+		put_pixel(offset, colors[row & 0x80 ? 2 : 1]);
 		row *= 2;
 	}
 
-	for(int i=0; i<SCREEN_XBORDER; i++) {
-		set_pixel_color(colors[0]);
-		screen[start + xpos*3 + 0] = pixel_color_r;
-		screen[start + xpos*3 + 1] = pixel_color_g;
-		screen[start + xpos*3 + 2] = pixel_color_b;
-		CPU_XPOS();
-	}
+	do_border(offset, SCREEN_XBORDER);
 	do_scan_end();
 }
 
@@ -402,47 +388,29 @@ static void do_scan_text_attribs(UINT8 line) {
 	LOGV(LOGTAG, "do_scan_text_attribs line %d", line);
 	do_scan_start();
 
-	int start = scanline * screen_pitch;
+	int offset = scanline * screen_pitch;
 	xpos = 0;
-	for(int i=0; i<SCREEN_XBORDER; i++) {
-		set_pixel_color(colors[0]);
-		screen[start + xpos*3 + 0] = pixel_color_r;
-		screen[start + xpos*3 + 1] = pixel_color_g;
-		screen[start + xpos*3 + 2] = pixel_color_b;
-		CPU_XPOS();
-	}
+	do_border(offset, SCREEN_XBORDER);
 
 	UINT8 row;
 	UINT8 foreground, background;
-	int offset = 0;
+	int char_offset = 0;
 	for(int i=0; i<SCREEN_XRES; i++) {
 		if (i % 8 == 0) {
-			UINT8 attrib = vram[attribs + offset];
+			UINT8 attrib = vram[attribs + char_offset];
 			foreground = (attrib & 0xF0) >> 4;
 			background = attrib & 0x0F;
 
-			UINT8 c = vram[lms + offset];
+			UINT8 c = vram[lms + char_offset];
 			row = vram[charset + c*8 + line];
-			offset++;
+			char_offset++;
 		}
 
-		set_pixel_color(row & 0x80 ? foreground : background);
-
-		screen[start + xpos*3 + 0] = pixel_color_r;
-		screen[start + xpos*3 + 1] = pixel_color_g;
-		screen[start + xpos*3 + 2] = pixel_color_b;
-
-		CPU_XPOS();
+		put_pixel(offset, row & 0x80 ? foreground : background);
 		row *= 2;
 	}
 
-	for(int i=0; i<SCREEN_XBORDER; i++) {
-		set_pixel_color(colors[0]);
-		screen[start + xpos*3 + 0] = pixel_color_r;
-		screen[start + xpos*3 + 1] = pixel_color_g;
-		screen[start + xpos*3 + 2] = pixel_color_b;
-		CPU_XPOS();
-	}
+	do_border(offset, SCREEN_XBORDER);
 	do_scan_end();
 }
 
