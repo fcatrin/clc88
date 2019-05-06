@@ -120,12 +120,12 @@ The **tiles_attribute register** points to the color attributes for each tile on
 * 15 colors from the global 256 color palette
 * 0 is transparent
 * X range: from 0 to 384.
-** 24 is start of left border, 32 is start of display screen
-** 352 is start of right border
-** 340 is out of the visible screen
+    * 24 is start of left border, 32 is start of display screen
+    * 352 is start of right border
+    * 340 is out of the visible screen
 * Y range: from 0 to 262
-** 16 is the first scan line
-** 246 is out of the visible screen
+    * 16 is the first scan line
+    * 246 is out of the visible screen
 
 ### Sprite memory
 
@@ -139,7 +139,7 @@ The **tiles_attribute register** points to the color attributes for each tile on
                |-------- visible
     |||||||||||--------. reserved for future use (scaling? rotating?)
  * 32*16 bytes: 32 palettes of 16 indexed colors
- ** Each index point to the global palette entries
+  * Each index point to the global palette entries
  
 **Sprite memory map**
 
