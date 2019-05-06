@@ -89,6 +89,56 @@
  * PAL 312 (3-VSYNC/45-VBLANK/228-Kernel/36-overscan) and NTSC 262 (3-VSYNC/37-VBLANK/192-Kernel/30-overscan)
  *
  *
+ * Video Modes (per line)
+ * ----------------------
+ *
+ * ID | Type     | Colors | Bytes | Chars/Pixels  |  Height  | Extra
+ * -----------------------------------------------------------------
+ * 01 | Text     |    2   | 40    |   40 Chars    |  8 scans | One Background + Foreground color
+ * 02 | Text     |   16   | 40+40 |   40 Chars    |  8 scans | 1 attribute per char (see CHAR_ATTR)
+ * 05 | Text     |   16   | 20+20 |   20 Chars    |  8 scans | 1 attribute per char (see CHAR_ATTR)
+ * 06 | Text     |   16   | 20+20 |   20 Chars    | 16 scans | 1 attribute per char (see CHAR_ATTR)
+ * 07 | Graphics |    4   | 40    |  160 Pixels   |  1 scan  | 4 pixels per byte, 2 bits per color
+ * 08 | Graphics |    4   | 40    |  160 Pixels   |  2 scans | 4 pixels per byte, 2 bits per color
+ * 03 | Graphics |    2   | 40    |  320 Pixels   |  1 scan  | One Background + Foreground color
+ * 09 | Graphics |    4   | 80    |  320 Pixels   |  1 scan  | 4 pixels per byte, 2 bits per color
+ * 04 | Graphics |   16   | 160   |  320 Pixels   |  1 scan  | 2 pixels per byte, 4 bits per color
+ * 00 | Tiled    |   16   | 10    |  160 Pixels   | 16 scans | See Tiles
+ * 00 | Tiled    |   16   | 20    |  320 Pixels   | 16 scans | See Tiles
+ *
+ *
+ * Text Modes
+ * ----------
+ * Each screen byte is a char
+ * the text_attribute register points to the color attributes for each char on the screen
+ * XXXXXXXX
+ *     ||||---- Foreground color
+ * ||||-------- Background color
+ *
+ * Graphic Modes
+ * -------------
+ *
+ * Each screen byte is a set of 4 or 2 pixels (4 or 16 colors respectively)
+ * The graphics_attribute register points to the color attributes for each 2 bytes on the screen
+ * XXXXXXXX
+ *     ||||---- Palette index for the even byte, up to 16 palettes per line
+ * ||||-------- Palette index for the odd  byte, up to 16 palettes per line
+ *
+ * Tiled Modes
+ * -----------
+ *
+ * Each screen byte is an index into the tiles memory area
+ * Each tile is a 16x16 pixel block using 15 colors + 1 transparency color zero
+ * The tiles_attribute register points to the color attributes for each tile on the screen
+ *
+ * XXXXXXXX
+ *     ||||---- Palette index, up to 16 palettes per line
+ *    |-------- Tile is X-inverted
+ *   |--------- Tile is Y-inverted
+ *
+ * tiles_attr   register points to the tiles attributes base
+ * tiles_colors register points to the 16 color palettes
+ *
  * Sprites
  * -------
  * - 32 sprites
