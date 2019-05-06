@@ -105,9 +105,9 @@ Each tile is a 16x16 pixel block using 15 colors + 1 transparency color zero.
 The **tiles_attribute register** points to the color attributes for each tile on the screen:
 
     ??XXXXXX
-         ||||---- Palette index, up to 16 palettes per line
-        |-------- Tile is X-inverted
-       |--------- Tile is Y-inverted
+        ||||---- Palette index, up to 16 palettes per line
+       |-------- Tile is X-inverted
+      |--------- Tile is Y-inverted
  
 **tiles_attr register** points to the tiles attributes base
 **tiles_colors register** points to the 16 color palettes
@@ -134,12 +134,13 @@ The **tiles_attribute register** points to the color attributes for each tile on
 * 64 bytes y position. 2 bytes per sprite
 * 64 attribute bytes. 2 byte per sprite:
 
-    xxxxxxxxXXXXXXXX
-                ||||---- color palette index
-               |-------- visible
-    |||||||||||--------. reserved for future use (scaling? rotating?)
+     xxxxxxxxXXXXXXXX
+                 ||||---- color palette index
+                |-------- visible
+     |||||||||||--------. reserved for future use (scaling? rotating?)
+    
  * 32*16 bytes: 32 palettes of 16 indexed colors
-  * Each index point to the global palette entries
+     * Each index point to the global palette entries
  
 **Sprite memory map**
 
