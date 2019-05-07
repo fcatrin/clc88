@@ -254,11 +254,11 @@ create_dl_mode_1:
 	
 	
 set_video_mode_dl:
-	lda #<(VRAM_SCREEN - VRAM)
-	sta VDLIST
+	lda #<VRAM_SCREEN
+	sta VRDLIST
 	sta DLIST
-	lda #>(VRAM_SCREEN - VRAM)
-	sta VDLIST+1
+	lda #>VRAM_SCREEN
+	sta VRDLIST+1
 	STA DLIST+1
 	rts
 

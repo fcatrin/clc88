@@ -23,12 +23,9 @@
 	ldx #OS_SET_VIDEO_MODE
 	jsr OS_CALL
 	
-	clc
 	lda DLIST
-	adc #<VRAM
 	sta TMPVARS
 	lda DLIST+1
-	adc #>VRAM
 	sta TMPVARS+1 
    ldy #10
    lda (TMPVARS), y

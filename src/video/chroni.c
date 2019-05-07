@@ -26,7 +26,7 @@ UINT8 vram[VRAM_MAX];
 static UINT16 scanline;
 static UINT8  page;
 
-static UINT16 dl;
+static UINT32 dl;
 static UINT16 lms = 0;
 static UINT16 attribs = 0;
 static UINT16 ypos, xpos;
@@ -67,14 +67,31 @@ static void reg_high(UINT16 *reg, UINT8 value) {
 	*reg = (*reg & 0x00FF) | (value << 8);
 }
 
+static void reg_addr_low(UINT32 *reg, UINT8 value) {
+	*reg = (*reg & 0xFFFE00) | (value>1);
+}
+
+static void reg_addr_high(UINT32 *reg, UINT8 value) {
+	*reg = (*reg & 0x001FF) | (value << 9);
+}
+
+static void reg_addr_rel_low(UINT32 *reg, UINT8 value) {
+	*reg = (*reg & 0xFFFF00) | (value);
+}
+
+static void reg_addr_rel_high(UINT32 *reg, UINT8 value) {
+	UINT32 offset = value - 0xA0 + (page << 2);
+	*reg = (*reg & 0x000FF) | (offset << 8);
+}
+
 void chroni_register_write(UINT8 index, UINT8 value) {
 	LOGV(LOGTAG, "chroni reg write: %04X = %02X", index, value);
 	switch (index) {
 	case 0:
-		reg_low(&dl, value);
+		reg_addr_low(&dl, value);
 		break;
 	case 1:
-		reg_high(&dl, value);
+		reg_addr_high(&dl, value);
 		break;
 	case 2:
 		reg_low(&charset, value);
@@ -109,6 +126,13 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 	case 19:
 		colors[index - 16] = value;
 		break;
+	case 0x40:
+		reg_addr_rel_low(&dl, value);
+		break;
+	case 0x41:
+		reg_addr_rel_high(&dl, value);
+		break;
+
 	}
 }
 
@@ -311,7 +335,7 @@ static void do_screen() {
 	while(ypos < screen_height) {
 		instruction = vram[dl + dlpos];
 		int scan_post_dli = instruction & 0x80;
-		LOGV(LOGTAG, "DL instruction %04X = %02X", dl + dlpos, instruction);
+		LOGV(LOGTAG, "DL instruction %05X = %02X", dl + dlpos, instruction);
 		dlpos++;
 		if ((instruction & 7) == 0) { // blank lines
 			UINT8 lines = 1 + ((instruction & 0x70) >> 4);
