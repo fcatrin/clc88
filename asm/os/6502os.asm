@@ -211,11 +211,11 @@ set_video_mode_text:
 	sta VRAM_SCREEN+3
 	lda #<(VRAM_SCREEN + TEXT_SCREEN_DLIST_SIZE)
 	sta TEXT_START
-	lda #<(VRAM_SCREEN + TEXT_SCREEN_DLIST_SIZE - VRAM)
+	lda #<((VRAM_SCREEN + TEXT_SCREEN_DLIST_SIZE - VRAM) / 2)
 	sta VRAM_SCREEN+4
 	lda #>(VRAM_SCREEN + TEXT_SCREEN_DLIST_SIZE)
 	sta TEXT_START+1
-	lda #>(VRAM_SCREEN + TEXT_SCREEN_DLIST_SIZE - VRAM)
+	lda #>((VRAM_SCREEN + TEXT_SCREEN_DLIST_SIZE - VRAM) / 2)
 	sta VRAM_SCREEN+5
 	
 	cpy #3
@@ -235,10 +235,10 @@ create_dl_mode_0:
 with_attributes:
 	clc
 	lda VRAM_SCREEN+4
-	adc #<TEXT_SCREEN_SIZE
+	adc #<(TEXT_SCREEN_SIZE / 2)
 	sta VRAM_SCREEN+6
 	lda VRAM_SCREEN+5
-	adc #>TEXT_SCREEN_SIZE
+	adc #>(TEXT_SCREEN_SIZE / 2)
 	sta VRAM_SCREEN+7
 
 	ldx #0

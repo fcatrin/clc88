@@ -359,8 +359,8 @@ static void do_screen() {
 			}
 		} else if ((instruction & 7) == 2) {
 			if (instruction & 64) {
-				lms = vram[dl + dlpos++];
-				lms += 256*vram[dl + dlpos++];
+				lms = VRAM_PTR(dl + dlpos);
+				dlpos+=2;
 			}
 			LOGV(LOGTAG, "do_scan_text lms: %04X", lms);
 			int lines = 8;
@@ -375,10 +375,10 @@ static void do_screen() {
 			lms += 40;
 		} else if ((instruction & 7) == 3) {
 			if (instruction & 64) {
-				lms = vram[dl + dlpos++];
-				lms += 256*vram[dl + dlpos++];
-				attribs = vram[dl + dlpos++];
-				attribs += 256*vram[dl + dlpos++];
+				lms     = VRAM_PTR(dl + dlpos);
+				dlpos+=2;
+				attribs = VRAM_PTR(dl + dlpos);
+				dlpos+=2;
 			}
 			LOGV(LOGTAG, "do_scan_text_attrib lms: %04X attrib: %04X", lms, attribs);
 			int lines = 8;

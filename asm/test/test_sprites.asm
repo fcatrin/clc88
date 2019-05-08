@@ -14,6 +14,16 @@
 	lda #$0F
 	sta VCOLOR0
 	
+	ldy #0
+copy:
+	lda message, y
+	cmp #255
+	beq end
+	sta (TEXT_START), y
+	iny
+	bne copy
+	
+	
 end:
    lda FRAMECOUNT
    clc
@@ -26,6 +36,10 @@ end:
    sta sprites_x+2
    sta sprites_y+2
    jmp end
+   
+message:
+	.byte 40, 101, 108, 108, 111, 0, 55, 111, 114, 108, 100, 1, 1, 1, 1, 255
+   
 
    org $C000
 sprite_0:
