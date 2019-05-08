@@ -6,13 +6,121 @@ Suggested by Stuart Law from *Cronie, partners in crime* a popular english sayin
 ## VRAM
 
 There are 128KB reserved for video and accesed directly by Chroni.  
-The CPU can access this area by the bank paging mechanism at 0xA000 - 0xCFFF.
+The CPU can access this area by the bank paging mechanism at 0xA000 - 0xDFFF.
 
 There is no need for a memory map, but this is a suggested one:
 
     00000 - 1EFFF : Free area
     1F000 - 1F3FF : Charset
     1F800 - 1FFFF : Main Color palettes (256 * 2bytes RGB565)
+
+
+VRAM addressing needs 17 bits, but as the processors are only 16 bit, there is a special
+**page register** that is combined with the addresses given to build a 17 bit final address.
+
+Using the bank paging access, the CPU can read/write to VRAM using a 16KB window
+at 0xA000 - 0xDFFF, which is 0x00000 to 0x03FFF (16K) in VRAM. To access beyond
+that area the **page register** in Chroni moves that window in increments of 1KB.
+
+You can use this equation to solve VRAM or CPU addresses
+
+    VRAM = (CPU - 0xA000) + PAGE * 0x0400
+
+For example, to access VRAM 0x04000 - 0x7FFF the page register must be set at 0x10 (16KB).
+
+    VRAM = (0xA0000 - 0xA0000) + 0x10 * 0x0400
+    VRAM =          0          + 0x4000
+    VRAM = 0x4000
+
+## Addressing
+
+There are two addressing mode:
+* A **relative** addressing mode where the address given is relative to the CPU system memory.
+  Here the 0xA000 address points to 0x00000 in VRAM
+* An **absolute** addressing node where the address points directly to the VRAM, so
+0xA000 address points to 0x0A000 in VRAM and 0x0000 points to 0x00000 in VRAM.
+
+Following is the detailed explanation
+
+### Relative addressing
+
+VRAM addresses as seen from Chroni start at 0x00000 and end at 0x1FFFF, but for the CPU
+the first VRAM entry at 0x00000 is located at 0xA000.
+
+So, given an address in system memory, we should substract 0xA000 to pass that address
+to Chroni, because 0xA000 for the CPU is 0x00000 for Chroni. Something like this:
+
+    LDA #<(ADDR - $A000)
+    STA #CHRONI_REG_LOW
+    LDA #>(ADDR - $A000)
+    STA #CHRONI_REG_HIGH
+
+That gets worse if we need to use shadow registers, becuase they will NOT point to CPU
+addresses, so we would need to add $A000 again.
+
+    LDA #<(ADDR - $A000)
+    STA #CHRONI_REG_LOW
+    LDA #<ADDR
+    STA #SHADOW_LOW
+    LDA #>(ADDR - $A000)
+    STA #CHRONI_REG_HIGH
+    LDA #>ADDR
+    STA #SHADOW_HIGH
+
+
+To avoid these problems, Chroni provides registers with relative addressing.  Chroni
+will internally use the page register and apply some math to know which VRAM address 
+are you refering to. For example you can write just code like this:
+
+
+    LDA #<ADDR
+    STA #CHRONI_REG_LOW
+    LDA #>ADDR
+    STA #CHRONI_REG_HIGH
+
+Using this mechanism, you can copy the same address to your shadow registers
+
+    LDA #<ADDR
+    STA #CHRONI_REG_LOW
+    STA #SHADOW_LOW
+    LDA #>ADDR
+    STA #CHRONI_REG_HIGH
+    STA #SHADOW_HIGH
+
+### Absolute addressing
+
+Absoulte addresses point to absolute locations in VRAM, so 0x0000 (16 bit) is 0x00000 (17 bit).
+To access 17 bit addresses, the 17 bit addresses are shifted 1 bit to the right, this is just
+a *2 multiplicaton. So a given address 0f 0x0001 will be 0x00002 in VRAM, and 0x8FFF will
+be 0x1FFFE.
+
+## Registers
+
+Chroni registers are mapped to 0x9000 - 0x907F on CPU system memory. Some registers have
+two versions, one relative and one absolute addressing mode.
+
+You can find the names declared in asm/os/symbols.asm
+
+    00 : VDLIST   WORD Display List pointer (absolute addr)
+    02 : VCHARSET WORD Charset pointer (absolute addr)
+    04 : VPALETTE WORD Palette pointer (absolute addr)
+    06 : VPAGE    BYTE 16KB page mapped on system memory. 1KB granularity
+    07 : VCOUNT   BYTE Vertical line count / 2
+    08 : WSYNC    BYTE Any write will halt the CPU until next HBLANK
+    09 : WSTATUS  BYTE
+          ?????XXX
+                 |--- VBLANK active (read only)
+                |---- HBLANK active (read only)
+               |----- Interrupts enabled
+    0A : VSPRITES WORD Sprites base address (absolute addr)
+    10 : VCOLOR0  BYTE Border color
+    11 : VCOLOR1  BYTE Simple Text mode background
+    12 : VCOLOR2  BYTE Simple Text mode foreround
+    
+    40 : VRDLIST   WORD Display List pointer (relative addr)
+    42 : VRCHARSET WORD Charset pointer (relative addr)
+    44 : VRPALETTE WORD Palette pointer (relative addr)
+    4A : VRSPRITES WORD Sprites base address (relative addr)
 
 ## Colors and Palettes
 
@@ -39,23 +147,6 @@ As the global palette and the smaller 16 color palettes can be put anywhere
 on the vram, you only need to change a register to switch to a completely
 different palette at any time. 
 
-## Registers
-
-    00 : WORD Display List pointer
-    02 : WORD Charset pointer
-    04 : WORD Palette pointer
-    06 : BYTE 16KB page mapped on system memory. 1KB granularity
-    07 : BYTE VCount (vertical line count / 2)
-    08 : BYTE WSYNC. Any write will halt the CPU until next HBLANK
-    09 : BYTE Status:
-          ?????XXX
-                 |--- VBLANK active (read only)
-                |---- HBLANK active (read only)
-               |----- Interrupts enabled
-    0A : WORD Sprites base address
-    10 : BYTE Border color
-    11 : BYTE Simple Text mode background
-    12 : BYTE Simple Text mode foreround
 
 ## Display lists
 
