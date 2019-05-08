@@ -32,10 +32,10 @@ static UINT16 attribs = 0;
 static UINT16 ypos, xpos;
 
 static UINT8 colors[4];
-static UINT16 palette;
+static UINT32 palette;
 
-static UINT16 charset;
-static UINT16 sprites;
+static UINT32 charset;
+static UINT32 sprites;
 
 // this is an RGB565 -> RGB888 conversion array for emulation only
 static UINT8 rgb565[0x10000 * 3];
@@ -57,14 +57,6 @@ void chroni_vram_write(UINT16 index, UINT8 value) {
 
 UINT8 chroni_vram_read(UINT16 index) {
 	return vram[page * PAGE_OFFSET + index];
-}
-
-static void reg_low(UINT16 *reg, UINT8 value) {
-	*reg = (*reg & 0xFF00) | value;
-}
-
-static void reg_high(UINT16 *reg, UINT8 value) {
-	*reg = (*reg & 0x00FF) | (value << 8);
 }
 
 static void reg_addr_low(UINT32 *reg, UINT8 value) {
@@ -94,16 +86,16 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 		reg_addr_high(&dl, value);
 		break;
 	case 2:
-		reg_low(&charset, value);
+		reg_addr_low(&charset, value);
 		break;
 	case 3:
-		reg_high(&charset, value);
+		reg_addr_high(&charset, value);
 		break;
 	case 4:
-		reg_low(&palette, value);
+		reg_addr_low(&palette, value);
 		break;
 	case 5:
-		reg_high(&palette, value);
+		reg_addr_high(&palette, value);
 		break;
 	case 6:
 		page = value & 0x7F;  // page offset in KB
@@ -115,10 +107,10 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 		status = (status & 0x3) | (value & 0xFC);
 		break;
 	case 0xa:
-		reg_low(&sprites, value);
+		reg_addr_low(&sprites, value);
 		break;
 	case 0xb:
-		reg_high(&sprites, value);
+		reg_addr_high(&sprites, value);
 		break;
 	case 16:
 	case 17:
@@ -131,6 +123,24 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 		break;
 	case 0x41:
 		reg_addr_rel_high(&dl, value);
+		break;
+	case 0x42:
+		reg_addr_rel_low(&charset, value);
+		break;
+	case 0x43:
+		reg_addr_rel_high(&charset, value);
+		break;
+	case 0x44:
+		reg_addr_rel_low(&palette, value);
+		break;
+	case 0x45:
+		reg_addr_rel_high(&palette, value);
+		break;
+	case 0x4a:
+		reg_addr_rel_low(&sprites, value);
+		break;
+	case 0x4b:
+		reg_addr_rel_high(&sprites, value);
 		break;
 
 	}

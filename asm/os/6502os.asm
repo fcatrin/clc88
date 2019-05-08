@@ -66,10 +66,10 @@ copy_vector:
 	sta COPY_PARAMS+1
 	jsr copy_block_with_params
 	
-	lda #<(VRAM_CHARSET - VRAM)
-	sta VCHARSET
-	lda #>(VRAM_CHARSET - VRAM)
-	sta VCHARSET+1
+	lda #<VRAM_CHARSET
+	sta VRCHARSET
+	lda #>VRAM_CHARSET
+	sta VRCHARSET+1
 	
 	lda #$ff
 	jsr set_video_mode
@@ -153,10 +153,10 @@ set_video_mode_0:
 	ldy #2
 	jsr set_video_mode_text
 	jsr clear_text_screen
-	lda #<(VRAM_PAL_ATARI - VRAM)
-	sta VPALETTE
-	lda #>(VRAM_PAL_ATARI - VRAM)
-	sta VPALETTE+1
+	lda #<VRAM_PAL_ATARI
+	sta VRPALETTE
+	lda #>VRAM_PAL_ATARI
+	sta VRPALETTE+1
 	rts
 
 set_video_mode_1:
@@ -182,10 +182,10 @@ set_video_mode_1:
 	lda #$F3
 	jsr mem_set_bytes
 
-	lda #<(VRAM_PAL_ZX - VRAM)
-	sta VPALETTE
-	lda #>(VRAM_PAL_ZX - VRAM)
-	sta VPALETTE+1
+	lda #<VRAM_PAL_ZX
+	sta VRPALETTE
+	lda #>VRAM_PAL_ZX
+	sta VRPALETTE+1
 	
 clear_text_screen:
 	lda #<TEXT_SCREEN_SIZE
