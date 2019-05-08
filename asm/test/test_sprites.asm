@@ -6,10 +6,10 @@
 	ldx #OS_SET_VIDEO_MODE
 	jsr OS_CALL
 	
-	lda #<(sprites_base - VRAM)
-	sta VSPRITES
-	lda #>(sprites_base - VRAM)
-	sta VSPRITES+1
+	lda #<sprites_base
+	sta VRSPRITES
+	lda #>sprites_base
+	sta VRSPRITES+1
 	
 	lda #$0F
 	sta VCOLOR0
