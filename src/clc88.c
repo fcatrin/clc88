@@ -33,6 +33,7 @@ int main(int argc, char *argv[]) {
 		chroni_run_frame();
 		screen_update();
 		frontend_process_events();
+		// frontend_sleep(1);
 		// i++;
 	}
 	utils_dump_mem(0, 256);

@@ -108,10 +108,12 @@ You can find the names declared in asm/os/symbols.asm
     07 : VCOUNT   BYTE Vertical line count / 2
     08 : WSYNC    BYTE Any write will halt the CPU until next HBLANK
     09 : WSTATUS  BYTE
-          ?????XXX
+          ???XXXXX
                  |--- VBLANK active (read only)
                 |---- HBLANK active (read only)
                |----- Interrupts enabled
+              |------ Sprites enabled
+             |------- Chroni enabled
     0A : VSPRITES WORD Sprites base address (absolute addr)
     10 : VCOLOR0  BYTE Border color
     11 : VCOLOR1  BYTE Simple Text mode background

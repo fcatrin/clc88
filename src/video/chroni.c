@@ -43,12 +43,23 @@ static UINT8 pixel_color_r;
 static UINT8 pixel_color_g;
 static UINT8 pixel_color_b;
 
-#define STATUS_VBLANK 1
-#define STATUS_HBLANK 2
-#define STATUS_INTEN  4
+#define STATUS_VBLANK         0x01
+#define STATUS_HBLANK         0x02
+#define STATUS_ENABLE_INTS    0x04
+#define STATUS_ENABLE_SPRITES 0x08
+#define STATUS_ENABLE_CHRONI  0x10
+
 
 static UINT8 status;
 static UINT8 post_dli = 0;
+
+void chroni_reset() {
+	status = 0;
+	dl = 0;
+	charset = 0;
+	sprites = 0;
+	palette = 0;
+}
 
 void chroni_vram_write(UINT16 index, UINT8 value) {
 	LOGV(LOGTAG, "vram write %04X = %02X", index, value);
@@ -77,7 +88,7 @@ static void reg_addr_rel_high(UINT32 *reg, UINT8 value) {
 }
 
 void chroni_register_write(UINT8 index, UINT8 value) {
-	LOGV(LOGTAG, "chroni reg write: %04X = %02X", index, value);
+	LOGV(LOGTAG, "chroni reg write: 0x%04X = 0x%02X", index, value);
 	switch (index) {
 	case 0:
 		reg_addr_low(&dl, value);
@@ -175,7 +186,7 @@ static UINT8 sprite_scanlines[SPRITES_MAX];
 
 static void do_scan_start() {
 	status |= STATUS_HBLANK;
-	if (post_dli && (status & STATUS_INTEN)) {
+	if (post_dli && (status & STATUS_ENABLE_INTS)) {
 		LOGV(LOGTAG, "do_scan_start fire DLI");
 		cpuexec_nmi(1);
 	}
@@ -263,13 +274,26 @@ static void inline do_border(int offset, int size) {
 	}
 }
 
-static void do_scan_blank() {
-	do_scan_start();
+static void inline do_scan_off(int offset, int size) {
+	for(int i=0; i<size; i++) {
+		screen[offset + xpos*3 + 0] = 0;
+		screen[offset + xpos*3 + 1] = 0;
+		screen[offset + xpos*3 + 2] = 0;
+		CPU_XPOS();
+	}
+}
 
+static void do_scan_blank() {
 	int offset = scanline * screen_pitch;
 	xpos = 0;
-	do_border(offset, screen_width);
-	do_scan_end();
+
+	if (status & STATUS_ENABLE_CHRONI) {
+		do_scan_start();
+		do_border(offset, screen_width);
+		do_scan_end();
+	} else {
+		do_scan_off(offset, screen_width);
+	}
 }
 
 static void do_scan_text(UINT8 line) {
@@ -335,14 +359,15 @@ static void do_screen() {
 		CPU_SCANLINE();
 	}
 	cpuexec_nmi(0);
+	LOGV(LOGTAG, "set status %02X enabled:%s", status, (status & STATUS_ENABLE_CHRONI) ? "true":"false");
 	status &= (255 - STATUS_VBLANK);
-	LOGV(LOGTAG, "set status %02X", status);
+	LOGV(LOGTAG, "set status %02X enabled:%s", status, (status & STATUS_ENABLE_CHRONI) ? "true":"false");
 
 	scanline = 0;
 
 	UINT8 instruction;
 	int dlpos = 0;
-	while(ypos < screen_height) {
+	while(ypos < screen_height && (status & STATUS_ENABLE_CHRONI)) {
 		instruction = vram[dl + dlpos];
 		int scan_post_dli = instruction & 0x80;
 		LOGV(LOGTAG, "DL instruction %05X = %02X", dl + dlpos, instruction);
@@ -416,10 +441,12 @@ static void init_rgb565_table() {
 
 void chroni_init() {
 	init_rgb565_table();
+	chroni_reset();
 }
 
 void chroni_run_frame() {
 	do_screen();
+
 	status |= STATUS_VBLANK;
-	if (status & STATUS_INTEN) cpuexec_nmi(1);
+	if (status & STATUS_ENABLE_INTS) cpuexec_nmi(1);
 }

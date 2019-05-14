@@ -33,7 +33,12 @@ TEXT_SCREEN_DLIST_SIZE = 32
 	jmp (OS_VECTOR)
 	
 boot:
+   lda #0
+   sta VSTATUS
+   sta CHRONI_ENABLED
+
 ; init interrupt vectors
+   
    ldx #0
 copy_vector:
    lda interrupt_vectors, x
@@ -81,8 +86,10 @@ copy_vector:
 	lda #$9A
 	sta VCOLOR2
 	
+	lda #1
+	sta CHRONI_ENABLED
 	lda VSTATUS
-	ora #VINTEN_STATUS
+	ora #VSTATUS_EN_INTS
 	sta VSTATUS
 	
 	jmp BOOTADDR
@@ -124,10 +131,30 @@ vblank_os:
    lda FRAMECOUNT+1
    adc #0
    sta FRAMECOUNT+1
+   
+   lda CHRONI_ENABLED
+   beq set_chroni_disabled
+   lda VSTATUS
+   ora #VSTATUS_ENABLE
+   sta VSTATUS
+   bne chroni_enabled_set
+set_chroni_disabled:
+   lda VSTATUS
+   and #($FF - VSTATUS_ENABLE)
+   sta VSTATUS
+chroni_enabled_set:   
+   
    pla
    rti   
     
 set_video_mode:
+   pha
+   lda #0
+   sta CHRONI_ENABLED
+   lda VSTATUS
+   and #($ff - VSTATUS_ENABLE)
+   sta VSTATUS
+   pla
 	cmp #$00
 	beq set_video_mode_0
 	cmp #$01
@@ -260,6 +287,9 @@ set_video_mode_dl:
 	lda #>VRAM_SCREEN
 	sta VRDLIST+1
 	STA DLIST+1
+	
+	lda #1
+   sta CHRONI_ENABLED
 	rts
 
 os_vector_table

@@ -3,7 +3,7 @@
 	org BOOTADDR
 	
    lda VSTATUS
-   and #(255 - VINTEN_STATUS)
+   and #(255 - VSTATUS_EN_INTS)
    sta VSTATUS
    	
 	lda #<vblank
@@ -16,7 +16,7 @@
    sta HBLANK_VECTOR+1
 
    lda VSTATUS
-   ora #VINTEN_STATUS
+   ora #VSTATUS_EN_INTS
    sta VSTATUS
 	
 	lda #0
