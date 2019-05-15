@@ -11,6 +11,7 @@ VRAM_SCREEN    = VRAM_PAL_ZX + PALETTE_SIZE
 
 TEXT_SCREEN_SIZE       = 40*24
 TEXT_SCREEN_SIZE_WIDE  = 20*24
+TEXT_SCREEN_SIZE_BLOCK = 20*12
 TEXT_SCREEN_DLIST_SIZE = 32
 
 
@@ -162,6 +163,8 @@ set_video_mode:
 	beq set_video_mode_1
 	cmp #$02
 	beq set_video_mode_2
+	cmp #$03
+	beq set_video_mode_3
 	cmp #$ff
 	beq set_video_mode_off
 	rts
@@ -230,6 +233,25 @@ set_video_mode_2:
 	lda #>VRAM_PAL_ZX
 	sta VRPALETTE+1
 	rts
+
+set_video_mode_3:
+	ldy #5
+	jsr set_video_mode_text
+
+	lda #<TEXT_SCREEN_SIZE_BLOCK
+	sta COPY_SIZE
+	lda #>TEXT_SCREEN_SIZE_BLOCK
+	sta COPY_SIZE+1
+	
+	jsr clear_text_screen
+	jsr init_attributes
+
+	lda #<VRAM_PAL_ZX
+	sta VRPALETTE
+	lda #>VRAM_PAL_ZX
+	sta VRPALETTE+1
+	rts
+
 	
 clear_text_screen:
 	lda TEXT_START
@@ -276,6 +298,8 @@ set_video_mode_text:
 	beq with_attributes
 	cpy #4
 	beq with_attributes_wide
+	cpy #5
+	beq with_attributes_block
 
 	ldx #0
 	tya
@@ -286,6 +310,7 @@ create_dl_mode_0:
 	bne create_dl_mode_0
 	lda #$41
 	sta VRAM_SCREEN+6, x
+	ldx #23
 	jmp set_video_mode_dl
 	
 with_attributes:
@@ -296,6 +321,7 @@ with_attributes:
 	lda VRAM_SCREEN+5
 	adc #>(TEXT_SCREEN_SIZE / 2)
 	sta VRAM_SCREEN+7
+	ldx #23
 	jmp create_dl_attributes
 	
 with_attributes_wide:
@@ -306,18 +332,29 @@ with_attributes_wide:
 	lda VRAM_SCREEN+5
 	adc #>(TEXT_SCREEN_SIZE_WIDE / 2)
 	sta VRAM_SCREEN+7
+	ldx #23
+	jmp create_dl_attributes
+
+with_attributes_block:
+	clc
+	lda VRAM_SCREEN+4
+	adc #<(TEXT_SCREEN_SIZE_BLOCK / 2)
+	sta VRAM_SCREEN+6
+	lda VRAM_SCREEN+5
+	adc #>(TEXT_SCREEN_SIZE_BLOCK / 2)
+	sta VRAM_SCREEN+7
+	ldx #11
 	jmp create_dl_attributes
 
 create_dl_attributes:
-	ldx #0
+	lda #$41
+	sta VRAM_SCREEN+8, x
+	dex
 	tya
 create_dl_mode_1:	
 	sta VRAM_SCREEN+8, x
-	inx
-	cpx #23
-	bne create_dl_mode_1
-	lda #$41
-	sta VRAM_SCREEN+8, x
+	dex
+	bpl create_dl_mode_1
 	jmp set_video_mode_dl
 	
 	

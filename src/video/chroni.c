@@ -459,9 +459,28 @@ static void do_screen() {
 			}
 			LOGV(LOGTAG, "do_scan_text_attrib lms: %04X attrib: %04X", lms, attribs);
 			int lines = 8;
-			for(int line=0; line<8; line++) {
+			for(int line=0; line<lines; line++) {
 				if (line == lines - 1) post_dli = scan_post_dli;
 				do_scan_text_attribs_double(line);
+				scanline++;
+				ypos++;
+				if (ypos == screen_height) return;
+			}
+
+			lms += 20;
+			attribs += 20;
+		} else if ((instruction & 7) == 5) {
+			if (instruction & 64) {
+				lms     = VRAM_PTR(dl + dlpos);
+				dlpos+=2;
+				attribs = VRAM_PTR(dl + dlpos);
+				dlpos+=2;
+			}
+			LOGV(LOGTAG, "do_scan_text_attrib lms: %04X attrib: %04X", lms, attribs);
+			int lines = 16;
+			for(int line=0; line<lines; line++) {
+				if (line == lines - 1) post_dli = scan_post_dli;
+				do_scan_text_attribs_double(line >> 1);
 				scanline++;
 				ypos++;
 				if (ypos == screen_height) return;

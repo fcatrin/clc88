@@ -21,7 +21,8 @@ int main(int argc, char *argv[]) {
 	//utils_load_xex("../asm/test/test_sprites.xex");
 	//utils_load_xex("../asm/test/test_atari.xex");
 	//utils_load_xex("../asm/test/test_spectrum.xex");
-	utils_load_xex("../asm/test/graphics_3.xex");
+	//utils_load_xex("../asm/test/graphics_3.xex");
+	utils_load_xex("../asm/test/graphics_4.xex");
 
 	v_cpu cpu;
 
@@ -37,7 +38,7 @@ int main(int argc, char *argv[]) {
 		// frontend_sleep(1);
 		// i++;
 	}
-	utils_dump_mem(0, 256);
+	utils_dump_mem(0xA000, 0X2000);
 	frontend_done();
 
 	return 0;
