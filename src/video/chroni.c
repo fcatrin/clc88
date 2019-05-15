@@ -202,6 +202,7 @@ static void do_scan_start() {
 	 */
 	for(int s=0; s < SPRITES_MAX; s++) {
 		sprite_scanlines[s] = SPRITE_SCAN_INVALID; // asume invalid sprite for this scan
+		if (!(status & STATUS_ENABLE_SPRITES)) continue;
 
 		UINT16 sprite_attrib = vram[sprites + SPRITES_ATTR + s*2];
 		if ((sprite_attrib & SPRITE_ATTR_ENABLED) == 0) continue;
@@ -222,7 +223,7 @@ static void do_scan_end() {
 static inline PAIR do_sprites() {
 	UINT8 dot_color   = 0;
 	UINT8 sprite_data = 0;
-	for(int s=SPRITES_MAX-1; s>=0; s--) {
+	for(int s=SPRITES_MAX-1; s>=0 && (status & STATUS_ENABLE_SPRITES); s--) {
 		UINT8 sprite_scanline = sprite_scanlines[s];
 		if (sprite_scanline == SPRITE_SCAN_INVALID) continue;
 
