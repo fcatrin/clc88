@@ -9,7 +9,8 @@ VRAM_PAL_ZX    = VRAM_PAL_ATARI + PALETTE_SIZE
 
 VRAM_SCREEN    = VRAM_PAL_ZX + PALETTE_SIZE
 
-TEXT_SCREEN_SIZE = 40*24
+TEXT_SCREEN_SIZE       = 40*24
+TEXT_SCREEN_SIZE_WIDE  = 20*24
 TEXT_SCREEN_DLIST_SIZE = 32
 
 
@@ -159,6 +160,8 @@ set_video_mode:
 	beq set_video_mode_0
 	cmp #$01
 	beq set_video_mode_1
+	cmp #$02
+	beq set_video_mode_2
 	cmp #$ff
 	beq set_video_mode_off
 	rts
@@ -179,7 +182,13 @@ create_dl_mode_off:
 set_video_mode_0:
 	ldy #2
 	jsr set_video_mode_text
+
+	lda #<TEXT_SCREEN_SIZE
+	sta COPY_SIZE
+	lda #>TEXT_SCREEN_SIZE
+	sta COPY_SIZE+1
 	jsr clear_text_screen
+	
 	lda #<VRAM_PAL_ATARI
 	sta VRPALETTE
 	lda #>VRAM_PAL_ATARI
@@ -189,43 +198,61 @@ set_video_mode_0:
 set_video_mode_1:
 	ldy #3
 	jsr set_video_mode_text
-	jsr clear_text_screen
-	
-	clc
-	lda TEXT_START
-	adc #<TEXT_SCREEN_SIZE
-	sta COPY_DST_ADDR
-	sta ATTRIB_START
-	lda TEXT_START+1
-	adc #>TEXT_SCREEN_SIZE
-	sta COPY_DST_ADDR+1
-	sta ATTRIB_START+1
-	
+
 	lda #<TEXT_SCREEN_SIZE
 	sta COPY_SIZE
 	lda #>TEXT_SCREEN_SIZE
 	sta COPY_SIZE+1
 	
-	lda #$F3
-	jsr mem_set_bytes
+	jsr clear_text_screen
+	jsr init_attributes
 
 	lda #<VRAM_PAL_ZX
 	sta VRPALETTE
 	lda #>VRAM_PAL_ZX
 	sta VRPALETTE+1
-	
-clear_text_screen:
-	lda #<TEXT_SCREEN_SIZE
+	rts
+
+set_video_mode_2:
+	ldy #4
+	jsr set_video_mode_text
+
+	lda #<TEXT_SCREEN_SIZE_WIDE
 	sta COPY_SIZE
-	lda #>TEXT_SCREEN_SIZE
+	lda #>TEXT_SCREEN_SIZE_WIDE
 	sta COPY_SIZE+1
 	
+	jsr clear_text_screen
+	jsr init_attributes
+
+	lda #<VRAM_PAL_ZX
+	sta VRPALETTE
+	lda #>VRAM_PAL_ZX
+	sta VRPALETTE+1
+	rts
+	
+clear_text_screen:
 	lda TEXT_START
 	sta COPY_DST_ADDR
 	lda TEXT_START+1
 	sta COPY_DST_ADDR+1
 	
 	lda #0
+	jmp mem_set_bytes
+
+init_attributes:
+	clc
+	lda TEXT_START
+	adc COPY_SIZE
+	sta COPY_DST_ADDR
+	sta ATTRIB_START
+	
+	lda TEXT_START+1
+	adc COPY_SIZE+1
+	sta COPY_DST_ADDR+1
+	sta ATTRIB_START+1
+	
+	lda #$F3
 	jmp mem_set_bytes
 
 set_video_mode_text:
@@ -247,6 +274,8 @@ set_video_mode_text:
 	
 	cpy #3
 	beq with_attributes
+	cpy #4
+	beq with_attributes_wide
 
 	ldx #0
 	tya
@@ -267,7 +296,19 @@ with_attributes:
 	lda VRAM_SCREEN+5
 	adc #>(TEXT_SCREEN_SIZE / 2)
 	sta VRAM_SCREEN+7
+	jmp create_dl_attributes
+	
+with_attributes_wide:
+	clc
+	lda VRAM_SCREEN+4
+	adc #<(TEXT_SCREEN_SIZE_WIDE / 2)
+	sta VRAM_SCREEN+6
+	lda VRAM_SCREEN+5
+	adc #>(TEXT_SCREEN_SIZE_WIDE / 2)
+	sta VRAM_SCREEN+7
+	jmp create_dl_attributes
 
+create_dl_attributes:
 	ldx #0
 	tya
 create_dl_mode_1:	

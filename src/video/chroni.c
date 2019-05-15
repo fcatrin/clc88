@@ -315,7 +315,7 @@ static void do_scan_text(UINT8 line) {
 		}
 
 		put_pixel(offset, colors[row & 0x80 ? 2 : 1]);
-		row *= 2;
+		row <<= 1;
 	}
 
 	do_border(offset, SCREEN_XBORDER);
@@ -345,7 +345,39 @@ static void do_scan_text_attribs(UINT8 line) {
 		}
 
 		put_pixel(offset, row & 0x80 ? foreground : background);
-		row *= 2;
+		row <<= 1;
+	}
+
+	do_border(offset, SCREEN_XBORDER);
+	do_scan_end();
+}
+
+static void do_scan_text_attribs_double(UINT8 line) {
+	LOGV(LOGTAG, "do_scan_text_attribs double line %d", line);
+	do_scan_start();
+
+	int offset = scanline * screen_pitch;
+	xpos = 0;
+	do_border(offset, SCREEN_XBORDER);
+
+	UINT8 row;
+	UINT8 foreground, background;
+	int char_offset = 0;
+	bool first = TRUE;
+	for(int i=0; i<SCREEN_XRES; i++) {
+		if (i % 0x10 == 0) {
+			UINT8 attrib = vram[attribs + char_offset];
+			foreground = (attrib & 0xF0) >> 4;
+			background = attrib & 0x0F;
+
+			UINT8 c = vram[lms + char_offset];
+			row = vram[charset + c*8 + line];
+			char_offset++;
+		}
+
+		put_pixel(offset, row & 0x80 ? foreground : background);
+		if (!first) row <<= 1;
+		first = !first;
 	}
 
 	do_border(offset, SCREEN_XBORDER);
@@ -418,6 +450,25 @@ static void do_screen() {
 
 			lms += 40;
 			attribs += 40;
+		} else if ((instruction & 7) == 4) {
+			if (instruction & 64) {
+				lms     = VRAM_PTR(dl + dlpos);
+				dlpos+=2;
+				attribs = VRAM_PTR(dl + dlpos);
+				dlpos+=2;
+			}
+			LOGV(LOGTAG, "do_scan_text_attrib lms: %04X attrib: %04X", lms, attribs);
+			int lines = 8;
+			for(int line=0; line<8; line++) {
+				if (line == lines - 1) post_dli = scan_post_dli;
+				do_scan_text_attribs_double(line);
+				scanline++;
+				ypos++;
+				if (ypos == screen_height) return;
+			}
+
+			lms += 20;
+			attribs += 20;
 		} else if (instruction == 0x41) {
 			break;
 		}

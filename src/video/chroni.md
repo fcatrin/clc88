@@ -158,20 +158,20 @@ Video modes are defined one per each line in a display list
 
     ID | Type     | Colors | Bytes | Chars/Pixels  |  Height  | Extra
     -----------------------------------------------------------------
-    01 | Text     |    2   | 40    |   40 Chars    |  8 scans | One Background + Foreground color
-    02 | Text     |   16   | 40+40 |   40 Chars    |  8 scans | 1 attribute per char (see CHAR_ATTR)
-    03 | Text     |   16   | 20+20 |   20 Chars    |  8 scans | 1 attribute per char (see CHAR_ATTR)
-    04 | Text     |   16   | 20+20 |   20 Chars    | 16 scans | 1 attribute per char (see CHAR_ATTR)
-    05 | Graphics |    4   | 40    |  160 Pixels   |  1 scan  | 4 pixels per byte, 2 bits per color
-    06 | Graphics |    4   | 40    |  160 Pixels   |  2 scans | 4 pixels per byte, 2 bits per color
-    07 | Graphics |   16   | 80    |  160 Pixels   |  1 scan  | 2 pixels per byte, 4 bits per color
-    08 | Graphics |    2   | 40    |  320 Pixels   |  1 scan  | One Background + Foreground color
-    08 | Graphics |    4   | 80    |  320 Pixels   |  1 scan  | 4 pixels per byte, 2 bits per color
-    0A | Graphics |   16   | 160   |  320 Pixels   |  1 scan  | 2 pixels per byte, 4 bits per color
-    0B | Tiled    |   16   | 10    |  160 Pixels   | 16 scans | See Tiles
-    0C | Tiled    |   16   | 20    |  320 Pixels   | 16 scans | See Tiles
+    02 | Text     |    2   | 40    |   40 Chars    |  8 scans | One Background + Foreground color
+    03 | Text     |   16   | 40+40 |   40 Chars    |  8 scans | 1 attribute per char (see CHAR_ATTR)
+    04 | Text     |   16   | 20+20 |   20 Chars    |  8 scans | 1 attribute per char (see CHAR_ATTR)
+    05 | Text     |   16   | 20+20 |   20 Chars    | 16 scans | 1 attribute per char (see CHAR_ATTR)
+    06 | Graphics |    4   | 40    |  160 Pixels   |  1 scan  | 4 pixels per byte, 2 bits per color
+    07 | Graphics |    4   | 40    |  160 Pixels   |  2 scans | 4 pixels per byte, 2 bits per color
+    08 | Graphics |   16   | 80    |  160 Pixels   |  1 scan  | 2 pixels per byte, 4 bits per color
+    09 | Graphics |    2   | 40    |  320 Pixels   |  1 scan  | One Background + Foreground color
+    0A | Graphics |    4   | 80    |  320 Pixels   |  1 scan  | 4 pixels per byte, 2 bits per color
+    0B | Graphics |   16   | 160   |  320 Pixels   |  1 scan  | 2 pixels per byte, 4 bits per color
+    0C | Tiled    |   16   | 10    |  160 Pixels   | 16 scans | See Tiles
+    0D | Tiled    |   16   | 20    |  320 Pixels   | 16 scans | See Tiles
 
-*At this time, only mode 1 and 2 are implemented*
+*At this time, only mode 2 and 3 are implemented*
     
 ### Text video modes
     

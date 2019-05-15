@@ -20,7 +20,8 @@ int main(int argc, char *argv[]) {
 	utils_load_xex("../asm/os/6502os.xex");
 	//utils_load_xex("../asm/test/test_sprites.xex");
 	//utils_load_xex("../asm/test/test_atari.xex");
-	utils_load_xex("../asm/test/test_spectrum.xex");
+	//utils_load_xex("../asm/test/test_spectrum.xex");
+	utils_load_xex("../asm/test/graphics_3.xex");
 
 	v_cpu cpu;
 
