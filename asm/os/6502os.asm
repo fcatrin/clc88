@@ -165,6 +165,10 @@ set_video_mode:
 	beq set_video_mode_2
 	cmp #$03
 	beq set_video_mode_3
+   cmp #$04
+   bne not_video_mode_4
+   jmp set_video_mode_4
+not_video_mode_4:   
 	cmp #$ff
 	beq set_video_mode_off
 	rts
@@ -252,7 +256,6 @@ set_video_mode_3:
 	sta VRPALETTE+1
 	rts
 
-	
 clear_text_screen:
 	lda TEXT_START
 	sta COPY_DST_ADDR
@@ -439,6 +442,8 @@ nmi:
    jmp (NMI_VECTOR)
 irq:
    jmp (IRQ_VECTOR)
+
+   icl 'graphics.asm'
    
 charset:
 	ins '../../res/charset.bin'

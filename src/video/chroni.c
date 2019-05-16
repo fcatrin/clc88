@@ -21,7 +21,10 @@
 
 UINT8 vram[VRAM_MAX];
 
-#define PAGE_OFFSET 0x0400
+#define PAGE_SIZE       0x4000
+#define PAGE_SHIFT      14
+#define PAGE_SHIFT_HIGH (PAGE_SHIFT-8)
+#define PAGE_BASE(x)    (x << PAGE_SHIFT)
 
 static UINT16 scanline;
 static UINT8  page;
@@ -33,6 +36,7 @@ static UINT16 ypos, xpos;
 
 static UINT8 colors[4];
 static UINT32 palette;
+static UINT32 subpals;
 
 static UINT32 charset;
 static UINT32 sprites;
@@ -63,11 +67,11 @@ void chroni_reset() {
 
 void chroni_vram_write(UINT16 index, UINT8 value) {
 	LOGV(LOGTAG, "vram write %04X = %02X", index, value);
-	vram[page * PAGE_OFFSET + index] = value;
+	vram[PAGE_BASE(page) + index] = value;
 }
 
 UINT8 chroni_vram_read(UINT16 index) {
-	return vram[page * PAGE_OFFSET + index];
+	return vram[PAGE_BASE(page) + index];
 }
 
 static void reg_addr_low(UINT32 *reg, UINT8 value) {
@@ -83,7 +87,7 @@ static void reg_addr_rel_low(UINT32 *reg, UINT8 value) {
 }
 
 static void reg_addr_rel_high(UINT32 *reg, UINT8 value) {
-	UINT32 offset = value - 0xA0 + (page << 2);
+	UINT32 offset = value - 0xA0 + (page << (PAGE_SHIFT_HIGH));
 	*reg = (*reg & 0x000FF) | (offset << 8);
 }
 
@@ -109,7 +113,7 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 		reg_addr_high(&palette, value);
 		break;
 	case 6:
-		page = value & 0x7F;  // page offset in KB
+		page = value & 0x07;
 		break;
 	case 8:
 		CPU_HALT();
@@ -384,6 +388,41 @@ static void do_scan_text_attribs_double(UINT8 line) {
 	do_scan_end();
 }
 
+static void do_scan_pixels_wide_4color() {
+	LOGV(LOGTAG, "do_scan_pixels_wide_4color line");
+	do_scan_start();
+
+	int offset = scanline * screen_pitch;
+	xpos = 0;
+	do_border(offset, SCREEN_XBORDER);
+
+	UINT8  palette = 0;
+	UINT8  palette_data = 0;
+	UINT8  pixel = 0;
+	UINT8  pixel_data = 0;
+	UINT16 pixel_data_offset = 0;
+	for(int i=0; i<SCREEN_XRES; i++) {
+		if ((i & 1) == 0) {
+			palette_data = vram[attribs + pixel_data_offset];
+			pixel_data = vram[lms + pixel_data_offset];
+			pixel_data_offset++;
+
+			pixel = pixel_data & 0x0F;
+			palette = (palette_data & 0x0F) << 2;
+		} else {
+			pixel = pixel_data >> 4;
+			palette = palette_data >> 2;
+		}
+
+		UINT8 color = vram[subpals + palette + pixel];
+
+		put_pixel(offset, color);
+	}
+
+	do_border(offset, SCREEN_XBORDER);
+	do_scan_end();
+}
+
 static void do_screen() {
 	/* 0-7 scanlines are not displayed because of vblank
 	 *
@@ -488,6 +527,22 @@ static void do_screen() {
 
 			lms += 20;
 			attribs += 20;
+		} else if ((instruction & 7) == 6) {
+			if (instruction & 64) {
+				lms     = VRAM_PTR(dl + dlpos);
+				dlpos+=2;
+				attribs = VRAM_PTR(dl + dlpos);
+				dlpos+=2;
+				subpals = VRAM_PTR(dl + dlpos);
+				dlpos+=2;
+			}
+			do_scan_pixels_wide_4color();
+			scanline++;
+			ypos++;
+			if (ypos == screen_height) return;
+
+			lms += 80;
+			attribs += 80;
 		} else if (instruction == 0x41) {
 			break;
 		}

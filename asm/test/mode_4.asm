@@ -2,11 +2,12 @@
 	
 	org BOOTADDR
 	
-	lda #3
+	lda #4
 	ldx #OS_SET_VIDEO_MODE
 	jsr OS_CALL
 	lda #$92
 	sta $F9
+	sta VCOLOR0
 	
 	ldy #0
 copy:

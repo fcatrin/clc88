@@ -4,20 +4,47 @@ COPY_SIZE     = $04
 COPY_PARAMS   = $06
 TEXT_START    = $08
 ATTRIB_START  = $0A
-FRAMECOUNT    = $0C
-DLIST         = $0E
+SUBPAL_START  = $0C
+VRAM_FREE     = $0E
+DLIST         = $10
+FRAMECOUNT    = $12
 
 NMI_VECTOR    = $10
 IRQ_VECTOR    = $12
 VBLANK_VECTOR = $14
 HBLANK_VECTOR = $18
 
+RAM_TO_VRAM   = $20 ; cpu address
+VRAM_TO_RAM   = $22 ; vram address / 2
+VRAM_PAGE     = $24 ; vram address + page
+
 OS_VECTOR     = $7E
 OS_VECTORS    = $80
 
 TMPVARS       = $C0
+R1            = $C1
+R2            = $C2
+R3            = $C3
+R4            = $C4
+R5            = $C5
+R6            = $C6
+R7            = $C7
+R8            = $C8
+ROS1          = $C9
+ROS2          = $CA
+ROS3          = $CB
+ROS4          = $CC
+ROS5          = $CD
+ROS6          = $CE
+ROS7          = $CF
+
+
 
 CHRONI_ENABLED = $200
+SCREEN_LINES   = $204
+SCREEN_SIZE    = $206
+ATTRIB_SIZE    = $208
+SUBPAL_SIZE    = $20A
 
 OS_SET_VIDEO_MODE    = 0
 OS_COPY_BLOCK        = 1
@@ -29,6 +56,7 @@ OS_CALL  = $F000
 VDLIST   = $9000
 VCHARSET = $9002
 VPALETTE = $9004
+VPAGE    = $9006
 VCOUNT   = $9007
 WSYNC    = $9008
 VSTATUS  = $9009
