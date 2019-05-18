@@ -10,11 +10,12 @@ typedef struct {
 	int  (*run)(int cycles);
 	void (*irq)(int do_interrupt);
 	void (*nmi)(int do_interrupt);
+	bool exec_break;
 } v_cpu;
 
-v_cpu cpu_init(enum CpuType cpuType);
-void  cpu_reset(v_cpu *cpu);
-int   cpu_run(v_cpu *cpu, int cycles);
+v_cpu* cpu_init(enum CpuType cpuType);
+void   cpu_reset(v_cpu *cpu);
+int    cpu_run(v_cpu *cpu, int cycles);
 
 /* MAME facade */
 

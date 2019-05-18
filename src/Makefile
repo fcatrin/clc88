@@ -2,7 +2,7 @@ FRONTEND = linux
 
 CC = gcc
 
-DEFS = -DHAVE_CONFIG_H -DINLINE=inline -DTRACEX
+DEFS = -DHAVE_CONFIG_H -DINLINE=inline -DTRACE -DMAME_DEBUG
 LIBS = -lm -lz 
 
 TARGET_BASE_NAME = clc88
@@ -23,12 +23,15 @@ OBJS = $(addprefix $(OBJDIR)/, \
 	timer.o \
 	utils.o \
 	cpuexec.o \
+	debug.o \
 	sound/filter.o \
 	sound/mixer.o \
 	sound/streams.o \
 	sound/sound_interface.o \
 	cpu/z80/z80.o \
+	cpu/z80/z80dasm.o \
 	cpu/m6502/m6502.o \
+	cpu/m6502/6502dasm.o \
 	sound/pokey/pokey.o \
 	video/screen.o \
 	video/chroni.o \

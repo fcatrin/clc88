@@ -23,8 +23,11 @@
 #include <string.h>
 #ifdef	MAME_DEBUG
 #include "driver.h"
-#include "mamedbg.h"
 #include "z80.h"
+
+#include "../../debug.h"
+#include "../../emu.h"
+#include "../cpu_interface.h"
 
 enum e_mnemonics {
 	zADC  ,zADD  ,zAND	,zBIT  ,zCALL ,zCCF  ,zCP	,zCPD  ,

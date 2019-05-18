@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "emu.h"
 #include "bus.h"
 #include "cpu/m6502/m6502.h"
@@ -14,17 +15,21 @@ UINT16 cpu_pc;
 v_cpu v_6502;
 v_cpu v_z80;
 
-static v_cpu cpu_6502_init() {
+int cpu_6502_irq_callback(int irq_line);
+
+static v_cpu* cpu_6502_init() {
+	v_6502.exec_break = FALSE;
 	m6502_init();
-	return v_6502;
+	m6502_set_irq_callback(cpu_6502_irq_callback);
+	return &v_6502;
 }
 
-static v_cpu cpu_z80_init() {
+static v_cpu* cpu_z80_init() {
 	z80_init();
-	return v_z80;
+	return &v_z80;
 }
 
-v_cpu cpu_init(enum CpuType cpuType) {
+v_cpu* cpu_init(enum CpuType cpuType) {
 	switch (cpuType) {
 	case CPU_M6502:
 		return cpu_6502_init();
@@ -38,6 +43,7 @@ static void cpu_6502_reset() {
 }
 
 static int cpu_6502_run(int cycles) {
+	if (v_6502.exec_break) return 0;
 	return m6502_execute(cycles);
 }
 
@@ -90,13 +96,34 @@ void  cpu_writeport16(UINT16 addr, UINT8 value) {
 	bus_write16(addr, value);
 }
 
+int cpu_6502_irq_callback(int irq_line) {
+	LOGV(LOGTAG, "cpu_6502_irq_callback %04X => %02X", cpu_pc, cpu_readop(cpu_pc));
+	exit(0);
+	if (cpu_readop(cpu_pc) == 0x00) { // BRK
+		LOGV(LOGTAG, "cpu_6502_irq_callback BRK");
+		exit(0);
+		v_6502.exec_break = TRUE;
+		return TRUE;
+	}
+	return FALSE;
+}
+
+
 int   cpu_getactivecpu() {
 	return 1;
 }
 
+char dasm[200];
 void  change_pc16(UINT16 addr) {
+	if (cpu_pc == addr) return;
 	cpu_pc = addr;
-	LOGV(LOGTAG, "PC %04X", addr);
+	v_6502.exec_break = cpu_readop(cpu_pc) == 0x00;
+#ifdef MAME_DEBUG
+	Dasm6502(dasm, addr);
+	LOGV(LOGTAG, "PC %04X %s", addr, dasm);
+#else
+	LOGV(LOGTAG, "PC %04X %02X", addr, cpu_readop(cpu_pc));
+#endif
 }
 
 UINT16 activecpu_get_pc() {

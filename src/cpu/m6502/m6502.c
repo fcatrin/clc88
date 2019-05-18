@@ -29,7 +29,10 @@
 #include "ops02.h"
 #include "ill02.h"
 #include "../../emu.h"
+#include "../../trace.h"
 #include "../cpu_interface.h"
+
+#define LOGTAG "6502"
 
 #define M6502_NMI_VEC	0xfffa
 #define M6502_RST_VEC	0xfffc
@@ -303,6 +306,7 @@ static INLINE void m6502_take_irq(void)
 		PCH = RDMEM(EAD+1);
 		LOG(("M6502#%d takes IRQ ($%04x)\n", cpu_getactivecpu(), PCD));
 		/* call back the cpuintrf to let it clear the line */
+		LOGV(LOGTAG, "irq callback is valid:%s", BOOLSTR(m6502.irq_callback));
 		if (m6502.irq_callback) (*m6502.irq_callback)(0);
 		change_pc16(PCD);
 	}

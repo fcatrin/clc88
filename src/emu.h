@@ -31,6 +31,8 @@ typedef union {
 #define TRUE  1
 #define FALSE 0
 
+#define BOOLSTR(x) ((x) ? "true" : "false")
+
 typedef UINT8 bool;
 
 /*

@@ -8,7 +8,18 @@ set_video_mode_4:
    mwa #video_mode_params_4 COPY_SRC_ADDR
    ldy #6
    jsr set_video_mode_bitmap
-   jmp set_video_mode_dl
+   jsr set_video_mode_dl
+   
+   mwa #VRAM_PAL_ATARI RAM_TO_VRAM
+   jsr ram2vram
+   mwa VRAM_TO_RAM VPALETTE
+   
+   lda #1
+   sta CHRONI_ENABLED
+   lda VSTATUS
+   ora #VSTATUS_EN_INTS
+   sta VSTATUS
+   rts
    
 set_video_mode_bitmap:
    tya
@@ -82,9 +93,9 @@ vmode_set_lines:
    adw SUBPAL_START ROS1 VRAM_FREE
 
 ; set values on LMS command
-   mwa TEXT_START   VRAM_SCREEN+5
-   mwa ATTRIB_START VRAM_SCREEN+7
-   mwa SUBPAL_START VRAM_SCREEN+9
+   mwa TEXT_START   VRAM_SCREEN+4
+   mwa ATTRIB_START VRAM_SCREEN+6
+   mwa SUBPAL_START VRAM_SCREEN+8
    
    mwa TEXT_START VRAM_TO_RAM
    mwa SCREEN_SIZE COPY_SIZE
@@ -100,14 +111,14 @@ vmode_set_lines:
    jmp vram_copy
    
 vram_clear:
-   jsr RAM_TO_VRAM
+   jsr ram2vram
    mwa VRAM_TO_RAM COPY_DST_ADDR
    mva VRAM_PAGE   VPAGE
    lda #0
    jmp vram_set_bytes
    
 vram_copy:
-   jsr RAM_TO_VRAM
+   jsr ram2vram
    mwa VRAM_TO_RAM COPY_DST_ADDR
    mva VRAM_PAGE   VPAGE
    jmp ram_vram_copy
@@ -144,7 +155,7 @@ vram_set_bytes_next:
    dec COPY_SIZE
    bne vram_set_bytes_loop
    dec COPY_SIZE+1
-   ldx COPY_SIZE
+   ldx COPY_SIZE+1
    cpx #$ff
    bne vram_set_bytes_loop
    
@@ -243,7 +254,7 @@ vram2ram:
    sta VRAM_TO_RAM
    rol VRAM_TO_RAM+1
    
-   sbw VRAM_TO_RAM #VRAM RAM_TO_VRAM
+   adw VRAM_TO_RAM #VRAM RAM_TO_VRAM
    rts
 
 ; in: a = low byte

@@ -24,14 +24,14 @@ int main(int argc, char *argv[]) {
 	//utils_load_xex("../asm/test/graphics_3.xex");
 	utils_load_xex("../asm/test/mode_4.xex");
 
-	v_cpu cpu;
+	v_cpu *cpu;
 
 	cpu = cpu_init(CPU_M6502);
 	cpuexec_init(cpu);
 
 	chroni_init();
 	int i=0;
-	while(frontend_running() && i<4) {
+	while(frontend_running() && i<4 && !cpu->exec_break) {
 		chroni_run_frame();
 		screen_update();
 		frontend_process_events();
@@ -41,6 +41,7 @@ int main(int argc, char *argv[]) {
 	utils_dump_mem(0x0000, 0x0400);
 	utils_dump_mem(0x2000, 0x0400);
 	utils_dump_mem(0xA800, 0X0400);
+	// utils_dump_mem(0xF000, 0X0FFF);
 	frontend_done();
 
 	return 0;

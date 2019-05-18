@@ -27,9 +27,9 @@ TEXT_SCREEN_DLIST_SIZE = 32
 	txa
 	asl
 	tax
-	lda OS_VECTORS, x
+	lda os_vector_table, x
 	sta OS_VECTOR
-	lda OS_VECTORS+1,x
+	lda os_vector_table+1,x
 	sta OS_VECTOR+1
 	pla
 	jmp (OS_VECTOR)
@@ -46,14 +46,8 @@ copy_vector:
    lda interrupt_vectors, x
    sta NMI_VECTOR, x
    inx
-   cpx #8
+   cpx #$08
    bne copy_vector
-
-	lda #<copy_params_vectors
-	sta COPY_PARAMS
-	lda #>copy_params_vectors
-	sta COPY_PARAMS+1
-	jsr copy_block_with_params
 	
 	lda #<copy_params_charset
 	sta COPY_PARAMS
@@ -378,9 +372,8 @@ os_vector_table
 	.word copy_block
 	.word copy_block_with_params
 	.word mem_set_bytes
-
-copy_params_vectors:
-	.word os_vector_table, OS_VECTORS, 4*2
+	.word ram2vram
+	.word vram2ram
 
 copy_params_charset:
 	.word charset, VRAM_CHARSET, CHARSET_SIZE

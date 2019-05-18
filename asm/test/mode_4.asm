@@ -9,12 +9,18 @@
 	sta $F9
 	sta VCOLOR0
 	
+	mwa TEXT_START VRAM_TO_RAM
+	ldx #OS_VRAM_TO_RAM
+	jsr OS_CALL
+	lda VRAM_PAGE
+	sta VPAGE
+	
 	ldy #0
 copy:
 	lda message, y
 	cmp #255
 	beq stop
-	sta (TEXT_START), y
+	sta (RAM_TO_VRAM), y
 	iny
 	bne copy
 stop:

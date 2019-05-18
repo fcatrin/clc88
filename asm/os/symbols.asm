@@ -6,8 +6,6 @@ TEXT_START    = $08
 ATTRIB_START  = $0A
 SUBPAL_START  = $0C
 VRAM_FREE     = $0E
-DLIST         = $10
-FRAMECOUNT    = $12
 
 NMI_VECTOR    = $10
 IRQ_VECTOR    = $12
@@ -16,7 +14,9 @@ HBLANK_VECTOR = $18
 
 RAM_TO_VRAM   = $20 ; cpu address
 VRAM_TO_RAM   = $22 ; vram address / 2
-VRAM_PAGE     = $24 ; vram address + page
+VRAM_PAGE     = $24 ; vram address page
+DLIST         = $30
+FRAMECOUNT    = $32
 
 OS_VECTOR     = $7E
 OS_VECTORS    = $80
@@ -50,6 +50,8 @@ OS_SET_VIDEO_MODE    = 0
 OS_COPY_BLOCK        = 1
 OS_COPY_BLOCK_PARAMS = 2
 OS_MEM_SET_BYTES     = 3
+OS_RAM_TO_VRAM       = 4
+OS_VRAM_TO_RAM       = 5
 
 OS_CALL  = $F000
 
