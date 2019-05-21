@@ -36,17 +36,28 @@
 	lda VRAM_PAGE
 	sta VPAGE
 	
+	ldx #20
+copy_line	
 	ldy #0
 copy:
 	lda message, y
-	cmp #255
-	beq stop
 	sta (RAM_TO_VRAM), y
 	iny
+	cpy #32
 	bne copy
+	
+	adw RAM_TO_VRAM #160
+	dex
+	bne copy_line
 stop:
 	jmp stop
 	
 message:
-	.byte 40, 101, 108, 108, 111, 0, 55, 111, 114, 108, 100, 1, 1, 1, 1, 255
-
+	.byte $11, $11, $11, $11
+	.byte $22, $22, $22, $22
+	.byte $33, $33, $33, $33
+	.byte $44, $44, $44, $44
+	.byte $55, $55, $55, $55
+	.byte $66, $66, $66, $66
+	.byte $77, $77, $77, $77
+   .byte $88, $88, $88, $88

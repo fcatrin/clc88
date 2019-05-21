@@ -13,9 +13,9 @@
 #define CPU_SCANLINE() CPU_RUN(144-8);CPU_RESUME();CPU_RUN(8)
 #define CPU_XPOS() if ((xpos++ & 3) == 0) CPU_GO(1)
 
-#define VRAM_WORD(addr) (WORD(vram[addr], vram[addr+1]))
+#define VRAM_WORD(addr) (WORD(VRAM_DATA(addr), VRAM_DATA(addr+1)))
 #define VRAM_PTR(addr) (VRAM_WORD(addr) << 1)
-
+#define VRAM_DATA(addr) (vram[(addr) & 0x1FFFF])
 
 #define VRAM_MAX 128*1024
 
@@ -67,11 +67,11 @@ void chroni_reset() {
 
 void chroni_vram_write(UINT16 index, UINT8 value) {
 	LOGV(LOGTAG, "vram write %04X = %02X", index, value);
-	vram[PAGE_BASE(page) + index] = value;
+	VRAM_DATA(PAGE_BASE(page) + index) = value;
 }
 
 UINT8 chroni_vram_read(UINT16 index) {
-	return vram[PAGE_BASE(page) + index];
+	return VRAM_DATA(PAGE_BASE(page) + index);
 }
 
 static void reg_addr_low(UINT32 *reg, UINT8 value) {
@@ -170,7 +170,7 @@ UINT8 chroni_register_read(UINT8 index) {
 }
 
 static inline void set_pixel_color(UINT8 color) {
-	UINT16 pixel_color_rgb565 = vram[palette + color*2 + 0] + (vram[palette + color*2 + 1] << 8);
+	UINT16 pixel_color_rgb565 = VRAM_WORD(palette + color*2 + 0);
 
 	pixel_color_r = rgb565[pixel_color_rgb565*3 + 0];
 	pixel_color_g = rgb565[pixel_color_rgb565*3 + 1];
@@ -208,7 +208,7 @@ static void do_scan_start() {
 		sprite_scanlines[s] = SPRITE_SCAN_INVALID; // asume invalid sprite for this scan
 		if (!(status & STATUS_ENABLE_SPRITES)) continue;
 
-		UINT16 sprite_attrib = vram[sprites + SPRITES_ATTR + s*2];
+		UINT16 sprite_attrib = VRAM_DATA(sprites + SPRITES_ATTR + s*2);
 		if ((sprite_attrib & SPRITE_ATTR_ENABLED) == 0) continue;
 
 		int sprite_y = VRAM_WORD(sprites + SPRITES_Y + s*2) - 16;
@@ -242,18 +242,18 @@ static inline PAIR do_sprites() {
 
 		int sprite_pointer = VRAM_PTR(sprites + s*2);
 
-		sprite_data = vram[sprite_pointer
+		sprite_data = VRAM_DATA(sprite_pointer
 				+ (sprite_scanline << 3)
-				+ (sprite_pixel_x  >> 1)];
+				+ (sprite_pixel_x  >> 1));
 		sprite_data = (sprite_pixel_x & 1) == 0 ?
 				sprite_data >> 4 :
 				sprite_data & 0xF;
 		if (sprite_data == 0) continue;
 
-		UINT16 sprite_attrib = vram[sprites + SPRITES_ATTR + s*2];
+		UINT16 sprite_attrib = VRAM_DATA(sprites + SPRITES_ATTR + s*2);
 		int sprite_palette = sprite_attrib & 0x0F;
 
-		dot_color = vram[sprites + SPRITES_COLOR + sprite_palette*16 + sprite_data];
+		dot_color = VRAM_DATA(sprites + SPRITES_COLOR + sprite_palette*16 + sprite_data);
 		break;
 	}
 	PAIR result;
@@ -313,8 +313,8 @@ static void do_scan_text(UINT8 line) {
 	int char_offset = 0;
 	for(int i=0; i<SCREEN_XRES; i++) {
 		if (i % 8 == 0) {
-			UINT8 c = vram[lms + char_offset];
-			row = vram[charset + c*8 + line];
+			UINT8 c = VRAM_DATA(lms + char_offset);
+			row = VRAM_DATA(charset + c*8 + line);
 			char_offset++;
 		}
 
@@ -339,12 +339,12 @@ static void do_scan_text_attribs(UINT8 line) {
 	int char_offset = 0;
 	for(int i=0; i<SCREEN_XRES; i++) {
 		if (i % 8 == 0) {
-			UINT8 attrib = vram[attribs + char_offset];
+			UINT8 attrib = VRAM_DATA(attribs + char_offset);
 			foreground = (attrib & 0xF0) >> 4;
 			background = attrib & 0x0F;
 
-			UINT8 c = vram[lms + char_offset];
-			row = vram[charset + c*8 + line];
+			UINT8 c = VRAM_DATA(lms + char_offset);
+			row = VRAM_DATA(charset + c*8 + line);
 			char_offset++;
 		}
 
@@ -370,12 +370,12 @@ static void do_scan_text_attribs_double(UINT8 line) {
 	bool first = TRUE;
 	for(int i=0; i<SCREEN_XRES; i++) {
 		if (i % 0x10 == 0) {
-			UINT8 attrib = vram[attribs + char_offset];
+			UINT8 attrib = VRAM_DATA(attribs + char_offset);
 			foreground = (attrib & 0xF0) >> 4;
 			background = attrib & 0x0F;
 
-			UINT8 c = vram[lms + char_offset];
-			row = vram[charset + c*8 + line];
+			UINT8 c = VRAM_DATA(lms + char_offset);
+			row = VRAM_DATA(charset + c*8 + line);
 			char_offset++;
 		}
 
@@ -403,8 +403,8 @@ static void do_scan_pixels_wide_4color() {
 	UINT16 pixel_data_offset = 0;
 	for(int i=0; i<SCREEN_XRES; i++) {
 		if ((i & 1) == 0) {
-			palette_data = vram[attribs + pixel_data_offset];
-			pixel_data = vram[lms + pixel_data_offset];
+			palette_data = VRAM_DATA(attribs + pixel_data_offset);
+			pixel_data = VRAM_DATA(lms + pixel_data_offset);
 			pixel_data_offset++;
 
 			pixel = pixel_data & 0x0F;
@@ -414,7 +414,7 @@ static void do_scan_pixels_wide_4color() {
 			palette = palette_data >> 2;
 		}
 
-		UINT8 color = vram[subpals + palette + pixel];
+		UINT8 color = VRAM_DATA(subpals + palette + pixel);
 
 		put_pixel(offset, color);
 	}
@@ -440,7 +440,7 @@ static void do_screen() {
 	UINT8 instruction;
 	int dlpos = 0;
 	while(ypos < screen_height && (status & STATUS_ENABLE_CHRONI)) {
-		instruction = vram[dl + dlpos];
+		instruction = VRAM_DATA(dl + dlpos);
 		int scan_post_dli = instruction & 0x80;
 		LOGV(LOGTAG, "DL instruction %05X = %02X", dl + dlpos, instruction);
 		dlpos++;
@@ -541,8 +541,8 @@ static void do_screen() {
 			ypos++;
 			if (ypos == screen_height) return;
 
-			lms += 80;
-			attribs += 80;
+			lms += 160;
+			attribs += 160;
 		} else if (instruction == 0x41) {
 			break;
 		}

@@ -34,7 +34,9 @@ UINT8 bus_read16(UINT16 addr) {
 	return retvalue;
 }
 void  bus_write16(UINT16 addr, UINT8 value) {
-	LOGV(LOGTAG, "bus write %04X = %02X", addr, value);
+	if (addr <0xA000 || addr >= 0xD000) {
+		LOGV(LOGTAG, "bus write %04X = %02X", addr, value);
+	}
 	if (addr >= CHRONI_START && addr <= CHRONI_END) {
 		chroni_register_write(addr - CHRONI_START, value);
 	} else if (addr >= CHRONI_MEM_START && addr <= CHRONI_MEM_END) {

@@ -1,8 +1,8 @@
 
 VMODE_4_LINES       = 192
-VMODE_4_SCREEN_SIZE = 80*VMODE_4_LINES
-VMODE_4_ATTRIB_SIZE = 80*VMODE_4_LINES
-VMODE_4_SUBPAL_SIZE = 16*4
+VMODE_4_SCREEN_SIZE = 160*VMODE_4_LINES
+VMODE_4_ATTRIB_SIZE = 160*VMODE_4_LINES
+VMODE_4_SUBPAL_SIZE = 16*16
 
 set_video_mode_4:
    mwa #video_mode_params_4 COPY_SRC_ADDR
@@ -111,10 +111,10 @@ vmode_set_lines:
    jmp vram_copy
    
 vram_clear:
-   jsr ram2vram
+   jsr vram2ram
    mwa VRAM_TO_RAM COPY_DST_ADDR
    mva VRAM_PAGE   VPAGE
-   lda #0
+   lda #$00
    jmp vram_set_bytes
    
 vram_copy:
@@ -142,9 +142,7 @@ vram_set_bytes_loop:
    bne vram_set_bytes_next_page
    
    ldx #$a0
-   lda VPAGE
-   adc #$10  ; next 16K
-   and #$7F
+   inc VPAGE
    sta VPAGE
    lda R1    ; restore byte to be written
    
