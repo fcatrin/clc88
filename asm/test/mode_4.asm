@@ -9,6 +9,27 @@
 	sta $F9
 	sta VCOLOR0
 	
+	mwa SUBPAL_START VRAM_TO_RAM
+	ldx #OS_VRAM_TO_RAM
+	jsr OS_CALL
+	lda VRAM_PAGE
+	sta VPAGE
+	
+	ldy #0
+   lda #$9A
+	sta (RAM_TO_VRAM), y
+	iny
+	lda #$38
+	sta (RAM_TO_VRAM), y
+   iny
+   lda #$C8
+   sta (RAM_TO_VRAM), y
+   iny
+   lda #$4C
+   sta (RAM_TO_VRAM), y
+	
+
+	
 	mwa TEXT_START VRAM_TO_RAM
 	ldx #OS_VRAM_TO_RAM
 	jsr OS_CALL

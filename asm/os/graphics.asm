@@ -74,20 +74,20 @@ vmode_set_lines:
    
    mwa VRAM_TO_RAM TEXT_START
    
-   lda SCREEN_SIZE+1
-   ldx SCREEN_SIZE
+   lda SCREEN_SIZE
+   ldx SCREEN_SIZE+1
    jsr word_div2
    
    adw TEXT_START   ROS1 ATTRIB_START
    
-   lda ATTRIB_SIZE+1
-   ldx ATTRIB_SIZE
+   lda ATTRIB_SIZE
+   ldx ATTRIB_SIZE+1
    jsr word_div2
    
    adw ATTRIB_START ROS1 SUBPAL_START
 
-   lda SUBPAL_SIZE+1
-   ldx SUBPAL_SIZE
+   lda SUBPAL_SIZE
+   ldx SUBPAL_SIZE+1
    jsr word_div2
    
    adw SUBPAL_START ROS1 VRAM_FREE

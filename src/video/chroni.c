@@ -389,7 +389,7 @@ static void do_scan_text_attribs_double(UINT8 line) {
 }
 
 static void do_scan_pixels_wide_4color() {
-	LOGV(LOGTAG, "do_scan_pixels_wide_4color line");
+	// LOGV(LOGTAG, "do_scan_pixels_wide_4color line");
 	do_scan_start();
 
 	int offset = scanline * screen_pitch;
