@@ -6,10 +6,13 @@
 enum CpuType {CPU_M6502, CPU_Z80};
 
 typedef struct {
+	enum CpuType cpuType;
 	void (*reset)();
 	int  (*run)(int cycles);
 	void (*irq)(int do_interrupt);
 	void (*nmi)(int do_interrupt);
+	void (*set_reg)(int regnum, unsigned val);
+	unsigned (*get_reg)(int regnum);
 	bool exec_break;
 } v_cpu;
 

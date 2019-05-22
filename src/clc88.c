@@ -8,7 +8,9 @@
 #include "machine.h"
 #include "video/screen.h"
 #include "utils.h"
+#include "monitor.h"
 #include "video/chroni.h"
+
 
 int main(int argc, char *argv[]) {
 	if (frontend_init(argc, argv)) return 1;
@@ -31,7 +33,8 @@ int main(int argc, char *argv[]) {
 
 	chroni_init();
 	int i=0;
-	while(frontend_running() && i<4 && !cpu->exec_break) {
+	monitor_enable(cpu);
+	while(frontend_running() && i<4) {
 		chroni_run_frame();
 		screen_update();
 		frontend_process_events();

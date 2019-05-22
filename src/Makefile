@@ -23,6 +23,7 @@ OBJS = $(addprefix $(OBJDIR)/, \
 	timer.o \
 	utils.o \
 	cpuexec.o \
+	monitor.o \
 	debug.o \
 	trace.o \
 	sound/filter.o \

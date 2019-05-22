@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "emu.h"
 #include "bus.h"
+#include "monitor.h"
 #include "cpu/m6502/m6502.h"
 #include "cpu/z80/z80.h"
 #include "cpu/cpu_interface.h"
@@ -46,7 +47,12 @@ static void cpu_6502_reset() {
 }
 
 static int cpu_6502_run(int cycles) {
-	if (v_6502.exec_break) exit(0);
+	if (monitor_is_enabled() || v_6502.exec_break) {
+		printf("monitor is enabled: %s, break is :%s\n", BOOLSTR(monitor_is_enabled()),
+				BOOLSTR(v_6502.exec_break));
+
+		monitor_enter();
+	}
 	return m6502_execute(cycles);
 }
 
@@ -58,6 +64,14 @@ static void cpu_6502_nmi(int do_interrupt) {
 	m6502_set_irq_line(IRQ_LINE_NMI, do_interrupt);
 }
 
+static unsigned cpu_6502_get_reg(int regnum) {
+	return m6502_get_reg(regnum);
+}
+
+static void cpu_6502_set_reg(int regnum, unsigned val) {
+	return m6502_set_reg(regnum, val);
+}
+
 static void cpu_z80_reset() {
 	z80_reset(NULL);
 }
@@ -67,15 +81,21 @@ static int cpu_z80_run(int cycles) {
 }
 
 v_cpu v_6502 = {
+		CPU_M6502,
 		cpu_6502_reset,
 		cpu_6502_run,
 		cpu_6502_irq,
-		cpu_6502_nmi
+		cpu_6502_nmi,
+		cpu_6502_set_reg,
+		cpu_6502_get_reg
 };
 
 v_cpu v_z80 = {
+		CPU_Z80,
 		cpu_z80_reset,
 		cpu_z80_run,
+		NULL,
+		NULL,
 		NULL,
 		NULL
 };
@@ -109,9 +129,10 @@ int   cpu_getactivecpu() {
 
 char dasm[200];
 void  change_pc16(UINT16 addr) {
+	v_6502.exec_break = cpu_readop(cpu_pc) == 0x00;
+
 	if (cpu_pc == addr) return;
 	cpu_pc = addr;
-	v_6502.exec_break = cpu_readop(cpu_pc) == 0x00;
 
 	//if (addr == 0xF2B2) trace_enabled = TRUE;
 	//if (addr == 0xF2D4) trace_enabled = FALSE;
