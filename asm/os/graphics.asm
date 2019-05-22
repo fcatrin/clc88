@@ -10,6 +10,8 @@ set_video_mode_4:
    jsr set_video_mode_bitmap
    jsr set_video_mode_dl
    
+   lda #0
+   sta VRAM_PAGE
    mwa #VRAM_PAL_ATARI RAM_TO_VRAM
    jsr ram2vram
    mwa VRAM_TO_RAM VPALETTE
@@ -52,7 +54,6 @@ vmode_set_lines:
    inx
    cpx SCREEN_LINES
    bne vmode_set_lines
-   
    lda #$41
    sta VRAM_SCREEN+7, x ; End of Screen
    
@@ -99,6 +100,7 @@ vmode_set_lines:
    
    mwa TEXT_START VRAM_TO_RAM
    mwa SCREEN_SIZE COPY_SIZE
+   
    jsr vram_clear
    
    mwa ATTRIB_START VRAM_TO_RAM
@@ -112,7 +114,7 @@ vmode_set_lines:
    
 vram_clear:
    jsr vram2ram
-   mwa VRAM_TO_RAM COPY_DST_ADDR
+   mwa RAM_TO_VRAM COPY_DST_ADDR
    mva VRAM_PAGE   VPAGE
    lda #$00
    jmp vram_set_bytes
@@ -143,7 +145,6 @@ vram_set_bytes_loop:
    
    ldx #$a0
    inc VPAGE
-   sta VPAGE
    lda R1    ; restore byte to be written
    
 vram_set_bytes_next_page:

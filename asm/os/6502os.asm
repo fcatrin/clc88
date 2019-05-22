@@ -356,6 +356,8 @@ create_dl_mode_1:
 	
 	
 set_video_mode_dl:
+   lda #0
+   sta VPAGE
 	lda #<VRAM_SCREEN
 	sta VRDLIST
 	sta DLIST
