@@ -13,6 +13,8 @@ typedef struct {
 	void (*nmi)(int do_interrupt);
 	void (*set_reg)(int regnum, unsigned val);
 	unsigned (*get_reg)(int regnum);
+	unsigned (*get_pc)();
+	unsigned (*disasm)(unsigned addr, char *dst);
 	bool exec_break;
 } v_cpu;
 

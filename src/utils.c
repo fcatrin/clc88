@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <ctype.h>
 #include <string.h>
 #include <errno.h>
 #include "emu.h"
@@ -47,4 +48,22 @@ void utils_dump_mem(UINT16 offset, UINT16 size) {
 		address+=16;
 	} while(address < end && address != 0x0000);
 
+}
+
+char *utils_str2lower(const char *src) {
+	static char buffer[127+1];
+	char *dst = buffer;
+	while( *src )
+		*dst++ = tolower(*src++);
+	*dst = '\0';
+	return buffer;
+}
+
+char *utils_str2upper( const char *src) {
+	static char buffer[127+1];
+	char *dst = buffer;
+	while( *src )
+		*dst++ = toupper(*src++);
+	*dst = '\0';
+	return buffer;
 }

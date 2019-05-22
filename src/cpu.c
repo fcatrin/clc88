@@ -72,6 +72,14 @@ static void cpu_6502_set_reg(int regnum, unsigned val) {
 	return m6502_set_reg(regnum, val);
 }
 
+static unsigned cpu_6502_disasm(unsigned addr, char *dst) {
+	return addr + Dasm6502(dst, addr);
+}
+
+static unsigned cpu_6502_get_pc() {
+	return cpu_pc;
+}
+
 static void cpu_z80_reset() {
 	z80_reset(NULL);
 }
@@ -87,13 +95,17 @@ v_cpu v_6502 = {
 		cpu_6502_irq,
 		cpu_6502_nmi,
 		cpu_6502_set_reg,
-		cpu_6502_get_reg
+		cpu_6502_get_reg,
+		cpu_6502_get_pc,
+		cpu_6502_disasm
 };
 
 v_cpu v_z80 = {
 		CPU_Z80,
 		cpu_z80_reset,
 		cpu_z80_run,
+		NULL,
+		NULL,
 		NULL,
 		NULL,
 		NULL,
