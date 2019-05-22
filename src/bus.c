@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include "emu.h"
 #include "memory.h"
-#include "trace.h"
 #include "video/chroni.h"
 
 /*
@@ -20,6 +19,10 @@
  */
 
 #define LOGTAG "BUS"
+#ifdef TRACE_BUS
+#define TRACE
+#endif
+#include "trace.h"
 
 UINT8 bus_read16(UINT16 addr) {
 	UINT8 retvalue = 0;

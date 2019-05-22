@@ -6,9 +6,12 @@
 #include "cpu/z80/z80.h"
 #include "cpu/cpu_interface.h"
 #include "cpu.h"
-#include "trace.h"
 
 #define LOGTAG "CPU"
+#ifdef TRACE_CPU
+#define TRACE
+#endif
+#include "trace.h"
 
 UINT16 cpu_pc;
 
@@ -43,7 +46,7 @@ static void cpu_6502_reset() {
 }
 
 static int cpu_6502_run(int cycles) {
-	if (v_6502.exec_break) return 0;
+	if (v_6502.exec_break) exit(0);
 	return m6502_execute(cycles);
 }
 
@@ -97,17 +100,8 @@ void  cpu_writeport16(UINT16 addr, UINT8 value) {
 }
 
 int cpu_6502_irq_callback(int irq_line) {
-	LOGV(LOGTAG, "cpu_6502_irq_callback %04X => %02X", cpu_pc, cpu_readop(cpu_pc));
-	exit(0);
-	if (cpu_readop(cpu_pc) == 0x00) { // BRK
-		LOGV(LOGTAG, "cpu_6502_irq_callback BRK");
-		exit(0);
-		v_6502.exec_break = TRUE;
-		return TRUE;
-	}
 	return FALSE;
 }
-
 
 int   cpu_getactivecpu() {
 	return 1;
@@ -118,12 +112,22 @@ void  change_pc16(UINT16 addr) {
 	if (cpu_pc == addr) return;
 	cpu_pc = addr;
 	v_6502.exec_break = cpu_readop(cpu_pc) == 0x00;
+
+	//if (addr == 0xF2B2) trace_enabled = TRUE;
+	//if (addr == 0xF2D4) trace_enabled = FALSE;
+
+	if (trace_enabled) {
+
 #ifdef MAME_DEBUG
+	trace_enabled = FALSE;
 	Dasm6502(dasm, addr);
+	trace_enabled = TRUE;
 	LOGV(LOGTAG, "PC %04X %s", addr, dasm);
 #else
 	LOGV(LOGTAG, "PC %04X %02X", addr, cpu_readop(cpu_pc));
 #endif
+
+	}
 }
 
 UINT16 activecpu_get_pc() {

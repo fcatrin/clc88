@@ -317,12 +317,11 @@ int m6502_execute(int cycles)
 {
 	m6502_ICount = cycles;
 
-	change_pc16(PCD);
-
 	do
 	{
 		UINT8 op;
 		PPC = PCD;
+		change_pc16(PCD);
 
 		/* CALL_MAME_DEBUG; */
 

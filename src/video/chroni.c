@@ -4,10 +4,13 @@
 #include "cpuexec.h"
 #include "screen.h"
 #include "chroni.h"
-#include "trace.h"
-
 
 #define LOGTAG "CHRONI"
+#ifdef TRACE_CHRONI
+#define TRACE
+#endif
+#include "trace.h"
+
 
 #define CPU_RUN(X) for(int nx=0; nx<X; nx++) CPU_GO(1)
 #define CPU_SCANLINE() CPU_RUN(144-8);CPU_RESUME();CPU_RUN(8)
@@ -163,6 +166,7 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 
 UINT8 chroni_register_read(UINT8 index) {
 	switch(index) {
+	case 6: return page & 0x07;
 	case 7: return ypos >> 1;
 	case 9: return status;
 	}
@@ -389,7 +393,7 @@ static void do_scan_text_attribs_double(UINT8 line) {
 }
 
 static void do_scan_pixels_wide_4color() {
-	// LOGV(LOGTAG, "do_scan_pixels_wide_4color line");
+	LOGV(LOGTAG, "do_scan_pixels_wide_4color line");
 	do_scan_start();
 
 	int offset = scanline * screen_pitch;
@@ -403,6 +407,8 @@ static void do_scan_pixels_wide_4color() {
 	UINT16 pixel_data_offset = 0;
 	for(int i=0; i<SCREEN_XRES; i++) {
 		if ((i & 1) == 0) {
+			LOGV(LOGTAG, "vram offset: %05X pixel:%05X attrib:%05X",
+					pixel_data_offset, lms+pixel_data_offset, attribs+pixel_data_offset);
 			palette_data = VRAM_DATA(attribs + pixel_data_offset);
 			pixel_data = VRAM_DATA(lms + pixel_data_offset);
 			pixel_data_offset++;
@@ -415,6 +421,8 @@ static void do_scan_pixels_wide_4color() {
 		}
 
 		UINT8 color = VRAM_DATA(subpals + palette + pixel);
+		LOGV(LOGTAG, "vram data subpals:%05X palette:%04X pixel:%02X color:%02X",
+			subpals, palette, pixel, color);
 
 		put_pixel(offset, color);
 	}
@@ -535,6 +543,7 @@ static void do_screen() {
 				dlpos+=2;
 				subpals = VRAM_PTR(dl + dlpos);
 				dlpos+=2;
+				LOGV(LOGTAG, "do_scan_text_attrib lms: %05X attrib: %05X subpals:%05X", lms, attribs, subpals);
 			}
 			do_scan_pixels_wide_4color();
 			scanline++;
