@@ -38,6 +38,12 @@ OBJS = $(addprefix $(OBJDIR)/, \
 	video/chroni.o \
 	)
 
+ASMDIR= ../asm
+XEX = $(addprefix $(ASMDIR)/, \
+	os/6502os.xex \
+	test/mode_4.xex \
+	)
+
 ifeq ($(FRONTEND), linux)
 
 OBJS += $(addprefix $(OBJDIR)/, \
@@ -49,16 +55,21 @@ LIBS += $(shell pkg-config --libs sdl2)
 
 endif
 	
-all: $(FINALTARGET)	
+all: $(FINALTARGET) samples
 
 $(OBJDIR)/%.o: %.c
 	@mkdir -p $(dir $@) 2> /dev/null 
 	$(CC) -c -o $@ $(DEFS) -I. $(CFLAGS) $<
 
+$(ASMDIR)/%.xex: $(ASMDIR)/%.asm
+	mads $< -l -s -o:$@
+
 $(TARGET): $(OBJS)
 	$(CC) -o $@ $(LDFLAGS) $(OBJS) $(LIBS)
 	
-	
+samples: $(XEX)
+
+
 clean:
-	rm $(TARGET) $(OBJS)
+	rm $(TARGET) $(OBJS) $(XEX)
 	
