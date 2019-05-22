@@ -67,3 +67,49 @@ char *utils_str2upper( const char *src) {
 	*dst = '\0';
 	return buffer;
 }
+
+bool utils_starts_with(const char *s, const char *prefix) {
+	if (strlen(s) < strlen(prefix)) return FALSE;
+
+	for(int i=0; i<strlen(prefix); i++) {
+		if (s[i] != prefix[i]) return FALSE;
+	}
+	return TRUE;
+}
+
+static inline bool is_empty_char(char c) {
+	return c == '\t' || c == ' ';
+}
+
+char *utils_ltrim(const char *s) {
+	static char buffer[1024];
+	if (s == NULL) return NULL;
+
+	int i = 0;
+	int d = 0;
+
+	while(is_empty_char(s[i])) i++;
+	while(s[i]) buffer[d++] = s[i++];
+	buffer[d] = 0;
+
+	return buffer;
+}
+
+char *utils_rtrim(const char *s) {
+	static char buffer[1024];
+	if (s == NULL) return NULL;
+
+	int pos = strlen(s)-1;
+	while (pos>=0 && is_empty_char(s[pos])) pos--;
+
+	pos++;
+	for(int i=0; i<pos; i++) {
+		buffer[i] = s[i];
+	}
+	buffer[pos] = 0;
+	return buffer;
+}
+
+char *utils_trim(const char *s) {
+	return utils_rtrim(utils_ltrim(s));
+}

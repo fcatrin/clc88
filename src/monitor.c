@@ -68,8 +68,10 @@ static unsigned disasm(unsigned addr, int lines) {
 	return addr;
 }
 
+#define MAX_LINE_SIZE 1000
+
 void monitor_enter() {
-	char line[1000];
+	char line[MAX_LINE_SIZE+1];
 
 	bool trace_was_enabled = trace_enabled;
 	trace_enabled = FALSE;
@@ -81,7 +83,7 @@ void monitor_enter() {
 
 	while(TRUE) {
 		printf(">");
-		scanf("%s", line);
+		fgets(line, MAX_LINE_SIZE, stdin);
 		if (!strcmp(line, "") || !strcmp(line,"s")) {
 			dump_registers();
 			dump_code(cpu->get_pc());
@@ -90,6 +92,12 @@ void monitor_enter() {
 			dasm_start = disasm(dasm_start, 16);
 		} else if (!strcmp(line, "da")) {
 			dasm_start = disasm(cpu->get_pc(), 16);
+		} else if (utils_starts_with(line, "d ")) {
+			char *saddr = utils_trim(line+1);
+
+			unsigned addr;
+			sscanf(saddr, "%x", &addr);
+			dasm_start = disasm(addr, 16);
 		} else if (!strcmp(line, "g")) {
 			is_enabled = FALSE;
 			break;
