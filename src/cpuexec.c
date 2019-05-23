@@ -2,6 +2,7 @@
 #include "emu.h"
 #include "cpu.h"
 #include "trace.h"
+#include "frontend/frontend.h"
 
 #define LOGTAG "CPUEXEC"
 
@@ -24,7 +25,7 @@ void cpuexec_init(v_cpu *vcpu) {
 }
 
 void cpuexec_run(int cycles_to_add) {
-	if (halt) return;
+	if (halt || !frontend_running()) return;
 
 	cycles_acum += cycles_to_add;
 

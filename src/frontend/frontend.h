@@ -15,4 +15,7 @@ int  frontend_running();
 
 void frontend_sleep(int seconds);
 
+void frontend_process_events_async_start();
+void frontend_process_events_async_stop();
+
 #endif

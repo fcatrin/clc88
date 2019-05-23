@@ -9,6 +9,9 @@ static int screen_width;
 static int screen_height;
 static int closed;
 
+static bool is_dispatch_async = FALSE;
+static SDL_Thread *dispatch_async_thread = NULL;
+
 int  frontend_start_audio_stream(int stereo) {
 	return 0;
 }
@@ -103,3 +106,24 @@ int frontend_running() {
 	return !closed;
 }
 
+static int dispatchEventsThread(void *ptr)
+{
+    while (is_dispatch_async && frontend_running()) {
+    	frontend_process_events();
+		frontend_sleep(1);
+    }
+
+    return 0;
+}
+
+void frontend_process_events_async_start() {
+	if (dispatch_async_thread) return;
+
+	is_dispatch_async = TRUE;
+	dispatch_async_thread = SDL_CreateThread(dispatchEventsThread, "DispatchEventsThread", (void *)NULL);
+}
+
+void frontend_process_events_async_stop() {
+	is_dispatch_async = FALSE;
+	dispatch_async_thread = NULL;
+}

@@ -78,7 +78,7 @@ bool utils_starts_with(const char *s, const char *prefix) {
 }
 
 static inline bool is_empty_char(char c) {
-	return c == '\t' || c == ' ';
+	return c == '\t' || c == ' ' || c=='\n' || c=='\r';
 }
 
 char *utils_ltrim(const char *s) {

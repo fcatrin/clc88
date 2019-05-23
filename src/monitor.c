@@ -6,10 +6,13 @@
 #include "bus.h"
 #include "cpu.h"
 #include "cpu/m6502/m6502.h"
+#include "frontend/frontend.h"
 #include "monitor.h"
 
 bool is_enabled = FALSE;
 v_cpu *cpu;
+
+#define MAX_LINE_SIZE 1000
 
 void monitor_enable(v_cpu *monitor_cpu) {
 	is_enabled = TRUE;
@@ -68,22 +71,26 @@ static unsigned disasm(unsigned addr, int lines) {
 	return addr;
 }
 
-#define MAX_LINE_SIZE 1000
-
 void monitor_enter() {
-	char line[MAX_LINE_SIZE+1];
+	if (!frontend_running()) return;
+
+	char buffer[MAX_LINE_SIZE+1];
 
 	bool trace_was_enabled = trace_enabled;
 	trace_enabled = FALSE;
 
 	unsigned dasm_start = cpu->get_pc();
 
+	frontend_process_events_async_start();
+
 	dump_registers();
 	dump_code(cpu->get_pc());
 
-	while(TRUE) {
+	while(is_enabled && frontend_running()) {
 		printf(">");
-		fgets(line, MAX_LINE_SIZE, stdin);
+		fgets(buffer, MAX_LINE_SIZE, stdin);
+		const char *line = utils_trim(buffer);
+
 		if (!strcmp(line, "") || !strcmp(line,"s")) {
 			dump_registers();
 			dump_code(cpu->get_pc());
@@ -103,6 +110,6 @@ void monitor_enter() {
 			break;
 		}
 	}
-
+	frontend_process_events_async_stop();
 	trace_enabled = trace_was_enabled;
 }
