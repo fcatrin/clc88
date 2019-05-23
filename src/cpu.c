@@ -47,12 +47,6 @@ static void cpu_6502_reset() {
 }
 
 static int cpu_6502_run(int cycles) {
-	if (monitor_is_enabled() || v_6502.exec_break) {
-		printf("monitor is enabled: %s, break is :%s\n", BOOLSTR(monitor_is_enabled()),
-				BOOLSTR(v_6502.exec_break));
-
-		monitor_enter();
-	}
 	return m6502_execute(cycles);
 }
 
@@ -142,12 +136,13 @@ int   cpu_getactivecpu() {
 char dasm[200];
 void  change_pc16(UINT16 addr) {
 	v_6502.exec_break = cpu_readop(cpu_pc) == 0x00;
-
 	if (cpu_pc == addr) return;
 	cpu_pc = addr;
 
-	//if (addr == 0xF2B2) trace_enabled = TRUE;
-	//if (addr == 0xF2D4) trace_enabled = FALSE;
+	if (monitor_is_enabled() || monitor_is_breakpoint(addr) || v_6502.exec_break) {
+		// printf("monitor is enabled: %s, break is :%s\n", BOOLSTR(monitor_is_enabled()),	BOOLSTR(v_6502.exec_break));
+		monitor_enter();
+	}
 
 	if (trace_enabled) {
 

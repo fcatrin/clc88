@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "emu.h"
 #include "trace.h"
@@ -14,9 +15,16 @@ v_cpu *cpu;
 
 #define MAX_LINE_SIZE 1000
 
-void monitor_enable(v_cpu *monitor_cpu) {
-	is_enabled = TRUE;
+#define MAX_BREAKPOINTS 100
+unsigned breakpoints[MAX_BREAKPOINTS];
+unsigned breakpoints_count = 0;
+
+void monitor_init(v_cpu *monitor_cpu) {
 	cpu = monitor_cpu;
+}
+
+void monitor_enable() {
+	is_enabled = TRUE;
 }
 
 void monitor_disable() {
@@ -59,7 +67,9 @@ static unsigned dump_code(unsigned addr) {
 	}
 
 	char code[100];
-	sprintf(code, "%04X %s  %s", addr, multi_byte, utils_str2upper(disasm));
+	sprintf(code, "%04X %s %s  %s", addr,
+			monitor_is_breakpoint(addr) ? "*":" ",
+			multi_byte, utils_str2upper(disasm));
 	printf("%s\n", code);
 	return next_addr;
 }
@@ -79,6 +89,42 @@ static unsigned parse_hex(char *s) {
 	return addr;
 }
 
+static void breakpoint_set(unsigned addr) {
+	if (breakpoints_count == MAX_BREAKPOINTS) return;
+	// ignore if breakpoint exists
+	for(int i=0; i<breakpoints_count; i++) {
+		if (breakpoints[i] == addr) return;
+	}
+	// add breakpoint
+	breakpoints[breakpoints_count++] = addr;
+}
+
+static void breakpoint_del(unsigned index) {
+	if (index >= breakpoints_count) return;
+
+	// remove breakpoint
+	for(int i = index; i<breakpoints_count-1; i++) {
+		breakpoints[i] = breakpoints[i+1];
+	}
+	breakpoints_count--;
+}
+
+void breakpoints_list() {
+	for(int i=0; i<breakpoints_count; i++) {
+		printf("%02d: ", i);
+		dump_code(breakpoints[i]);
+	}
+}
+
+
+bool monitor_is_breakpoint(unsigned addr) {
+	for(int i=0; i<breakpoints_count; i++) {
+		if (breakpoints[i] == addr) return TRUE;
+	}
+
+	return FALSE;
+}
+
 void monitor_enter() {
 	if (!frontend_running()) return;
 
@@ -95,10 +141,13 @@ void monitor_enter() {
 	dump_code(cpu->get_pc());
 
 	unsigned nparts = 0;
-	while(is_enabled && frontend_running()) {
+	bool in_loop = TRUE;
+	while((in_loop || is_enabled) && frontend_running()) {
 		printf(">");
 		fgets(buffer, MAX_LINE_SIZE, stdin);
-		char **parts = utils_split(utils_trim(buffer), &nparts);
+		char *line = strdup(utils_trim(buffer));
+
+		char **parts = utils_split(line, &nparts);
 
 		if (nparts == 0 || !strcmp(parts[0],"s")) {
 			dump_registers();
@@ -115,9 +164,24 @@ void monitor_enter() {
 			dasm_start = disasm(cpu->get_pc(), 16);
 		} else if (!strcmp(parts[0], "g")) {
 			is_enabled = FALSE;
-			break;
+			in_loop = FALSE;
+		} else if (!strcmp(parts[0], "b")) {
+			if (nparts > 2) {
+				unsigned addr = parse_hex(parts[2]);
+				if (!strcmp(parts[1], "set")) {
+					breakpoint_set(addr);
+				} else if (!strcmp(parts[1], "del")) {
+					breakpoint_del(addr);
+				}
+			} else if (nparts > 1) {
+				unsigned addr = parse_hex(parts[1]);
+				breakpoint_set(addr);
+			}
+			breakpoints_list();
 		}
+		free(line);
 	}
 	frontend_process_events_async_stop();
 	trace_enabled = trace_was_enabled;
 }
+

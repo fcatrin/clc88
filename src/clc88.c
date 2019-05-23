@@ -29,11 +29,13 @@ int main(int argc, char *argv[]) {
 	v_cpu *cpu;
 
 	cpu = cpu_init(CPU_M6502);
+	monitor_init(cpu);
+	monitor_enable();
+
 	cpuexec_init(cpu);
 
 	chroni_init();
 	int i=0;
-	monitor_enable(cpu);
 	while(frontend_running() && i<4) {
 		chroni_run_frame();
 		screen_update();
