@@ -113,3 +113,21 @@ char *utils_rtrim(const char *s) {
 char *utils_trim(const char *s) {
 	return utils_rtrim(utils_ltrim(s));
 }
+
+char **utils_split(char *s, unsigned *count) {
+	static char *parts[100];
+	if (s == NULL) {
+		*count = 0;
+		return NULL;
+	}
+
+	char *part;
+	char *str = s;
+	int i = 0;
+	while ((part = strtok(str, " "))) {
+		parts[i++] = part;
+		str = NULL;
+	}
+	*count = i;
+	return parts;
+}

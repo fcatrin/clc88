@@ -71,6 +71,14 @@ static unsigned disasm(unsigned addr, int lines) {
 	return addr;
 }
 
+static unsigned parse_hex(char *s) {
+	char *saddr = utils_trim(s);
+
+	unsigned addr;
+	sscanf(saddr, "%x", &addr);
+	return addr;
+}
+
 void monitor_enter() {
 	if (!frontend_running()) return;
 
@@ -86,26 +94,26 @@ void monitor_enter() {
 	dump_registers();
 	dump_code(cpu->get_pc());
 
+	unsigned nparts = 0;
 	while(is_enabled && frontend_running()) {
 		printf(">");
 		fgets(buffer, MAX_LINE_SIZE, stdin);
-		const char *line = utils_trim(buffer);
+		char **parts = utils_split(utils_trim(buffer), &nparts);
 
-		if (!strcmp(line, "") || !strcmp(line,"s")) {
+		if (nparts == 0 || !strcmp(parts[0],"s")) {
 			dump_registers();
 			dump_code(cpu->get_pc());
 			continue;
-		} else if (!strcmp(line, "d")) {
-			dasm_start = disasm(dasm_start, 16);
-		} else if (!strcmp(line, "da")) {
+		} else if (!strcmp(parts[0], "d")) {
+			if (nparts == 1) {
+				dasm_start = disasm(dasm_start, 16);
+			} else {
+				unsigned addr = parse_hex(parts[1]);
+				dasm_start = disasm(addr, 16);
+			}
+		} else if (!strcmp(parts[0], "da")) {
 			dasm_start = disasm(cpu->get_pc(), 16);
-		} else if (utils_starts_with(line, "d ")) {
-			char *saddr = utils_trim(line+1);
-
-			unsigned addr;
-			sscanf(saddr, "%x", &addr);
-			dasm_start = disasm(addr, 16);
-		} else if (!strcmp(line, "g")) {
+		} else if (!strcmp(parts[0], "g")) {
 			is_enabled = FALSE;
 			break;
 		}

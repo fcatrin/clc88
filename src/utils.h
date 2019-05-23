@@ -13,4 +13,6 @@ char *utils_ltrim(const char *s);
 char *utils_rtrim(const char *s);
 char *utils_trim(const char *s);
 
+char **utils_split(const char *s, unsigned *count);
+
 #endif
