@@ -2,11 +2,11 @@
 #include <stdlib.h>
 #include "emu.h"
 #include "bus.h"
-#include "monitor.h"
 #include "cpu/m6502/m6502.h"
 #include "cpu/z80/z80.h"
 #include "cpu/cpu_interface.h"
 #include "cpu.h"
+#include "monitor.h"
 
 #define LOGTAG "CPU"
 #ifdef TRACE_CPU
@@ -139,7 +139,7 @@ void  change_pc16(UINT16 addr) {
 	if (cpu_pc == addr) return;
 	cpu_pc = addr;
 
-	if (monitor_is_enabled() || monitor_is_breakpoint(addr) || v_6502.exec_break) {
+	if (monitor_is_enabled() || monitor_is_stop(addr) || v_6502.exec_break) {
 		// printf("monitor is enabled: %s, break is :%s\n", BOOLSTR(monitor_is_enabled()),	BOOLSTR(v_6502.exec_break));
 		monitor_enter();
 	}

@@ -11,6 +11,8 @@
 #include "monitor.h"
 
 bool is_enabled = FALSE;
+bool is_step    = FALSE;
+
 v_cpu *cpu;
 
 #define MAX_LINE_SIZE 1000
@@ -116,6 +118,9 @@ void breakpoints_list() {
 	}
 }
 
+bool monitor_is_stop(unsigned addr) {
+	return monitor_is_breakpoint(addr) || is_step;
+}
 
 bool monitor_is_breakpoint(unsigned addr) {
 	for(int i=0; i<breakpoints_count; i++) {
@@ -127,29 +132,31 @@ bool monitor_is_breakpoint(unsigned addr) {
 
 void monitor_enter() {
 	if (!frontend_running()) return;
-
-	char buffer[MAX_LINE_SIZE+1];
+	is_step = FALSE;
+	is_enabled = FALSE;
 
 	bool trace_was_enabled = trace_enabled;
 	trace_enabled = FALSE;
 
-	unsigned dasm_start = cpu->get_pc();
-
 	frontend_process_events_async_start();
+
+	unsigned dasm_start = cpu->get_pc();
 
 	dump_registers();
 	dump_code(cpu->get_pc());
 
+	char buffer[MAX_LINE_SIZE+1];
+
 	unsigned nparts = 0;
 	bool in_loop = TRUE;
-	while((in_loop || is_enabled) && frontend_running()) {
+	while(in_loop && frontend_running()) {
 		printf(">");
 		fgets(buffer, MAX_LINE_SIZE, stdin);
 		char *line = strdup(utils_trim(buffer));
 
 		char **parts = utils_split(line, &nparts);
 
-		if (nparts == 0 || !strcmp(parts[0],"s")) {
+		if (nparts == 0 || !strcmp(parts[0],"r")) {
 			dump_registers();
 			dump_code(cpu->get_pc());
 			continue;
@@ -163,7 +170,6 @@ void monitor_enter() {
 		} else if (!strcmp(parts[0], "da")) {
 			dasm_start = disasm(cpu->get_pc(), 16);
 		} else if (!strcmp(parts[0], "g")) {
-			is_enabled = FALSE;
 			in_loop = FALSE;
 		} else if (!strcmp(parts[0], "b")) {
 			if (nparts > 2) {
@@ -178,6 +184,9 @@ void monitor_enter() {
 				breakpoint_set(addr);
 			}
 			breakpoints_list();
+		} else if (!strcmp(parts[0], "s")) {
+			is_step = TRUE;
+			in_loop = FALSE;
 		}
 		free(line);
 	}

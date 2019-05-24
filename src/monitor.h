@@ -8,6 +8,7 @@ void monitor_disable();
 
 bool monitor_is_enabled();
 bool monitor_is_breakpoint(unsigned addr);
+bool monitor_is_stop(unsigned addr);
 
 void monitor_enter();
 
