@@ -134,6 +134,23 @@ bool monitor_is_breakpoint(unsigned addr) {
 	return FALSE;
 }
 
+void monitor_help() {
+	printf("\nCompy monitor\n\n");
+	printf("Commands:\n");
+	printf("r             Display Registers\n");
+	printf("d             Disassembly\n");
+	printf("d addr        Disassembly from address\n");
+	printf("da            Disassembly (again) from PC address\n");
+	printf("s             Step one instruction\n");
+	printf("g             Run\n");
+	printf("g addr        Run up to the specified address\n");
+	printf("b             Display breakpoints\n");
+	printf("b [set] addr  Set breakpoints at addr\n");
+	printf("b del pos     Del breakpoint at position\n");
+	printf("h             This help\n");
+	printf("x             Exit emulator\n\n");
+}
+
 void monitor_enter() {
 	if (!frontend_running()) return;
 	is_step = FALSE;
@@ -196,6 +213,11 @@ void monitor_enter() {
 		} else if (!strcmp(parts[0], "s")) {
 			is_step = TRUE;
 			in_loop = FALSE;
+		} else if (!strcmp(parts[0], "h")) {
+			monitor_help();
+		} else if (!strcmp(parts[0], "x")) {
+			in_loop = FALSE;
+			frontend_shutdown();
 		}
 		free(line);
 	}
