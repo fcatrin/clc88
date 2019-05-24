@@ -41,14 +41,28 @@ bool monitor_is_enabled() {
 
 static void dump_registers() {
 	char register_info[1000];
+	char flags[100];
 	if (cpu->cpuType == CPU_M6502) {
+		UINT8 p = cpu->get_reg(M6502_P);
+		sprintf(flags, "N%c V%c R%c B%c D%c I%c Z%c C%c",
+						p & 0x80 ? '+':'-',
+						p & 0x40 ? '+':'-',
+						p & 0x20 ? '+':'-',
+						p & 0x10 ? '+':'-',
+						p & 0x08 ? '+':'-',
+						p & 0x04 ? '+':'-',
+						p & 0x02 ? '+':'-',
+						p & 0x01 ? '+':'-'
+		);
+
 		sprintf(register_info,
-			"A:%02X X:%02X Y:%02X P:%02X S:%02X",
+			"A:%02X  X:%02X  Y:%02X  P:%02X  S:%02X     Flags: %s",
 			cpu->get_reg(M6502_A),
 			cpu->get_reg(M6502_X),
 			cpu->get_reg(M6502_Y),
-			cpu->get_reg(M6502_P),
-			cpu->get_reg(M6502_S)
+			p,
+			cpu->get_reg(M6502_S),
+			flags
 		);
 	}
 	printf("%s\n", register_info);
