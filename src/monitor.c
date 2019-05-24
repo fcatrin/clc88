@@ -12,6 +12,8 @@
 
 bool is_enabled = FALSE;
 bool is_step    = FALSE;
+bool is_stop_at_addr = FALSE;
+unsigned stop_at_addr = 0;
 
 v_cpu *cpu;
 
@@ -119,7 +121,9 @@ void breakpoints_list() {
 }
 
 bool monitor_is_stop(unsigned addr) {
-	return monitor_is_breakpoint(addr) || is_step;
+	return monitor_is_breakpoint(addr)
+			|| is_step
+			|| (is_stop_at_addr && addr == stop_at_addr);
 }
 
 bool monitor_is_breakpoint(unsigned addr) {
@@ -171,6 +175,11 @@ void monitor_enter() {
 			dasm_start = disasm(cpu->get_pc(), 16);
 		} else if (!strcmp(parts[0], "g")) {
 			in_loop = FALSE;
+			if (nparts >1) {
+				unsigned addr = parse_hex(parts[1]);
+				stop_at_addr = addr;
+				is_stop_at_addr = TRUE;
+			}
 		} else if (!strcmp(parts[0], "b")) {
 			if (nparts > 2) {
 				unsigned addr = parse_hex(parts[2]);
