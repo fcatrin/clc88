@@ -96,6 +96,11 @@ int frontend_init(int argc, char *argv[]) {
 	return 0;
 }
 
+void frontend_shutdown() {
+	frontend_process_events_async_stop();
+	closed = TRUE;
+}
+
 void frontend_done() {
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);

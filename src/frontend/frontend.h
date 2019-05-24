@@ -11,6 +11,7 @@ int  frontend_init_screen(int width, int height);
 void frontend_update_screen(void *pixels);
 void frontend_process_events();
 void frontend_done();
+void frontend_shutdown();
 int  frontend_running();
 
 void frontend_sleep(int seconds);
