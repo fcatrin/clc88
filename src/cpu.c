@@ -66,12 +66,26 @@ static void cpu_6502_set_reg(int regnum, unsigned val) {
 	return m6502_set_reg(regnum, val);
 }
 
+static bool cpu_6502_is_ret_op(unsigned addr) {
+	UINT8 op = cpu_readop(cpu_pc);
+	return op == 0x60 || op == 0x40;
+}
+
 static unsigned cpu_6502_disasm(unsigned addr, char *dst) {
 	return addr + Dasm6502(dst, addr);
 }
 
 static unsigned cpu_6502_get_pc() {
 	return cpu_pc;
+}
+
+static UINT8 cpu_6502_frame;
+static void cpu_6502_set_ret_frame() {
+	cpu_6502_frame = m6502_get_reg(M6502_S);
+}
+
+static bool cpu_6502_is_ret_frame() {
+	return cpu_6502_frame == m6502_get_reg(M6502_S);
 }
 
 static void cpu_z80_reset() {
@@ -91,13 +105,19 @@ v_cpu v_6502 = {
 		cpu_6502_set_reg,
 		cpu_6502_get_reg,
 		cpu_6502_get_pc,
-		cpu_6502_disasm
+		cpu_6502_disasm,
+		cpu_6502_is_ret_op,
+		cpu_6502_set_ret_frame,
+		cpu_6502_is_ret_frame,
 };
 
 v_cpu v_z80 = {
 		CPU_Z80,
 		cpu_z80_reset,
 		cpu_z80_run,
+		NULL,
+		NULL,
+		NULL,
 		NULL,
 		NULL,
 		NULL,

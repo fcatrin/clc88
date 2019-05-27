@@ -13,6 +13,7 @@
 bool is_enabled = FALSE;
 bool is_step    = FALSE;
 bool is_stop_at_addr = FALSE;
+bool is_stop_at_ret  = FALSE;
 unsigned stop_at_addr = 0;
 
 v_cpu *cpu;
@@ -137,7 +138,8 @@ void breakpoints_list() {
 bool monitor_is_stop(unsigned addr) {
 	return monitor_is_breakpoint(addr)
 			|| is_step
-			|| (is_stop_at_addr && addr == stop_at_addr);
+			|| (is_stop_at_addr && addr == stop_at_addr)
+			|| (is_stop_at_ret && cpu->is_ret_op(addr) && cpu->is_ret_frame());
 }
 
 bool monitor_is_breakpoint(unsigned addr) {
@@ -157,6 +159,7 @@ void monitor_help() {
 	printf("da            Disassembly (again) from PC address\n");
 	printf("s             Step one instruction\n");
 	printf("g             Run\n");
+	printf("g r           Run until return of subroutine\n");
 	printf("g addr        Run up to the specified address\n");
 	printf("b             Display breakpoints\n");
 	printf("b [set] addr  Set breakpoints at addr\n");
@@ -167,8 +170,10 @@ void monitor_help() {
 
 void monitor_enter() {
 	if (!frontend_running()) return;
-	is_step = FALSE;
-	is_enabled = FALSE;
+	is_step         = FALSE;
+	is_enabled      = FALSE;
+	is_stop_at_addr = FALSE;
+	is_stop_at_ret  = FALSE;
 
 	bool trace_was_enabled = trace_enabled;
 	trace_enabled = FALSE;
@@ -207,9 +212,14 @@ void monitor_enter() {
 		} else if (!strcmp(parts[0], "g")) {
 			in_loop = FALSE;
 			if (nparts >1) {
-				unsigned addr = parse_hex(parts[1]);
-				stop_at_addr = addr;
-				is_stop_at_addr = TRUE;
+				if (!strcmp(parts[1], "r")) {
+					is_stop_at_ret = TRUE;
+					cpu->set_ret_frame();
+				} else {
+					unsigned addr = parse_hex(parts[1]);
+					stop_at_addr = addr;
+					is_stop_at_addr = TRUE;
+				}
 			}
 		} else if (!strcmp(parts[0], "b")) {
 			if (nparts > 2) {

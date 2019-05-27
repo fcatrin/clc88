@@ -15,6 +15,9 @@ typedef struct {
 	unsigned (*get_reg)(int regnum);
 	unsigned (*get_pc)();
 	unsigned (*disasm)(unsigned addr, char *dst);
+	bool (*is_ret_op)(unsigned addr);
+	void (*set_ret_frame)();
+	bool (*is_ret_frame)();
 	bool exec_break;
 } v_cpu;
 
