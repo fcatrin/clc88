@@ -26,6 +26,9 @@ int main(int argc, char *argv[]) {
 	//utils_load_xex("../asm/test/graphics_3.xex");
 	utils_load_xex("../asm/test/mode_4.xex");
 
+	monitor_source_init();
+	monitor_source_read_file("../asm/os/6502os.lst");
+
 	v_cpu *cpu;
 
 	cpu = cpu_init(CPU_M6502);
@@ -43,9 +46,9 @@ int main(int argc, char *argv[]) {
 		// frontend_sleep(1);
 		// i++;
 	}
-	utils_dump_mem(0x0000, 0x0400);
-	utils_dump_mem(0x2000, 0x0400);
-	utils_dump_mem(0xA800, 0X0400);
+	// utils_dump_mem(0x0000, 0x0400);
+	// utils_dump_mem(0x2000, 0x0400);
+	// utils_dump_mem(0xA800, 0X0400);
 	// utils_dump_mem(0xF000, 0X0FFF);
 	frontend_done();
 

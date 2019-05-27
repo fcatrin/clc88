@@ -24,6 +24,8 @@ v_cpu *cpu;
 unsigned breakpoints[MAX_BREAKPOINTS];
 unsigned breakpoints_count = 0;
 
+static char *source_lines[0x10000];
+
 void monitor_init(v_cpu *monitor_cpu) {
 	cpu = monitor_cpu;
 }
@@ -85,10 +87,15 @@ static unsigned dump_code(unsigned addr) {
 		}
 	}
 
-	char code[100];
+	char code[1000];
 	sprintf(code, "%04X %s %s  %s", addr,
 			monitor_is_breakpoint(addr) ? "*":" ",
 			multi_byte, utils_str2upper(disasm));
+	if (source_lines[addr]) {
+		strcat(code, "                            ");
+		strcpy(code+34, "");
+		strcat(code, source_lines[addr]);
+	}
 	printf("%s\n", code);
 	return next_addr;
 }
@@ -157,7 +164,10 @@ void monitor_help() {
 	printf("d             Disassembly\n");
 	printf("d addr        Disassembly from address\n");
 	printf("da            Disassembly (again) from PC address\n");
-	printf("s             Step one instruction\n");
+	printf("s             Disassembly\n");
+	printf("s addr        Disassembly from address\n");
+	printf("sa            Disassembly (again) from PC address\n");
+	printf("t             Step one instruction\n");
 	printf("g             Run\n");
 	printf("g r           Run until return of subroutine\n");
 	printf("g addr        Run up to the specified address\n");
@@ -249,3 +259,106 @@ void monitor_enter() {
 	trace_enabled = trace_was_enabled;
 }
 
+/* source code handling */
+
+void monitor_source_init() {
+	memset(source_lines, 0, 0x10000 * sizeof(char *));
+}
+
+static inline void safe_substr(char *dst, char *src, size_t from, size_t n) {
+	if (from<strlen(src)) {
+		strncpy(dst, src + from, n);
+		dst[n] = 0;
+	} else {
+		strcat(dst, "");
+	}
+}
+
+static inline bool is_hex(char c) {
+	return ('0' <= c && c <='9') || ('A' <= c && c <= 'F');
+}
+
+static inline bool is_hex_addr(char *s) {
+	for(int i=0; i<4; i++) if (!is_hex(s[i])) return FALSE;
+	return TRUE;
+}
+
+// look for not byte pattern after byte pattern
+static bool first_line = TRUE;
+static char *get_source_line(char *line) {
+	if (!first_line) return NULL;
+	// first_line = FALSE;
+
+	int i = 7;
+	int state = 0;
+	printf("%s\n", line);
+	while (i<strlen(line)) {
+		char c = line[i];
+		printf("line[%d]=%c state:%d\n", i, c, state);
+		bool is_hex_char = is_hex(c);
+		bool is_space_char = c == ' ' || c == '\t';
+
+		switch(state) {
+		case 0:
+			state = is_space_char ? 1 : 0;
+			break;
+		case 1:
+			state = is_hex_char ? 2 : 0;
+			break;
+		case 2:
+			state = is_hex_char ? 3 : 0;
+			break;
+		case 3:
+			state = is_space_char ? 4 : 0;
+			break;
+		case 4:
+			state = is_hex_char ? 2 : 5;
+		}
+
+		if (state == 5) return &line[i];
+		i++;
+	}
+	return NULL;
+}
+static void monitor_source_read_line(char *line) {
+	char buffer[2000];
+
+	safe_substr(buffer, line, 0, 6);
+	char *line_number = utils_trim(buffer);
+	int n = atoi(line_number);
+	if (n == 0) return;
+
+	safe_substr(buffer, line, 7, 5);
+	if (!strcmp(buffer, "FFFF>")) {
+		safe_substr(buffer, line, 13, 4);
+	} else if (is_hex_addr(buffer)) {
+		safe_substr(buffer, line, 7, 4);
+	} else {
+		return;
+	}
+
+	int addr;
+	sscanf(buffer, "%X", &addr);
+	if (source_lines[addr]) {
+		free(source_lines[addr]);
+	}
+
+	char *source_line = get_source_line(line);
+	if (source_line!=NULL) {
+		source_lines[addr] = strdup(utils_trim(source_line));
+	}
+}
+
+void monitor_source_read_file(char *filename) {
+	FILE *f = fopen(filename, "rt");
+	if (!f) {
+		fprintf(stderr, "cannot open file %s", filename);
+		return;
+	}
+
+	char line[1000];
+	while (fgets(line, 1000, f)) {
+		monitor_source_read_line(line);
+	}
+	fclose(f);
+}

@@ -12,4 +12,7 @@ bool monitor_is_stop(unsigned addr);
 
 void monitor_enter();
 
+void monitor_source_init();
+void monitor_source_read_file(char *filename);
+
 #endif
