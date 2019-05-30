@@ -52,16 +52,9 @@ vmode_set_lines:
    sta VRAM_SCREEN+7, x ; End of Screen
    
 ; calculate display, attribs and subpal adresses
-   clc
-   lda #<(VRAM_SCREEN + 3 + 7 + 1 + 1) ; 3 blank scans + 7 bytes LMS + 1 byte End of screen
-   adc SCREEN_LINES
-   and #$fe
-   sta RAM_TO_VRAM
    
-   lda #>(VRAM_SCREEN + 3 + 7 + 1 + 1)
-   adc SCREEN_LINES+1
-   sta RAM_TO_VRAM+1
-
+   adw SCREEN_LINES #(VRAM_SCREEN + 3 + 7 + 1 + 1) RAM_TO_VRAM ; 3 BLANK + 7 + LMS + 1 EOS
+ 
    lda #0
    sta VRAM_PAGE
    
