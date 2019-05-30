@@ -65,6 +65,8 @@ $(OBJDIR)/%.o: %.c
 $(ASMDIR)/%.xex: $(ASMDIR)/%.asm
 	mads $< -l -s -o:$@
 
+$(ASMDIR)/os/6502os.xex : $(ASMDIR)/os/symbols.asm $(ASMDIR)/os/graphics.asm
+
 $(TARGET): $(OBJS)
 	$(CC) -o $@ $(LDFLAGS) $(OBJS) $(LIBS)
 	
