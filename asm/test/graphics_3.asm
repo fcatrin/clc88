@@ -13,7 +13,7 @@ copy:
 	lda message, y
 	cmp #255
 	beq stop
-	sta (TEXT_START), y
+	sta (DISPLAY_START), y
 	iny
 	bne copy
 stop:

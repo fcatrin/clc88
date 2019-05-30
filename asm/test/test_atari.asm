@@ -37,7 +37,7 @@ copy:
 	lda message, y
 	cmp #255
 	beq rainbow
-	sta (TEXT_START), y
+	sta (DISPLAY_START), y
 	iny
 	bne copy
 	ldx #0

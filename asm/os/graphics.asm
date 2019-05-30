@@ -73,13 +73,13 @@ vmode_set_lines:
    
    jsr ram2vram
    
-   mwa VRAM_TO_RAM TEXT_START
+   mwa VRAM_TO_RAM DISPLAY_START
    
    lda SCREEN_SIZE
    ldx SCREEN_SIZE+1
    jsr word_div2
    
-   adw TEXT_START   ROS1 ATTRIB_START
+   adw DISPLAY_START ROS1 ATTRIB_START
    
    lda ATTRIB_SIZE
    ldx ATTRIB_SIZE+1
@@ -94,11 +94,11 @@ vmode_set_lines:
    adw SUBPAL_START ROS1 VRAM_FREE
 
 ; set values on LMS command
-   mwa TEXT_START   VRAM_SCREEN+4
-   mwa ATTRIB_START VRAM_SCREEN+6
-   mwa SUBPAL_START VRAM_SCREEN+8
+   mwa DISPLAY_START VRAM_SCREEN+4
+   mwa ATTRIB_START  VRAM_SCREEN+6
+   mwa SUBPAL_START  VRAM_SCREEN+8
    
-   mwa TEXT_START VRAM_TO_RAM
+   mwa DISPLAY_START VRAM_TO_RAM
    mwa SCREEN_SIZE COPY_SIZE
    
    jsr vram_clear

@@ -251,9 +251,9 @@ set_video_mode_3:
 	rts
 
 clear_text_screen:
-	lda TEXT_START
+	lda DISPLAY_START
 	sta COPY_DST_ADDR
-	lda TEXT_START+1
+	lda DISPLAY_START+1
 	sta COPY_DST_ADDR+1
 	
 	lda #0
@@ -261,12 +261,12 @@ clear_text_screen:
 
 init_attributes:
 	clc
-	lda TEXT_START
+	lda DISPLAY_START
 	adc COPY_SIZE
 	sta COPY_DST_ADDR
 	sta ATTRIB_START
 	
-	lda TEXT_START+1
+	lda DISPLAY_START+1
 	adc COPY_SIZE+1
 	sta COPY_DST_ADDR+1
 	sta ATTRIB_START+1
@@ -283,11 +283,11 @@ set_video_mode_text:
 	ora #$40
 	sta VRAM_SCREEN+3
 	lda #<(VRAM_SCREEN + TEXT_SCREEN_DLIST_SIZE)
-	sta TEXT_START
+	sta DISPLAY_START
 	lda #<((VRAM_SCREEN + TEXT_SCREEN_DLIST_SIZE - VRAM) / 2)
 	sta VRAM_SCREEN+4
 	lda #>(VRAM_SCREEN + TEXT_SCREEN_DLIST_SIZE)
-	sta TEXT_START+1
+	sta DISPLAY_START+1
 	lda #>((VRAM_SCREEN + TEXT_SCREEN_DLIST_SIZE - VRAM) / 2)
 	sta VRAM_SCREEN+5
 	
