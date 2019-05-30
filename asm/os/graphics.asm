@@ -27,14 +27,8 @@ set_video_mode_bitmap:
    tya
    pha
    
-   lda #8
-   sta COPY_SIZE
-   lda #0
-   sta COPY_SIZE+1
-   lda #<SCREEN_LINES
-   sta COPY_DST_ADDR
-   lda #>SCREEN_LINES
-   sta COPY_DST_ADDR+1
+   mwa #8 COPY_SIZE
+   mwa #SCREEN_LINES COPY_DST_ADDR
    jsr copy_block
 
    pla
