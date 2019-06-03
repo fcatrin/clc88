@@ -336,20 +336,12 @@ static char *get_source_label_line(char *line) {
 
 	int i = 7;
 	int state = 0;
-	printf("src line %s\n", line);
 	unsigned start = 0;
 	while (i<strlen(line)) {
 		char c = line[i];
 		bool is_space_char = c == ' ' || c == '\t';
 		bool is_hex_char = is_hex(c);
 		bool is_label_delimiter = c == ':';
-		printf("line[%d] = %c space: %s, label:%s\n",
-				i,
-				c,
-				BOOLSTR(is_space_char),
-				BOOLSTR(is_label_delimiter)
-
-		);
 		switch(state) {
 		case 0:
 			state = is_hex_char ? 1 : 0;

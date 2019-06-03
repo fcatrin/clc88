@@ -15,10 +15,8 @@
 static bool arg_monitor_enabled = FALSE;
 
 static void emulator_init(int argc, char *argv[]) {
-	printf("monitor enabled %s\n", BOOLSTR(arg_monitor_enabled));
 	for(int i=0; i<argc; i++) {
 		if (!strcmp(argv[i], "-m")) arg_monitor_enabled = TRUE;
-		printf("monitor enabled %s %s\n", argv[i], BOOLSTR(arg_monitor_enabled));
 	}
 }
 
