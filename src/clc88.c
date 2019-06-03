@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "emu.h"
 #include "frontend/frontend.h"
 #include "cpu.h"
@@ -11,9 +12,20 @@
 #include "monitor.h"
 #include "video/chroni.h"
 
+static bool arg_monitor_enabled = FALSE;
+
+static void emulator_init(int argc, char *argv[]) {
+	printf("monitor enabled %s\n", BOOLSTR(arg_monitor_enabled));
+	for(int i=0; i<argc; i++) {
+		if (!strcmp(argv[i], "-m")) arg_monitor_enabled = TRUE;
+		printf("monitor enabled %s %s\n", argv[i], BOOLSTR(arg_monitor_enabled));
+	}
+}
 
 int main(int argc, char *argv[]) {
 	if (frontend_init(argc, argv)) return 1;
+
+	emulator_init(argc, argv);
 
 	screen_init();
 
@@ -33,7 +45,9 @@ int main(int argc, char *argv[]) {
 
 	cpu = cpu_init(CPU_M6502);
 	monitor_init(cpu);
-	monitor_enable();
+	if (arg_monitor_enabled) {
+		monitor_enable();
+	}
 
 	cpuexec_init(cpu);
 

@@ -291,10 +291,8 @@ static char *get_source_line(char *line) {
 
 	int i = 7;
 	int state = 0;
-	printf("%s\n", line);
 	while (i<strlen(line)) {
 		char c = line[i];
-		printf("line[%d]=%c state:%d\n", i, c, state);
 		bool is_hex_char = is_hex(c);
 		bool is_space_char = c == ' ' || c == '\t';
 

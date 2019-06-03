@@ -155,12 +155,13 @@ int   cpu_getactivecpu() {
 
 char dasm[200];
 void  change_pc16(UINT16 addr) {
-	v_6502.exec_break = cpu_readop(cpu_pc) == 0x00;
 	if (cpu_pc == addr) return;
 	cpu_pc = addr;
 
+	v_6502.exec_break = cpu_readop(cpu_pc) == 0x00;
+
 	if (monitor_is_enabled() || monitor_is_stop(addr) || v_6502.exec_break) {
-		// printf("monitor is enabled: %s, break is :%s\n", BOOLSTR(monitor_is_enabled()),	BOOLSTR(v_6502.exec_break));
+		printf("monitor is enabled: %s, break is :%s\n", BOOLSTR(monitor_is_enabled()),	BOOLSTR(v_6502.exec_break));
 		monitor_enter();
 	}
 
