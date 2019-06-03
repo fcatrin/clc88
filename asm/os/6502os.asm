@@ -22,7 +22,7 @@ TEXT_SCREEN_DLIST_SIZE = 32
 	.word irq
 
 	org OS_CALL
-	
+init:	
 	pha
 	txa
 	asl

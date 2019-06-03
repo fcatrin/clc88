@@ -25,6 +25,7 @@ unsigned breakpoints[MAX_BREAKPOINTS];
 unsigned breakpoints_count = 0;
 
 static char *source_lines[0x10000];
+static char *source_labels[0x10000];
 
 void monitor_init(v_cpu *monitor_cpu) {
 	cpu = monitor_cpu;
@@ -91,11 +92,24 @@ static unsigned dump_code(unsigned addr) {
 	sprintf(code, "%04X %s %s  %s", addr,
 			monitor_is_breakpoint(addr) ? "*":" ",
 			multi_byte, utils_str2upper(disasm));
-	if (source_lines[addr]) {
-		strcat(code, "                            ");
-		strcpy(code+34, "");
-		strcat(code, source_lines[addr]);
+
+	char source[1000] = "";
+	if (source_labels[addr]) {
+		strcat(source, source_labels[addr]);
+		strcat(source, " ");
 	}
+	if (source_lines[addr]) {
+		strcat(source, source_labels[addr] ? "":"      ");
+		strcat(source, source_lines[addr]);
+	}
+	if (strlen(source)>0) {
+		strcat(code, "                            ");
+		code[32] = '|';
+		strcpy(code+35, source);
+	}
+
+
+
 	printf("%s\n", code);
 	return next_addr;
 }
@@ -284,10 +298,7 @@ static inline bool is_hex_addr(char *s) {
 }
 
 // look for not byte pattern after byte pattern
-static bool first_line = TRUE;
 static char *get_source_line(char *line) {
-	if (!first_line) return NULL;
-	// first_line = FALSE;
 
 	int i = 7;
 	int state = 0;
@@ -311,6 +322,7 @@ static char *get_source_line(char *line) {
 			break;
 		case 4:
 			state = is_hex_char ? 2 : 5;
+			break;
 		}
 
 		if (state == 5) return &line[i];
@@ -318,6 +330,57 @@ static char *get_source_line(char *line) {
 	}
 	return NULL;
 }
+
+// look for label pattern
+static char *get_source_label_line(char *line) {
+
+	int i = 7;
+	int state = 0;
+	printf("src line %s\n", line);
+	unsigned start = 0;
+	while (i<strlen(line)) {
+		char c = line[i];
+		bool is_space_char = c == ' ' || c == '\t';
+		bool is_hex_char = is_hex(c);
+		bool is_label_delimiter = c == ':';
+		printf("line[%d] = %c space: %s, label:%s\n",
+				i,
+				c,
+				BOOLSTR(is_space_char),
+				BOOLSTR(is_label_delimiter)
+
+		);
+		switch(state) {
+		case 0:
+			state = is_hex_char ? 1 : 0;
+			break;
+		case 1:
+			state = is_hex_char ? 2 : 0;
+			break;
+		case 2:
+			state = is_hex_char ? 3 : 0;
+			break;
+		case 3:
+			state = is_hex_char ? 4 : 0;
+			break;
+		case 4:
+			state = is_space_char ? 4 : 5;
+			if (state == 5) start = i;
+			break;
+		case 5:
+			state = is_space_char ? 6 : (is_label_delimiter ? 7 : 5);
+			break;
+		case 6:
+			return NULL;
+		}
+
+		if (state == 7) return &line[start];
+		i++;
+	}
+	return NULL;
+}
+
+
 static void monitor_source_read_line(char *line) {
 	char buffer[2000];
 
@@ -344,6 +407,11 @@ static void monitor_source_read_line(char *line) {
 	char *source_line = get_source_line(line);
 	if (source_line!=NULL) {
 		source_lines[addr] = strdup(utils_trim(source_line));
+	}
+
+	char *label_line = get_source_label_line(line);
+	if (label_line!=NULL) {
+		source_labels[addr] = strdup(utils_trim(label_line));
 	}
 }
 
