@@ -1,43 +1,39 @@
 	icl '../os/symbols.asm'
 	
 	org BOOTADDR
+
+   lda #0
+   ldx #OS_SET_VIDEO_MODE
+   jsr OS_CALL
 	
    lda VSTATUS
    and #(255 - VSTATUS_EN_INTS)
    sta VSTATUS
    	
-	lda #<vblank
-	sta VBLANK_VECTOR
-	lda #>vblank
-	sta VBLANK_VECTOR+1
-	lda #<dli
-	sta HBLANK_VECTOR
-   lda #>dli
-   sta HBLANK_VECTOR+1
+   mwa #vblank VBLANK_VECTOR
+   mwa #dli    HBLANK_VECTOR
 
    lda VSTATUS
    ora #VSTATUS_EN_INTS
    sta VSTATUS
 	
-	lda #0
-	ldx #OS_SET_VIDEO_MODE
-	jsr OS_CALL
-	
-	lda DLIST
-	sta TMPVARS
-	lda DLIST+1
-	sta TMPVARS+1 
+	mwa DLIST VRAM_TO_RAM
+	jsr lib_vram_to_ram
+
    ldy #10
-   lda (TMPVARS), y
+   lda (RAM_TO_VRAM), y
    ora #$80
-   sta (TMPVARS), y
+   sta (RAM_TO_VRAM), y
+
+   mwa TEXT_START VRAM_TO_RAM
+   jsr lib_vram_to_ram
 	
 	ldy #0
 copy:
 	lda message, y
 	cmp #255
 	beq rainbow
-	sta (TEXT_START), y
+	sta (RAM_TO_VRAM), y
 	iny
 	bne copy
 	ldx #0
@@ -66,3 +62,4 @@ vblank:
 message:
 	.byte 40, 101, 108, 108, 111, 0, 55, 111, 114, 108, 100, 1, 1, 1, 1, 255
 
+   icl '../os/stdlib.asm'
