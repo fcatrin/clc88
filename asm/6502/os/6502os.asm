@@ -100,12 +100,7 @@ hblank_os:
    
 vblank_os:
    pha
-   lda FRAMECOUNT
-   adc #1
-   sta FRAMECOUNT
-   lda FRAMECOUNT+1
-   adc #0
-   sta FRAMECOUNT+1
+   adw FRAMECOUNT #1
    
    lda CHRONI_ENABLED
    beq set_chroni_disabled
