@@ -76,7 +76,7 @@ static unsigned cpu_6502_disasm(unsigned addr, char *dst) {
 }
 
 static unsigned cpu_6502_get_pc() {
-	return cpu_pc;
+	return m6502_get_reg(M6502_PC);
 }
 
 static UINT8 cpu_6502_frame;
