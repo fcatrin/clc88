@@ -20,24 +20,31 @@ static void emulator_init(int argc, char *argv[]) {
 	}
 }
 
+static void emulator_load(char *filename) {
+	char buffer[1000];
+	sprintf(buffer, "%s.xex", filename);
+	utils_load_xex(buffer);
+	sprintf(buffer, "%s.lst", filename);
+	monitor_source_read_file(buffer);
+}
+
 int main(int argc, char *argv[]) {
 	if (frontend_init(argc, argv)) return 1;
 
 	emulator_init(argc, argv);
 
 	screen_init();
-
 	machine_init();
 
-	utils_load_xex("../asm/os/6502os.xex");
+	monitor_source_init();
+
+	emulator_load("../asm/os/6502os");
 	//utils_load_xex("../asm/test/test_sprites.xex");
 	//utils_load_xex("../asm/test/test_atari.xex");
 	//utils_load_xex("../asm/test/test_spectrum.xex");
 	//utils_load_xex("../asm/test/graphics_3.xex");
-	utils_load_xex("../asm/test/mode_4.xex");
+	emulator_load("../asm/test/mode_4");
 
-	monitor_source_init();
-	monitor_source_read_file("../asm/os/6502os.lst");
 
 	v_cpu *cpu;
 
