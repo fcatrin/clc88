@@ -1,6 +1,8 @@
 #include <SDL.h>
 #include <unistd.h>
 #include "../../emu.h"
+#include "../../cpu.h"
+#include "../../monitor.h"
 #include "../frontend.h"
 
 static SDL_Window *window;
@@ -59,6 +61,10 @@ void frontend_process_events() {
 				closed = 1;
 			}
 			break;
+		case SDL_KEYDOWN:
+			switch( event.key.keysym.sym ){
+				case SDLK_F1: monitor_enable(); break;
+			}
 		}
 	}
 }
