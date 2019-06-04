@@ -78,7 +78,7 @@ UINT8 chroni_vram_read(UINT16 index) {
 }
 
 static void reg_addr_low(UINT32 *reg, UINT8 value) {
-	*reg = (*reg & 0xFFFE00) | (value>1);
+	*reg = (*reg & 0xFFFE00) | (value << 1);
 }
 
 static void reg_addr_high(UINT32 *reg, UINT8 value) {
@@ -305,31 +305,6 @@ static void do_scan_blank() {
 	}
 }
 
-static void do_scan_text(UINT8 line) {
-	LOGV(LOGTAG, "do_scan_text line %d", line);
-	do_scan_start();
-
-	int offset = scanline * screen_pitch;
-	xpos = 0;
-	do_border(offset, SCREEN_XBORDER);
-
-	UINT8 row;
-	int char_offset = 0;
-	for(int i=0; i<SCREEN_XRES; i++) {
-		if (i % 8 == 0) {
-			UINT8 c = VRAM_DATA(lms + char_offset);
-			row = VRAM_DATA(charset + c*8 + line);
-			char_offset++;
-		}
-
-		put_pixel(offset, colors[row & 0x80 ? 2 : 1]);
-		row <<= 1;
-	}
-
-	do_border(offset, SCREEN_XBORDER);
-	do_scan_end();
-}
-
 static void do_scan_text_attribs(UINT8 line) {
 	LOGV(LOGTAG, "do_scan_text_attribs line %d", line);
 	do_scan_start();
@@ -352,7 +327,10 @@ static void do_scan_text_attribs(UINT8 line) {
 			char_offset++;
 		}
 
-		put_pixel(offset, row & 0x80 ? foreground : background);
+		put_pixel(offset, row & 0x80 ?
+				VRAM_DATA(subpals + foreground) :
+				VRAM_DATA(subpals + background));
+
 		row <<= 1;
 	}
 
@@ -383,7 +361,9 @@ static void do_scan_text_attribs_double(UINT8 line) {
 			char_offset++;
 		}
 
-		put_pixel(offset, row & 0x80 ? foreground : background);
+		put_pixel(offset, row & 0x80 ?
+				VRAM_DATA(subpals + foreground) :
+				VRAM_DATA(subpals + background));
 		if (!first) row <<= 1;
 		first = !first;
 	}
@@ -466,28 +446,14 @@ static void do_screen() {
 			if (instruction & 64) {
 				lms = VRAM_PTR(dl + dlpos);
 				dlpos+=2;
+				attribs = VRAM_PTR(dl + dlpos);
+				dlpos+=2;
+				subpals = VRAM_PTR(dl + dlpos);
+				dlpos+=2;
 			}
 			LOGV(LOGTAG, "do_scan_text lms: %04X", lms);
 			int lines = 8;
 			for(int line=0; line<lines; line++) {
-				if (line == lines - 1) post_dli = scan_post_dli;
-				do_scan_text(line);
-				scanline++;
-				ypos++;
-				if (ypos == screen_height) return;
-			}
-
-			lms += 40;
-		} else if ((instruction & 7) == 3) {
-			if (instruction & 64) {
-				lms     = VRAM_PTR(dl + dlpos);
-				dlpos+=2;
-				attribs = VRAM_PTR(dl + dlpos);
-				dlpos+=2;
-			}
-			LOGV(LOGTAG, "do_scan_text_attrib lms: %04X attrib: %04X", lms, attribs);
-			int lines = 8;
-			for(int line=0; line<8; line++) {
 				if (line == lines - 1) post_dli = scan_post_dli;
 				do_scan_text_attribs(line);
 				scanline++;
@@ -575,6 +541,7 @@ static void init_rgb565_table() {
 }
 
 void chroni_init() {
+	trace_enabled = TRUE;
 	init_rgb565_table();
 	chroni_reset();
 }
