@@ -409,7 +409,7 @@ irq:
    icl 'graphics.asm'
    
 charset:
-	ins '../../res/charset.bin'
+	ins '../../../res/charset.bin'
 	icl 'palette_atari_ntsc.asm'
 	icl 'palette_spectrum.asm'
 	

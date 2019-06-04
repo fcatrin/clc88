@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
 
 	monitor_source_init();
 
-	emulator_load("../asm/os/6502os");
+	emulator_load("../asm/6502/os/6502os");
 	//utils_load_xex("../asm/test/test_sprites.xex");
 	//utils_load_xex("../asm/test/test_atari.xex");
 	//utils_load_xex("../asm/test/test_spectrum.xex");
