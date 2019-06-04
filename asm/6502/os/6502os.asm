@@ -46,7 +46,7 @@ copy_vector:
    lda interrupt_vectors, x
    sta NMI_VECTOR, x
    inx
-   cpx #$08
+   cpx #$0C
    bne copy_vector
 	
 	lda #<copy_params_charset
@@ -93,8 +93,10 @@ copy_vector:
 interrupt_vectors:
    .word nmi_os
    .word irq_os
-   .word vblank_os
    .word hblank_os
+   .word vblank_os
+   .word hblank_user
+   .word vblank_user
 
 nmi_os:
    cld
@@ -117,8 +119,9 @@ irq_os:
    rti
 
 hblank_os:
+   jsr call_hblank_user
    rti
-
+   
 vblank_os:
    pha
    lda FRAMECOUNT
@@ -139,10 +142,21 @@ set_chroni_disabled:
    and #($FF - VSTATUS_ENABLE)
    sta VSTATUS
 chroni_enabled_set:   
-   
+   jsr call_vblank_user
    pla
    rti
 
+vblank_user:
+   rts   
+
+hblank_user:
+   rts   
+   
+call_vblank_user:
+   jmp (VBLANK_VECTOR_USER)
+
+call_hblank_user:
+   jmp (HBLANK_VECTOR_USER)
     
 set_video_mode:
    pha
