@@ -43,6 +43,14 @@ bool monitor_is_enabled() {
 	return is_enabled;
 }
 
+static unsigned parse_hex(char *s) {
+	char *saddr = utils_trim(s);
+
+	unsigned addr;
+	sscanf(saddr, "%x", &addr);
+	return addr;
+}
+
 static void dump_registers() {
 	char register_info[1000];
 	char flags[100];
@@ -70,6 +78,23 @@ static void dump_registers() {
 		);
 	}
 	printf("%s\n", register_info);
+}
+
+static void set_register(char *register_name, char *value) {
+	static unsigned reg = 0;
+
+	if (!strcmp(register_name, "pc")) {
+		reg = M6502_PC;
+	} else if (!strcmp(register_name, "a")) {
+		reg = M6502_A;
+	} else if (!strcmp(register_name, "x")) {
+		reg = M6502_X;
+	} else if (!strcmp(register_name, "y")) {
+		reg = M6502_Y;
+	}
+	if (reg == 0) return;
+
+	cpu->set_reg(reg, parse_hex(value));
 }
 
 static unsigned dump_code(unsigned addr) {
@@ -121,14 +146,6 @@ static unsigned disasm(unsigned addr, int lines) {
 	return addr;
 }
 
-static unsigned parse_hex(char *s) {
-	char *saddr = utils_trim(s);
-
-	unsigned addr;
-	sscanf(saddr, "%x", &addr);
-	return addr;
-}
-
 static void breakpoint_set(unsigned addr) {
 	if (breakpoints_count == MAX_BREAKPOINTS) return;
 	// ignore if breakpoint exists
@@ -175,6 +192,7 @@ void monitor_help() {
 	printf("\nCompy monitor\n\n");
 	printf("Commands:\n");
 	printf("r             Display Registers\n");
+	printf("r reg value   Set Register [pc|a|x|y] with hex value\n");
 	printf("d             Disassembly\n");
 	printf("d addr        Disassembly from address\n");
 	printf("da            Disassembly (again) from PC address\n");
@@ -221,6 +239,9 @@ void monitor_enter() {
 		char **parts = utils_split(line, &nparts);
 
 		if (nparts == 0 || !strcmp(parts[0],"r")) {
+			if (nparts >= 3) {
+				set_register(parts[1], parts[2]);
+			}
 			dump_registers();
 			dump_code(cpu->get_pc());
 			continue;
