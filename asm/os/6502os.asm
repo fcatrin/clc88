@@ -141,18 +141,17 @@ set_chroni_disabled:
 chroni_enabled_set:   
    
    pla
-   rti   
+   rti
+
     
 set_video_mode:
    pha
-   lda #0
-   sta CHRONI_ENABLED
-   lda VSTATUS
-   and #($ff - VSTATUS_ENABLE)
-   sta VSTATUS
+   jsr set_video_disabled
    pla
 	cmp #$00
-	beq set_video_mode_0
+	bne not_video_mode_0
+	jmp set_video_mode_0
+not_video_mode_0:	
 	cmp #$01
 	beq set_video_mode_1
 	cmp #$02
@@ -180,22 +179,6 @@ create_dl_mode_off:
 	
 	jmp set_video_mode_dl
 	
-set_video_mode_0:
-	ldy #2
-	jsr set_video_mode_text
-
-	lda #<TEXT_SCREEN_SIZE
-	sta COPY_SIZE
-	lda #>TEXT_SCREEN_SIZE
-	sta COPY_SIZE+1
-	jsr clear_text_screen
-	
-	lda #<VRAM_PAL_ATARI
-	sta VRPALETTE
-	lda #>VRAM_PAL_ATARI
-	sta VRPALETTE+1
-	rts
-
 set_video_mode_1:
 	ldy #3
 	jsr set_video_mode_text
@@ -354,21 +337,6 @@ create_dl_mode_1:
 	bpl create_dl_mode_1
 	jmp set_video_mode_dl
 	
-	
-set_video_mode_dl:
-   lda #0
-   sta VPAGE
-	lda #<VRAM_SCREEN
-	sta VRDLIST
-	sta DLIST
-	lda #>VRAM_SCREEN
-	sta VRDLIST+1
-	STA DLIST+1
-	
-	lda #1
-   sta CHRONI_ENABLED
-	rts
-
 os_vector_table
 	.word set_video_mode
 	.word copy_block

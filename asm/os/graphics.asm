@@ -1,21 +1,41 @@
+VMODE_0_LINES       = 24
+VMODE_0_SCREEN_SIZE = 40*VMODE_0_LINES
+VMODE_0_ATTRIB_SIZE = 40*VMODE_0_LINES
+VMODE_0_SUBPAL_SIZE = 16
 
 VMODE_4_LINES       = 192
 VMODE_4_SCREEN_SIZE = 160*VMODE_4_LINES
 VMODE_4_ATTRIB_SIZE = 160*VMODE_4_LINES
 VMODE_4_SUBPAL_SIZE = 16*16
 
+set_video_mode_0:
+   mwa #video_mode_params_0 COPY_SRC_ADDR
+   ldy #2
+   jsr set_video_mode_screen
+   jsr set_video_mode_dl
+   
+   mwa #VRAM_PAL_ATARI RAM_TO_VRAM
+   jsr set_video_palette
+   jmp set_video_enabled
+
 set_video_mode_4:
    mwa #video_mode_params_4 COPY_SRC_ADDR
    ldy #6
-   jsr set_video_mode_bitmap
+   jsr set_video_mode_screen
    jsr set_video_mode_dl
    
+   mwa #VRAM_PAL_ATARI RAM_TO_VRAM
+   jsr set_video_palette
+   jmp set_video_enabled
+ 
+ set_video_palette:
    lda #0
    sta VRAM_PAGE
-   mwa #VRAM_PAL_ATARI RAM_TO_VRAM
    jsr ram2vram
    mwa VRAM_TO_RAM VPALETTE
-   
+   rts
+  
+set_video_enabled:
    lda #1
    sta CHRONI_ENABLED
    lda VSTATUS
@@ -23,18 +43,31 @@ set_video_mode_4:
    sta VSTATUS
    rts
    
-set_video_mode_bitmap:
+set_video_disabled:
+   lda #0
+   sta CHRONI_ENABLED
+   lda VSTATUS
+   and #($ff - VSTATUS_ENABLE)
+   sta VSTATUS
+   rts
+   
+set_video_mode_dl:
+   mwa #VRAM_SCREEN RAM_TO_VRAM
+   jsr ram2vram
+   lda VRAM_TO_RAM
+   sta DLIST
+   sta VDLIST
+   lda VRAM_TO_RAM+1
+   sta DLIST+1
+   sta VDLIST+1
+   rts
+
+set_video_mode_screen:
    tya
    pha
    
-   lda #8
-   sta COPY_SIZE
-   lda #0
-   sta COPY_SIZE+1
-   lda #<SCREEN_LINES
-   sta COPY_DST_ADDR
-   lda #>SCREEN_LINES
-   sta COPY_DST_ADDR+1
+   mwa #10 COPY_SIZE
+   mwa #SCREEN_LINES COPY_DST_ADDR
    jsr copy_block
 
    pla
@@ -105,23 +138,29 @@ vmode_set_lines:
    
    mwa ATTRIB_START VRAM_TO_RAM
    mwa ATTRIB_SIZE COPY_SIZE
-   jsr vram_clear
+   lda #$01
+   jsr vram_clear_to
 
    mwa SUBPAL_START VRAM_TO_RAM
-   mwa SUBPAL_SIZE COPY_SIZE
-   mwa subpal COPY_SRC_ADDR
+   mwa SUBPAL_SIZE  COPY_SIZE
+   mwa SUBPAL_ADDR  COPY_SRC_ADDR
    jmp vram_copy
    
 vram_clear:
+   lda #$00
+
+vram_clear_to:
+   pha
    jsr vram2ram
    mwa RAM_TO_VRAM COPY_DST_ADDR
    mva VRAM_PAGE   VPAGE
-   lda #$00
+   pla
    jmp vram_set_bytes
+
    
 vram_copy:
-   jsr ram2vram
-   mwa VRAM_TO_RAM COPY_DST_ADDR
+   jsr vram2ram
+   mwa RAM_TO_VRAM COPY_DST_ADDR
    mva VRAM_PAGE   VPAGE
    jmp ram_vram_copy
    
@@ -274,10 +313,18 @@ word_mul2:
    rol ROS2
    rts
 
+video_mode_params_0:
+   .word VMODE_0_LINES, VMODE_0_SCREEN_SIZE, VMODE_0_ATTRIB_SIZE, VMODE_0_SUBPAL_SIZE, video_mode_subpal_0
 video_mode_params_4:
-   .word VMODE_4_LINES, VMODE_4_SCREEN_SIZE, VMODE_4_ATTRIB_SIZE, SUBPAL_SIZE
+   .word VMODE_4_LINES, VMODE_4_SCREEN_SIZE, VMODE_4_ATTRIB_SIZE, VMODE_4_SUBPAL_SIZE, video_mode_subpal_4
 
-subpal:
+video_mode_subpal_0
+   .byte 0x94, 0x0f, 0x00, 0x00
+   .byte 0x00, 0x00, 0x00, 0x00
+   .byte 0x00, 0x00, 0x00, 0x00
+   .byte 0x00, 0x00, 0x00, 0x00
+
+video_mode_subpal_4:
    .byte 0x00, 0x0f, 0x94, 0x9a
    .byte 0x10, 0x1f, 0xa4, 0xaa
    .byte 0x20, 0x2f, 0xb4, 0xba
