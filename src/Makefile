@@ -2,7 +2,7 @@ FRONTEND = linux
 
 CC = gcc
 
-DEFS = -DHAVE_CONFIG_H -DINLINE=inline -DMAME_DEBUG -DTRACE_CPU -DTRACE_BUS -DTRACE_CHRONI
+DEFS = -DHAVE_CONFIG_H -DINLINE=inline -DMAME_DEBUG -DTRACE_CPUX -DTRACE_BUSX -DTRACE_CHRONIX
 LIBS = -lm -lz 
 
 TARGET_BASE_NAME = clc88
@@ -65,6 +65,8 @@ $(OBJDIR)/%.o: %.c
 
 $(ASMDIR)/%.xex: $(ASMDIR)/%.asm
 	mads $< -l -s -o:$@
+	
+$(ASMDIR)/os/6502os.asm : $(ASMDIR)/os/symbols.asm $(ASMDIR)/os/graphics.asm 	
 
 $(TARGET): $(OBJS)
 	$(CC) -o $@ $(LDFLAGS) $(OBJS) $(LIBS)
