@@ -97,6 +97,32 @@ static void set_register(char *register_name, char *value) {
 	cpu->set_reg(reg, parse_hex(value));
 }
 
+static unsigned dump_memory(unsigned addr, unsigned lines) {
+	for(int line=0; line < lines; line++) {
+		printf("%04X|", addr);
+		for(int i=0; i<16; i++) {
+			printf("%02X", bus_read16(addr + i));
+			if (((i+1) % 4) == 0) {
+				printf("|");
+			} else {
+				printf(" ");
+			}
+		}
+		for(int i=0; i<16; i++) {
+			UINT8 c = bus_read16(addr + i);
+			if (0x20 <= c && c <= 0x7F) {
+				printf("%c", c);
+			} else {
+				printf(".");
+			}
+
+		}
+		printf("\n");
+		addr += 16;
+	}
+	return addr;
+}
+
 static unsigned dump_code(unsigned addr) {
 	char disasm[100];
 	unsigned next_addr = cpu->disasm(addr, disasm);
@@ -196,9 +222,8 @@ void monitor_help() {
 	printf("d             Disassembly\n");
 	printf("d addr        Disassembly from address\n");
 	printf("da            Disassembly (again) from PC address\n");
-	printf("s             Disassembly\n");
-	printf("s addr        Disassembly from address\n");
-	printf("sa            Disassembly (again) from PC address\n");
+	printf("m             Memory dump\n");
+	printf("m addr        Memory dump from address\n");
 	printf("t             Step one instruction\n");
 	printf("g             Run\n");
 	printf("g r           Run until return of subroutine\n");
@@ -223,6 +248,7 @@ void monitor_enter() {
 	frontend_process_events_async_start();
 
 	unsigned dasm_start = cpu->get_pc();
+	unsigned mem_start  = 0;
 
 	dump_registers();
 	dump_code(cpu->get_pc());
@@ -251,6 +277,13 @@ void monitor_enter() {
 			} else {
 				unsigned addr = parse_hex(parts[1]);
 				dasm_start = disasm(addr, 16);
+			}
+		} else if (!strcmp(parts[0], "m")) {
+			if (nparts == 1) {
+				mem_start = dump_memory(mem_start, 16);
+			} else {
+				unsigned addr = parse_hex(parts[1]);
+				mem_start = dump_memory(addr, 16);
 			}
 		} else if (!strcmp(parts[0], "da")) {
 			dasm_start = disasm(cpu->get_pc(), 16);
