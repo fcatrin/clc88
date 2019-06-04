@@ -85,15 +85,6 @@ static void reg_addr_high(UINT32 *reg, UINT8 value) {
 	*reg = (*reg & 0x001FF) | (value << 9);
 }
 
-static void reg_addr_rel_low(UINT32 *reg, UINT8 value) {
-	*reg = (*reg & 0xFFFF00) | (value);
-}
-
-static void reg_addr_rel_high(UINT32 *reg, UINT8 value) {
-	UINT32 offset = value - 0xA0 + (page << (PAGE_SHIFT_HIGH));
-	*reg = (*reg & 0x000FF) | (offset << 8);
-}
-
 void chroni_register_write(UINT8 index, UINT8 value) {
 	LOGV(LOGTAG, "chroni reg write: 0x%04X = 0x%02X", index, value);
 	switch (index) {
@@ -136,31 +127,6 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 	case 19:
 		colors[index - 16] = value;
 		break;
-	case 0x40:
-		reg_addr_rel_low(&dl, value);
-		break;
-	case 0x41:
-		reg_addr_rel_high(&dl, value);
-		break;
-	case 0x42:
-		reg_addr_rel_low(&charset, value);
-		break;
-	case 0x43:
-		reg_addr_rel_high(&charset, value);
-		break;
-	case 0x44:
-		reg_addr_rel_low(&palette, value);
-		break;
-	case 0x45:
-		reg_addr_rel_high(&palette, value);
-		break;
-	case 0x4a:
-		reg_addr_rel_low(&sprites, value);
-		break;
-	case 0x4b:
-		reg_addr_rel_high(&sprites, value);
-		break;
-
 	}
 }
 
