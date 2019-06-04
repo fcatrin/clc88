@@ -27,10 +27,7 @@ init:
 	txa
 	asl
 	tax
-	lda os_vector_table, x
-	sta OS_VECTOR
-	lda os_vector_table+1,x
-	sta OS_VECTOR+1
+	mwa os_vector_table,x OS_VECTOR
 	pla
 	jmp (OS_VECTOR)
 	
@@ -49,38 +46,17 @@ copy_vector:
    cpx #$0C
    bne copy_vector
 	
-	lda #<copy_params_charset
-	sta COPY_PARAMS
-	lda #>copy_params_charset
-	sta COPY_PARAMS+1
+	mwa #copy_params_charset COPY_PARAMS
 	jsr copy_block_with_params
 	
-	lda #<copy_params_pal_atari
-	sta COPY_PARAMS
-	lda #>copy_params_pal_atari
-	sta COPY_PARAMS+1
+   mwa #copy_params_pal_atari COPY_PARAMS
 	jsr copy_block_with_params
 	
-	lda #<copy_params_pal_spectrum
-	sta COPY_PARAMS
-	lda #>copy_params_pal_spectrum
-	sta COPY_PARAMS+1
+	mwa #copy_params_pal_spectrum COPY_PARAMS
 	jsr copy_block_with_params
-	
-	lda #<VRAM_CHARSET
-	sta VRCHARSET
-	lda #>VRAM_CHARSET
-	sta VRCHARSET+1
 	
 	lda #$ff
 	jsr set_video_mode
-
-	lda #0
-	sta VCOLOR0
-	lda #$94
-	sta VCOLOR1
-	lda #$9A
-	sta VCOLOR2
 	
 	lda #1
 	sta CHRONI_ENABLED
