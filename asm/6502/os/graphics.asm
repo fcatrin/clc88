@@ -52,6 +52,8 @@ set_video_disabled:
    rts
    
 set_video_mode_dl:
+   lda #0
+   sta VRAM_PAGE
    mwa #VRAM_SCREEN RAM_TO_VRAM
    jsr ram2vram
    lda VRAM_TO_RAM
