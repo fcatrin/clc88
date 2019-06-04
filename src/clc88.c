@@ -13,10 +13,14 @@
 #include "video/chroni.h"
 
 static bool arg_monitor_enabled = FALSE;
+static char xexfile[1000] = "";
 
 static void emulator_init(int argc, char *argv[]) {
-	for(int i=0; i<argc; i++) {
+	for(int i=1; i<argc; i++) {
 		if (!strcmp(argv[i], "-m")) arg_monitor_enabled = TRUE;
+		else {
+			strcpy(xexfile, argv[i]);
+		}
 	}
 }
 
@@ -43,8 +47,9 @@ int main(int argc, char *argv[]) {
 	//utils_load_xex("../asm/test/test_atari.xex");
 	//utils_load_xex("../asm/test/test_spectrum.xex");
 	//utils_load_xex("../asm/test/graphics_3.xex");
-	emulator_load("../asm/test/mode_4");
-
+	if (strlen(xexfile) > 0) {
+		emulator_load(xexfile);
+	}
 
 	v_cpu *cpu;
 
