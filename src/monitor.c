@@ -224,7 +224,8 @@ void monitor_help() {
 	printf("da            Disassembly (again) from PC address\n");
 	printf("m             Memory dump\n");
 	printf("m addr        Memory dump from address\n");
-	printf("t             Step one instruction\n");
+	printf("s             Step one instruction\n");
+	printf("t             Step over one instruction\n");
 	printf("g             Run\n");
 	printf("g r           Run until return of subroutine\n");
 	printf("g addr        Run up to the specified address\n");
@@ -312,6 +313,11 @@ void monitor_enter() {
 				monitor_breakpoint_set(addr);
 			}
 			breakpoints_list();
+		} else if (!strcmp(parts[0], "t")) {
+			unsigned addr = disasm(cpu->get_pc(), 1);
+			stop_at_addr = addr;
+			is_stop_at_addr = TRUE;
+			in_loop = FALSE;
 		} else if (!strcmp(parts[0], "s")) {
 			is_step = TRUE;
 			in_loop = FALSE;
