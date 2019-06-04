@@ -13,11 +13,13 @@
 #include "video/chroni.h"
 
 static bool arg_monitor_enabled = FALSE;
+static bool arg_monitor_stop_on_xex = FALSE;
 static char xexfile[1000] = "";
 
 static void emulator_init(int argc, char *argv[]) {
 	for(int i=1; i<argc; i++) {
-		if (!strcmp(argv[i], "-m")) arg_monitor_enabled = TRUE;
+		if (!strcmp(argv[i], "-M")) arg_monitor_enabled = TRUE;
+		if (!strcmp(argv[i], "-m")) arg_monitor_stop_on_xex = TRUE;
 		else {
 			strcpy(xexfile, argv[i]);
 		}
@@ -57,6 +59,10 @@ int main(int argc, char *argv[]) {
 	monitor_init(cpu);
 	if (arg_monitor_enabled) {
 		monitor_enable();
+	}
+
+	if (arg_monitor_stop_on_xex) {
+		monitor_breakpoint_set(0x2000);
 	}
 
 	cpuexec_init(cpu);

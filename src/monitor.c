@@ -146,7 +146,7 @@ static unsigned disasm(unsigned addr, int lines) {
 	return addr;
 }
 
-static void breakpoint_set(unsigned addr) {
+void monitor_breakpoint_set(unsigned addr) {
 	if (breakpoints_count == MAX_BREAKPOINTS) return;
 	// ignore if breakpoint exists
 	for(int i=0; i<breakpoints_count; i++) {
@@ -156,7 +156,7 @@ static void breakpoint_set(unsigned addr) {
 	breakpoints[breakpoints_count++] = addr;
 }
 
-static void breakpoint_del(unsigned index) {
+void monitor_breakpoint_del(unsigned index) {
 	if (index >= breakpoints_count) return;
 
 	// remove breakpoint
@@ -270,13 +270,13 @@ void monitor_enter() {
 			if (nparts > 2) {
 				unsigned addr = parse_hex(parts[2]);
 				if (!strcmp(parts[1], "set")) {
-					breakpoint_set(addr);
+					monitor_breakpoint_set(addr);
 				} else if (!strcmp(parts[1], "del")) {
-					breakpoint_del(addr);
+					monitor_breakpoint_del(addr);
 				}
 			} else if (nparts > 1) {
 				unsigned addr = parse_hex(parts[1]);
-				breakpoint_set(addr);
+				monitor_breakpoint_set(addr);
 			}
 			breakpoints_list();
 		} else if (!strcmp(parts[0], "s")) {
