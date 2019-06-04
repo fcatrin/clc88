@@ -42,6 +42,7 @@ OBJS = $(addprefix $(OBJDIR)/, \
 ASMDIR= ../asm
 XEX = $(addprefix $(ASMDIR)/, \
 	os/6502os.xex \
+	test/mode_0.xex \
 	test/mode_4.xex \
 	)
 
