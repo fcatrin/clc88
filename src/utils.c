@@ -4,9 +4,12 @@
 #include <errno.h>
 #include "emu.h"
 #include "bus.h"
-#include "trace.h"
 
 #define LOGTAG "UTILS"
+#ifdef TRACE_UTILS
+#define TRACE
+#endif
+#include "trace.h"
 
 void utils_load_xex(char *filename) {
 	UINT8 buffer[0x1000];
