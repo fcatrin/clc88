@@ -66,7 +66,7 @@ set_video_mode_screen:
    tya
    pha
    
-   mwa #10 COPY_SIZE
+   mwa #11 COPY_SIZE
    mwa #SCREEN_LINES COPY_DST_ADDR
    jsr copy_block
 
@@ -138,7 +138,7 @@ vmode_set_lines:
    
    mwa ATTRIB_START VRAM_TO_RAM
    mwa ATTRIB_SIZE COPY_SIZE
-   lda #$01
+   lda ATTRIB_DEFAULT
    jsr vram_clear_to
 
    mwa SUBPAL_START VRAM_TO_RAM
@@ -227,7 +227,7 @@ ram_vram_copy_next_page:
       
 ram_vram_copy_next:
    inc COPY_SRC_ADDR
-   beq ram_vram_copy_no_src_page
+   bne ram_vram_copy_no_src_page
    inc COPY_SRC_ADDR+1
    
 ram_vram_copy_no_src_page:
@@ -314,12 +314,12 @@ word_mul2:
    rts
 
 video_mode_params_0:
-   .word VMODE_0_LINES, VMODE_0_SCREEN_SIZE, VMODE_0_ATTRIB_SIZE, VMODE_0_SUBPAL_SIZE, video_mode_subpal_0
+   .word VMODE_0_LINES, VMODE_0_SCREEN_SIZE, VMODE_0_ATTRIB_SIZE, VMODE_0_SUBPAL_SIZE, video_mode_subpal_0, $10
 video_mode_params_4:
-   .word VMODE_4_LINES, VMODE_4_SCREEN_SIZE, VMODE_4_ATTRIB_SIZE, VMODE_4_SUBPAL_SIZE, video_mode_subpal_4
+   .word VMODE_4_LINES, VMODE_4_SCREEN_SIZE, VMODE_4_ATTRIB_SIZE, VMODE_4_SUBPAL_SIZE, video_mode_subpal_4, $00
 
 video_mode_subpal_0
-   .byte 0x94, 0x0f, 0x00, 0x00
+   .byte 0x94, 0x0C, 0x00, 0x00
    .byte 0x00, 0x00, 0x00, 0x00
    .byte 0x00, 0x00, 0x00, 0x00
    .byte 0x00, 0x00, 0x00, 0x00

@@ -10,7 +10,7 @@
    and #(255 - VSTATUS_EN_INTS)
    sta VSTATUS
    	
-   mwa #vblank VBLANK_VECTOR
+   ; mwa #vblank VBLANK_VECTOR
    mwa #dli    HBLANK_VECTOR
 
    lda VSTATUS
@@ -38,24 +38,24 @@ copy:
 	bne copy
 	ldx #0
 rainbow:
-   ; clc
-	; lda VCOUNT
+   clc
+	lda VCOUNT
 	; adc FRAMECOUNT
-	; sta WSYNC
-	; sta VCOLOR0
+	sta WSYNC
+	sta VCOLOR0
 	jmp rainbow
 	
 dli:
    pha
    lda #$66
-   sta VCOLOR0
+   ; sta VCOLOR0
    pla
    rti
 
 vblank:
    pha
    lda #$BF
-   sta VCOLOR0
+   ; sta VCOLOR0
    pla
    rti
 	
