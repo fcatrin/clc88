@@ -5,15 +5,9 @@
 	lda #4
 	ldx #OS_SET_VIDEO_MODE
 	jsr OS_CALL
-	lda #$92
-	sta $F9
-	sta VCOLOR0
 	
 	mwa SUBPAL_START VRAM_TO_RAM
-	ldx #OS_VRAM_TO_RAM
-	jsr OS_CALL
-	lda VRAM_PAGE
-	sta VPAGE
+	jsr lib_vram_to_ram
 	
 	ldy #0
    lda #$9A
@@ -28,13 +22,8 @@
    lda #$4C
    sta (RAM_TO_VRAM), y
 	
-
-	
 	mwa TEXT_START VRAM_TO_RAM
-	ldx #OS_VRAM_TO_RAM
-	jsr OS_CALL
-	lda VRAM_PAGE
-	sta VPAGE
+	jsr lib_vram_to_ram
 	
 	ldx #20
 copy_line	
@@ -61,3 +50,5 @@ message:
 	.byte $66, $66, $66, $66
 	.byte $77, $77, $77, $77
    .byte $88, $88, $88, $88
+
+   icl '../os/stdlib.asm'
