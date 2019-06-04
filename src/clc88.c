@@ -19,7 +19,7 @@ static char xexfile[1000] = "";
 static void emulator_init(int argc, char *argv[]) {
 	for(int i=1; i<argc; i++) {
 		if (!strcmp(argv[i], "-M")) arg_monitor_enabled = TRUE;
-		if (!strcmp(argv[i], "-m")) arg_monitor_stop_on_xex = TRUE;
+		else if (!strcmp(argv[i], "-m")) arg_monitor_stop_on_xex = TRUE;
 		else {
 			strcpy(xexfile, argv[i]);
 		}
