@@ -530,6 +530,26 @@ static void do_screen() {
 
 			lms += 40;
 			attribs += 40;
+		} else if ((instruction & 7) == 6) {
+			if (instruction & 64) {
+				lms     = VRAM_PTR(dl + dlpos);
+				dlpos+=2;
+				attribs = VRAM_PTR(dl + dlpos);
+				dlpos+=2;
+				subpals = VRAM_PTR(dl + dlpos);
+				dlpos+=2;
+				LOGV(LOGTAG, "do_scan_pixels_wide_4color lms: %05X attrib: %05X subpals:%05X", lms, attribs, subpals);
+			}
+			unsigned lines = 2;
+			for(int line=0; line<lines; line++) {
+				do_scan_pixels_wide_2bpp();
+				scanline++;
+				ypos++;
+				if (ypos == screen_height) return;
+			}
+
+			lms += 40;
+			attribs += 40;
 		} else if ((instruction & 7) == 7) {
 			if (instruction & 64) {
 				lms     = VRAM_PTR(dl + dlpos);
