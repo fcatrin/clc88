@@ -410,7 +410,7 @@ static void do_screen() {
 			}
 		} else if ((instruction & 7) == 2) {
 			if (instruction & 64) {
-				lms = VRAM_PTR(dl + dlpos);
+				lms     = VRAM_PTR(dl + dlpos);
 				dlpos+=2;
 				attribs = VRAM_PTR(dl + dlpos);
 				dlpos+=2;
@@ -429,11 +429,13 @@ static void do_screen() {
 
 			lms += 40;
 			attribs += 40;
-		} else if ((instruction & 7) == 4) {
+		} else if ((instruction & 7) == 3) {
 			if (instruction & 64) {
 				lms     = VRAM_PTR(dl + dlpos);
 				dlpos+=2;
 				attribs = VRAM_PTR(dl + dlpos);
+				dlpos+=2;
+				subpals = VRAM_PTR(dl + dlpos);
 				dlpos+=2;
 			}
 			LOGV(LOGTAG, "do_scan_text_attrib lms: %04X attrib: %04X", lms, attribs);

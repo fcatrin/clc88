@@ -138,7 +138,9 @@ set_video_mode:
 	jmp set_video_mode_0
 not_video_mode_0:	
 	cmp #$01
-	beq set_video_mode_1
+	bne not_video_mode_1
+	jmp set_video_mode_1
+not_video_mode_1:
 	cmp #$02
 	beq set_video_mode_2
 	cmp #$03
@@ -164,23 +166,6 @@ create_dl_mode_off:
 	
 	jmp set_video_mode_dl
 	
-set_video_mode_1:
-	ldy #3
-	jsr set_video_mode_text
-
-	lda #<TEXT_SCREEN_SIZE
-	sta COPY_SIZE
-	lda #>TEXT_SCREEN_SIZE
-	sta COPY_SIZE+1
-	
-	jsr clear_text_screen
-	jsr init_attributes
-
-	lda #<VRAM_PAL_ZX
-	sta VRPALETTE
-	lda #>VRAM_PAL_ZX
-	sta VRPALETTE+1
-	rts
 
 set_video_mode_2:
 	ldy #4
