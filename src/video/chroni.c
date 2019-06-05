@@ -338,8 +338,8 @@ static void do_scan_text_attribs_double(UINT8 line) {
 	do_scan_end();
 }
 
-static void do_scan_pixels_wide_4color() {
-	LOGV(LOGTAG, "do_scan_pixels_wide_4color line");
+static void do_scan_pixels_wide_4bpp() {
+	LOGV(LOGTAG, "do_scan_pixels_wide_4bpp line");
 	do_scan_start();
 
 	int offset = scanline * screen_pitch;
@@ -371,6 +371,48 @@ static void do_scan_pixels_wide_4color() {
 			subpals, palette, pixel, color);
 
 		put_pixel(offset, color);
+	}
+
+	do_border(offset, SCREEN_XBORDER);
+	do_scan_end();
+}
+
+static void do_scan_pixels_wide_2bpp() {
+	LOGV(LOGTAG, "do_scan_pixels_wide_2bpp line");
+	do_scan_start();
+
+	int offset = scanline * screen_pitch;
+	xpos = 0;
+	do_border(offset, SCREEN_XBORDER);
+
+	UINT8  palette = 0;
+	UINT8  palette_data = 0;
+	UINT8  pixel = 0;
+	UINT8  pixel_data = 0;
+	UINT16 pixel_data_offset = 0;
+	for(int i=0; i<SCREEN_XRES; i++) {
+		if ((i & 7) == 0) {
+			LOGV(LOGTAG, "vram offset: %05X pixel:%05X attrib:%05X",
+					pixel_data_offset, lms+pixel_data_offset, attribs+pixel_data_offset);
+			palette_data = VRAM_DATA(attribs + pixel_data_offset);
+			pixel_data = VRAM_DATA(lms + pixel_data_offset);
+			pixel_data_offset++;
+		}
+
+		if ((i & 1) == 0) {
+			pixel   = (pixel_data   & 0xC0) >> 6;
+			palette = (palette_data & 0xC0) >> 2;
+
+			pixel_data <<= 2;
+			palette_data <<= 2;
+		}
+
+		UINT8 color = VRAM_DATA(subpals + palette + pixel);
+		LOGV(LOGTAG, "vram data subpals:%05X palette:%04X pixel:%02X color:%02X",
+			subpals, palette, pixel, color);
+
+		put_pixel(offset, color);
+
 	}
 
 	do_border(offset, SCREEN_XBORDER);
@@ -481,14 +523,31 @@ static void do_screen() {
 				dlpos+=2;
 				LOGV(LOGTAG, "do_scan_pixels_wide_4color lms: %05X attrib: %05X subpals:%05X", lms, attribs, subpals);
 			}
-			do_scan_pixels_wide_4color();
+			do_scan_pixels_wide_2bpp();
+			scanline++;
+			ypos++;
+			if (ypos == screen_height) return;
+
+			lms += 40;
+			attribs += 40;
+		} else if ((instruction & 7) == 7) {
+			if (instruction & 64) {
+				lms     = VRAM_PTR(dl + dlpos);
+				dlpos+=2;
+				attribs = VRAM_PTR(dl + dlpos);
+				dlpos+=2;
+				subpals = VRAM_PTR(dl + dlpos);
+				dlpos+=2;
+				LOGV(LOGTAG, "do_scan_pixels_wide_4color lms: %05X attrib: %05X subpals:%05X", lms, attribs, subpals);
+			}
+			do_scan_pixels_wide_4bpp();
 			scanline++;
 			ypos++;
 			if (ypos == screen_height) return;
 
 			lms += 160;
 			attribs += 160;
-		} else if ((instruction & 7) == 6) {
+		} else if ((instruction & 7) == 8) {
 			if (instruction & 64) {
 				lms     = VRAM_PTR(dl + dlpos);
 				dlpos+=2;
@@ -500,7 +559,7 @@ static void do_screen() {
 			}
 			unsigned lines = 2;
 			for(int line=0; line<lines; line++) {
-				do_scan_pixels_wide_4color();
+				do_scan_pixels_wide_4bpp();
 				scanline++;
 				ypos++;
 				if (ypos == screen_height) return;
