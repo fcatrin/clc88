@@ -2,7 +2,7 @@
 	
 	org BOOTADDR
 	
-	lda #4
+	lda #3
 	ldx #OS_SET_VIDEO_MODE
 	jsr OS_CALL
 	

@@ -471,7 +471,7 @@ static void do_screen() {
 
 			lms += 20;
 			attribs += 20;
-		} else if ((instruction & 7) == 6) {
+		} else if ((instruction & 7) == 5) {
 			if (instruction & 64) {
 				lms     = VRAM_PTR(dl + dlpos);
 				dlpos+=2;
