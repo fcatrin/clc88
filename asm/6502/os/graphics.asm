@@ -11,22 +11,30 @@ VMODE_4_SUBPAL_SIZE = 16*16
 set_video_mode_0:
    mwa #video_mode_params_0 COPY_SRC_ADDR
    ldy #2
-   jsr set_video_mode_screen
-   jsr set_video_mode_dl
-   
-   mwa #VRAM_PAL_ATARI RAM_TO_VRAM
-   jsr set_video_palette
-   jmp set_video_enabled
+   jmp set_video_mode_with_params
 
 set_video_mode_4:
    mwa #video_mode_params_4 COPY_SRC_ADDR
    ldy #6
+   jmp set_video_mode_with_params
+ 
+set_video_mode_with_params:
    jsr set_video_mode_screen
    jsr set_video_mode_dl
+
+   lda ROS8 ; palette type
+   bne use_spectrum_palette
    
    mwa #VRAM_PAL_ATARI RAM_TO_VRAM
+   jmp set_video_mode_finish
+   
+use_spectrum_palette:
+   mwa #VRAM_PAL_ZX RAM_TO_VRAM
+   
+set_video_mode_finish:
    jsr set_video_palette
    jmp set_video_enabled
+ 
  
  set_video_palette:
    lda #0

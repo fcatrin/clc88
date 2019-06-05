@@ -38,6 +38,7 @@ ROS4          = $CB
 ROS5          = $CC
 ROS6          = $CD
 ROS7          = $CE
+ROS8          = $CF
 
 CHRONI_ENABLED = $200
 SCREEN_LINES   = $204

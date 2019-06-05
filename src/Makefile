@@ -48,6 +48,7 @@ ASMDIR= ../asm
 XEX = $(addprefix $(ASMDIR)/, \
 	6502/os/6502os.xex \
 	6502/test/mode_0.xex \
+	6502/test/mode_0_attribs.xex \
 	6502/test/mode_4.xex \
 	)
 
