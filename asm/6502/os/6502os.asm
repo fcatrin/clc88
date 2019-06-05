@@ -149,6 +149,10 @@ not_video_mode_2:
    bne not_video_mode_3
    jmp set_video_mode_3
 not_video_mode_3:   
+   cmp #$04
+   bne not_video_mode_4
+   jmp set_video_mode_4
+not_video_mode_4:   
 	cmp #$ff
 	beq set_video_mode_off
 	rts

@@ -110,7 +110,7 @@ Video modes are defined one per each line in a display list
     0B | Tiled    |   16   | 10    |  160 Pixels   | 16 scans | See Tiles
     0C | Tiled    |   16   | 20    |  320 Pixels   | 16 scans | See Tiles
 
-*At this time, only mode 2 - 4 are implemented*
+*At this time, only mode 2 - 6 are implemented*
     
 ### Text video modes
     
