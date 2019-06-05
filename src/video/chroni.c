@@ -443,11 +443,50 @@ static void do_scan_pixels_wide_4bpp() {
 
 		if ((i & 1) == 0) {
 			pixel   = (pixel_data   & 0xF0) >> 4;
-			palette = 0; // (palette_data & 0xF0);
+			palette = (palette_data & 0xF0);
 
 			pixel_data   <<= 4;
 			palette_data <<= 4;
 		}
+
+		UINT8 color = VRAM_DATA(subpals + palette + pixel);
+		LOGV(LOGTAG, "vram data subpals:%05X palette:%04X pixel:%02X color:%02X",
+			subpals, palette, pixel, color);
+
+		put_pixel(offset, color);
+	}
+
+	do_border(offset, SCREEN_XBORDER);
+	do_scan_end();
+}
+
+static void do_scan_pixels_1bpp() {
+	LOGV(LOGTAG, "do_scan_pixels_1bpp line");
+	do_scan_start();
+
+	int offset = scanline * screen_pitch;
+	xpos = 0;
+	do_border(offset, SCREEN_XBORDER);
+
+	UINT8  palette = 0;
+	UINT8  palette_data = 0;
+	UINT8  pixel = 0;
+	UINT8  pixel_data = 0;
+	UINT16 pixel_data_offset = 0;
+	for(int i=0; i<SCREEN_XRES; i++) {
+		if ((i & 7) == 0) {
+			LOGV(LOGTAG, "vram offset: %05X pixel:%05X attrib:%05X",
+					pixel_data_offset, lms+pixel_data_offset, attribs+pixel_data_offset);
+			palette_data = VRAM_DATA(attribs + pixel_data_offset);
+			pixel_data = VRAM_DATA(lms + pixel_data_offset);
+			pixel_data_offset++;
+		}
+
+		pixel   = (pixel_data   & 0x80) >> 7;
+		palette = (palette_data & 0x80) >> 6;
+
+		pixel_data   <<= 1;
+		palette_data <<= 1;
 
 		UINT8 color = VRAM_DATA(subpals + palette + pixel);
 		LOGV(LOGTAG, "vram data subpals:%05X palette:%04X pixel:%02X color:%02X",
@@ -582,6 +621,14 @@ static void do_screen() {
 
 				lms += 80;
 				attribs += 80;
+			} else if (mode == 9) {
+				do_scan_pixels_1bpp();
+				scanline++;
+				ypos++;
+				if (ypos == screen_height) return;
+
+				lms += 40;
+				attribs += 40;
 			}
 		}
 	}

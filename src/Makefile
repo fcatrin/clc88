@@ -55,6 +55,7 @@ XEX = $(addprefix $(ASMDIR)/, \
 	6502/test/mode_4.xex \
 	6502/test/mode_5.xex \
 	6502/test/mode_6.xex \
+	6502/test/mode_7.xex \
 	)
 
 ifeq ($(FRONTEND), linux)
