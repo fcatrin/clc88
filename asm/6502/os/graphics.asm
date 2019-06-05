@@ -23,32 +23,15 @@ VMODE_4_SCREEN_SIZE = 160*VMODE_4_LINES
 VMODE_4_ATTRIB_SIZE = 160*VMODE_4_LINES
 VMODE_4_SUBPAL_SIZE = 16*16
 
-set_video_mode_0:
-   mwa #video_mode_params_0 COPY_SRC_ADDR
-   ldy #2
-   jmp set_video_mode_with_params
-
-set_video_mode_1:
-   mwa #video_mode_params_1 COPY_SRC_ADDR
-   ldy #3
-   jmp set_video_mode_with_params
-
-set_video_mode_2:
-   mwa #video_mode_params_2 COPY_SRC_ADDR
-   ldy #4
-   jmp set_video_mode_with_params
-
-set_video_mode_3:
-   mwa #video_mode_params_3 COPY_SRC_ADDR
-   ldy #5
-   jmp set_video_mode_with_params
-
-set_video_mode_4:
-   mwa #video_mode_params_4 COPY_SRC_ADDR
-   ldy #6
-   jmp set_video_mode_with_params
- 
-set_video_mode_with_params:
+set_video_mode_std:
+   pha
+   asl
+   tax
+   mwa video_mode_params,x COPY_SRC_ADDR
+   pla
+   clc
+   adc #2
+   tay
    jsr set_video_mode_screen
    jsr set_video_mode_dl
 
@@ -363,6 +346,13 @@ video_mode_params_3:
    .word VMODE_3_LINES, VMODE_3_SCREEN_SIZE, VMODE_3_ATTRIB_SIZE, VMODE_3_SUBPAL_SIZE, video_mode_subpal_3, $00
 video_mode_params_4:
    .word VMODE_4_LINES, VMODE_4_SCREEN_SIZE, VMODE_4_ATTRIB_SIZE, VMODE_4_SUBPAL_SIZE, video_mode_subpal_3, $00
+
+video_mode_params:
+   .word video_mode_params_0
+   .word video_mode_params_1
+   .word video_mode_params_2
+   .word video_mode_params_3
+   .word video_mode_params_4
 
 video_mode_subpal_0
    .byte 0x94, 0x0C, 0x00, 0x00

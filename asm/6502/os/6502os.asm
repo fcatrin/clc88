@@ -133,28 +133,9 @@ set_video_mode:
    pha
    jsr set_video_disabled
    pla
-	cmp #$00
-	bne not_video_mode_0
-	jmp set_video_mode_0
-not_video_mode_0:	
-	cmp #$01
-	bne not_video_mode_1
-	jmp set_video_mode_1
-not_video_mode_1:
-	cmp #$02
-	bne not_video_mode_2
-	jmp set_video_mode_2
-not_video_mode_2:	
-   cmp #$03
-   bne not_video_mode_3
-   jmp set_video_mode_3
-not_video_mode_3:   
-   cmp #$04
-   bne not_video_mode_4
-   jmp set_video_mode_4
-not_video_mode_4:   
 	cmp #$ff
 	beq set_video_mode_off
+	jmp set_video_mode_std
 	rts
 	
 set_video_mode_off:
@@ -168,111 +149,6 @@ create_dl_mode_off:
 	lda #$41
 	sta VRAM_SCREEN, x
 	
-	jmp set_video_mode_dl
-	
-
-clear_text_screen:
-	lda TEXT_START
-	sta COPY_DST_ADDR
-	lda TEXT_START+1
-	sta COPY_DST_ADDR+1
-	
-	lda #0
-	jmp mem_set_bytes
-
-init_attributes:
-	clc
-	lda TEXT_START
-	adc COPY_SIZE
-	sta COPY_DST_ADDR
-	sta ATTRIB_START
-	
-	lda TEXT_START+1
-	adc COPY_SIZE+1
-	sta COPY_DST_ADDR+1
-	sta ATTRIB_START+1
-	
-	lda #$F3
-	jmp mem_set_bytes
-
-set_video_mode_text:
-	lda #112
-	sta VRAM_SCREEN
-	sta VRAM_SCREEN+1
-	sta VRAM_SCREEN+2
-	tya
-	ora #$40
-	sta VRAM_SCREEN+3
-	lda #<(VRAM_SCREEN + TEXT_SCREEN_DLIST_SIZE)
-	sta TEXT_START
-	lda #<((VRAM_SCREEN + TEXT_SCREEN_DLIST_SIZE - VRAM) / 2)
-	sta VRAM_SCREEN+4
-	lda #>(VRAM_SCREEN + TEXT_SCREEN_DLIST_SIZE)
-	sta TEXT_START+1
-	lda #>((VRAM_SCREEN + TEXT_SCREEN_DLIST_SIZE - VRAM) / 2)
-	sta VRAM_SCREEN+5
-	
-	cpy #3
-	beq with_attributes
-	cpy #4
-	beq with_attributes_wide
-	cpy #5
-	beq with_attributes_block
-
-	ldx #0
-	tya
-create_dl_mode_0:	
-	sta VRAM_SCREEN+6, x
-	inx
-	cpx #23
-	bne create_dl_mode_0
-	lda #$41
-	sta VRAM_SCREEN+6, x
-	ldx #23
-	jmp set_video_mode_dl
-	
-with_attributes:
-	clc
-	lda VRAM_SCREEN+4
-	adc #<(TEXT_SCREEN_SIZE / 2)
-	sta VRAM_SCREEN+6
-	lda VRAM_SCREEN+5
-	adc #>(TEXT_SCREEN_SIZE / 2)
-	sta VRAM_SCREEN+7
-	ldx #23
-	jmp create_dl_attributes
-	
-with_attributes_wide:
-	clc
-	lda VRAM_SCREEN+4
-	adc #<(TEXT_SCREEN_SIZE_WIDE / 2)
-	sta VRAM_SCREEN+6
-	lda VRAM_SCREEN+5
-	adc #>(TEXT_SCREEN_SIZE_WIDE / 2)
-	sta VRAM_SCREEN+7
-	ldx #23
-	jmp create_dl_attributes
-
-with_attributes_block:
-	clc
-	lda VRAM_SCREEN+4
-	adc #<(TEXT_SCREEN_SIZE_BLOCK / 2)
-	sta VRAM_SCREEN+6
-	lda VRAM_SCREEN+5
-	adc #>(TEXT_SCREEN_SIZE_BLOCK / 2)
-	sta VRAM_SCREEN+7
-	ldx #11
-	jmp create_dl_attributes
-
-create_dl_attributes:
-	lda #$41
-	sta VRAM_SCREEN+8, x
-	dex
-	tya
-create_dl_mode_1:	
-	sta VRAM_SCREEN+8, x
-	dex
-	bpl create_dl_mode_1
 	jmp set_video_mode_dl
 	
 os_vector_table
