@@ -2,6 +2,7 @@
 	
 	org BOOTADDR
 	
+	mva #0 ROS8
 	lda #5
 	ldx #OS_SET_VIDEO_MODE
 	jsr OS_CALL
@@ -35,13 +36,16 @@ copy:
 	cpy #32
 	bne copy
 	
-	adw RAM_TO_VRAM #160
+	adw RAM_TO_VRAM #80
 	dex
 	bne copy_line
 stop:
 	jmp stop
 	
 message:
+   .byte $45, $45, $45, $45
+   .byte $12, $34, $56, $78
+   .byte $9A, $BC, $DE, $FF
 	.byte $11, $11, $11, $11
 	.byte $22, $22, $22, $22
 	.byte $33, $33, $33, $33
