@@ -482,7 +482,10 @@ static void do_screen() {
 		int scan_post_dli = instruction & 0x80;
 		LOGV(LOGTAG, "DL instruction %05X = %02X", dl + dlpos, instruction);
 		dlpos++;
-		if ((instruction & 7) == 0) { // blank lines
+		UINT8 mode = instruction & 0x0F;
+		if (instruction == 0x41) {
+			break;
+		} else if (mode == 0) { // blank lines
 			UINT8 lines = 1 + ((instruction & 0x70) >> 4);
 			LOGV(LOGTAG, "do_scan_blank lines %d", lines);
 			for(int line=0; line<lines; line++) {
@@ -502,7 +505,7 @@ static void do_screen() {
 				dlpos+=2;
 			}
 
-			if ((instruction & 7) == 2) {
+			if (mode == 2) {
 				LOGV(LOGTAG, "do_scan_text lms: %04X", lms);
 				int lines = 8;
 				for(int line=0; line<lines; line++) {
@@ -515,7 +518,7 @@ static void do_screen() {
 
 				lms += 40;
 				attribs += 40;
-			} else if ((instruction & 7) == 3) {
+			} else if (mode == 3) {
 				LOGV(LOGTAG, "do_scan_text_attrib lms: %04X attrib: %04X", lms, attribs);
 				int lines = 8;
 				for(int line=0; line<lines; line++) {
@@ -528,7 +531,7 @@ static void do_screen() {
 
 				lms += 20;
 				attribs += 20;
-			} else if ((instruction & 7) == 4) {
+			} else if (mode == 4) {
 				LOGV(LOGTAG, "do_scan_text_attrib lms: %04X attrib: %04X", lms, attribs);
 				int lines = 16;
 				for(int line=0; line<lines; line++) {
@@ -541,7 +544,7 @@ static void do_screen() {
 
 				lms += 20;
 				attribs += 20;
-			} else if ((instruction & 7) == 5) {
+			} else if (mode == 5) {
 				do_scan_pixels_wide_2bpp();
 				scanline++;
 				ypos++;
@@ -549,7 +552,7 @@ static void do_screen() {
 
 				lms += 40;
 				attribs += 40;
-			} else if ((instruction & 7) == 6) {
+			} else if (mode == 6) {
 				unsigned lines = 2;
 				for(int line=0; line<lines; line++) {
 					do_scan_pixels_wide_2bpp();
@@ -560,7 +563,7 @@ static void do_screen() {
 
 				lms += 40;
 				attribs += 40;
-			} else if ((instruction & 7) == 7) {
+			} else if (mode == 7) {
 				do_scan_pixels_wide_4bpp();
 				scanline++;
 				ypos++;
@@ -568,7 +571,7 @@ static void do_screen() {
 
 				lms += 80;
 				attribs += 80;
-			} else if ((instruction & 7) == 8) {
+			} else if (mode == 8) {
 				unsigned lines = 2;
 				for(int line=0; line<lines; line++) {
 					do_scan_pixels_wide_4bpp();
@@ -579,8 +582,6 @@ static void do_screen() {
 
 				lms += 80;
 				attribs += 80;
-			} else if (instruction == 0x41) {
-				break;
 			}
 		}
 	}
