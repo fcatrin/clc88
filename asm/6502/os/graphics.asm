@@ -8,6 +8,11 @@ VMODE_1_SCREEN_SIZE = 20*VMODE_1_LINES
 VMODE_1_ATTRIB_SIZE = 20*VMODE_1_LINES
 VMODE_1_SUBPAL_SIZE = 16
 
+VMODE_2_LINES       = 12
+VMODE_2_SCREEN_SIZE = 20*VMODE_2_LINES
+VMODE_2_ATTRIB_SIZE = 20*VMODE_2_LINES
+VMODE_2_SUBPAL_SIZE = 16
+
 
 VMODE_4_LINES       = 192
 VMODE_4_SCREEN_SIZE = 160*VMODE_4_LINES
@@ -22,6 +27,11 @@ set_video_mode_0:
 set_video_mode_1:
    mwa #video_mode_params_1 COPY_SRC_ADDR
    ldy #3
+   jmp set_video_mode_with_params
+
+set_video_mode_2:
+   mwa #video_mode_params_2 COPY_SRC_ADDR
+   ldy #4
    jmp set_video_mode_with_params
 
 set_video_mode_4:
@@ -104,12 +114,12 @@ set_video_mode_screen:
    tya
    ldx #1
 vmode_set_lines:   
-   sta VRAM_SCREEN+7, x ; take LMS part as already done
+   sta VRAM_SCREEN+9, x ; take LMS part as already done
    inx
    cpx SCREEN_LINES
    bne vmode_set_lines
    lda #$41
-   sta VRAM_SCREEN+7, x ; End of Screen
+   sta VRAM_SCREEN+9, x ; End of Screen
    
 ; calculate display, attribs and subpal adresses
    clc
@@ -338,6 +348,8 @@ video_mode_params_0:
    .word VMODE_0_LINES, VMODE_0_SCREEN_SIZE, VMODE_0_ATTRIB_SIZE, VMODE_0_SUBPAL_SIZE, video_mode_subpal_0, $10
 video_mode_params_1:
    .word VMODE_1_LINES, VMODE_1_SCREEN_SIZE, VMODE_1_ATTRIB_SIZE, VMODE_1_SUBPAL_SIZE, video_mode_subpal_0, $10
+video_mode_params_2:
+   .word VMODE_2_LINES, VMODE_2_SCREEN_SIZE, VMODE_2_ATTRIB_SIZE, VMODE_2_SUBPAL_SIZE, video_mode_subpal_0, $10
 video_mode_params_4:
    .word VMODE_4_LINES, VMODE_4_SCREEN_SIZE, VMODE_4_ATTRIB_SIZE, VMODE_4_SUBPAL_SIZE, video_mode_subpal_4, $00
 

@@ -450,11 +450,13 @@ static void do_screen() {
 
 			lms += 20;
 			attribs += 20;
-		} else if ((instruction & 7) == 5) {
+		} else if ((instruction & 7) == 4) {
 			if (instruction & 64) {
 				lms     = VRAM_PTR(dl + dlpos);
 				dlpos+=2;
 				attribs = VRAM_PTR(dl + dlpos);
+				dlpos+=2;
+				subpals = VRAM_PTR(dl + dlpos);
 				dlpos+=2;
 			}
 			LOGV(LOGTAG, "do_scan_text_attrib lms: %04X attrib: %04X", lms, attribs);
