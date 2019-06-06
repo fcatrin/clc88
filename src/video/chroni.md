@@ -111,7 +111,7 @@ Video modes are defined one per each line in a display list
     0C | Tiled    |   16   | 10    |  160 Pixels   | 16 scans | See Tiles
     0D | Tiled    |   16   | 20    |  320 Pixels   | 16 scans | See Tiles
 
-*At this time, only mode 0x02 - 0x0A are implemented*
+*At this time, only mode 0x02 - 0x0B are implemented*
     
 ### Text video modes
     
