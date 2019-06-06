@@ -56,6 +56,8 @@ XEX = $(addprefix $(ASMDIR)/, \
 	6502/test/mode_5.xex \
 	6502/test/mode_6.xex \
 	6502/test/mode_7.xex \
+	6502/test/mode_8.xex \
+	6502/test/mode_9.xex \
 	)
 
 ifeq ($(FRONTEND), linux)
@@ -78,7 +80,7 @@ $(OBJDIR)/%.o: %.c
 $(ASMDIR)/%.xex: $(ASMDIR)/%.asm
 	mads $< -l -s -o:$@
 	
-$(ASMDIR)/6502/os/6502os.asm : $(ASMDIR)/6502/os/symbols.asm $(ASMDIR)/6502/os/graphics.asm 	
+$(ASMDIR)/6502/os/6502os.xex : $(ASMDIR)/6502/os/symbols.asm $(ASMDIR)/6502/os/graphics.asm 	
 
 $(TARGET): $(OBJS)
 	$(CC) -o $@ $(LDFLAGS) $(OBJS) $(LIBS)

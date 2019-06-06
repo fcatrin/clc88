@@ -338,6 +338,47 @@ static void do_scan_text_attribs_double(UINT8 line) {
 	do_scan_end();
 }
 
+static void do_scan_pixels_2bpp() {
+	LOGV(LOGTAG, "do_scan_pixels_2bpp line");
+	do_scan_start();
+
+	int offset = scanline * screen_pitch;
+	xpos = 0;
+	do_border(offset, SCREEN_XBORDER);
+
+	UINT8  palette = 0;
+	UINT8  palette_data = 0;
+	UINT8  pixel = 0;
+	UINT8  pixel_data = 0;
+	UINT16 pixel_data_offset = 0;
+	for(int i=0; i<SCREEN_XRES; i++) {
+		if ((i & 3) == 0) {
+			LOGV(LOGTAG, "vram offset: %05X pixel:%05X attrib:%05X",
+					pixel_data_offset, lms+pixel_data_offset, attribs+pixel_data_offset);
+			palette_data = VRAM_DATA(attribs + pixel_data_offset);
+			pixel_data = VRAM_DATA(lms + pixel_data_offset);
+			pixel_data_offset++;
+		}
+
+		pixel   = (pixel_data   & 0xC0) >> 6;
+		palette = (palette_data & 0xC0) >> 4;
+
+		pixel_data <<= 2;
+		palette_data <<= 2;
+
+		UINT8 color = VRAM_DATA(subpals + palette + pixel);
+		LOGV(LOGTAG, "vram data subpals:%05X palette:%04X pixel:%02X color:%02X",
+			subpals, palette, pixel, color);
+
+		put_pixel(offset, color);
+
+	}
+
+	do_border(offset, SCREEN_XBORDER);
+	do_scan_end();
+}
+
+
 static void do_scan_pixels_4bpp() {
 	LOGV(LOGTAG, "do_scan_pixels_4bpp line");
 	do_scan_start();
@@ -358,13 +399,13 @@ static void do_scan_pixels_4bpp() {
 			palette_data = VRAM_DATA(attribs + pixel_data_offset);
 			pixel_data = VRAM_DATA(lms + pixel_data_offset);
 			pixel_data_offset++;
-
-			pixel = pixel_data & 0x0F;
-			palette = (palette_data & 0x0F) << 2;
-		} else {
-			pixel = pixel_data >> 4;
-			palette = palette_data >> 2;
 		}
+
+		pixel   = (pixel_data   & 0xF0) >> 4;
+		palette = (palette_data & 0xF0);
+
+		pixel_data   <<= 4;
+		palette_data <<= 4;
 
 		UINT8 color = VRAM_DATA(subpals + palette + pixel);
 		LOGV(LOGTAG, "vram data subpals:%05X palette:%04X pixel:%02X color:%02X",
@@ -629,6 +670,22 @@ static void do_screen() {
 
 				lms += 40;
 				attribs += 40;
+			} else if (mode == 0x0A) {
+				do_scan_pixels_2bpp();
+				scanline++;
+				ypos++;
+				if (ypos == screen_height) return;
+
+				lms += 80;
+				attribs += 80;
+			} else if (mode == 0x0B) {
+				do_scan_pixels_4bpp();
+				scanline++;
+				ypos++;
+				if (ypos == screen_height) return;
+
+				lms += 160;
+				attribs += 160;
 			}
 		}
 	}
