@@ -44,6 +44,8 @@ static UINT32 subpals;
 static UINT32 charset;
 static UINT32 sprites;
 
+static UINT32 tileset_small;
+
 // this is an RGB565 -> RGB888 conversion array for emulation only
 static UINT8 rgb565[0x10000 * 3];
 static UINT8 pixel_color_r;
@@ -66,6 +68,7 @@ void chroni_reset() {
 	charset = 0;
 	sprites = 0;
 	palette = 0;
+	tileset_small = 0;
 }
 
 void chroni_vram_write(UINT16 index, UINT8 value) {
@@ -120,6 +123,12 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 		break;
 	case 0xb:
 		reg_addr_high(&sprites, value);
+		break;
+	case 0xc:
+		reg_addr_low(&tileset_small, value);
+		break;
+	case 0xd:
+		reg_addr_high(&tileset_small, value);
 		break;
 	case 16:
 	case 17:
@@ -337,6 +346,44 @@ static void do_scan_text_attribs_double(UINT8 line) {
 	do_border(offset, SCREEN_XBORDER);
 	do_scan_end();
 }
+
+static void do_scan_tile_wide_2bpp(UINT8 line) {
+	LOGV(LOGTAG, "do_scan_tile_wide_2bpp line %d", line);
+	do_scan_start();
+
+	int offset = scanline * screen_pitch;
+	xpos = 0;
+	do_border(offset, SCREEN_XBORDER);
+
+	UINT8  palette = 0;
+	UINT8  pixel = 0;
+	UINT8  pixel_data = 0;
+	int tile_offset = 0;
+	for(int i=0; i<SCREEN_XRES; i++) {
+		if ((i & 7) == 0) {
+			palette = VRAM_DATA(attribs + tile_offset);
+
+			UINT8 tile = VRAM_DATA(lms + tile_offset);
+			pixel_data = VRAM_DATA(tileset_small + tile*8 + line);
+			tile_offset++;
+		}
+
+		if ((i & 1) == 0) {
+			pixel   = (pixel_data   & 0xC0) >> 6;
+			pixel_data <<= 2;
+		}
+
+		UINT8 color = VRAM_DATA(subpals + palette*4 + pixel);
+
+		put_pixel(offset, color);
+
+	}
+
+	do_border(offset, SCREEN_XBORDER);
+	do_scan_end();
+}
+
+
 
 static void do_scan_pixels_2bpp() {
 	LOGV(LOGTAG, "do_scan_pixels_2bpp line");
@@ -686,6 +733,18 @@ static void do_screen() {
 
 				lms += 160;
 				attribs += 160;
+			} else if (mode == 0x0C) {
+				int lines = 8;
+				for(int line=0; line<lines; line++) {
+					if (line == lines - 1) post_dli = scan_post_dli;
+					do_scan_tile_wide_2bpp(line);
+					scanline++;
+					ypos++;
+					if (ypos == screen_height) return;
+				}
+
+				lms += 40;
+				attribs += 40;
 			}
 		}
 	}
