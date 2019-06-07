@@ -6,25 +6,31 @@
 	ldx #OS_SET_VIDEO_MODE
 	jsr OS_CALL
 	
-	lda #<sprites_base
-	sta VRSPRITES
-	lda #>sprites_base
-	sta VRSPRITES+1
+	mwa #sprites_base RAM_TO_VRAM
+	jsr lib_ram_to_vram
+	mwa VRAM_TO_RAM VSPRITES
 	
 	lda #$0F
 	sta VCOLOR0
+	
+	mwa TEXT_START VRAM_TO_RAM
+	jsr lib_vram_to_ram
 	
 	ldy #0
 copy:
 	lda message, y
 	cmp #255
 	beq end
-	sta (TEXT_START), y
+	sta (RAM_TO_VRAM), y
 	iny
 	bne copy
 	
-	
 end:
+	lda VSTATUS
+	ora #VSTATUS_EN_SPRITES
+	sta VSTATUS
+	
+loop:
    lda FRAMECOUNT
    clc
    ror
@@ -35,11 +41,12 @@ end:
    adc #50
    sta sprites_x+2
    sta sprites_y+2
-   jmp end
+   jmp loop
    
 message:
 	.byte 40, 101, 108, 108, 111, 0, 55, 111, 114, 108, 100, 1, 1, 1, 1, 255
    
+   icl '../os/stdlib.asm'   
 
    org $C000
 sprite_0:

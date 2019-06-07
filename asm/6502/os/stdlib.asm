@@ -4,4 +4,9 @@ lib_vram_to_ram:
    lda VRAM_PAGE
    sta VPAGE
    rts
+   
+lib_ram_to_vram:
+   ldx #OS_RAM_TO_VRAM
+   jmp OS_CALL
+   
 
