@@ -37,7 +37,7 @@ static UINT16 lms = 0;
 static UINT16 attribs = 0;
 static UINT16 ypos, xpos;
 
-static UINT8 colors[4];
+static UINT8  border_color = 0;
 static UINT32 palette;
 static UINT32 subpals;
 
@@ -137,11 +137,8 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 	case 0xf:
 		reg_addr_high(&tileset_big, value);
 		break;
-	case 16:
-	case 17:
-	case 18:
-	case 19:
-		colors[index - 16] = value;
+	case 0x10:
+		border_color = value;
 		break;
 	}
 }
@@ -261,7 +258,7 @@ static void inline put_pixel(int offset, UINT8 color) {
 
 static void inline do_border(int offset, int size) {
 	for(int i=0; i<size; i++) {
-		put_pixel(offset, colors[0]);
+		put_pixel(offset, border_color);
 	}
 }
 

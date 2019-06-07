@@ -61,8 +61,6 @@ You can find the names declared in asm/6502/os/symbols.asm
              |------- Chroni enabled
     0A : VSPRITES WORD Sprites base address (absolute addr)
     10 : VCOLOR0  BYTE Border color
-    11 : VCOLOR1  BYTE Simple Text mode background
-    12 : VCOLOR2  BYTE Simple Text mode foreround
 
 ## Colors and Palettes
 
