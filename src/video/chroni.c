@@ -45,6 +45,7 @@ static UINT32 charset;
 static UINT32 sprites;
 
 static UINT32 tileset_small;
+static UINT32 tileset_big;
 
 // this is an RGB565 -> RGB888 conversion array for emulation only
 static UINT8 rgb565[0x10000 * 3];
@@ -129,6 +130,12 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 		break;
 	case 0xd:
 		reg_addr_high(&tileset_small, value);
+		break;
+	case 0xe:
+		reg_addr_low(&tileset_big, value);
+		break;
+	case 0xf:
+		reg_addr_high(&tileset_big, value);
 		break;
 	case 16:
 	case 17:
@@ -376,14 +383,53 @@ static void do_scan_tile_wide_2bpp(UINT8 line) {
 		UINT8 color = VRAM_DATA(subpals + palette*4 + pixel);
 
 		put_pixel(offset, color);
-
 	}
 
 	do_border(offset, SCREEN_XBORDER);
 	do_scan_end();
 }
 
+static void do_scan_tile_wide_4bpp(UINT8 line) {
+	LOGV(LOGTAG, "do_scan_tile_wide_4bpp line %d", line);
+	do_scan_start();
 
+	int offset = scanline * screen_pitch;
+	xpos = 0;
+	do_border(offset, SCREEN_XBORDER);
+
+	UINT8  palette = 0;
+	UINT8  pixel = 0;
+	UINT8  pixel_data = 0;
+	UINT8  tile = 0;
+	UINT8  tile_data;
+	int tile_offset = 0;
+	for(int i=0; i<SCREEN_XRES; i++) {
+		if ((i & 31) == 0) {
+			palette = VRAM_DATA(attribs + tile_offset);
+			tile    = VRAM_DATA(lms + tile_offset);
+			tile_data = 0;
+
+			tile_offset++;
+		}
+
+		if ((i & 3) == 0) {
+			pixel_data = VRAM_DATA(tileset_big + tile*128 + line*8 + tile_data);
+			tile_data++;
+		}
+
+		if ((i & 1) == 0) {
+			pixel   = (pixel_data & 0xF0) >> 4;
+			pixel_data <<= 4;
+		}
+
+		UINT8 color = VRAM_DATA(subpals + palette*16 + pixel);
+
+		put_pixel(offset, color);
+	}
+
+	do_border(offset, SCREEN_XBORDER);
+	do_scan_end();
+}
 
 static void do_scan_pixels_2bpp() {
 	LOGV(LOGTAG, "do_scan_pixels_2bpp line");
@@ -745,6 +791,18 @@ static void do_screen() {
 
 				lms += 40;
 				attribs += 40;
+			} else if (mode == 0x0D) {
+				int lines = 16;
+				for(int line=0; line<lines; line++) {
+					if (line == lines - 1) post_dli = scan_post_dli;
+					do_scan_tile_wide_4bpp(line);
+					scanline++;
+					ypos++;
+					if (ypos == screen_height) return;
+				}
+
+				lms += 10;
+				attribs += 10;
 			}
 		}
 	}

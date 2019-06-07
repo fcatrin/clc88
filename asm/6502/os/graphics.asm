@@ -51,7 +51,13 @@ VMODE_9_SUBPAL_SIZE = 16*16
 VMODE_A_LINES       = 24
 VMODE_A_SCREEN_SIZE = 40*VMODE_A_LINES
 VMODE_A_ATTRIB_SIZE = 40*VMODE_A_LINES
-VMODE_A_SUBPAL_SIZE = 4*4
+VMODE_A_SUBPAL_SIZE = 4*8
+
+VMODE_B_LINES       = 12
+VMODE_B_SCREEN_SIZE = 10*VMODE_B_LINES
+VMODE_B_ATTRIB_SIZE = 10*VMODE_B_LINES
+VMODE_B_SUBPAL_SIZE = 16*8
+
 
 set_video_mode_std:
    pha
@@ -388,6 +394,8 @@ video_mode_params_9:
    .word VMODE_9_LINES, VMODE_9_SCREEN_SIZE, VMODE_9_ATTRIB_SIZE, VMODE_9_SUBPAL_SIZE, video_mode_subpal_3, $00
 video_mode_params_a:
    .word VMODE_A_LINES, VMODE_A_SCREEN_SIZE, VMODE_A_ATTRIB_SIZE, VMODE_A_SUBPAL_SIZE, video_mode_subpal_0, $00
+video_mode_params_b:
+   .word VMODE_B_LINES, VMODE_B_SCREEN_SIZE, VMODE_B_ATTRIB_SIZE, VMODE_B_SUBPAL_SIZE, video_mode_subpal_3, $00
 
 
 video_mode_params:
@@ -402,6 +410,7 @@ video_mode_params:
    .word video_mode_params_8
    .word video_mode_params_9
    .word video_mode_params_a
+   .word video_mode_params_b
    
 video_mode_subpal_0
    .byte 0x94, 0x0C, 0x00, 0x00
@@ -410,7 +419,7 @@ video_mode_subpal_0
    .byte 0x00, 0x00, 0x00, 0x00
 
 video_mode_subpal_3:
-   .byte 0x00, 0x0f, 0x94, 0x9a
+   .byte 0x94, 0x0f, 0x94, 0x9a
    .byte 0x10, 0x1f, 0xa4, 0xaa
    .byte 0x20, 0x2f, 0xb4, 0xba
    .byte 0x30, 0x3f, 0xc4, 0xca
