@@ -431,6 +431,47 @@ static void do_scan_tile_wide_4bpp(UINT8 line) {
 	do_scan_end();
 }
 
+static void do_scan_tile_4bpp(UINT8 line) {
+	LOGV(LOGTAG, "do_scan_tile_wide_4bpp line %d", line);
+	do_scan_start();
+
+	int offset = scanline * screen_pitch;
+	xpos = 0;
+	do_border(offset, SCREEN_XBORDER);
+
+	UINT8  palette = 0;
+	UINT8  pixel = 0;
+	UINT8  pixel_data = 0;
+	UINT8  tile = 0;
+	UINT8  tile_data;
+	int tile_offset = 0;
+	for(int i=0; i<SCREEN_XRES; i++) {
+		if ((i & 15) == 0) {
+			palette = VRAM_DATA(attribs + tile_offset);
+			tile    = VRAM_DATA(lms + tile_offset);
+			tile_data = 0;
+
+			tile_offset++;
+		}
+
+		if ((i & 1) == 0) {
+			pixel_data = VRAM_DATA(tileset_big + tile*128 + line*8 + tile_data);
+			tile_data++;
+		}
+
+		pixel   = (pixel_data & 0xF0) >> 4;
+		pixel_data <<= 4;
+
+		UINT8 color = VRAM_DATA(subpals + palette*16 + pixel);
+
+		put_pixel(offset, color);
+	}
+
+	do_border(offset, SCREEN_XBORDER);
+	do_scan_end();
+}
+
+
 static void do_scan_pixels_2bpp() {
 	LOGV(LOGTAG, "do_scan_pixels_2bpp line");
 	do_scan_start();
@@ -796,6 +837,18 @@ static void do_screen() {
 				for(int line=0; line<lines; line++) {
 					if (line == lines - 1) post_dli = scan_post_dli;
 					do_scan_tile_wide_4bpp(line);
+					scanline++;
+					ypos++;
+					if (ypos == screen_height) return;
+				}
+
+				lms += 10;
+				attribs += 10;
+			} else if (mode == 0x0E) {
+				int lines = 16;
+				for(int line=0; line<lines; line++) {
+					if (line == lines - 1) post_dli = scan_post_dli;
+					do_scan_tile_4bpp(line);
 					scanline++;
 					ypos++;
 					if (ypos == screen_height) return;

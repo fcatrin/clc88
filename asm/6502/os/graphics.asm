@@ -58,6 +58,10 @@ VMODE_B_SCREEN_SIZE = 10*VMODE_B_LINES
 VMODE_B_ATTRIB_SIZE = 10*VMODE_B_LINES
 VMODE_B_SUBPAL_SIZE = 16*8
 
+VMODE_C_LINES       = 12
+VMODE_C_SCREEN_SIZE = 20*VMODE_C_LINES
+VMODE_C_ATTRIB_SIZE = 20*VMODE_C_LINES
+VMODE_C_SUBPAL_SIZE = 16*8
 
 set_video_mode_std:
    pha
@@ -396,6 +400,8 @@ video_mode_params_a:
    .word VMODE_A_LINES, VMODE_A_SCREEN_SIZE, VMODE_A_ATTRIB_SIZE, VMODE_A_SUBPAL_SIZE, video_mode_subpal_0, $00
 video_mode_params_b:
    .word VMODE_B_LINES, VMODE_B_SCREEN_SIZE, VMODE_B_ATTRIB_SIZE, VMODE_B_SUBPAL_SIZE, video_mode_subpal_3, $00
+video_mode_params_c:
+   .word VMODE_C_LINES, VMODE_C_SCREEN_SIZE, VMODE_C_ATTRIB_SIZE, VMODE_C_SUBPAL_SIZE, video_mode_subpal_3, $00
 
 
 video_mode_params:
@@ -411,6 +417,7 @@ video_mode_params:
    .word video_mode_params_9
    .word video_mode_params_a
    .word video_mode_params_b
+   .word video_mode_params_c
    
 video_mode_subpal_0
    .byte 0x94, 0x0C, 0x00, 0x00
