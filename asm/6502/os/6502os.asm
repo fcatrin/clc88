@@ -158,6 +158,7 @@ os_vector_table
 	.word mem_set_bytes
 	.word ram2vram
 	.word vram2ram
+	.word vram_set_bytes
 
 copy_params_charset:
 	.word charset, VRAM_CHARSET, CHARSET_SIZE
