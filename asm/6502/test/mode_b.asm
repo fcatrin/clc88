@@ -24,7 +24,7 @@ copy_tile:
    bne copy_tile
 
 
-   mwa TEXT_START VRAM_TO_RAM
+   mwa DISPLAY_START VRAM_TO_RAM
    jsr lib_vram_to_ram
 	
 	ldy #0

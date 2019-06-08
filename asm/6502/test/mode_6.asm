@@ -23,7 +23,7 @@
    lda #$4C
    sta (RAM_TO_VRAM), y
    
-   mwa TEXT_START VRAM_TO_RAM
+   mwa DISPLAY_START VRAM_TO_RAM
    jsr lib_vram_to_ram
    
    ldx #20

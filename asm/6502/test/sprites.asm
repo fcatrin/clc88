@@ -13,7 +13,7 @@
 	lda #$0F
 	sta VCOLOR0
 	
-	mwa TEXT_START VRAM_TO_RAM
+	mwa DISPLAY_START VRAM_TO_RAM
 	jsr lib_vram_to_ram
 	
 	ldy #0
