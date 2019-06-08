@@ -11,6 +11,7 @@
    mwa SUBPAL_START VRAM_TO_RAM
    jsr lib_vram_to_ram
 
+; use first 16 entries as subpal
    ldy #0
 set_subpal:
    tya
@@ -18,7 +19,17 @@ set_subpal:
    iny
    cpy #16
    bne set_subpal
+   
+; reset all attributes to $0F   
+   mwa ATTRIB_START VRAM_TO_RAM
+   jsr lib_vram_to_ram
+   
+   mwa RAM_TO_VRAM COPY_DST_ADDR
+   mwa SCREEN_SIZE COPY_SIZE
+   lda #$0F
+   jsr lib_vram_set_bytes
 
+; copy test attrbutes
    mwa ATTRIB_START VRAM_TO_RAM
    jsr lib_vram_to_ram
    
@@ -50,7 +61,7 @@ stop:
 message:
 	.byte 40, 101, 108, 108, 111, 0, 55, 111, 114, 108, 100, 1, 1, 1, 1, 255
 attribs:	
-	.byte $0F, $F0, $1E, $E1, $01, $02, $03, $04, $21, $22, $23, $24
+	.byte $0F, $01, $1E, $E1, $01, $02, $03, $04, $21, $22, $23, $24
 	.byte $1F, $2F, $3F, $4F, $5F, $00
 
    icl '../os/stdlib.asm'
