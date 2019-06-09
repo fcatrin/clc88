@@ -16,14 +16,35 @@
 	mwa DISPLAY_START VRAM_TO_RAM
 	jsr lib_vram_to_ram
 	
+	adw RAM_TO_VRAM #44
+	
 	ldy #0
 copy:
 	lda message, y
 	cmp #255
-	beq end
+	beq set_chars_full
 	sta (RAM_TO_VRAM), y
 	iny
 	bne copy
+	
+set_chars_full:
+
+	adw RAM_TO_VRAM #120 R4
+	
+	mwa ATTRIB_START VRAM_TO_RAM
+	jsr lib_vram_to_ram
+	adw RAM_TO_VRAM #(40*4)+4 R6
+	
+	lda #$32
+	sta R2
+	jsr write_charset
+	
+	lda #$43
+	sta R2
+	adw R4 #120
+	adw R6 #120
+	
+	jsr write_charset
 	
 end:
 	lda VSTATUS
@@ -41,10 +62,36 @@ loop:
    adc #50
    sta sprites_x+2
    sta sprites_y+2
+   
+   lda VCOUNT
+   asl
+   sta WSYNC
+   sta VCOLOR0
    jmp loop
    
+write_charset:
+   ldx #0
+   stx R1
+set_chars_line:
+   ldy #0
+set_chars:   
+   lda R1
+   sta (R4), y
+   lda R2
+   sta (R6), y
+   inc R1
+   iny
+   cpy #32
+   bne set_chars
+   adw R4 #40
+   adw R6 #40
+   inx
+   cpx #4
+   bne set_chars_line
+   rts
+   
 message:
-	.byte 40, 101, 108, 108, 111, 0, 55, 111, 114, 108, 100, 1, 1, 1, 1, 255
+	.by "Hello world!! This is Chroni!", 255
    
    icl '../os/stdlib.asm'   
 
