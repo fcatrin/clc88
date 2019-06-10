@@ -31,6 +31,7 @@ UINT8 vram[VRAM_MAX];
 
 static UINT16 scanline;
 static UINT8  page;
+static UINT32 offset;
 
 static UINT32 dl;
 static UINT16 lms = 0;
@@ -286,11 +287,6 @@ static void do_scan_blank() {
 
 static void do_scan_text_attribs(UINT8 line) {
 	LOGV(LOGTAG, "do_scan_text_attribs line %d", line);
-	do_scan_start();
-
-	int offset = scanline * screen_pitch;
-	xpos = 0;
-	do_border(offset, SCREEN_XBORDER);
 
 	UINT8 row;
 	UINT8 foreground, background;
@@ -312,18 +308,10 @@ static void do_scan_text_attribs(UINT8 line) {
 
 		row <<= 1;
 	}
-
-	do_border(offset, SCREEN_XBORDER);
-	do_scan_end();
 }
 
 static void do_scan_text_attribs_double(UINT8 line) {
 	LOGV(LOGTAG, "do_scan_text_attribs double line %d", line);
-	do_scan_start();
-
-	int offset = scanline * screen_pitch;
-	xpos = 0;
-	do_border(offset, SCREEN_XBORDER);
 
 	UINT8 row;
 	UINT8 foreground, background;
@@ -346,18 +334,10 @@ static void do_scan_text_attribs_double(UINT8 line) {
 		if (!first) row <<= 1;
 		first = !first;
 	}
-
-	do_border(offset, SCREEN_XBORDER);
-	do_scan_end();
 }
 
 static void do_scan_tile_wide_2bpp(UINT8 line) {
 	LOGV(LOGTAG, "do_scan_tile_wide_2bpp line %d", line);
-	do_scan_start();
-
-	int offset = scanline * screen_pitch;
-	xpos = 0;
-	do_border(offset, SCREEN_XBORDER);
 
 	UINT8  palette = 0;
 	UINT8  pixel = 0;
@@ -381,18 +361,10 @@ static void do_scan_tile_wide_2bpp(UINT8 line) {
 
 		put_pixel(offset, color);
 	}
-
-	do_border(offset, SCREEN_XBORDER);
-	do_scan_end();
 }
 
 static void do_scan_tile_wide_4bpp(UINT8 line) {
 	LOGV(LOGTAG, "do_scan_tile_wide_4bpp line %d", line);
-	do_scan_start();
-
-	int offset = scanline * screen_pitch;
-	xpos = 0;
-	do_border(offset, SCREEN_XBORDER);
 
 	UINT8  palette = 0;
 	UINT8  pixel = 0;
@@ -423,18 +395,10 @@ static void do_scan_tile_wide_4bpp(UINT8 line) {
 
 		put_pixel(offset, color);
 	}
-
-	do_border(offset, SCREEN_XBORDER);
-	do_scan_end();
 }
 
 static void do_scan_tile_4bpp(UINT8 line) {
 	LOGV(LOGTAG, "do_scan_tile_wide_4bpp line %d", line);
-	do_scan_start();
-
-	int offset = scanline * screen_pitch;
-	xpos = 0;
-	do_border(offset, SCREEN_XBORDER);
 
 	UINT8  palette = 0;
 	UINT8  pixel = 0;
@@ -463,19 +427,11 @@ static void do_scan_tile_4bpp(UINT8 line) {
 
 		put_pixel(offset, color);
 	}
-
-	do_border(offset, SCREEN_XBORDER);
-	do_scan_end();
 }
 
 
 static void do_scan_pixels_2bpp() {
 	LOGV(LOGTAG, "do_scan_pixels_2bpp line");
-	do_scan_start();
-
-	int offset = scanline * screen_pitch;
-	xpos = 0;
-	do_border(offset, SCREEN_XBORDER);
 
 	UINT8  palette = 0;
 	UINT8  palette_data = 0;
@@ -504,19 +460,11 @@ static void do_scan_pixels_2bpp() {
 		put_pixel(offset, color);
 
 	}
-
-	do_border(offset, SCREEN_XBORDER);
-	do_scan_end();
 }
 
 
 static void do_scan_pixels_4bpp() {
 	LOGV(LOGTAG, "do_scan_pixels_4bpp line");
-	do_scan_start();
-
-	int offset = scanline * screen_pitch;
-	xpos = 0;
-	do_border(offset, SCREEN_XBORDER);
 
 	UINT8  palette = 0;
 	UINT8  palette_data = 0;
@@ -544,18 +492,10 @@ static void do_scan_pixels_4bpp() {
 
 		put_pixel(offset, color);
 	}
-
-	do_border(offset, SCREEN_XBORDER);
-	do_scan_end();
 }
 
 static void do_scan_pixels_wide_2bpp() {
 	LOGV(LOGTAG, "do_scan_pixels_wide_2bpp line");
-	do_scan_start();
-
-	int offset = scanline * screen_pitch;
-	xpos = 0;
-	do_border(offset, SCREEN_XBORDER);
 
 	UINT8  palette = 0;
 	UINT8  palette_data = 0;
@@ -586,18 +526,10 @@ static void do_scan_pixels_wide_2bpp() {
 		put_pixel(offset, color);
 
 	}
-
-	do_border(offset, SCREEN_XBORDER);
-	do_scan_end();
 }
 
 static void do_scan_pixels_wide_4bpp() {
 	LOGV(LOGTAG, "do_scan_pixels_wide_4bpp line");
-	do_scan_start();
-
-	int offset = scanline * screen_pitch;
-	xpos = 0;
-	do_border(offset, SCREEN_XBORDER);
 
 	UINT8  palette = 0;
 	UINT8  palette_data = 0;
@@ -627,18 +559,10 @@ static void do_scan_pixels_wide_4bpp() {
 
 		put_pixel(offset, color);
 	}
-
-	do_border(offset, SCREEN_XBORDER);
-	do_scan_end();
 }
 
 static void do_scan_pixels_1bpp() {
 	LOGV(LOGTAG, "do_scan_pixels_1bpp line");
-	do_scan_start();
-
-	int offset = scanline * screen_pitch;
-	xpos = 0;
-	do_border(offset, SCREEN_XBORDER);
 
 	UINT8  palette = 0;
 	UINT8  palette_data = 0;
@@ -666,9 +590,6 @@ static void do_scan_pixels_1bpp() {
 
 		put_pixel(offset, color);
 	}
-
-	do_border(offset, SCREEN_XBORDER);
-	do_scan_end();
 }
 
 static UINT8 bytes_per_scan[] = {
@@ -734,6 +655,12 @@ static void do_screen() {
 			for(int line=0; line<lines; line++) {
 				if (line == lines - 1) post_dli = scan_post_dli;
 
+				do_scan_start();
+
+				offset = scanline * screen_pitch;
+				xpos = 0;
+				do_border(offset, SCREEN_XBORDER);
+
 				switch(mode) {
 				case 0x2: do_scan_text_attribs(line); break;
 				case 0x3: do_scan_text_attribs_double(line); break;
@@ -749,6 +676,9 @@ static void do_screen() {
 				case 0xD: do_scan_tile_wide_4bpp(line); break;
 				case 0xE: do_scan_tile_4bpp(line); break;
 				}
+
+				do_border(offset, SCREEN_XBORDER);
+				do_scan_end();
 
 				scanline++;
 				ypos++;
