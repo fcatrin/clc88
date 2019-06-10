@@ -299,7 +299,7 @@ static void do_scan_blank() {
 	}
 }
 
-static void do_scan_text_attribs(bool use_hscroll, UINT8 line) {
+static void do_scan_text_attribs(bool use_hscroll, bool use_vscroll, UINT8 pitch, UINT8 line) {
 	LOGV(LOGTAG, "do_scan_text_attribs line %d", line);
 
 	UINT8 row;
@@ -307,7 +307,9 @@ static void do_scan_text_attribs(bool use_hscroll, UINT8 line) {
 	UINT8 foreground, background;
 
 	int pixel_offset = use_hscroll ? (hscroll & 0x3F) : 0;
-	int char_offset  = pixel_offset >> 3;
+	int scan_offset  = use_vscroll ? (vscroll & 0x3F) : 0;
+	int line_offset  = scan_offset & 7;
+	int char_offset  = (pixel_offset >> 3) + ((line + scan_offset) >> 3) * pitch;
 
 	for(int i=0; i<SCREEN_XRES; i++) {
 		if (i  == 0 || (pixel_offset & 7) == 0) {
@@ -316,7 +318,7 @@ static void do_scan_text_attribs(bool use_hscroll, UINT8 line) {
 			background = attrib & 0x0F;
 
 			UINT8 c = VRAM_DATA(lms + char_offset);
-			row = VRAM_DATA(charset + c*8 + line);
+			row = VRAM_DATA(charset + c*8 + ((line + line_offset) & 7));
 
 			bit = 0x80 >> (pixel_offset & 7);
 
@@ -653,6 +655,7 @@ static void do_screen() {
 
 	UINT8 instruction;
 	UINT8 use_hscroll = 0;
+	UINT8 use_vscroll = 0;
 	int dlpos = 0;
 	while(ypos < screen_height && (status & STATUS_ENABLE_CHRONI)) {
 		instruction = VRAM_DATA(dl + dlpos);
@@ -675,6 +678,7 @@ static void do_screen() {
 		} else {
 			if (instruction & 64) {
 				use_hscroll = instruction & 16;
+				use_vscroll = instruction & 32;
 
 				lms     = VRAM_PTR(dl + dlpos);
 				dlpos+=2;
@@ -684,6 +688,8 @@ static void do_screen() {
 				dlpos+=2;
 			}
 			int lines = lines_per_mode[mode];
+			UINT8 pitch = use_hscroll ? bytes_per_scan_scroll[mode] : bytes_per_scan[mode];
+
 			for(int line=0; line<lines; line++) {
 				if (line == lines - 1) post_dli = scan_post_dli;
 
@@ -694,7 +700,7 @@ static void do_screen() {
 				do_border(offset, SCREEN_XBORDER);
 
 				switch(mode) {
-				case 0x2: do_scan_text_attribs(use_hscroll, line); break;
+				case 0x2: do_scan_text_attribs(use_hscroll, use_vscroll, pitch, line); break;
 				case 0x3: do_scan_text_attribs_double(line); break;
 				case 0x4: do_scan_text_attribs_double(line >> 1); break;
 				case 0x5: do_scan_pixels_wide_2bpp(); break;
@@ -718,7 +724,6 @@ static void do_screen() {
 
 			}
 
-			UINT8 pitch = use_hscroll ? bytes_per_scan_scroll[mode] : bytes_per_scan[mode];
 			lms += pitch;
 			attribs += pitch;
 		}

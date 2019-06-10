@@ -52,7 +52,7 @@ end:
    jsr lib_vram_to_ram
    ldy #3
    lda (RAM_TO_VRAM), y
-   ora #$10
+   ora #$30
    sta (RAM_TO_VRAM), y
 
    lda VSTATUS
@@ -92,6 +92,7 @@ vblank:
    lda FRAMECOUNT
    and #$1
    bne no_scroll
+   inc VSCROLL
    inc HSCROLL
 no_scroll:   
    pla
