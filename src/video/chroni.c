@@ -673,10 +673,16 @@ static void do_scan_pixels_1bpp() {
 
 static UINT8 bytes_per_scan[] = {
 		0, 0, 40, 20,
-		40, 40, 80, 80,
-		40, 80, 160, 40,
-		10, 10
+		20, 40, 40, 80,
+		80, 40, 80, 160,
+		40, 10, 20
+};
 
+static UINT8 lines_per_mode[] = {
+		0, 0, 8, 8,
+		16, 1, 2, 1,
+		2, 1, 1, 1,
+		8, 16, 16
 };
 
 
@@ -724,105 +730,30 @@ static void do_screen() {
 				subpals = VRAM_PTR(dl + dlpos);
 				dlpos+=2;
 			}
+			int lines = lines_per_mode[mode];
+			for(int line=0; line<lines; line++) {
+				if (line == lines - 1) post_dli = scan_post_dli;
 
-			if (mode == 2) {
-				LOGV(LOGTAG, "do_scan_text lms: %04X", lms);
-				int lines = 8;
-				for(int line=0; line<lines; line++) {
-					if (line == lines - 1) post_dli = scan_post_dli;
-					do_scan_text_attribs(line);
-					scanline++;
-					ypos++;
-					if (ypos == screen_height) return;
+				switch(mode) {
+				case 0x2: do_scan_text_attribs(line); break;
+				case 0x3: do_scan_text_attribs_double(line); break;
+				case 0x4: do_scan_text_attribs_double(line >> 1); break;
+				case 0x5: do_scan_pixels_wide_2bpp(); break;
+				case 0x6: do_scan_pixels_wide_2bpp(); break;
+				case 0x7: do_scan_pixels_wide_4bpp(); break;
+				case 0x8: do_scan_pixels_wide_4bpp(); break;
+				case 0x9: do_scan_pixels_1bpp(); break;
+				case 0xA: do_scan_pixels_2bpp(); break;
+				case 0xB: do_scan_pixels_4bpp(); break;
+				case 0xC: do_scan_tile_wide_2bpp(line); break;
+				case 0xD: do_scan_tile_wide_4bpp(line); break;
+				case 0xE: do_scan_tile_4bpp(line); break;
 				}
-			} else if (mode == 3) {
-				LOGV(LOGTAG, "do_scan_text_attrib lms: %04X attrib: %04X", lms, attribs);
-				int lines = 8;
-				for(int line=0; line<lines; line++) {
-					if (line == lines - 1) post_dli = scan_post_dli;
-					do_scan_text_attribs_double(line);
-					scanline++;
-					ypos++;
-					if (ypos == screen_height) return;
-				}
-			} else if (mode == 4) {
-				LOGV(LOGTAG, "do_scan_text_attrib lms: %04X attrib: %04X", lms, attribs);
-				int lines = 16;
-				for(int line=0; line<lines; line++) {
-					if (line == lines - 1) post_dli = scan_post_dli;
-					do_scan_text_attribs_double(line >> 1);
-					scanline++;
-					ypos++;
-					if (ypos == screen_height) return;
-				}
-			} else if (mode == 5) {
-				do_scan_pixels_wide_2bpp();
+
 				scanline++;
 				ypos++;
 				if (ypos == screen_height) return;
-			} else if (mode == 6) {
-				unsigned lines = 2;
-				for(int line=0; line<lines; line++) {
-					do_scan_pixels_wide_2bpp();
-					scanline++;
-					ypos++;
-					if (ypos == screen_height) return;
-				}
-			} else if (mode == 7) {
-				do_scan_pixels_wide_4bpp();
-				scanline++;
-				ypos++;
-				if (ypos == screen_height) return;
-			} else if (mode == 8) {
-				unsigned lines = 2;
-				for(int line=0; line<lines; line++) {
-					do_scan_pixels_wide_4bpp();
-					scanline++;
-					ypos++;
-					if (ypos == screen_height) return;
-				}
-			} else if (mode == 9) {
-				do_scan_pixels_1bpp();
-				scanline++;
-				ypos++;
-				if (ypos == screen_height) return;
-			} else if (mode == 0x0A) {
-				do_scan_pixels_2bpp();
-				scanline++;
-				ypos++;
-				if (ypos == screen_height) return;
-			} else if (mode == 0x0B) {
-				do_scan_pixels_4bpp();
-				scanline++;
-				ypos++;
-				if (ypos == screen_height) return;
-			} else if (mode == 0x0C) {
-				int lines = 8;
-				for(int line=0; line<lines; line++) {
-					if (line == lines - 1) post_dli = scan_post_dli;
-					do_scan_tile_wide_2bpp(line);
-					scanline++;
-					ypos++;
-					if (ypos == screen_height) return;
-				}
-			} else if (mode == 0x0D) {
-				int lines = 16;
-				for(int line=0; line<lines; line++) {
-					if (line == lines - 1) post_dli = scan_post_dli;
-					do_scan_tile_wide_4bpp(line);
-					scanline++;
-					ypos++;
-					if (ypos == screen_height) return;
-				}
-			} else if (mode == 0x0E) {
-				int lines = 16;
-				for(int line=0; line<lines; line++) {
-					if (line == lines - 1) post_dli = scan_post_dli;
-					do_scan_tile_4bpp(line);
-					scanline++;
-					ypos++;
-					if (ypos == screen_height) return;
-				}
+
 			}
 
 			UINT8 pitch = bytes_per_scan[mode];
