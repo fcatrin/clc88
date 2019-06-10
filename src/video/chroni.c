@@ -308,7 +308,7 @@ static void do_scan_text_attribs(bool use_hscroll, bool use_vscroll, UINT8 pitch
 
 	int pixel_offset = use_hscroll ? (hscroll & 0x3F) : 0;
 	int scan_offset  = use_vscroll ? (vscroll & 0x3F) : 0;
-	int line_offset  = scan_offset & 7;
+	int line_offset  = (line + scan_offset) & 7;
 	int char_offset  = (pixel_offset >> 3) + ((line + scan_offset) >> 3) * pitch;
 
 	for(int i=0; i<SCREEN_XRES; i++) {
@@ -318,7 +318,7 @@ static void do_scan_text_attribs(bool use_hscroll, bool use_vscroll, UINT8 pitch
 			background = attrib & 0x0F;
 
 			UINT8 c = VRAM_DATA(lms + char_offset);
-			row = VRAM_DATA(charset + c*8 + ((line + line_offset) & 7));
+			row = VRAM_DATA(charset + c*8 + line_offset);
 
 			bit = 0x80 >> (pixel_offset & 7);
 
