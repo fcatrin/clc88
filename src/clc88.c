@@ -7,6 +7,7 @@
 #include "cpuexec.h"
 #include "memory.h"
 #include "machine.h"
+#include "storage.h"
 #include "video/screen.h"
 #include "utils.h"
 #include "monitor.h"
@@ -40,6 +41,7 @@ int main(int argc, char *argv[]) {
 	emulator_init(argc, argv);
 
 	screen_init();
+	storage_init();
 	machine_init();
 
 	monitor_source_init();
@@ -80,6 +82,7 @@ int main(int argc, char *argv[]) {
 	// utils_dump_mem(0x2000, 0x0400);
 	// utils_dump_mem(0xA800, 0X0400);
 	// utils_dump_mem(0xF000, 0X0FFF);
+	storage_done();
 	frontend_done();
 
 	return 0;

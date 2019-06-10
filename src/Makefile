@@ -7,7 +7,7 @@ DEFS = -DHAVE_CONFIG_H -DINLINE=inline -DMAME_DEBUG
 # DEFS += -DTRACE_BUS 
 # DEFS += -DTRACE_CHRONI
 # DEFS += -DTRACE_UTILS
-# DEFS += -DTRACE_STORAGE
+DEFS += -DTRACE_STORAGE
 
 LIBS = -lm -lz -lpthread
 
@@ -65,6 +65,7 @@ XEX = $(addprefix $(ASMDIR)/, \
 	6502/test/mode_c.xex \
 	6502/test/sprites.xex \
 	6502/test/scroll.xex \
+	6502/test/storage.xex \
 	)
 
 ifeq ($(FRONTEND), linux)
@@ -84,10 +85,10 @@ $(OBJDIR)/%.o: %.c
 	@mkdir -p $(dir $@) 2> /dev/null 
 	$(CC) -c -o $@ $(DEFS) -I. $(CFLAGS) $<
 
-$(ASMDIR)/%.xex: $(ASMDIR)/%.asm
+$(ASMDIR)/%.xex: $(ASMDIR)/%.asm $(ASMDIR)/6502/os/symbols.asm
 	mads $< -l -s -o:$@
 	
-$(ASMDIR)/6502/os/6502os.xex : $(ASMDIR)/6502/os/symbols.asm $(ASMDIR)/6502/os/graphics.asm 	
+$(ASMDIR)/6502/os/6502os.xex : $(ASMDIR)/6502/os/graphics.asm 	
 
 $(TARGET): $(OBJS)
 	$(CC) -o $@ $(LDFLAGS) $(OBJS) $(LIBS)

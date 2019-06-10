@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include "emu.h"
 #include "memory.h"
+#include "storage.h"
 #include "video/chroni.h"
+#include "bus.h"
 
 /*
  * system memory map
@@ -30,6 +32,8 @@ UINT8 bus_read16(UINT16 addr) {
 		retvalue = chroni_register_read(addr - CHRONI_START);
 	} else if (addr >= CHRONI_MEM_START && addr <= CHRONI_MEM_END) {
 		retvalue = chroni_vram_read(addr - CHRONI_MEM_START);
+	} else if (addr >= STORAGE_START && addr <= STORAGE_END) {
+		retvalue = storage_register_read(addr - STORAGE_START);
 	} else {
 		retvalue = mem_readmem16(addr);
 	}
@@ -44,6 +48,8 @@ void  bus_write16(UINT16 addr, UINT8 value) {
 		chroni_register_write(addr - CHRONI_START, value);
 	} else if (addr >= CHRONI_MEM_START && addr <= CHRONI_MEM_END) {
 		chroni_vram_write(addr - CHRONI_MEM_START, value);
+	} else if (addr >= STORAGE_START && addr <= STORAGE_END) {
+		storage_register_write(addr - STORAGE_START, value);
 	} else {
 		mem_writemem16(addr, value);
 	}

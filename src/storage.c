@@ -18,12 +18,18 @@
 #define RET_SUCCESS             0x00
 #define ERR_INVALID_OPERATION   0x80
 #define ERR_FILE_NOT_FOUND      0x81
+#define ERR_EOF                 0x82
 #define ERR_IO                  0x83
 #define ERR_TOO_MANY_OPEN_FILES 0x84
+#define ERR_INVALID_FILE        0x85
 
 #define CMD_OPEN  0x01
 #define CMD_CLOSE 0x02
+#define CMD_READ_BYTE 0x03
 
+#define STATUS_IDLE       0x00
+#define STATUS_PROCESSING 0x01
+#define STATUS_DONE       0xFF
 
 #define reg_proceed      0x00
 #define reg_write_enable 0x01
@@ -45,6 +51,9 @@ UINT8 ret[RET_MAX_SIZE];
 UINT8 cmd_index = 0;
 UINT8 ret_index = 0;
 
+UINT8 write_data = 0;
+UINT8 read_data  = 0;
+
 UINT8 cmd_write_enable = 0;
 UINT8 ret_read_enable = 0;
 
@@ -54,31 +63,31 @@ pthread_t processor_thread;
 bool processor_thread_running = FALSE;
 bool process_command_enable   = FALSE;
 
-static void cmd_write(UINT8 value) {
+static void cmd_write() {
 	if (cmd_index < CMD_MAX_SIZE) {
-		cmd[cmd_index++] = value;
+		cmd[cmd_index++] = write_data;
 	}
 	cmd_write_enable = 0;
 }
-
-static UINT8 ret_read() {
+static void ret_data() {
 	if (ret_index < RET_MAX_SIZE) {
 		ret_read_enable = 0;
-		return ret[ret_index++];
+		read_data = ret[ret_index++];
 	}
-	return 0;
 }
 
 void storage_register_write(UINT8 index, UINT8 value) {
 	switch(index) {
 	case reg_write_enable:
 		cmd_write_enable = value;
+		if (cmd_write_enable) cmd_write();
 		break;
 	case reg_write_data:
-		if (cmd_write_enable) cmd_write(value);
+		write_data = value;
 		break;
 	case reg_read_enable:
 		ret_read_enable = value;
+		if (ret_read_enable) ret_data();
 		break;
 	case reg_write_reset:
 		cmd_index = 0;
@@ -99,20 +108,26 @@ UINT8 storage_register_read(UINT8 index) {
 	case reg_read_enable:
 		return ret_read_enable;
 	case reg_read_data:
-		return ret_read();
+		return read_data;
 	case reg_status:
+		if (status == STATUS_DONE) {
+			status = STATUS_IDLE;
+			return STATUS_DONE;
+		}
 		return status;
 	}
 	return 0;
 }
 
-static void storage_open() {
+static void cmd_storage_open() {
 	char filename[FILENAME_MAX_SIZE+1];
-	char *mode = cmd[1] ? "rb":"wb";
+	char *mode = (cmd[1] == 0) ? "rb":"wb";
 
 	strncpy(filename, (char *)(cmd+2), FILENAME_MAX_SIZE);
+	LOGV(LOGTAG, "try open file %s mode %s", filename, mode);
 	FILE *file_handle = fopen(filename, mode);
 	if (!file_handle) {
+		LOGV(LOGTAG, "cannot open file %s err %s", filename, strerror(errno));
 		ret[0] = 1;
 		ret[1] = errno == ENOENT ? ERR_FILE_NOT_FOUND : ERR_IO;
 		return;
@@ -133,40 +148,71 @@ static void storage_open() {
 	ret[1] = ERR_TOO_MANY_OPEN_FILES;
 }
 
-static void storage_close() {
-	int file_handle_index = cmd[1];
+static FILE *get_file_handle(UINT8 file_handle_index) {
 	if (file_handle_index < MAX_OPEN_FILES) {
 		FILE *file_handle = file_handles[file_handle_index];
 		if (file_handle) {
-			fclose(file_handle);
-			file_handles[file_handle_index] = 0;
+			return file_handle;
+		} else {
 			ret[0] = 1;
-			ret[1] = RET_SUCCESS;
-			return;
+			ret[1] = ERR_INVALID_FILE;
 		}
 	}
 	ret[0] = 1;
 	ret[1] = ERR_INVALID_OPERATION;
+	return NULL;
+}
+
+static void cmd_storage_close() {
+	UINT8 file_handle_index = cmd[1];
+	FILE *file_handle = get_file_handle(file_handle_index);
+	if (!file_handle) return;
+
+	fclose(file_handle);
+	file_handles[file_handle_index] = NULL;
+	ret[0] = 1;
+	ret[1] = RET_SUCCESS;
+}
+
+static void cmd_read_byte() {
+	FILE *file_handle = get_file_handle(cmd[1]);
+	if (!file_handle) return;
+
+	int c = fgetc(file_handle);
+	if (c == EOF) {
+		ret[0] = 1;
+		ret[1] = ERR_EOF;
+	} else {
+		ret[0] = 2;
+		ret[1] = RET_SUCCESS;
+		ret[2] = c;
+		LOGV(LOGTAG, "read byte %02X", c);
+	}
 }
 
 static void process_command() {
-	status = 0xFF;
+	status = STATUS_PROCESSING;
 
 	switch(cmd[0]) {
-	case CMD_OPEN  : storage_open(); break;
-	case CMD_CLOSE : storage_close(); break;
+	case CMD_OPEN  :     cmd_storage_open(); break;
+	case CMD_CLOSE :     cmd_storage_close(); break;
+	case CMD_READ_BYTE : cmd_read_byte();
 	}
 
-	status = 0x00;
+	ret_index = 0;
+	cmd_index = 0;
+	ret_data();
+
+	status = STATUS_DONE;
 }
 
-void *processor_thread_function(void *data) {
+static void *processor_thread_function(void *data) {
 	while(processor_thread_running) {
 		if (process_command_enable) {
 			process_command();
 			process_command_enable = FALSE;
 		} else {
-			usleep(50000);
+			usleep(5000);
 		}
 	}
 	return NULL;
