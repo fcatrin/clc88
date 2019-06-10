@@ -64,6 +64,9 @@ static UINT8 pixel_color_b;
 static UINT8 status;
 static UINT8 post_dli = 0;
 
+static UINT8 vscroll;
+static UINT8 hscroll;
+
 void chroni_reset() {
 	status = 0;
 	dl = 0;
@@ -71,6 +74,8 @@ void chroni_reset() {
 	sprites = 0;
 	palette = 0;
 	tileset_small = 0;
+	vscroll = 0;
+	hscroll = 0;
 }
 
 void chroni_vram_write(UINT16 index, UINT8 value) {
@@ -141,6 +146,12 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 	case 0x10:
 		border_color = value;
 		break;
+	case 0x11:
+		hscroll = value;
+		break;
+	case 0x12:
+		vscroll = value;
+		break;
 	}
 }
 
@@ -149,6 +160,9 @@ UINT8 chroni_register_read(UINT8 index) {
 	case 6: return page & 0x07;
 	case 7: return ypos >> 1;
 	case 9: return status;
+	case 0x10 : return border_color;
+	case 0x11 : return hscroll;
+	case 0x12 : return vscroll;
 	}
 	return 0;
 }
@@ -285,28 +299,36 @@ static void do_scan_blank() {
 	}
 }
 
-static void do_scan_text_attribs(UINT8 line) {
+static void do_scan_text_attribs(bool use_hscroll, UINT8 line) {
 	LOGV(LOGTAG, "do_scan_text_attribs line %d", line);
 
 	UINT8 row;
+	UINT8 bit;
 	UINT8 foreground, background;
-	int char_offset = 0;
+
+	int pixel_offset = use_hscroll ? (hscroll & 0x3F) : 0;
+	int char_offset  = pixel_offset >> 3;
+
 	for(int i=0; i<SCREEN_XRES; i++) {
-		if (i % 8 == 0) {
+		if (i  == 0 || (pixel_offset & 7) == 0) {
 			UINT8 attrib = VRAM_DATA(attribs + char_offset);
 			foreground = (attrib & 0xF0) >> 4;
 			background = attrib & 0x0F;
 
 			UINT8 c = VRAM_DATA(lms + char_offset);
 			row = VRAM_DATA(charset + c*8 + line);
+
+			bit = 0x80 >> (pixel_offset & 7);
+
 			char_offset++;
 		}
 
-		put_pixel(offset, row & 0x80 ?
+		put_pixel(offset, row & bit ?
 				VRAM_DATA(subpals + foreground) :
 				VRAM_DATA(subpals + background));
 
-		row <<= 1;
+		pixel_offset++;
+		bit >>= 1;
 	}
 }
 
@@ -599,6 +621,14 @@ static UINT8 bytes_per_scan[] = {
 		40, 10, 20
 };
 
+static UINT8 bytes_per_scan_scroll[] = {
+		0, 0, 48, 20,
+		20, 40, 40, 80,
+		80, 40, 80, 160,
+		40, 10, 20
+};
+
+
 static UINT8 lines_per_mode[] = {
 		0, 0, 8, 8,
 		16, 1, 2, 1,
@@ -622,6 +652,7 @@ static void do_screen() {
 	scanline = 0;
 
 	UINT8 instruction;
+	UINT8 use_hscroll = 0;
 	int dlpos = 0;
 	while(ypos < screen_height && (status & STATUS_ENABLE_CHRONI)) {
 		instruction = VRAM_DATA(dl + dlpos);
@@ -629,7 +660,6 @@ static void do_screen() {
 		LOGV(LOGTAG, "DL instruction %05X = %02X", dl + dlpos, instruction);
 		dlpos++;
 		UINT8 mode = instruction & 0x0F;
-
 		if (instruction == 0x41) {
 			break;
 		} else if (mode == 0) { // blank lines
@@ -644,6 +674,8 @@ static void do_screen() {
 			}
 		} else {
 			if (instruction & 64) {
+				use_hscroll = instruction & 16;
+
 				lms     = VRAM_PTR(dl + dlpos);
 				dlpos+=2;
 				attribs = VRAM_PTR(dl + dlpos);
@@ -662,7 +694,7 @@ static void do_screen() {
 				do_border(offset, SCREEN_XBORDER);
 
 				switch(mode) {
-				case 0x2: do_scan_text_attribs(line); break;
+				case 0x2: do_scan_text_attribs(use_hscroll, line); break;
 				case 0x3: do_scan_text_attribs_double(line); break;
 				case 0x4: do_scan_text_attribs_double(line >> 1); break;
 				case 0x5: do_scan_pixels_wide_2bpp(); break;
@@ -686,7 +718,7 @@ static void do_screen() {
 
 			}
 
-			UINT8 pitch = bytes_per_scan[mode];
+			UINT8 pitch = use_hscroll ? bytes_per_scan_scroll[mode] : bytes_per_scan[mode];
 			lms += pitch;
 			attribs += pitch;
 		}
