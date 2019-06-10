@@ -671,6 +671,14 @@ static void do_scan_pixels_1bpp() {
 	do_scan_end();
 }
 
+static UINT8 bytes_per_scan[] = {
+		0, 0, 40, 20,
+		40, 40, 80, 80,
+		40, 80, 160, 40,
+		10, 10
+
+};
+
 
 static void do_screen() {
 	/* 0-7 scanlines are not displayed because of vblank
@@ -694,6 +702,7 @@ static void do_screen() {
 		LOGV(LOGTAG, "DL instruction %05X = %02X", dl + dlpos, instruction);
 		dlpos++;
 		UINT8 mode = instruction & 0x0F;
+
 		if (instruction == 0x41) {
 			break;
 		} else if (mode == 0) { // blank lines
@@ -726,9 +735,6 @@ static void do_screen() {
 					ypos++;
 					if (ypos == screen_height) return;
 				}
-
-				lms += 40;
-				attribs += 40;
 			} else if (mode == 3) {
 				LOGV(LOGTAG, "do_scan_text_attrib lms: %04X attrib: %04X", lms, attribs);
 				int lines = 8;
@@ -739,9 +745,6 @@ static void do_screen() {
 					ypos++;
 					if (ypos == screen_height) return;
 				}
-
-				lms += 20;
-				attribs += 20;
 			} else if (mode == 4) {
 				LOGV(LOGTAG, "do_scan_text_attrib lms: %04X attrib: %04X", lms, attribs);
 				int lines = 16;
@@ -752,17 +755,11 @@ static void do_screen() {
 					ypos++;
 					if (ypos == screen_height) return;
 				}
-
-				lms += 20;
-				attribs += 20;
 			} else if (mode == 5) {
 				do_scan_pixels_wide_2bpp();
 				scanline++;
 				ypos++;
 				if (ypos == screen_height) return;
-
-				lms += 40;
-				attribs += 40;
 			} else if (mode == 6) {
 				unsigned lines = 2;
 				for(int line=0; line<lines; line++) {
@@ -771,17 +768,11 @@ static void do_screen() {
 					ypos++;
 					if (ypos == screen_height) return;
 				}
-
-				lms += 40;
-				attribs += 40;
 			} else if (mode == 7) {
 				do_scan_pixels_wide_4bpp();
 				scanline++;
 				ypos++;
 				if (ypos == screen_height) return;
-
-				lms += 80;
-				attribs += 80;
 			} else if (mode == 8) {
 				unsigned lines = 2;
 				for(int line=0; line<lines; line++) {
@@ -790,33 +781,21 @@ static void do_screen() {
 					ypos++;
 					if (ypos == screen_height) return;
 				}
-
-				lms += 80;
-				attribs += 80;
 			} else if (mode == 9) {
 				do_scan_pixels_1bpp();
 				scanline++;
 				ypos++;
 				if (ypos == screen_height) return;
-
-				lms += 40;
-				attribs += 40;
 			} else if (mode == 0x0A) {
 				do_scan_pixels_2bpp();
 				scanline++;
 				ypos++;
 				if (ypos == screen_height) return;
-
-				lms += 80;
-				attribs += 80;
 			} else if (mode == 0x0B) {
 				do_scan_pixels_4bpp();
 				scanline++;
 				ypos++;
 				if (ypos == screen_height) return;
-
-				lms += 160;
-				attribs += 160;
 			} else if (mode == 0x0C) {
 				int lines = 8;
 				for(int line=0; line<lines; line++) {
@@ -826,9 +805,6 @@ static void do_screen() {
 					ypos++;
 					if (ypos == screen_height) return;
 				}
-
-				lms += 40;
-				attribs += 40;
 			} else if (mode == 0x0D) {
 				int lines = 16;
 				for(int line=0; line<lines; line++) {
@@ -838,9 +814,6 @@ static void do_screen() {
 					ypos++;
 					if (ypos == screen_height) return;
 				}
-
-				lms += 10;
-				attribs += 10;
 			} else if (mode == 0x0E) {
 				int lines = 16;
 				for(int line=0; line<lines; line++) {
@@ -850,10 +823,11 @@ static void do_screen() {
 					ypos++;
 					if (ypos == screen_height) return;
 				}
-
-				lms += 10;
-				attribs += 10;
 			}
+
+			UINT8 pitch = bytes_per_scan[mode];
+			lms += pitch;
+			attribs += pitch;
 		}
 	}
 	for(;scanline <screen_height; scanline++) {
