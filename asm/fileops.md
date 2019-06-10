@@ -66,14 +66,18 @@ A device handler must implement the following operations
 0E : Delete
    * Name
 
+0F : Get info
+   * Name
+   * Destination address
+   
+   Returns a Directory Entry
 
 Directory entry is:
-* Size of this entry
-* Name
-* Size
+* Size (0 for directory)
 * Date in YYYYMMDD
 * Time in HHMMSS
 * Type 00: File, 01: Directory
+* Name
 
 Status:
 00: success
