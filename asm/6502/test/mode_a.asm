@@ -25,6 +25,6 @@ stop:
 	jmp stop
 	
 message:
-	.byte 40, 101, 108, 108, 111, 0, 55, 111, 114, 108, 100, 1, 1, 1, 1, 255
+	.by "Hello world!!!!", 255
 
    icl '../os/stdlib.asm'
