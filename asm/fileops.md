@@ -85,4 +85,5 @@ Status:
 81: path not found
 82: eof / eod
 83: IO error
+84: too many open files
 

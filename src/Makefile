@@ -7,8 +7,9 @@ DEFS = -DHAVE_CONFIG_H -DINLINE=inline -DMAME_DEBUG
 # DEFS += -DTRACE_BUS 
 # DEFS += -DTRACE_CHRONI
 # DEFS += -DTRACE_UTILS
+# DEFS += -DTRACE_STORAGE
 
-LIBS = -lm -lz 
+LIBS = -lm -lz -lpthread
 
 TARGET_BASE_NAME = clc88
 
@@ -28,6 +29,7 @@ OBJS = $(addprefix $(OBJDIR)/, \
 	timer.o \
 	utils.o \
 	cpuexec.o \
+	storage.o \
 	monitor.o \
 	debug.o \
 	trace.o \
