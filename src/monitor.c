@@ -246,8 +246,6 @@ void monitor_enter() {
 	bool trace_was_enabled = trace_enabled;
 	trace_enabled = FALSE;
 
-	frontend_process_events_async_start();
-
 	unsigned dasm_start = cpu->get_pc();
 	unsigned mem_start  = 0;
 
@@ -329,7 +327,6 @@ void monitor_enter() {
 		}
 		free(line);
 	}
-	frontend_process_events_async_stop();
 	trace_enabled = trace_was_enabled;
 }
 

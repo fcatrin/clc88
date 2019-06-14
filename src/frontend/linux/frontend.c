@@ -1,5 +1,6 @@
 #include <SDL.h>
 #include <unistd.h>
+#include "../../compy.h"
 #include "../../emu.h"
 #include "../../cpu.h"
 #include "../../monitor.h"
@@ -9,10 +10,16 @@ static SDL_Window *window;
 static SDL_Renderer *renderer;
 static int screen_width;
 static int screen_height;
+static int screen_data_size;
 static int closed;
 
-static bool is_dispatch_async = FALSE;
-static SDL_Thread *dispatch_async_thread = NULL;
+#define MAX_BUFFERS 3
+
+static void *screen_buffers[MAX_BUFFERS];
+static int buffer_next = 0;
+static int buffer_post = -1;
+
+static SDL_Thread *emulator_thread = NULL;
 
 int  frontend_start_audio_stream(int stereo) {
 	return 0;
@@ -29,7 +36,21 @@ void frontend_sleep(int seconds) {
 	sleep(seconds);
 }
 
+/* This is called from the emulator thread */
 void frontend_update_screen(void *pixels) {
+	while (buffer_next == buffer_post) {
+		SDL_Delay(2);
+	}
+	memcpy(screen_buffers[buffer_next], pixels, screen_data_size);
+	while (buffer_post>=0) {
+		SDL_Delay(2);
+	}
+	buffer_post = buffer_next;
+	buffer_next++;
+	if (buffer_next == MAX_BUFFERS) buffer_next = 0;
+}
+
+static void update_screen(void *pixels) {
 	SDL_Surface *surface = SDL_CreateRGBSurfaceFrom(
 			pixels, screen_width, screen_height, 24,
 			screen_width*3, 0, 0, 0, 0);
@@ -88,6 +109,12 @@ int  frontend_init_screen(int width, int height) {
 	screen_width = width;
 	screen_height = height;
 
+	screen_data_size = width * 3 * height;
+
+	for(int i=0; i<MAX_BUFFERS; i++) {
+		screen_buffers[i] = malloc(screen_data_size);
+	}
+
 	return 0;
 }
 
@@ -103,7 +130,6 @@ int frontend_init(int argc, char *argv[]) {
 }
 
 void frontend_shutdown() {
-	frontend_process_events_async_stop();
 	closed = TRUE;
 }
 
@@ -111,30 +137,39 @@ void frontend_done() {
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
 	SDL_Quit();
+
+	for(int i=0; i<MAX_BUFFERS; i++) {
+		free(screen_buffers[i]);
+	}
 }
 
 int frontend_running() {
 	return !closed;
 }
 
-static int dispatchEventsThread(void *ptr)
-{
-    while (is_dispatch_async && frontend_running()) {
-    	frontend_process_events();
-		frontend_sleep(1);
+static int runEmulatorThread(void *ptr){
+    while (frontend_running()) {
+    	compy_run();
     }
-
     return 0;
 }
 
-void frontend_process_events_async_start() {
-	if (dispatch_async_thread) return;
+int main(int argc, char *argv[]) {
+	if (frontend_init(argc, argv)) return 1;
+	compy_init(argc, argv);
 
-	is_dispatch_async = TRUE;
-	dispatch_async_thread = SDL_CreateThread(dispatchEventsThread, "DispatchEventsThread", (void *)NULL);
+	emulator_thread = SDL_CreateThread(runEmulatorThread, "CompyThread", (void *)NULL);
+
+	while (frontend_running()) {
+		if (buffer_post>=0) {
+			update_screen(screen_buffers[buffer_post]);
+			buffer_post = -1;
+		} else {
+			SDL_Delay(2);
+		}
+		frontend_process_events();
+	}
+
+	frontend_done();
 }
 
-void frontend_process_events_async_stop() {
-	is_dispatch_async = FALSE;
-	dispatch_async_thread = NULL;
-}

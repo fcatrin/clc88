@@ -35,8 +35,7 @@ static void emulator_load(char *filename) {
 	monitor_source_read_file(buffer);
 }
 
-int main(int argc, char *argv[]) {
-	if (frontend_init(argc, argv)) return 1;
+void compy_init(int argc, char *argv[]) {
 
 	emulator_init(argc, argv);
 
@@ -70,20 +69,13 @@ int main(int argc, char *argv[]) {
 	cpuexec_init(cpu);
 
 	chroni_init();
-	int i=0;
-	while(frontend_running() && i<4) {
-		chroni_run_frame();
-		screen_update();
-		frontend_process_events();
-		// frontend_sleep(1);
-		// i++;
-	}
-	// utils_dump_mem(0x0000, 0x0400);
-	// utils_dump_mem(0x2000, 0x0400);
-	// utils_dump_mem(0xA800, 0X0400);
-	// utils_dump_mem(0xF000, 0X0FFF);
-	storage_done();
-	frontend_done();
+}
 
-	return 0;
+void compy_run() {
+	chroni_run_frame();
+	screen_update();
+}
+
+void compy_done() {
+	storage_done();
 }
