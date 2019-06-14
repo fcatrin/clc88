@@ -168,9 +168,7 @@ void  change_pc16(UINT16 addr) {
 	if (trace_enabled) {
 
 #ifdef MAME_DEBUG
-	trace_enabled = FALSE;
 	Dasm6502(dasm, addr);
-	trace_enabled = TRUE;
 	LOGV(LOGTAG, "PC %04X %s", addr, dasm);
 #else
 	LOGV(LOGTAG, "PC %04X %02X", addr, cpu_readop(cpu_pc));

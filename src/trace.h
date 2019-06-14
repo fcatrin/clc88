@@ -10,8 +10,9 @@ extern int trace_enabled;
 		#define LOGE(TAG, ...)   if (trace_enabled) __android_log_print((int)ANDROID_LOG_ERROR, TAG, __VA_ARGS__)
 	#else
 		#include <stdarg.h>
-		#define LOGV(TAG, ...)   if (trace_enabled) {fprintf(stdout, "[%s] ", TAG); fprintf(stdout, __VA_ARGS__); fprintf(stdout, "\n");}
-		#define LOGE(TAG, ...)   if (trace_enabled) {fprintf(stderr, "[%s] ", TAG); fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n");}
+		#include "frontend/frontend.h"
+		#define LOGV(TAG, ...)   if (trace_enabled) {frontend_trace_msg(TAG, __VA_ARGS__);}
+		#define LOGE(TAG, ...)   if (trace_enabled) {frontend_trace_err(TAG, __VA_ARGS__);}
 	#endif
 #else
 	#define LOGV(...)

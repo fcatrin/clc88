@@ -1,10 +1,12 @@
 #include <SDL.h>
 #include <unistd.h>
+#include <stdarg.h>
 #include "../../compy.h"
 #include "../../emu.h"
 #include "../../cpu.h"
 #include "../../monitor.h"
 #include "../frontend.h"
+
 
 static SDL_Window *window;
 static SDL_Renderer *renderer;
@@ -152,6 +154,31 @@ static int runEmulatorThread(void *ptr){
     	compy_run();
     }
     return 0;
+}
+
+void frontend_trace_msg(char *tag, ...) {
+	va_list args;
+	va_start(args, tag);
+	char *format = va_arg(args, char *);
+
+	fprintf(stdout, "[%s] ", tag);
+	vfprintf(stdout, format, args);
+	fprintf(stdout, "\n");
+
+	va_end(args);
+}
+
+void frontend_trace_err(char *tag, ...) {
+
+	va_list args;
+	va_start(args, tag);
+	char *format = va_arg(args, char *);
+
+	fprintf(stderr, "[%s] ", tag);
+	vfprintf(stderr, format, args);
+	fprintf(stderr, "\n");
+
+	va_end(args);
 }
 
 int main(int argc, char *argv[]) {
