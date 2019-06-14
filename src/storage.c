@@ -25,7 +25,8 @@
 
 #define CMD_OPEN  0x01
 #define CMD_CLOSE 0x02
-#define CMD_READ_BYTE 0x03
+#define CMD_READ_BYTE   0x03
+#define CMD_READ_SECTOR 0x04
 
 #define STATUS_IDLE       0x00
 #define STATUS_PROCESSING 0x01
@@ -45,11 +46,12 @@ FILE *file_handles[MAX_OPEN_FILES];
 
 #define CMD_MAX_SIZE 1024
 #define RET_MAX_SIZE 1024
+#define SECTOR_SIZE  256
 
 UINT8 cmd[CMD_MAX_SIZE];
 UINT8 ret[RET_MAX_SIZE];
-UINT8 cmd_index = 0;
-UINT8 ret_index = 0;
+UINT16 cmd_index = 0;
+UINT16 ret_index = 0;
 
 UINT8 write_data = 0;
 UINT8 read_data  = 0;
@@ -190,13 +192,37 @@ static void cmd_read_byte() {
 	}
 }
 
+static void cmd_read_sector() {
+	FILE *file_handle = get_file_handle(cmd[1]);
+	if (!file_handle) return;
+
+	UINT8 buffer[SECTOR_SIZE];
+	int n = fread(buffer, 1, SECTOR_SIZE, file_handle);
+	if (n) {
+		ret[0] = 3;
+		ret[1] = RET_SUCCESS;
+		ret[2] = n % SECTOR_SIZE;
+		memcpy(&ret[3], buffer, n);
+		LOGV(LOGTAG, "read block size %02X", n);
+	} else if (feof(file_handle)) {
+		ret[0] = 1;
+		ret[1] = ERR_EOF;
+		LOGV(LOGTAG, "read block EOF");
+	} else {
+		ret[0] = 1;
+		ret[1] = ERR_IO;
+	}
+}
+
+
 static void process_command() {
 	status = STATUS_PROCESSING;
 
 	switch(cmd[0]) {
-	case CMD_OPEN  :     cmd_storage_open(); break;
-	case CMD_CLOSE :     cmd_storage_close(); break;
-	case CMD_READ_BYTE : cmd_read_byte();
+	case CMD_OPEN  :       cmd_storage_open();  break;
+	case CMD_CLOSE :       cmd_storage_close(); break;
+	case CMD_READ_BYTE :   cmd_read_byte();     break;
+	case CMD_READ_SECTOR : cmd_read_sector();   break;
 	}
 
 	ret_index = 0;

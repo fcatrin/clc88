@@ -66,6 +66,7 @@ XEX = $(addprefix $(ASMDIR)/, \
 	6502/test/sprites.xex \
 	6502/test/scroll.xex \
 	6502/test/storage.xex \
+	6502/test/storage_block.xex \
 	)
 
 ifeq ($(FRONTEND), linux)
