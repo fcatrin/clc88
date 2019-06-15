@@ -298,6 +298,8 @@ static void cmd_read_dir() {
 	ret[2] = dir_handle;
 	ret[3] = entries & 0xFF;
 	ret[4] = entries >> 8;
+
+	LOGV(LOGTAG, "open dir %s %d entries", dirname, entries);
 }
 
 static dir_entry *get_dir_entries(int dir_handle) {
@@ -319,16 +321,24 @@ static void cmd_get_dir_entry() {
 		entry = entry->next;
 	}
 
-	cmd[0] = 0;
-	cmd[1] = RET_SUCCESS;
-	cmd[2] = entry->is_dir ? 1 : 0;
-	cmd[3] = entry->size & 0xFF;
-	cmd[4] = (entry->size & 0x0000FF00) >> 8;
-	cmd[5] = (entry->size & 0x00FF0000) >> 16;
-	cmd[6] = (entry->size & 0xFF000000) >> 24;
-	strcpy((char *)&cmd[7], entry->date);
-	strcpy((char *)&cmd[11], entry->time);
-	strcpy((char *)&cmd[15], entry->name);
+	ret[0] = 0;
+	ret[1] = RET_SUCCESS;
+	ret[2] = entry->is_dir ? 1 : 0;
+	ret[3] = entry->size & 0xFF;
+	ret[4] = (entry->size & 0x0000FF00) >> 8;
+	ret[5] = (entry->size & 0x00FF0000) >> 16;
+	ret[6] = (entry->size & 0xFF000000) >> 24;
+	strcpy((char *)&ret[7], entry->date);
+	strcpy((char *)&ret[15], entry->time);
+	strcpy((char *)&ret[21], entry->name);
+
+	LOGV(LOGTAG, "get dir entry %s %s %s %s %d", entry->name, BOOLSTR(entry->is_dir),
+			entry->date, entry->time, entry->size);
+	for(int i=0; i<21 + strlen(entry->name); i++) {
+		printf("%02X ", ret[i]);
+	}
+	printf("\n");
+
 }
 
 static void cmd_close_dir() {
@@ -346,6 +356,8 @@ static void cmd_close_dir() {
 		entry = next;
 	};
 
+	LOGV(LOGTAG, "dir closed");
+
 	cmd[0] = 1;
 	cmd[1] = RET_SUCCESS;
 }
@@ -361,7 +373,7 @@ static void process_command() {
 	case CMD_READ_SECTOR : cmd_read_sector();   break;
 	case CMD_DIR_OPEN :    cmd_read_dir();      break;
 	case CMD_DIR_ENTRY :   cmd_get_dir_entry(); break;
-	case CMD_DIR_CLOSE :   cmd_close_dir();      break;
+	case CMD_DIR_CLOSE :   cmd_close_dir();     break;
 	}
 
 	ret_index = 0;
