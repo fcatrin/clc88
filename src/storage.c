@@ -34,6 +34,7 @@
 #define CMD_READ_SECTOR 0x04
 #define CMD_DIR_OPEN    0x05
 #define CMD_DIR_ENTRY   0x06
+#define CMD_DIR_CLOSE   0x07
 
 #define STATUS_IDLE       0x00
 #define STATUS_PROCESSING 0x01
@@ -330,6 +331,26 @@ static void cmd_get_dir_entry() {
 	strcpy((char *)&cmd[15], entry->name);
 }
 
+static void cmd_close_dir() {
+	unsigned dir_index = cmd[1];
+	dir_entry *entry = get_dir_entries(dir_index);
+	if (entry == NULL) return;
+
+	while (entry != NULL) {
+		free(entry->name);
+		free(entry->date);
+		free(entry->time);
+
+		dir_entry *next = entry->next;
+		free(entry);
+		entry = next;
+	};
+
+	cmd[0] = 1;
+	cmd[1] = RET_SUCCESS;
+}
+
+
 static void process_command() {
 	status = STATUS_PROCESSING;
 
@@ -340,6 +361,7 @@ static void process_command() {
 	case CMD_READ_SECTOR : cmd_read_sector();   break;
 	case CMD_DIR_OPEN :    cmd_read_dir();      break;
 	case CMD_DIR_ENTRY :   cmd_get_dir_entry(); break;
+	case CMD_DIR_CLOSE :   cmd_close_dir();      break;
 	}
 
 	ret_index = 0;
