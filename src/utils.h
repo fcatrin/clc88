@@ -15,4 +15,8 @@ char *utils_trim(const char *s);
 
 char **utils_split(const char *s, unsigned *count);
 
+char *utils_format_date(struct timespec *ts);
+char *utils_format_time(struct timespec *ts);
+
+
 #endif

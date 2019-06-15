@@ -2,6 +2,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <errno.h>
+#include <time.h>
 #include "emu.h"
 #include "bus.h"
 
@@ -135,9 +136,8 @@ char **utils_split(char *s, unsigned *count) {
 	return parts;
 }
 
-char *format_date(struct timespec *ts) {
+char *utils_format_date(struct timespec *ts) {
 	static char buffer[100];
-	static char invalid[] = "000000";
 
 	int len = sizeof(buffer);
 	struct tm t;
@@ -152,7 +152,7 @@ char *format_date(struct timespec *ts) {
 
 }
 
-char *format_time(struct timespec *ts) {
+char *utils_format_time(struct timespec *ts) {
 	static char buffer[100];
 
 	int len = sizeof(buffer);

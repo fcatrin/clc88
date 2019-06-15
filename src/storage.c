@@ -1,3 +1,5 @@
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,7 +8,9 @@
 #include <pthread.h>
 #include <dirent.h>
 
+
 #include "emu.h"
+#include "utils.h"
 
 #define LOGTAG "STORAGE"
 #ifdef TRACE_STORAGE
@@ -28,7 +32,8 @@
 #define CMD_CLOSE 0x02
 #define CMD_READ_BYTE   0x03
 #define CMD_READ_SECTOR 0x04
-#define CMD_READ_DIR    0x05
+#define CMD_DIR_OPEN    0x05
+#define CMD_DIR_ENTRY   0x06
 
 #define STATUS_IDLE       0x00
 #define STATUS_PROCESSING 0x01
@@ -228,7 +233,7 @@ static void cmd_read_sector() {
 	}
 }
 
-static int get_dir_handle() {
+static int get_new_dir_handle() {
 	for(int i=0; i<MAX_OPEN_FILES; i++) {
 		if (!dir_handles[i]) return i;
 	}
@@ -242,16 +247,16 @@ static void stat_dir_entry(char *dirname, dir_entry *entry) {
 	strcat(name, entry->name);
 
 	static struct stat entry_stat;
-	fstat(name, &entry_stat);
+	stat(name, &entry_stat);
 
 	entry->size = entry_stat.st_size;
 	entry->is_dir = S_ISDIR(entry_stat.st_mode);
-	entry->date = format_date(entry_stat.st_mtim);
-	entry->time = format_time(entry_stat.st_mtim);
+	entry->date = utils_format_date(&entry_stat.st_mtim);
+	entry->time = utils_format_time(&entry_stat.st_mtim);
 }
 
 static void cmd_read_dir() {
-	int dir_handle = get_dir_handle();
+	int dir_handle = get_new_dir_handle();
 	if (dir_handle < 0) {
 		ret[0] = 1;
 		ret[1] = ERR_TOO_MANY_OPEN_FILES;
@@ -260,7 +265,7 @@ static void cmd_read_dir() {
 
 	char dirname[FILENAME_MAX_SIZE];
 	if (cmd[1]) {
-		strncpy(dirname, &cmd[1], FILENAME_MAX_SIZE);
+		strncpy(dirname, (char *)&cmd[1], FILENAME_MAX_SIZE);
 	} else {
 		strcpy(dirname, ".");
 	}
@@ -273,6 +278,7 @@ static void cmd_read_dir() {
 		while ((dirent = readdir(dir))!=NULL) {
 			dir_entry *entry = malloc(sizeof(dir_entry));
 			entry->name = strdup(dirent->d_name);
+			entry->next = NULL;
 
 			stat_dir_entry(dirname, entry);
 			if (head == NULL) {
@@ -293,6 +299,37 @@ static void cmd_read_dir() {
 	ret[4] = entries >> 8;
 }
 
+static dir_entry *get_dir_entries(int dir_handle) {
+	dir_entry *entries = dir_handles[dir_handle];
+	if (entries) return entries;
+
+	ret[0] = 1;
+	ret[1] = ERR_INVALID_FILE;
+	return NULL;
+}
+
+static void cmd_get_dir_entry() {
+	dir_entry *entry = get_dir_entries(cmd[1]);
+	if (entry == NULL) return;
+
+	unsigned index = cmd[2] + (cmd[3]<<8);
+	while (index > 0 && entry->next != NULL) {
+		index--;
+		entry = entry->next;
+	}
+
+	cmd[0] = 0;
+	cmd[1] = RET_SUCCESS;
+	cmd[2] = entry->is_dir ? 1 : 0;
+	cmd[3] = entry->size & 0xFF;
+	cmd[4] = (entry->size & 0x0000FF00) >> 8;
+	cmd[5] = (entry->size & 0x00FF0000) >> 16;
+	cmd[6] = (entry->size & 0xFF000000) >> 24;
+	strcpy((char *)&cmd[7], entry->date);
+	strcpy((char *)&cmd[11], entry->time);
+	strcpy((char *)&cmd[15], entry->name);
+}
+
 static void process_command() {
 	status = STATUS_PROCESSING;
 
@@ -301,7 +338,8 @@ static void process_command() {
 	case CMD_CLOSE :       cmd_storage_close(); break;
 	case CMD_READ_BYTE :   cmd_read_byte();     break;
 	case CMD_READ_SECTOR : cmd_read_sector();   break;
-	case CMD_READ_DIR :    cmd_read_dir();      break;
+	case CMD_DIR_OPEN :    cmd_read_dir();      break;
+	case CMD_DIR_ENTRY :   cmd_get_dir_entry(); break;
 	}
 
 	ret_index = 0;
