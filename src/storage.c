@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <pthread.h>
+#include <dirent.h>
 
 #include "emu.h"
 
@@ -27,6 +28,7 @@
 #define CMD_CLOSE 0x02
 #define CMD_READ_BYTE   0x03
 #define CMD_READ_SECTOR 0x04
+#define CMD_READ_DIR    0x05
 
 #define STATUS_IDLE       0x00
 #define STATUS_PROCESSING 0x01
@@ -43,6 +45,18 @@
 
 #define MAX_OPEN_FILES 128
 FILE *file_handles[MAX_OPEN_FILES];
+
+typedef struct dir_entry {
+	char *name;
+	unsigned size;
+	char *date;
+	char *time;
+	bool is_dir;
+	struct dir_entry *next;
+
+} dir_entry;
+
+dir_entry *dir_handles[MAX_OPEN_FILES];
 
 #define CMD_MAX_SIZE 1024
 #define RET_MAX_SIZE 1024
@@ -214,6 +228,70 @@ static void cmd_read_sector() {
 	}
 }
 
+static int get_dir_handle() {
+	for(int i=0; i<MAX_OPEN_FILES; i++) {
+		if (!dir_handles[i]) return i;
+	}
+	return -1;
+}
+
+static void stat_dir_entry(char *dirname, dir_entry *entry) {
+	static char name[FILENAME_MAX_SIZE];
+	strcpy(name, dirname);
+	strcat(name, "/");
+	strcat(name, entry->name);
+
+	static struct stat entry_stat;
+	fstat(name, &entry_stat);
+
+	entry->size = entry_stat.st_size;
+	entry->is_dir = S_ISDIR(entry_stat.st_mode);
+	entry->date = format_date(entry_stat.st_mtim);
+	entry->time = format_time(entry_stat.st_mtim);
+}
+
+static void cmd_read_dir() {
+	int dir_handle = get_dir_handle();
+	if (dir_handle < 0) {
+		ret[0] = 1;
+		ret[1] = ERR_TOO_MANY_OPEN_FILES;
+		return;
+	}
+
+	char dirname[FILENAME_MAX_SIZE];
+	if (cmd[1]) {
+		strncpy(dirname, &cmd[1], FILENAME_MAX_SIZE);
+	} else {
+		strcpy(dirname, ".");
+	}
+
+	dir_entry *head = NULL;
+	unsigned entries = 0;
+	DIR *dir = opendir(dirname);
+	if (dir) {
+		struct dirent *dirent;
+		while ((dirent = readdir(dir))!=NULL) {
+			dir_entry *entry = malloc(sizeof(dir_entry));
+			entry->name = strdup(dirent->d_name);
+
+			stat_dir_entry(dirname, entry);
+			if (head == NULL) {
+				head = entry;
+				dir_handles[dir_handle] = head;
+			} else {
+				head->next = entry;
+				head = entry;
+			}
+			entries++;
+		}
+	}
+	closedir(dir);
+	ret[0] = 4;
+	ret[1] = RET_SUCCESS;
+	ret[2] = dir_handle;
+	ret[3] = entries & 0xFF;
+	ret[4] = entries >> 8;
+}
 
 static void process_command() {
 	status = STATUS_PROCESSING;
@@ -223,6 +301,7 @@ static void process_command() {
 	case CMD_CLOSE :       cmd_storage_close(); break;
 	case CMD_READ_BYTE :   cmd_read_byte();     break;
 	case CMD_READ_SECTOR : cmd_read_sector();   break;
+	case CMD_READ_DIR :    cmd_read_dir();      break;
 	}
 
 	ret_index = 0;

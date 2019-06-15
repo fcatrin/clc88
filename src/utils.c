@@ -134,3 +134,35 @@ char **utils_split(char *s, unsigned *count) {
 	*count = i;
 	return parts;
 }
+
+char *format_date(struct timespec *ts) {
+	static char buffer[100];
+	static char invalid[] = "000000";
+
+	int len = sizeof(buffer);
+	struct tm t;
+
+	tzset();
+	if (localtime_r(&(ts->tv_sec), &t) != NULL) {
+		if (strftime(buffer, len, "%Y%m%d", &t)) {
+			return strdup(buffer);
+		}
+	}
+	return strdup("000000");
+
+}
+
+char *format_time(struct timespec *ts) {
+	static char buffer[100];
+
+	int len = sizeof(buffer);
+	struct tm t;
+
+	tzset();
+	if (localtime_r(&(ts->tv_sec), &t) != NULL) {
+		if (strftime(buffer, len, "%H%M%S", &t)) {
+			return strdup(buffer);
+		}
+	}
+	return strdup("000000");
+}
