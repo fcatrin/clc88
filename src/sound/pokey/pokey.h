@@ -1,25 +1,60 @@
-/*****************************************************************************
- *
- *	POKEY chip emulator 4.3
- *	Copyright (c) 2000 by The MAME Team
- *
- *	Based on original info found in Ron Fries' Pokey emulator,
- *	with additions by Brad Oliver, Eric Smith and Juergen Buchmueller.
- *	paddle (a/d conversion) details from the Atari 400/800 Hardware Manual.
- *  Polynome algorithms according to info supplied by Perry McFarlane.
- *
- *	This code is subject to the MAME license, which besides other
- *	things means it is distributed as is, no warranties whatsoever.
- *	For more details read mame.txt that comes with MAME.
- *
- *****************************************************************************/
+/*****************************************************************************/
+/*                                                                           */
+/* Module:  POKEY Chip Simulator Includes, V2.0                              */
+/* Purpose: To emulate the sound generation hardware of the Atari POKEY chip.*/
+/* Author:  Ron Fries                                                        */
+/* Date:    January 1, 1997                                                  */
+/*                                                                           */
+/*****************************************************************************/
+/*                                                                           */
+/*                 License Information and Copyright Notice                  */
+/*                 ========================================                  */
+/*                                                                           */
+/* PokeySound is Copyright(c) 1997 by Ron Fries                              */
+/*                                                                           */
+/* This library is free software; you can redistribute it and/or modify it   */
+/* under the terms of version 2 of the GNU Library General Public License    */
+/* as published by the Free Software Foundation.                             */
+/*                                                                           */
+/* This library is distributed in the hope that it will be useful, but       */
+/* WITHOUT ANY WARRANTY; without even the implied warranty of                */
+/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library */
+/* General Public License for more details.                                  */
+/* To obtain a copy of the GNU Library General Public License, write to the  */
+/* Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.   */
+/*                                                                           */
+/* Any permitted reproduction of these routines, in whole or in part, must   */
+/* bear this legend.                                                         */
+/*                                                                           */
+/*****************************************************************************/
 
 #ifndef _POKEYSOUND_H
 #define _POKEYSOUND_H
 
+#ifndef _TYPEDEF_H
+#define _TYPEDEF_H
+
+/* define some data types to keep it platform independent */
+#ifdef COMP16                 /* if 16-bit compiler defined */
+#define int8  char
+#define int16 int
+#define int32 long
+#else                         /* else default to 32-bit compiler */
+#define int8  char
+#define int16 short
+#define int32 int
+#endif
+
+#define uint8  unsigned int8
+#define uint16 unsigned int16
+#define uint32 unsigned int32
+
+#endif
+
 /* CONSTANT DEFINITIONS */
 
 /* POKEY WRITE LOGICALS */
+/* Note: only 0x00 - 0x09 are emulated by POKEYSND */
 #define AUDF1_C     0x00
 #define AUDC1_C     0x01
 #define AUDF2_C     0x02
@@ -52,81 +87,40 @@
 #define IRQST_C     0x0E
 #define SKSTAT_C    0x0F
 
-/* exact 1.79 MHz clock freq (of the Atari 800 that is) */
-#define FREQ_17_EXACT   1789790
 
-/*
- * We can now handle the exact frequency as well as any other,
- * because aliasing effects are suppressed for pure tones.
- */
-#define FREQ_17_APPROX  FREQ_17_EXACT
+/* As an alternative to using the exact frequencies, selecting a playback
+   frequency that is an exact division of the main clock provides a higher
+   quality output due to less aliasing.  For best results, a value of
+   1787520 MHz is used for the main clock.  With this value, both the
+   64 kHz and 15 kHz clocks are evenly divisible.  Selecting a playback
+   frequency that is also a division of the clock provides the best
+   results.  The best options are FREQ_64 divided by either 2, 3, or 4.
+   The best selection is based on a trade off between performance and
+   sound quality.
 
-#define MAXPOKEYS	4	/* max number of emulated chips */
+   Of course, using a main clock frequency that is not exact will affect
+   the pitch of the output.  With these numbers, the pitch will be low
+   by 0.127%.  (More than likely, an actual unit will vary by this much!) */
 
+#define FREQ_17_EXACT     1789790  /* exact 1.79 MHz clock freq */
+#define FREQ_17_APPROX    1787520  /* approximate 1.79 MHz clock freq */
+
+#define MAXPOKEYS         4        /* max number of emulated chips */
+
+#define CLIP                       /* required to force clipping */
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/*****************************************************************************
- * pot0_r to pot7_r:
- *	Handlers for reading the pot values. Some Atari games use
- *	ALLPOT to return dipswitch settings and other things.
- * serin_r, serout_w, interrupt_cb:
- *	New function pointers for serial input/output and a interrupt callback.
- *****************************************************************************/
-
-struct POKEYinterface {
-	int num;    /* total number of pokeys in the machine */
-	int baseclock;
-	int mixing_level[MAXPOKEYS];
-	mem_read_handler pot0_r[MAXPOKEYS];
-	mem_read_handler pot1_r[MAXPOKEYS];
-	mem_read_handler pot2_r[MAXPOKEYS];
-	mem_read_handler pot3_r[MAXPOKEYS];
-	mem_read_handler pot4_r[MAXPOKEYS];
-	mem_read_handler pot5_r[MAXPOKEYS];
-	mem_read_handler pot6_r[MAXPOKEYS];
-	mem_read_handler pot7_r[MAXPOKEYS];
-	mem_read_handler allpot_r[MAXPOKEYS];
-	mem_read_handler serin_r[MAXPOKEYS];
-	mem_write_handler serout_w[MAXPOKEYS];
-	void (*interrupt_cb[MAXPOKEYS])(int mask);
-};
-
-
-int pokey_sh_start (const struct MachineSound *msound);
-void pokey_sh_stop (void);
-
-READ_HANDLER( pokey1_r );
-READ_HANDLER( pokey2_r );
-READ_HANDLER( pokey3_r );
-READ_HANDLER( pokey4_r );
-READ_HANDLER( quad_pokey_r );
-
-WRITE_HANDLER( pokey1_w );
-WRITE_HANDLER( pokey2_w );
-WRITE_HANDLER( pokey3_w );
-WRITE_HANDLER( pokey4_w );
-WRITE_HANDLER( quad_pokey_w );
-
-void pokey1_serin_ready (int after);
-void pokey2_serin_ready (int after);
-void pokey3_serin_ready (int after);
-void pokey4_serin_ready (int after);
-
-void pokey1_break_w (int shift);
-void pokey2_break_w (int shift);
-void pokey3_break_w (int shift);
-void pokey4_break_w (int shift);
-
-void pokey1_kbcode_w (int kbcode, int make);
-void pokey2_kbcode_w (int kbcode, int make);
-void pokey3_kbcode_w (int kbcode, int make);
-void pokey4_kbcode_w (int kbcode, int make);
+void Pokey_sound_init (uint32 freq17, uint16 playback_freq,
+                       uint8 num_pokeys);
+void Update_pokey_sound (uint16 addr, uint8 val, uint8 chip, uint8 gain);
+void Pokey_process_2 (register unsigned char *buffer, register uint16 n);
+void Pokey_process (register unsigned char *buffer, register uint16 n);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif	/* POKEYSOUND_H */
+#endif
