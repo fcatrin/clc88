@@ -1,6 +1,8 @@
 #ifndef _UTILS_H
 #define _UTILS_H
 
+#include <sys/stat.h>
+
 void utils_load_xex(char *filename);
 void utils_dump_mem(UINT16 offset, UINT16 size);
 
@@ -15,8 +17,8 @@ char *utils_trim(const char *s);
 
 char **utils_split(const char *s, unsigned *count);
 
-char *utils_format_date(struct timespec *ts);
-char *utils_format_time(struct timespec *ts);
+char *utils_format_date(time_t time);
+char *utils_format_time(time_t time);
 
 
 #endif

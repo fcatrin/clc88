@@ -1,5 +1,4 @@
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -252,8 +251,8 @@ static void stat_dir_entry(char *dirname, dir_entry *entry) {
 
 	entry->size = entry_stat.st_size;
 	entry->is_dir = S_ISDIR(entry_stat.st_mode);
-	entry->date = utils_format_date(&entry_stat.st_mtim);
-	entry->time = utils_format_time(&entry_stat.st_mtim);
+	entry->date = utils_format_date(entry_stat.st_mtime);
+	entry->time = utils_format_time(entry_stat.st_mtime);
 }
 
 static void cmd_read_dir() {
