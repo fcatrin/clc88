@@ -3,7 +3,7 @@ FRONTEND = linux
 CC = gcc
 
 DEFS = -DHAVE_CONFIG_H -DINLINE=inline -DMAME_DEBUG
-DEFS += -DTRACE_COMPY
+# DEFS += -DTRACE_COMPY
 # DEFS += -DTRACE_CPU 
 # DEFS += -DTRACE_BUS 
 # DEFS += -DTRACE_CHRONI
@@ -70,6 +70,7 @@ XEX = $(addprefix $(ASMDIR)/, \
 	6502/test/storage.xex \
 	6502/test/storage_block.xex \
 	6502/test/storage_list.xex \
+	6502/test/sound.xex \
 	)
 
 ifeq ($(FRONTEND), linux)

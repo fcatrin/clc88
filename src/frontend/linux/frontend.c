@@ -5,6 +5,7 @@
 #include "../../emu.h"
 #include "../../cpu.h"
 #include "../../monitor.h"
+#include "../../sound.h"
 #include "../frontend.h"
 
 
@@ -22,16 +23,40 @@ static int buffer_next = 0;
 static int buffer_post = -1;
 
 static SDL_Thread *emulator_thread = NULL;
+static SDL_AudioDeviceID dev;
 
 int  frontend_start_audio_stream(int stereo) {
+	SDL_AudioSpec want, have;
+
+	SDL_memset(&want, 0, sizeof(want)); /* or SDL_zero(want) */
+	want.freq = 44100;
+	want.format = AUDIO_S16LSB;
+	want.channels = stereo ? 2 : 1;
+	want.samples = 4096;
+	want.callback = NULL;
+
+	dev = SDL_OpenAudioDevice(NULL, 0, &want, &have, 0);
+	if (dev == 0) {
+	    SDL_Log("Failed to open audio: %s", SDL_GetError());
+	} else {
+	    SDL_PauseAudioDevice(dev, 0); /* start audio playing. */
+	}
 	return 0;
 }
 
 void frontend_stop_audio_stream() {
+    SDL_CloseAudioDevice(dev);
 }
 
-int  frontend_update_audio_stream(INT16 *buffer) {
-	return 0;
+void frontend_update_audio_stream() {
+	UINT16 *buffer;
+	unsigned size;
+
+	sound_fill_buffer(&buffer, &size);
+
+	if (SDL_QueueAudio(dev, buffer, size*2)<0) {
+		SDL_Log("Failed to open audio: %s", SDL_GetError());
+	}
 }
 
 void frontend_sleep(int seconds) {
@@ -123,10 +148,12 @@ int  frontend_init_screen(int width, int height) {
 
 int frontend_init(int argc, char *argv[]) {
 	closed = 0;
-	if (SDL_Init(SDL_INIT_VIDEO) != 0){
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) != 0){
 		printf("SDL_Init Error: %s", SDL_GetError());
 		return 1;
 	}
+
+	frontend_start_audio_stream(0);
 
 	return 0;
 }
@@ -143,6 +170,8 @@ void frontend_done() {
 	for(int i=0; i<MAX_BUFFERS; i++) {
 		free(screen_buffers[i]);
 	}
+
+	frontend_stop_audio_stream();
 }
 
 int frontend_running() {
@@ -195,6 +224,7 @@ int main(int argc, char *argv[]) {
 			SDL_Delay(2);
 		}
 		frontend_process_events();
+		frontend_update_audio_stream();
 	}
 
 	frontend_done();
