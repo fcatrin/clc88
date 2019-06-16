@@ -60,12 +60,13 @@ static UINT8 pixel_color_b;
 #define STATUS_ENABLE_SPRITES 0x08
 #define STATUS_ENABLE_CHRONI  0x10
 
-
 static UINT8 status;
 static UINT8 post_dli = 0;
 
 static UINT8 vscroll;
 static UINT8 hscroll;
+
+void (*scan_callback)(unsigned scanline) = NULL;
 
 void chroni_reset() {
 	status = 0;
@@ -220,6 +221,7 @@ static void do_scan_start() {
 static void do_scan_end() {
 	CPU_RESUME();
 	CPU_RUN(8);
+	if (scan_callback) scan_callback(scanline);
 }
 
 static inline PAIR do_sprites() {
@@ -284,6 +286,7 @@ static void inline do_scan_off(int offset, int size) {
 		screen[offset + xpos*3 + 2] = 0;
 		CPU_XPOS();
 	}
+	if (scan_callback) scan_callback(scanline);
 }
 
 static void do_scan_blank() {
@@ -757,4 +760,8 @@ void chroni_run_frame() {
 
 	status |= STATUS_VBLANK;
 	if (status & STATUS_ENABLE_INTS) cpuexec_nmi(1);
+}
+
+void chroni_set_scan_callback(void (*callback)(unsigned scanline)) {
+	scan_callback = callback;
 }

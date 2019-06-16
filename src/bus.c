@@ -3,6 +3,7 @@
 #include "memory.h"
 #include "storage.h"
 #include "video/chroni.h"
+#include "sound.h"
 #include "bus.h"
 
 /*
@@ -50,6 +51,8 @@ void  bus_write16(UINT16 addr, UINT8 value) {
 		chroni_vram_write(addr - CHRONI_MEM_START, value);
 	} else if (addr >= STORAGE_START && addr <= STORAGE_END) {
 		storage_register_write(addr - STORAGE_START, value);
+	} else if (addr >= SOUND_POKEY_START && addr <= SOUND_POKEY_END) {
+		sound_register_write(addr - SOUND_POKEY_START, value);
 	} else {
 		mem_writemem16(addr, value);
 	}

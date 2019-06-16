@@ -12,6 +12,13 @@
 #include "utils.h"
 #include "monitor.h"
 #include "video/chroni.h"
+#include "sound.h"
+
+#define LOGTAG "COMPY"
+#ifdef TRACE_COMPY
+#define TRACE
+#endif
+#include "trace.h"
 
 static bool arg_monitor_enabled = FALSE;
 static bool arg_monitor_stop_on_xex = FALSE;
@@ -35,6 +42,12 @@ static void emulator_load(char *filename) {
 	monitor_source_read_file(buffer);
 }
 
+static void scan_callback(unsigned scanline) {
+	if ((scanline % 48) == 0) {
+		sound_process();
+	}
+}
+
 void compy_init(int argc, char *argv[]) {
 
 	emulator_init(argc, argv);
@@ -42,6 +55,7 @@ void compy_init(int argc, char *argv[]) {
 	screen_init();
 	storage_init();
 	machine_init();
+	sound_init();
 
 	monitor_source_init();
 
@@ -69,6 +83,8 @@ void compy_init(int argc, char *argv[]) {
 	cpuexec_init(cpu);
 
 	chroni_init();
+
+	chroni_set_scan_callback(scan_callback);
 }
 
 void compy_run() {
@@ -78,4 +94,5 @@ void compy_run() {
 
 void compy_done() {
 	storage_done();
+	sound_done();
 }

@@ -3,11 +3,12 @@ FRONTEND = linux
 CC = gcc
 
 DEFS = -DHAVE_CONFIG_H -DINLINE=inline -DMAME_DEBUG
+DEFS += -DTRACE_COMPY
 # DEFS += -DTRACE_CPU 
 # DEFS += -DTRACE_BUS 
 # DEFS += -DTRACE_CHRONI
 # DEFS += -DTRACE_UTILS
-DEFS += -DTRACE_STORAGE
+# DEFS += -DTRACE_STORAGE
 
 LIBS = -lm -lz -lpthread
 
@@ -33,6 +34,7 @@ OBJS = $(addprefix $(OBJDIR)/, \
 	monitor.o \
 	debug.o \
 	trace.o \
+	sound.o \
 	sound/filter.o \
 	sound/mixer.o \
 	sound/streams.o \

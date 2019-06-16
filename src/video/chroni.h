@@ -10,5 +10,6 @@ UINT8 chroni_vram_read(UINT16 index);
 void  chroni_init();
 void  chroni_run_frame();
 
+void  chroni_set_scan_callback(void (*scan_callback)(unsigned scanline));
 
 #endif

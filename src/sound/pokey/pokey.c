@@ -215,7 +215,7 @@ static uint32 Base_mult[MAXPOKEYS]; /* selects either 64Khz or 15Khz clock mult 
 /*                                                                           */
 /*****************************************************************************/
 
-void Pokey_sound_init (uint32 freq17, uint16 playback_freq, uint8 num_pokeys)
+void pokey_sound_init (uint32 freq17, uint16 playback_freq, uint8 num_pokeys)
 {
    uint8 chan,chip;
    int32 n;
@@ -285,7 +285,7 @@ void Pokey_sound_init (uint32 freq17, uint16 playback_freq, uint8 num_pokeys)
 /*                                                                           */
 /*****************************************************************************/
 
-void Update_pokey_sound (uint16 addr, uint8 val, uint8 chip, uint8 gain)
+void pokey_update_sound (uint16 addr, uint8 val, uint8 chip, uint8 gain)
 {
     uint32 new_val = 0;
     uint8 chan;
@@ -512,7 +512,7 @@ void Update_pokey_sound (uint16 addr, uint8 val, uint8 chip, uint8 gain)
 /* Outputs: the buffer will be filled with n bytes of audio - no return val  */
 /*                                                                           */
 /*****************************************************************************/
-void Pokey_process(unsigned char *buffer, uint16 n)
+void pokey_process(unsigned char *buffer, uint16 n)
 {
     uint32 *samp_cnt_w_ptr;
 #ifdef CLIP                      /* if clipping is selected */
