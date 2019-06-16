@@ -347,7 +347,6 @@ extern	UINT8	*RAM;
  *	set I flag, jump via IRQ vector
  ***************************************************************/
 #define BRK 													\
-	PCW++;														\
 	PUSH(PCH);													\
 	PUSH(PCL);													\
 	PUSH(P | F_B);												\

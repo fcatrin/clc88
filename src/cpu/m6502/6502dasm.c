@@ -28,7 +28,6 @@
 #include <stdio.h>
 #ifdef MAME_DEBUG
 #include "driver.h"
-#include "mamedbg.h"
 #include "m6502.h"
 #if (HAS_M65CE02)
 #include "m65ce02.h"
@@ -39,6 +38,10 @@
 #if (HAS_M4510)
 #include "m4510.h"
 #endif
+
+#include "../../debug.h"
+#include "../../emu.h"
+#include "../cpu_interface.h"
 
 #define OPCODE(A)  cpu_readop(A)
 #define ARGBYTE(A) cpu_readop_arg(A)

@@ -26,6 +26,15 @@ typedef union {
         UINT32 d;
 }       PAIR;
 
+#define WORD(a, b) (a + (b << 8))
+
+#define TRUE  1
+#define FALSE 0
+
+#define BOOLSTR(x) ((x) ? "true" : "false")
+
+typedef UINT8 bool;
+
 /*
  * Versions of GNU C earlier that 2.7 appear to have problems with the
  * __attribute__ definition of UNUSEDARG, so we act as if it was not a

@@ -6,13 +6,24 @@
 enum CpuType {CPU_M6502, CPU_Z80};
 
 typedef struct {
+	enum CpuType cpuType;
 	void (*reset)();
 	int  (*run)(int cycles);
+	void (*irq)(int do_interrupt);
+	void (*nmi)(int do_interrupt);
+	void (*set_reg)(int regnum, unsigned val);
+	unsigned (*get_reg)(int regnum);
+	unsigned (*get_pc)();
+	unsigned (*disasm)(unsigned addr, char *dst);
+	bool (*is_ret_op)(unsigned addr);
+	void (*set_ret_frame)();
+	bool (*is_ret_frame)();
+	bool exec_break;
 } v_cpu;
 
-v_cpu cpu_init(enum CpuType cpuType);
-void  cpu_reset(v_cpu *cpu);
-int   cpu_run(v_cpu *cpu, int cycles);
+v_cpu* cpu_init(enum CpuType cpuType);
+void   cpu_reset(v_cpu *cpu);
+int    cpu_run(v_cpu *cpu, int cycles);
 
 /* MAME facade */
 

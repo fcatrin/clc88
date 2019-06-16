@@ -1,49 +1,81 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "emu.h"
+#include "frontend/frontend.h"
 #include "cpu.h"
+#include "cpuexec.h"
 #include "memory.h"
 #include "machine.h"
+#include "storage.h"
+#include "video/screen.h"
+#include "utils.h"
+#include "monitor.h"
+#include "video/chroni.h"
 
-UINT8 test_code_6502[] = { 0xA9, 0x92, 0x8D, 0x01, 0x07, 0x4C, 0x00, 0x06};
-/*   * = 0x600
- * LOOP:
- *   LDA #0x92
- *   STA 0x701
- *   JMP LOOP
- */
+static bool arg_monitor_enabled = FALSE;
+static bool arg_monitor_stop_on_xex = FALSE;
+static char xexfile[1000] = "";
 
+static void emulator_init(int argc, char *argv[]) {
+	for(int i=1; i<argc; i++) {
+		if (!strcmp(argv[i], "-M")) arg_monitor_enabled = TRUE;
+		else if (!strcmp(argv[i], "-m")) arg_monitor_stop_on_xex = TRUE;
+		else {
+			strcpy(xexfile, argv[i]);
+		}
+	}
+}
 
-UINT8 test_code_z80[] = {0x3e, 0x29, 0x32, 0x02, 0x07, 0xc3, 0x00, 0x00};
-/*   * = 0x000
- * LOOP:
- *   LD A, #0x29
- *   LD (0x702), A
- *   JMP LOOP
- */
+static void emulator_load(char *filename) {
+	char buffer[1000];
+	sprintf(buffer, "%s.xex", filename);
+	utils_load_xex(buffer);
+	sprintf(buffer, "%s.lst", filename);
+	monitor_source_read_file(buffer);
+}
 
+void compy_init(int argc, char *argv[]) {
 
-int main(int argc, char *argv[]) {
+	emulator_init(argc, argv);
+
+	screen_init();
+	storage_init();
 	machine_init();
 
-	mem_write(0x600, test_code_6502, 8);
-	mem_write(0x000, test_code_z80,  8);
+	monitor_source_init();
 
-	// 6502 reset vector
-	mem_writemem16(0xFFFC, 0x00);
-	mem_writemem16(0xFFFD, 0x06);
+	emulator_load("../asm/6502/os/6502os");
+	//utils_load_xex("../asm/test/test_sprites.xex");
+	//utils_load_xex("../asm/test/test_atari.xex");
+	//utils_load_xex("../asm/test/test_spectrum.xex");
+	//utils_load_xex("../asm/test/graphics_3.xex");
+	if (strlen(xexfile) > 0) {
+		emulator_load(xexfile);
+	}
 
-	v_cpu cpu;
+	v_cpu *cpu;
 
 	cpu = cpu_init(CPU_M6502);
-	cpu.reset();
-	cpu.run(100);
+	monitor_init(cpu);
+	if (arg_monitor_enabled) {
+		monitor_enable();
+	}
 
-	cpu = cpu_init(CPU_Z80);
-	cpu.reset();
-	cpu.run(100);
+	if (arg_monitor_stop_on_xex) {
+		monitor_breakpoint_set(0x2000);
+	}
 
-	printf("result on memory 0x701 : 0x%02X\n", mem_readmem16(0x701));
-	printf("result on memory 0x702 : 0x%02X\n", mem_readmem16(0x702));
+	cpuexec_init(cpu);
 
-	return 0;
+	chroni_init();
+}
+
+void compy_run() {
+	chroni_run_frame();
+	screen_update();
+}
+
+void compy_done() {
+	storage_done();
 }
