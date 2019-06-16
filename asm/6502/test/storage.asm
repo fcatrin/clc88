@@ -139,7 +139,7 @@ file_handle:
    .byte 0
    
 filename:
-   .by "/home/fcatrin/storage_test.txt", 0
+   .by "../asm/6502/test/storage.asm", 0
    
 message_not_found:
    .by "Cannot open file: ", 0   

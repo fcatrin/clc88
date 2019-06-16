@@ -188,7 +188,7 @@ dir_index:
 	.word 0
 	
 dirname:
-   .by "/home/fcatrin", 0
+   .by "./", 0
    
 message_not_found:
    .by "Cannot open dir: ", 0   
