@@ -11,6 +11,7 @@
 #define TRACE
 #endif
 #include "trace.h"
+#include "utils.h"
 
 void utils_load_xex(char *filename) {
 	UINT8 buffer[0x1000];
@@ -118,7 +119,7 @@ char *utils_trim(const char *s) {
 	return utils_rtrim(utils_ltrim(s));
 }
 
-char **utils_split(char *s, unsigned *count) {
+char **utils_split(const char *s, unsigned *count) {
 	static char *parts[100];
 	if (s == NULL) {
 		*count = 0;
@@ -126,7 +127,7 @@ char **utils_split(char *s, unsigned *count) {
 	}
 
 	char *part;
-	char *str = s;
+	char *str = (char *)s;
 	int i = 0;
 	while ((part = strtok(str, " "))) {
 		parts[i++] = part;
@@ -136,14 +137,14 @@ char **utils_split(char *s, unsigned *count) {
 	return parts;
 }
 
-char *utils_format_date(struct timespec *ts) {
+char *utils_format_date(time_t time) {
 	static char buffer[100];
 
 	int len = sizeof(buffer);
 	struct tm t;
 
 	tzset();
-	if (localtime_r(&(ts->tv_sec), &t) != NULL) {
+	if (localtime_r(&(time), &t) != NULL) {
 		if (strftime(buffer, len, "%Y%m%d", &t)) {
 			return strdup(buffer);
 		}
@@ -152,14 +153,14 @@ char *utils_format_date(struct timespec *ts) {
 
 }
 
-char *utils_format_time(struct timespec *ts) {
+char *utils_format_time(time_t time) {
 	static char buffer[100];
 
 	int len = sizeof(buffer);
 	struct tm t;
 
 	tzset();
-	if (localtime_r(&(ts->tv_sec), &t) != NULL) {
+	if (localtime_r(&(time), &t) != NULL) {
 		if (strftime(buffer, len, "%H%M%S", &t)) {
 			return strdup(buffer);
 		}

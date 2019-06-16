@@ -102,5 +102,5 @@ samples: $(XEX)
 
 
 clean:
-	rm $(TARGET) $(OBJS) $(XEX)
+	rm -f $(TARGET) $(OBJS) $(XEX)
 	

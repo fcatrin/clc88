@@ -145,7 +145,7 @@ file_handle:
    .byte 0
    
 filename:
-   .by "/home/fcatrin/dosbox.conf", 0
+   .by "../asm/6502/test/storage_block.asm", 0
    
 message_not_found:
    .by "Cannot open file: ", 0   

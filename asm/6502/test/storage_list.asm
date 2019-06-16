@@ -63,18 +63,31 @@ read_next_entry:
    cmp #ST_RET_SUCCESS
    bne end_of_dir
 
+   ldy #0
+
    jsr storage_read ; is_dir
 .rept 4
    jsr storage_read ; size
 .endr
-.rept 8
-   jsr storage_read ; date
-.endr
-.rept 6
-   jsr storage_read ; time
-.endr
 
-   ldy #0
+copy_date:
+   jsr storage_read ; date
+   sta (RAM_TO_VRAM), y
+   iny
+   cpy #08
+   bne copy_date
+   iny
+
+copy_time:
+   jsr storage_read ; time
+   sta (RAM_TO_VRAM), y
+   iny
+   cpy #13
+   bne copy_time
+   iny
+   jsr storage_read ; time
+   jsr storage_read ; time
+
 copy_name:   
    jsr storage_read
    cmp #0
@@ -175,7 +188,7 @@ dir_index:
 	.word 0
 	
 dirname:
-   .by "/home/fcatrin", 0
+   .by "./", 0
    
 message_not_found:
    .by "Cannot open dir: ", 0   
