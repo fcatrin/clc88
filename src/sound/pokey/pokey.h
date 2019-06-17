@@ -116,7 +116,7 @@ extern "C" {
 void pokey_sound_init (uint32 freq17, uint16 playback_freq,
                        uint8 num_pokeys);
 void pokey_update_sound (uint16 addr, uint8 val, uint8 chip, uint8 gain);
-void pokey_process (unsigned char *buffer, uint16 n);
+void pokey_process (unsigned char *buffer, uint16 n, uint8 chip);
 
 #ifdef __cplusplus
 }

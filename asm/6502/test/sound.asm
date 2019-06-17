@@ -60,8 +60,13 @@ vblank:
    
    lda #$AF
    sta POKEY0_AUDC1
+   sta POKEY1_AUDC1
+   
    lda FRAMECOUNT
    sta POKEY0_AUDF1
+   
+   lda #30
+   sta POKEY1_AUDF1
       
    pla
    rts

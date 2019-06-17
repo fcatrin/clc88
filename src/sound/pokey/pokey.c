@@ -512,7 +512,7 @@ void pokey_update_sound (uint16 addr, uint8 val, uint8 chip, uint8 gain)
 /* Outputs: the buffer will be filled with n bytes of audio - no return val  */
 /*                                                                           */
 /*****************************************************************************/
-void pokey_process(unsigned char *buffer, uint16 n)
+void pokey_process(unsigned char *buffer, uint16 n, uint8 chip)
 {
     uint32 *samp_cnt_w_ptr;
 #ifdef CLIP                      /* if clipping is selected */
@@ -525,14 +525,18 @@ void pokey_process(unsigned char *buffer, uint16 n)
     uint8 toggle;
     uint8 *vol_ptr;
 
+    uint8 chip_offs;
+
+    chip_offs = chip << 2;
+
     /* set a pointer to the whole portion of the samp_n_cnt */
     // JH - bombs MIPS???
     //samp_cnt_w_ptr = (uint32 *)((uint8 *)(&Samp_n_cnt[0])+1);
     samp_cnt_w_ptr = (uint32 *)(&Samp_n_cnt[0]);
 
     /* set a pointer for optimization */
-    out_ptr = Outvol;
-    vol_ptr = AUDV;
+    out_ptr = Outvol + chip_offs;
+    vol_ptr = AUDV   + chip_offs;
 
     /* The current output is pre-determined and then adjusted based on each */
     /* output change for increased performance (less over-all math). */
@@ -570,7 +574,7 @@ void pokey_process(unsigned char *buffer, uint16 n)
        //event_min = *samp_cnt_w_ptr;
        uint32 event_min = *samp_cnt_w_ptr / 256;       // jh - TO COMPENSATE
 
-       uint32 *div_n_ptr = Div_n_cnt;
+       uint32 *div_n_ptr = Div_n_cnt + chip_offs;
 
        // JH - took out multiple pokey loop here
        if (*div_n_ptr <= event_min) {
@@ -625,13 +629,13 @@ void pokey_process(unsigned char *buffer, uint16 n)
           Poly_adjust = 0;
 
           /* adjust channel counter */
-          Div_n_cnt[next_event] += Div_n_max[next_event];
+          Div_n_cnt[next_event + chip_offs] += Div_n_max[next_event + chip_offs];
 
           /* get the current AUDC into a register (for optimization) */
-          audc = AUDC[next_event];
+          audc = AUDC[next_event + chip_offs];
 
           /* set a pointer to the current output (for opt...) */
-          out_ptr = &Outvol[next_event];
+          out_ptr = &Outvol[next_event + chip_offs];
 
           /* assume no changes to the output */
           toggle = FALSE;
@@ -659,7 +663,7 @@ void pokey_process(unsigned char *buffer, uint16 n)
              else
              {
                 /* if 9-bit poly is selected on this chip */
-                if (AUDCTL[next_event >> 2] & POLY9)
+                if (AUDCTL[(next_event >> 2) + chip] & POLY9)
                 {
                    /* compare to the poly9 bit */
                    toggle = (bit17[P9] == !(*out_ptr));
@@ -686,7 +690,7 @@ void pokey_process(unsigned char *buffer, uint16 n)
              if (*out_ptr)
              {
                 /* remove this channel from the signal */
-                cur_val -= AUDV[next_event];
+                cur_val -= AUDV[next_event + chip_offs];
 
                 /* and turn the output off */
                 *out_ptr = 0;
@@ -697,7 +701,7 @@ void pokey_process(unsigned char *buffer, uint16 n)
                 *out_ptr = 1;
 
                 /* and add it to the output signal */
-                cur_val += AUDV[next_event];
+                cur_val += AUDV[next_event + chip_offs];
              }
           }
        }

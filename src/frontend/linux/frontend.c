@@ -25,8 +25,11 @@ static int buffer_post = -1;
 static SDL_Thread *emulator_thread = NULL;
 static SDL_AudioDeviceID dev;
 
+FILE *sdebug;
 int  frontend_start_audio_stream(int stereo) {
 	SDL_AudioSpec want, have;
+
+	sdebug = fopen("/home/fcatrin/audio.raw", "wb");
 
 	SDL_memset(&want, 0, sizeof(want)); /* or SDL_zero(want) */
 	want.freq = 44100;
@@ -45,6 +48,7 @@ int  frontend_start_audio_stream(int stereo) {
 }
 
 void frontend_stop_audio_stream() {
+	fclose(sdebug);
     SDL_CloseAudioDevice(dev);
 }
 
@@ -54,6 +58,7 @@ void frontend_update_audio_stream() {
 
 	sound_fill_buffer(&buffer, &size);
 
+	fwrite(buffer, size*2, 1, sdebug);
 	if (SDL_QueueAudio(dev, buffer, size*2)<0) {
 		SDL_Log("Failed to open audio: %s", SDL_GetError());
 	}
@@ -113,6 +118,7 @@ void frontend_process_events() {
 			switch( event.key.keysym.sym ){
 				case SDLK_F1: monitor_enable(); break;
 			}
+			break;
 		}
 	}
 }
@@ -153,7 +159,7 @@ int frontend_init(int argc, char *argv[]) {
 		return 1;
 	}
 
-	frontend_start_audio_stream(0);
+	frontend_start_audio_stream(1);
 
 	return 0;
 }
