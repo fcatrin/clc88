@@ -8,7 +8,6 @@
 #include "../../sound.h"
 #include "../frontend.h"
 
-
 static SDL_Window *window;
 static SDL_Renderer *renderer;
 static int screen_width;
@@ -25,11 +24,16 @@ static int buffer_post = -1;
 static SDL_Thread *emulator_thread = NULL;
 static SDL_AudioDeviceID dev;
 
+#ifdef DUMP_AUDIO
 FILE *sdebug;
+#endif
+
 int  frontend_start_audio_stream(int stereo) {
 	SDL_AudioSpec want, have;
 
+#ifdef DUMP_AUDIO
 	sdebug = fopen("/home/fcatrin/audio.raw", "wb");
+#endif
 
 	SDL_memset(&want, 0, sizeof(want)); /* or SDL_zero(want) */
 	want.freq = 44100;
@@ -48,7 +52,9 @@ int  frontend_start_audio_stream(int stereo) {
 }
 
 void frontend_stop_audio_stream() {
+#ifdef DUMP_AUDIO
 	fclose(sdebug);
+#endif
     SDL_CloseAudioDevice(dev);
 }
 
@@ -58,7 +64,10 @@ void frontend_update_audio_stream() {
 
 	sound_fill_buffer(&buffer, &size);
 
+#ifdef DUMP_AUDIO
 	fwrite(buffer, size*2, 1, sdebug);
+#endif
+
 	if (SDL_QueueAudio(dev, buffer, size*2)<0) {
 		SDL_Log("Failed to open audio: %s", SDL_GetError());
 	}
