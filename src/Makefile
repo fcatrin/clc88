@@ -78,6 +78,7 @@ ifeq ($(FRONTEND), linux)
 
 OBJS += $(addprefix $(OBJDIR)/, \
 	frontend/linux/frontend.o \
+	frontend/linux/keyboard.o \
 	)
 	
 CFLAGS += $(shell pkg-config --cflags sdl2)

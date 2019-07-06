@@ -7,6 +7,7 @@
 #include "../../monitor.h"
 #include "../../sound.h"
 #include "../frontend.h"
+#include "keyboard.h"
 
 static SDL_Window *window;
 static SDL_Renderer *renderer;
@@ -114,6 +115,8 @@ static void update_screen(void *pixels) {
 	SDL_DestroyTexture(texture);
 }
 
+bool is_alt_pressed = FALSE;
+
 void frontend_process_events() {
 	SDL_Event event;
 	while (SDL_PollEvent(&event)) {
@@ -125,8 +128,25 @@ void frontend_process_events() {
 			break;
 		case SDL_KEYDOWN:
 			switch( event.key.keysym.sym ){
-				case SDLK_F1: monitor_enable(); break;
+				case SDLK_F1:
+					if (is_alt_pressed) {
+						monitor_enable();
+						return;
+					}
+					break;
+				case SDLK_LALT:
+					is_alt_pressed = TRUE;
+					break;
 			}
+			keyb_update(event.key.keysym.sym, TRUE);
+			break;
+		case SDL_KEYUP:
+			switch( event.key.keysym.sym ){
+				case SDLK_LALT:
+					is_alt_pressed = FALSE;
+					break;
+			}
+			keyb_update(event.key.keysym.sym, FALSE);
 			break;
 		}
 	}
@@ -168,6 +188,7 @@ int frontend_init(int argc, char *argv[]) {
 		return 1;
 	}
 
+	keyb_init();
 	frontend_start_audio_stream(1);
 
 	return 0;
@@ -186,6 +207,7 @@ void frontend_done() {
 		free(screen_buffers[i]);
 	}
 
+	keyb_done();
 	frontend_stop_audio_stream();
 }
 

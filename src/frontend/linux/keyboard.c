@@ -1,4 +1,5 @@
 #include <SDL.h>
+#include "../../emu.h"
 #include "../../input/scancodes.h"
 
 static int translation_table[] = {
@@ -83,7 +84,17 @@ static int translation_table[] = {
 		0
 };
 
-int keyb_translate(int keycode) {
+#define KEY_REGISTERS 8
+
+static UINT8 regs[KEY_REGISTERS];
+
+void keyb_init() {
+	memset(regs, 0, KEY_REGISTERS*sizeof(UINT8));
+}
+
+void keyb_done() {}
+
+static int keyb_translate(int keycode) {
 	int i=0;
 
 	while(translation_table[i] && translation_table[i] != keycode) {
@@ -92,3 +103,24 @@ int keyb_translate(int keycode) {
 
 	return translation_table[i];
 }
+
+void keyb_update(int keycode, bool down) {
+	int translated = keyb_translate(keycode);
+	if (!translated) return;
+
+	int bit_index = translated - 1;
+	int reg = bit_index / 8;
+	int rot = bit_index % 8;
+
+	int bit = 1 << (7-rot);
+	if (down) {
+		regs[reg] = regs[reg] | bit;
+	} else {
+		regs[reg] = regs[reg] & (0xFF - bit);
+	}
+}
+
+UINT8 keyb_get_reg(int reg) {
+	return (reg < KEY_REGISTERS) ? regs[reg] : 0;
+}
+

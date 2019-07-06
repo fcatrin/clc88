@@ -83,6 +83,8 @@ enum scancodes {
 	SCANCODE_RIGHT_ALT,
 	SCANCODE_RIGHT_CTRL,
 
+	SCANCODE_LAST
+
 };
 
 #endif
