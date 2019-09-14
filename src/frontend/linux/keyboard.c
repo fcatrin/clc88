@@ -84,7 +84,7 @@ static int translation_table[] = {
 		0
 };
 
-#define KEY_REGISTERS 8
+#define KEY_REGISTERS 16
 
 static UINT8 regs[KEY_REGISTERS];
 
@@ -101,7 +101,7 @@ static int keyb_translate(int keycode) {
 		i+=2;
 	}
 
-	return translation_table[i];
+	return translation_table[i+1];
 }
 
 void keyb_update(int keycode, bool down) {
@@ -111,6 +111,9 @@ void keyb_update(int keycode, bool down) {
 	int bit_index = translated - 1;
 	int reg = bit_index / 8;
 	int rot = bit_index % 8;
+
+	printf("keyb update bit: %d, reg %d = %d  last = %d\n", bit_index, reg, rot, SCANCODE_LAST);
+	fflush(stdout);
 
 	int bit = 1 << (7-rot);
 	if (down) {

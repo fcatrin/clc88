@@ -152,6 +152,10 @@ void frontend_process_events() {
 	}
 }
 
+UINT8 frontend_keyb_reg_read(UINT8 index) {
+	return keyb_get_reg(index);
+}
+
 int  frontend_init_screen(int width, int height) {
 	window = SDL_CreateWindow("CLC88 Compy", 100, 100, width*2, height*2, SDL_WINDOW_SHOWN);
 	if (window == NULL){

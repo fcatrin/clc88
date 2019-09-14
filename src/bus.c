@@ -4,6 +4,7 @@
 #include "storage.h"
 #include "video/chroni.h"
 #include "sound.h"
+#include "keyb.h"
 #include "bus.h"
 
 /*
@@ -35,6 +36,8 @@ UINT8 bus_read16(UINT16 addr) {
 		retvalue = chroni_vram_read(addr - CHRONI_MEM_START);
 	} else if (addr >= STORAGE_START && addr <= STORAGE_END) {
 		retvalue = storage_register_read(addr - STORAGE_START);
+	} else if (addr >= KEYB_START && addr <= KEYB_END) {
+		retvalue = keyb_register_read(addr - KEYB_START);
 	} else {
 		retvalue = mem_readmem16(addr);
 	}

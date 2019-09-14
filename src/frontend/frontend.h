@@ -19,4 +19,6 @@ void frontend_sleep(int seconds);
 void frontend_trace_msg(char *tag, ...);
 void frontend_trace_err(char *tag, ...);
 
+UINT8 frontend_keyb_reg_read(UINT8 index);
+
 #endif

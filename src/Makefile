@@ -9,6 +9,7 @@ DEFS = -DHAVE_CONFIG_H -DINLINE=inline -DMAME_DEBUG
 # DEFS += -DTRACE_CHRONI
 # DEFS += -DTRACE_UTILS
 # DEFS += -DTRACE_STORAGE
+# DEFS += -DTRACE_KEYB
 # DEFS += -DDUMP_AUDIO
 
 LIBS = -lm -lz -lpthread
@@ -35,6 +36,7 @@ OBJS = $(addprefix $(OBJDIR)/, \
 	monitor.o \
 	debug.o \
 	trace.o \
+	keyb.o \
 	sound.o \
 	sound/filter.o \
 	sound/mixer.o \
@@ -72,6 +74,7 @@ XEX = $(addprefix $(ASMDIR)/, \
 	6502/test/storage_block.xex \
 	6502/test/storage_list.xex \
 	6502/test/sound.xex \
+	6502/test/keyb.xex \
 	)
 
 ifeq ($(FRONTEND), linux)

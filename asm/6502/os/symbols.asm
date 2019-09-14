@@ -89,6 +89,8 @@ ST_WRITE_RESET  = $9085
 ST_READ_RESET   = $9086
 ST_STATUS       = $9087
 
+KEY_STATUS      = $9090 ; up to $909F
+
 ST_CMD_OPEN       = $01
 ST_CMD_CLOSE      = $02
 ST_CMD_READ_BYTE  = $03
