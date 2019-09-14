@@ -2,6 +2,13 @@
 #include "../../emu.h"
 #include "../../input/scancodes.h"
 
+#define LOGTAG "KEYB_IN"
+#ifdef TRACE_KEYB_IN
+#define TRACE
+#endif
+#include "trace.h"
+
+
 static int translation_table[] = {
 		SDLK_ESCAPE, SCANCODE_ESC,
 		SDLK_F1,  SCANCODE_F1,
@@ -16,6 +23,11 @@ static int translation_table[] = {
 		SDLK_F10, SCANCODE_F10,
 		SDLK_F11, SCANCODE_F11,
 		SDLK_F12, SCANCODE_F12,
+
+		SDLK_RIGHT, SCANCODE_RIGHT,
+		SDLK_LEFT,  SCANCODE_LEFT,
+		SDLK_DOWN,  SCANCODE_DOWN,
+		SDLK_UP,    SCANCODE_UP,
 
 		SDLK_BACKQUOTE, SCANCODE_GRAVE,
 		SDLK_1, SCANCODE_1,
@@ -106,16 +118,18 @@ static int keyb_translate(int keycode) {
 
 void keyb_update(int keycode, bool down) {
 	int translated = keyb_translate(keycode);
-	if (!translated) return;
+	if (!translated) {
+		LOGV(LOGTAG, "Non translated scan code %d", keycode);
+		return;
+	}
 
 	int bit_index = translated - 1;
 	int reg = bit_index / 8;
 	int rot = bit_index % 8;
 
-	printf("keyb update bit: %d, reg %d = %d  last = %d\n", bit_index, reg, rot, SCANCODE_LAST);
-	fflush(stdout);
 
 	int bit = 1 << (7-rot);
+	LOGV(LOGTAG, "keyb update scancode: %d, reg: %d bit: %d %s", translated, reg, bit, down ? "ON":"OFF");
 	if (down) {
 		regs[reg] = regs[reg] | bit;
 	} else {
