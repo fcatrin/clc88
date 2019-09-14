@@ -159,6 +159,7 @@ os_vector_table
 	.word ram2vram
 	.word vram2ram
 	.word vram_set_bytes
+	.word keyb_poll
 
 copy_params_charset:
 	.word charset, VRAM_CHARSET, CHARSET_SIZE
@@ -222,6 +223,7 @@ irq:
    jmp (IRQ_VECTOR)
 
    icl 'graphics.asm'
+   icl 'keyboard.asm'
    
 charset:
 	ins '../../../res/charset.bin'

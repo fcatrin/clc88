@@ -76,6 +76,7 @@ XEX = $(addprefix $(ASMDIR)/, \
 	6502/test/storage_list.xex \
 	6502/test/sound.xex \
 	6502/test/keyb.xex \
+	6502/test/memopad.xex \
 	)
 
 ifeq ($(FRONTEND), linux)
@@ -99,7 +100,7 @@ $(OBJDIR)/%.o: %.c
 $(ASMDIR)/%.xex: $(ASMDIR)/%.asm $(ASMDIR)/6502/os/symbols.asm
 	mads $< -l -s -o:$@
 	
-$(ASMDIR)/6502/os/6502os.xex : $(ASMDIR)/6502/os/graphics.asm 	
+$(ASMDIR)/6502/os/6502os.xex : $(ASMDIR)/6502/os/graphics.asm  $(ASMDIR)/6502/os/keyboard.asm 	
 
 $(TARGET): $(OBJS)
 	$(CC) -o $@ $(LDFLAGS) $(OBJS) $(LIBS)
