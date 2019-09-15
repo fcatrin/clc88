@@ -84,8 +84,8 @@ static int translation_table[] = {
 		SDLK_LESS,    SCANCODE_LESS,
 		SDLK_GREATER, SCANCODE_GREATER,
 		SDLK_SLASH,   SCANCODE_SLASH,
-		SDLK_RSHIFT,  SCANCODE_RIGHT_SHIFT,
 
+		SDLK_RSHIFT,  SCANCODE_RIGHT_SHIFT,
 		SDLK_LCTRL, SCANCODE_LEFT_CTRL,
 		SDLK_LALT,  SCANCODE_LEFT_ALT,
 		SDLK_LGUI,  SCANCODE_LEFT_META,
@@ -134,6 +134,13 @@ void keyb_update(int keycode, bool down) {
 		regs[reg] = regs[reg] | bit;
 	} else {
 		regs[reg] = regs[reg] & (0xFF - bit);
+	}
+
+	if (translated < SCANCODE_LEFT_SHIFT || translated > SCANCODE_RIGHT_META) {
+		UINT8 last_scan = (UINT8)translated;
+		int last_scan_reg = KEY_REGISTERS-1;
+
+		regs[last_scan_reg] = down ? last_scan : 0;
 	}
 }
 

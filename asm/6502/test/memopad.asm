@@ -21,7 +21,14 @@ wait:
 
    ldx #OS_KEYB_POLL
    jsr OS_CALL
-
+   
+   lda KEY_PRESSED
+   cmp last_key_pressed
+   beq ignore_key
+   sta last_key_pressed
+   jsr print_key
+   
+ignore_key:
 	jsr keybprint
 	jmp next_frame
 	
@@ -86,6 +93,84 @@ print_c:
 end_print:
 	rts
 
+print_key:
+    mwa DISPLAY_START VRAM_TO_RAM
+    jsr lib_vram_to_ram
+
+   jsr calc_screen_offset
+   adw RAM_TO_VRAM pos_offset
+
+   ldx #0
+search_key:   
+   lda key_conversion_normal, x
+   beq end_print_key
+   cmp last_key_pressed
+   bne next_char
+   ldy #0
+   inx
+   lda key_conversion_normal, x
+   sta (RAM_TO_VRAM), y
+   inc pos_x
+   lda pos_x
+   cmp #40
+   bne no_line_feed
+   lda #2
+   sta pos_x
+   inc pos_y
+no_line_feed   
+   rts
+next_char:   
+   inx
+   inx
+   bne search_key
+end_print_key:
+   rts   
+
+calc_screen_offset:
+   mwa #0 pos_offset
+     
+   // pos_offset = y*32
+   lda pos_y
+   asl
+   rol pos_offset+1
+   asl
+   rol pos_offset+1
+   asl
+   rol pos_offset+1
+   asl
+   rol pos_offset+1
+   asl
+   rol pos_offset +1
+   sta pos_offset
+   
+   // pos_offset += y*8   => pos_offset = y*40
+   lda pos_y
+   asl
+   asl
+   asl
+   clc
+   adc pos_offset
+   sta pos_offset
+   lda #0
+   adc pos_offset+1
+   sta pos_offset+1
+
+   // add x
+   clc
+   lda pos_x
+   adc pos_offset
+   sta pos_offset
+   lda #0
+   adc pos_offset+1
+   sta pos_offset+1
+   rts
+
+last_key_pressed:
+   .byte 0
+   
+pos_x:  .byte 2
+pos_y:  .byte 0
+pos_offset: .word 0
 
 key_shift:
 	.byte 'shift', 0
@@ -94,5 +179,17 @@ key_ctrl:
 key_alt:
 	.byte 'alt', 0
 
+key_conversion_normal:
+   .by 19, '1',
+   .by 20, '2',
+   .by 21, '3',
+   .by 22, '4',
+   .by 23, '5',
+   .by 24, '6',
+   .by 25, '7',
+   .by 26, '8',
+   .by 27, '9',
+   .by 28, '0',
+	.by 0
 	
    icl '../os/stdlib.asm'
