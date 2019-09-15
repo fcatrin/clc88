@@ -99,10 +99,17 @@ end_print:
 
 print_key:
    lda last_key_pressed
+   
    cmp #46
-   bne not_enter
-   jmp line_feed
-not_enter   
+   jeq line_feed
+   cmp #14
+   jeq cursor_left
+   cmp #15
+   jeq cursor_right
+   cmp #16
+   jeq cursor_up
+   cmp #17
+   jeq cursor_down
 
    mwa DISPLAY_START VRAM_TO_RAM
    jsr lib_vram_to_ram
@@ -182,6 +189,37 @@ line_feed:
    sta pos_x
    inc pos_y
 line_feed_end
+   rts   
+
+cursor_left:
+   lda pos_x
+   cmp #0
+   beq no_cursor_change
+   dec pos_x
+   jmp calc_screen_offset
+   
+cursor_right:
+   lda pos_x
+   cmp #40
+   beq no_cursor_change
+   inc pos_x
+   jmp calc_screen_offset
+
+cursor_up:
+   lda pos_y
+   cmp #0
+   beq no_cursor_change
+   dec pos_y
+   jmp calc_screen_offset
+
+cursor_down:
+   lda pos_y
+   cmp #22
+   beq no_cursor_change
+   inc pos_y
+   jmp calc_screen_offset
+
+no_cursor_change:
    rts   
 
 cursor_blink:
