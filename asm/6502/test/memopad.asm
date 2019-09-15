@@ -94,8 +94,13 @@ end_print:
 	rts
 
 print_key:
-    mwa DISPLAY_START VRAM_TO_RAM
-    jsr lib_vram_to_ram
+   cmp #46
+   bne not_enter
+   jmp line_feed
+not_enter   
+
+   mwa DISPLAY_START VRAM_TO_RAM
+   jsr lib_vram_to_ram
 
    jsr calc_screen_offset
    adw RAM_TO_VRAM pos_offset
@@ -115,8 +120,7 @@ search_key:
    cmp #40
    bne no_line_feed
    lda #2
-   sta pos_x
-   inc pos_y
+   jsr line_feed
 no_line_feed   
    rts
 next_char:   
@@ -164,6 +168,17 @@ calc_screen_offset:
    adc pos_offset+1
    sta pos_offset+1
    rts
+   
+line_feed:
+   lda pos_y
+   cmp #24
+   beq line_feed_end
+   lda #2
+   sta pos_x
+   inc pos_y
+line_feed_end
+   rts   
+
 
 last_key_pressed:
    .byte 0
@@ -180,6 +195,7 @@ key_alt:
 	.byte 'alt', 0
 
 key_conversion_normal:
+   .by 66, ' ',
    .by 19, '1',
    .by 20, '2',
    .by 21, '3',
@@ -190,6 +206,36 @@ key_conversion_normal:
    .by 26, '8',
    .by 27, '9',
    .by 28, '0',
+   
+   .by 34, 'q',
+   .by 35, 'w',
+   .by 36, 'e',
+   .by 37, 'r',
+   .by 38, 't',
+   .by 39, 'y',
+   .by 40, 'u',
+   .by 41, 'i',
+   .by 42, 'o',
+   .by 43, 'p',
+   
+   .by 48, 'a',
+   .by 49, 's',
+   .by 50, 'd',
+   .by 51, 'f',
+   .by 52, 'g',
+   .by 53, 'h',
+   .by 54, 'j',
+   .by 55, 'k',
+   .by 56, 'l',
+   
+   .by 59, 'z',
+   .by 60, 'x',
+   .by 61, 'c',
+   .by 62, 'v',
+   .by 63, 'b',
+   .by 64, 'n',
+   .by 65, 'm',
+ 
 	.by 0
 	
    icl '../os/stdlib.asm'
