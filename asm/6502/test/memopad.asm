@@ -13,6 +13,8 @@ POS_ALT   = POS_CTRL  + 5
    ldx #OS_SET_VIDEO_MODE
    jsr OS_CALL
    
+   jsr calc_screen_offset
+   
 next_frame:
 	lda FRAMECOUNT
 wait:
@@ -26,9 +28,11 @@ wait:
    cmp last_key_pressed
    beq ignore_key
    sta last_key_pressed
+   jsr cursor_off
    jsr print_key
    
 ignore_key:
+   jsr cursor_blink
 	jsr keybprint
 	jmp next_frame
 	
@@ -94,6 +98,7 @@ end_print:
 	rts
 
 print_key:
+   lda last_key_pressed
    cmp #46
    bne not_enter
    jmp line_feed
@@ -179,9 +184,41 @@ line_feed:
 line_feed_end
    rts   
 
+cursor_blink:
+   lda FRAMECOUNT
+   and #32
+   beq cursor_off
+
+cursor_on:
+   lda #1
+   sta is_cursor_on
+   lda #$01
+   jmp change_cursor_attr
+
+cursor_off:
+   lda #0
+   sta is_cursor_on
+   
+   lda #$10
+   
+change_cursor_attr:
+      
+   pha
+   mwa ATTRIB_START VRAM_TO_RAM
+   jsr lib_vram_to_ram
+
+   adw RAM_TO_VRAM pos_offset
+   pla
+   ldy #0
+   sta (RAM_TO_VRAM), y
+   rts
+   
+
 
 last_key_pressed:
    .byte 0
+   
+is_cursor_on: .byte 0
    
 pos_x:  .byte 2
 pos_y:  .byte 0
