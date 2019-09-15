@@ -1,6 +1,6 @@
 	icl '../os/symbols.asm'
 
-POS_BASE = 20*40
+POS_BASE = 22*40
 POS_SHIFT = POS_BASE  + 2
 POS_CTRL  = POS_SHIFT + 6
 POS_ALT   = POS_CTRL  + 5
@@ -32,7 +32,7 @@ wait:
    jsr print_key
    
 ignore_key:
-   jsr cursor_blink
+   jsr cursor_on
 	jsr keybprint
 	jmp next_frame
 	
@@ -200,7 +200,7 @@ cursor_left:
    
 cursor_right:
    lda pos_x
-   cmp #40
+   cmp #39
    beq no_cursor_change
    inc pos_x
    jmp calc_screen_offset
@@ -214,18 +214,13 @@ cursor_up:
 
 cursor_down:
    lda pos_y
-   cmp #22
+   cmp #20
    beq no_cursor_change
    inc pos_y
    jmp calc_screen_offset
 
 no_cursor_change:
    rts   
-
-cursor_blink:
-   lda FRAMECOUNT
-   and #32
-   beq cursor_off
 
 cursor_on:
    lda #1
@@ -245,6 +240,7 @@ change_cursor_attr:
    mwa ATTRIB_START VRAM_TO_RAM
    jsr lib_vram_to_ram
 
+   jsr calc_screen_offset
    adw RAM_TO_VRAM pos_offset
    pla
    ldy #0
