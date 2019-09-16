@@ -26,8 +26,41 @@ wait:
    
    lda KEY_PRESSED
    cmp last_key_pressed
-   beq ignore_key
+   bne new_key
+   lda in_auto_repeat
+   bne do_auto_repeat
+   
+   lda auto_repeat_wait_max
+   cmp auto_repeat_wait
+   beq auto_repeat_start
+   
+   inc auto_repeat_wait
+   jmp ignore_key
+
+auto_repeat_start:
+   lda #1
+   sta in_auto_repeat
+   jmp repeat_key
+   
+do_auto_repeat:
+   lda auto_repeat_delay_max
+   cmp auto_repeat_delay
+   bne keep_waiting
+   lda #0
+   sta auto_repeat_delay
+   jmp repeat_key
+keep_waiting:
+   inc auto_repeat_delay
+   jmp ignore_key   
+   
+new_key
    sta last_key_pressed
+   lda #0
+   sta auto_repeat_wait
+   sta auto_repeat_delay
+   sta in_auto_repeat
+   
+repeat_key:   
    jsr cursor_off
    jsr print_key
    
@@ -418,6 +451,13 @@ pos_x:  .byte 0
 pos_y:  .byte 0
 pos_offset: .word 0
 pos_save:   .word 0
+
+in_auto_repeat: .byte 0
+auto_repeat_wait:  .byte 0
+auto_repeat_delay: .byte 0
+
+auto_repeat_wait_max:  .byte 20
+auto_repeat_delay_max: .byte 3
 
 display_base: .word 0
 
