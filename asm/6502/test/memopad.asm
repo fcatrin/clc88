@@ -1,7 +1,8 @@
    icl '../os/symbols.asm'
 
-POS_BASE = 22*40+11
-POS_SHIFT = POS_BASE 
+POS_BASE = 22*40+9
+POS_CAPS  = POS_BASE
+POS_SHIFT = POS_CAPS  + 6 
 POS_CTRL  = POS_SHIFT + 7
 POS_ALT   = POS_CTRL  + 6
 
@@ -72,13 +73,25 @@ ignore_key:
 keybprint:
    lda #$FF
    sta R5
+   lda caps
+   beq no_caps
+   lda #$DF
+   sta R5
+
+no_caps:
+   jsr print_caps
+   
+   lda #$FF
+   sta R5
 	lda KEY_META
 	and #KEY_META_SHIFT
 	beq no_shift
 	lda #$DF
 	sta R5
+	
 no_shift:
 	jsr print_shift
+	
    lda #$FF
    sta R5
 	lda KEY_META
@@ -88,6 +101,7 @@ no_shift:
 	sta R5
 no_ctrl:
 	jsr print_ctrl
+	
    lda #$FF
    sta R5
 	lda KEY_META
@@ -98,6 +112,10 @@ no_ctrl:
 no_alt:
 	jmp print_alt
 	
+print_caps:
+   mwa #key_caps R1
+   mwa #POS_CAPS R3
+   jmp print
 
 print_shift:
 	mwa #key_shift R1
@@ -164,6 +182,8 @@ print_key_noctrl:
    jeq cursor_down
    cmp #32
    jeq backspace
+   cmp #47
+   jeq caps_toggle
 
    mwa DISPLAY_START VRAM_TO_RAM
    jsr lib_vram_to_ram
@@ -192,6 +212,26 @@ search_key:
    bne next_char
    iny
    lda (R1), y
+   ldx caps
+   beq normal_key
+   
+   cmp #'A'
+   bcc normal_key
+   cmp #'Z'+1
+   bcs check_lower
+   ora #$20
+   jmp normal_key
+   
+check_lower   
+   cmp #'a'
+   bcc normal_key
+   cmp #'z'+1
+   bcs normal_key
+   
+alpha_key:   
+   and #$DF
+   
+normal_key:
    ldy #0
    sta (RAM_TO_VRAM), y
    inc pos_x
@@ -264,7 +304,7 @@ backspace_del:
 
    jsr calc_screen_offset
    adw RAM_TO_VRAM pos_offset
-   lda #' '
+   lda #0
    ldy #0
    sta (RAM_TO_VRAM), y
 backspace_abort:   
@@ -475,6 +515,11 @@ word_next_start:
    bne word_next_next
    rts
 
+caps_toggle:
+   lda caps
+   eor #1
+   sta caps
+   rts
 
 last_key_pressed:
    .byte 0
@@ -493,8 +538,12 @@ auto_repeat_delay: .byte 0
 auto_repeat_wait_max:  .byte 20
 auto_repeat_delay_max: .byte 3
 
+caps: .byte 1
+
 display_base: .word 0
 
+key_caps:
+   .byte 'caps', 0
 key_shift:
 	.byte 'shift', 0
 key_ctrl:
