@@ -354,9 +354,11 @@ key_conversion_normal:
    .by 30, '+',
    .by 44, '{',
    .by 45, '}',
+   .by 58, $27,
    .by 75, '<',
    .by 78, ',',
    .by 79, '.',
+   .by 80, '|',
 	.by 0
 	
 key_conversion_shift:
@@ -405,9 +407,11 @@ key_conversion_shift:
 	.by 30, '*',
    .by 44, '[',
    .by 45, ']',
+   .by 58, '?',
    .by 75, '>',
    .by 78, ';',
    .by 79, ':',
+   .by 80, $60,
 	.by 0
 	
    icl '../os/stdlib.asm'

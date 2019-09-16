@@ -98,6 +98,7 @@ static int translation_table[] = {
 		44, SCANCODE_COMMA,
 		46, SCANCODE_DOT,
 		123, SCANCODE_BRACKET_OPEN,
+		124, SCANCODE_PIPE,
 		125, SCANCODE_BRACKET_CLOSE,
 
 		0
