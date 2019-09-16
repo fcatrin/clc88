@@ -100,7 +100,8 @@ $(OBJDIR)/%.o: %.c
 $(ASMDIR)/%.xex: $(ASMDIR)/%.asm $(ASMDIR)/6502/os/symbols.asm
 	mads $< -l -s -o:$@
 	
-$(ASMDIR)/6502/os/6502os.xex : $(ASMDIR)/6502/os/graphics.asm  $(ASMDIR)/6502/os/keyboard.asm 	
+$(ASMDIR)/6502/os/6502os.xex : $(ASMDIR)/6502/os/graphics.asm 	
+$(ASMDIR)/6502/test/memopad.xex: $(ASMDIR)/6502/os/keyboard.asm
 
 $(TARGET): $(OBJS)
 	$(CC) -o $@ $(LDFLAGS) $(OBJS) $(LIBS)

@@ -118,12 +118,19 @@ print_key:
 
    jsr calc_screen_offset
    adw RAM_TO_VRAM pos_offset
-   
-   MWA #key_conversion_normal R1
+
+   mwa #key_conversion_shift R1
    lda KEY_META
    and #KEY_META_SHIFT
-   beq search_key_start
-   mwa #key_conversion_shift R1
+   bne search_key_start
+   
+   MWA #key_conversion_alt R1
+   lda KEY_META
+   and #KEY_META_ALT
+   bne search_key_start
+   
+   MWA #key_conversion_normal R1
+   
 search_key_start:
    ldy #0
 search_key:   

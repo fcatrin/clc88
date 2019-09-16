@@ -100,6 +100,7 @@ static int translation_table[] = {
 		123, SCANCODE_BRACKET_OPEN,
 		124, SCANCODE_PIPE,
 		125, SCANCODE_BRACKET_CLOSE,
+		241, SCANCODE_NAU,
 
 		0
 };
