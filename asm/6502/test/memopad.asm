@@ -106,8 +106,18 @@ print_key:
    jeq cursor_home
    cmp #15
    jeq cursor_end
+
+print_key_noshift
+   lda KEY_META
+   and #KEY_META_CTRL
+   beq print_key_noctrl
+   lda last_key_pressed
+   cmp #14
+   jeq word_prev
+   cmp #15
+   // jeq word_next
    
-print_key_noshift:   
+print_key_noctrl:   
    lda last_key_pressed
    cmp #46
    jeq line_feed
@@ -361,6 +371,43 @@ cursor_end_found:
    sty pos_x
    jmp calc_screen_offset
    
+word_prev:
+   mwa DISPLAY_START VRAM_TO_RAM
+   jsr lib_vram_to_ram
+   mwa RAM_TO_VRAM display_base
+   ldx #1
+      
+word_prev_next:
+   mwa display_base RAM_TO_VRAM
+   mwa pos_x pos_save   
+
+   lda pos_x
+   bne word_prev_x
+   lda pos_y
+   bne word_prev_y
+   rts
+word_prev_y:
+   lda #39
+   sta pos_x
+   dec pos_y
+   jmp word_prev_start
+   
+word_prev_x:
+   dec pos_x
+   
+word_prev_start:
+   jsr calc_screen_offset
+   adw RAM_TO_VRAM pos_offset
+   ldy #0
+   lda (RAM_TO_VRAM), y
+   bne word_prev_next
+   cpx #1
+   bne word_prev_end
+   dex
+   jmp word_prev_next
+word_prev_end:   
+   mwa pos_save pos_x
+   rts
 
 last_key_pressed:
    .byte 0
@@ -370,6 +417,9 @@ is_cursor_on: .byte 0
 pos_x:  .byte 0
 pos_y:  .byte 0
 pos_offset: .word 0
+pos_save:   .word 0
+
+display_base: .word 0
 
 key_shift:
 	.byte 'shift', 0
