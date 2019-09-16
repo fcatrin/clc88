@@ -1,9 +1,9 @@
-	icl '../os/symbols.asm'
+   icl '../os/symbols.asm'
 
-POS_BASE = 22*40
-POS_SHIFT = POS_BASE  + 2
-POS_CTRL  = POS_SHIFT + 6
-POS_ALT   = POS_CTRL  + 5
+POS_BASE = 22*40+11
+POS_SHIFT = POS_BASE 
+POS_CTRL  = POS_SHIFT + 7
+POS_ALT   = POS_CTRL  + 6
 
 
 	org BOOTADDR
@@ -18,8 +18,8 @@ POS_ALT   = POS_CTRL  + 5
 next_frame:
 	lda FRAMECOUNT
 wait:
-	cmp FRAMECOUNT
-	beq wait
+   cmp FRAMECOUNT
+   beq wait
 
    ldx #OS_KEYB_POLL
    jsr OS_CALL
@@ -37,8 +37,8 @@ ignore_key:
 	jmp next_frame
 	
 keybprint:
-    lda #$FF
-    sta R5
+   lda #$FF
+   sta R5
 	lda KEY_META
 	and #KEY_META_SHIFT
 	beq no_shift
@@ -46,8 +46,8 @@ keybprint:
 	sta R5
 no_shift:
 	jsr print_shift
-    lda #$FF
-    sta R5
+   lda #$FF
+   sta R5
 	lda KEY_META
 	and #KEY_META_CTRL
 	beq no_ctrl
@@ -55,8 +55,8 @@ no_shift:
 	sta R5
 no_ctrl:
 	jsr print_ctrl
-    lda #$FF
-    sta R5
+   lda #$FF
+   sta R5
 	lda KEY_META
 	and #KEY_META_ALT
 	beq no_alt
@@ -82,8 +82,8 @@ print_alt:
 	jmp print
 
 print:
-    mwa DISPLAY_START VRAM_TO_RAM
-    jsr lib_vram_to_ram
+   mwa DISPLAY_START VRAM_TO_RAM
+   jsr lib_vram_to_ram
 	adw RAM_TO_VRAM R3
 
 	ldy #0
@@ -116,28 +116,31 @@ print_key:
 
    jsr calc_screen_offset
    adw RAM_TO_VRAM pos_offset
-
-   ldx #0
+   
+   MWA #key_conversion_normal R1
+   lda KEY_META
+   and #KEY_META_SHIFT
+   beq search_key_start
+   mwa #key_conversion_shift R1
+search_key_start:
+   ldy #0
 search_key:   
-   lda key_conversion_normal, x
+   lda (R1), y
    beq end_print_key
    cmp last_key_pressed
    bne next_char
+   iny
+   lda (R1), y
    ldy #0
-   inx
-   lda key_conversion_normal, x
    sta (RAM_TO_VRAM), y
    inc pos_x
    lda pos_x
    cmp #40
-   bne no_line_feed
-   lda #2
-   jsr line_feed
-no_line_feed   
+   jeq line_feed
    rts
 next_char:   
-   inx
-   inx
+   iny
+   iny
    bne search_key
 end_print_key:
    rts   
@@ -320,6 +323,50 @@ key_conversion_normal:
    .by 64, 'n',
    .by 65, 'm',
  
+	.by 0
+	
+key_conversion_shift:
+   .by 66, ' ',
+   .by 19, '!',
+   .by 20, '"',
+   .by 21, '#',
+   .by 22, '$',
+   .by 23, '%',
+   .by 24, '&',
+   .by 25, '/',
+   .by 26, '(',
+   .by 27, ')',
+   .by 28, '=',
+   
+   .by 34, 'Q',
+   .by 35, 'W',
+   .by 36, 'E',
+   .by 37, 'R',
+   .by 38, 'T',
+   .by 39, 'Y',
+   .by 40, 'U',
+   .by 41, 'I',
+   .by 42, 'O',
+   .by 43, 'P',
+   
+   .by 48, 'A',
+   .by 49, 'S',
+   .by 50, 'D',
+   .by 51, 'F',
+   .by 52, 'G',
+   .by 53, 'H',
+   .by 54, 'J',
+   .by 55, 'K',
+   .by 56, 'L',
+   
+   .by 59, 'Z',
+   .by 60, 'X',
+   .by 61, 'C',
+   .by 62, 'V',
+   .by 63, 'B',
+   .by 64, 'N',
+   .by 65, 'M',
+	
 	.by 0
 	
    icl '../os/stdlib.asm'
