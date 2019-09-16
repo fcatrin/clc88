@@ -148,7 +148,7 @@ print_key_noshift
    cmp #14
    jeq word_prev
    cmp #15
-   // jeq word_next
+   jeq word_next
    
 print_key_noctrl:   
    lda last_key_pressed
@@ -441,6 +441,40 @@ word_prev_start:
 word_prev_end:   
    mwa pos_save pos_x
    rts
+
+
+word_next:
+   mwa DISPLAY_START VRAM_TO_RAM
+   jsr lib_vram_to_ram
+   mwa RAM_TO_VRAM display_base
+      
+word_next_next:
+   mwa display_base RAM_TO_VRAM
+
+   lda pos_x
+   cmp #39
+   bne word_next_x
+   lda pos_y
+   cmp #22
+   bne word_next_y
+   rts
+word_next_y:
+   lda #0
+   sta pos_x
+   inc pos_y
+   jmp word_next_start
+   
+word_next_x:
+   inc pos_x
+   
+word_next_start:
+   jsr calc_screen_offset
+   adw RAM_TO_VRAM pos_offset
+   ldy #0
+   lda (RAM_TO_VRAM), y
+   bne word_next_next
+   rts
+
 
 last_key_pressed:
    .byte 0
