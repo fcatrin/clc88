@@ -194,33 +194,46 @@ line_feed_end
 cursor_left:
    lda pos_x
    cmp #0
-   beq no_cursor_change
+   beq cursor_wrap_left
    dec pos_x
+   jmp calc_screen_offset
+cursor_wrap_left   
+   lda #39
+   sta pos_x
    jmp calc_screen_offset
    
 cursor_right:
    lda pos_x
    cmp #39
-   beq no_cursor_change
+   beq cursor_wrap_right
    inc pos_x
+   jmp calc_screen_offset
+cursor_wrap_right:   
+   lda #0
+   sta pos_x
    jmp calc_screen_offset
 
 cursor_up:
    lda pos_y
    cmp #0
-   beq no_cursor_change
+   beq cursor_wrap_up
    dec pos_y
+   jmp calc_screen_offset
+cursor_wrap_up:   
+   lda #20
+   sta pos_y
    jmp calc_screen_offset
 
 cursor_down:
    lda pos_y
    cmp #20
-   beq no_cursor_change
+   beq cursor_wrap_down
    inc pos_y
    jmp calc_screen_offset
-
-no_cursor_change:
-   rts   
+cursor_wrap_down:   
+   lda #0
+   sta pos_y
+   jmp calc_screen_offset
 
 cursor_on:
    lda #1
