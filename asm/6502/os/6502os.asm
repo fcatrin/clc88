@@ -216,6 +216,13 @@ mem_set_bytes_short:
 mem_set_bytes_end:
 	rts
 
+keyb_poll:
+   lda KEY_STATUS + 8
+   and #$3F
+   sta KEY_META
+   lda KEY_STATUS + 15
+   sta KEY_PRESSED
+   rts
 
 nmi:
    jmp (NMI_VECTOR)
@@ -223,7 +230,6 @@ irq:
    jmp (IRQ_VECTOR)
 
    icl 'graphics.asm'
-   icl 'keyboard.asm'
    
 charset:
 	ins '../../../res/charset.bin'
