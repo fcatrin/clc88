@@ -98,8 +98,17 @@ end_print:
 	rts
 
 print_key:
+   lda KEY_META
+   and #KEY_META_SHIFT
+   beq print_key_noshift
    lda last_key_pressed
+   cmp #14
+   jeq cursor_home
+   cmp #15
+   jeq cursor_end
    
+print_key_noshift:   
+   lda last_key_pressed
    cmp #46
    jeq line_feed
    cmp #14
@@ -297,7 +306,61 @@ change_cursor_attr:
    sta (RAM_TO_VRAM), y
    rts
    
+cursor_home:
+   mwa DISPLAY_START VRAM_TO_RAM
+   jsr lib_vram_to_ram
 
+   lda pos_x
+   sta R1
+   bne cursor_home_start
+   rts
+   
+cursor_home_start:   
+   lda #0
+   sta pos_x
+   jsr calc_screen_offset
+   adw RAM_TO_VRAM pos_offset
+
+   ldy #0
+cursor_home_next:   
+   lda (RAM_TO_VRAM), y
+   bne cursor_home_found
+   iny
+   cpy R1
+   bne cursor_home_next
+   ldy #0
+cursor_home_found:
+   sty pos_x
+   jmp calc_screen_offset
+   
+cursor_end:
+   mwa DISPLAY_START VRAM_TO_RAM
+   jsr lib_vram_to_ram
+
+   lda pos_x
+   sta R1
+   cmp #39
+   bne cursor_end_start
+   rts
+   
+cursor_end_start:   
+   lda #0
+   sta pos_x
+   jsr calc_screen_offset
+   adw RAM_TO_VRAM pos_offset
+
+   ldy #39
+cursor_end_next:   
+   lda (RAM_TO_VRAM), y
+   bne cursor_end_found
+   dey
+   cpy R1
+   bne cursor_end_next
+   ldy #39
+cursor_end_found:
+   sty pos_x
+   jmp calc_screen_offset
+   
 
 last_key_pressed:
    .byte 0

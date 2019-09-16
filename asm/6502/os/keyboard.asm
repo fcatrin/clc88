@@ -1,5 +1,5 @@
 key_conversion_normal:
-   .by 66, ' '
+   .by 66, 0
    .by 19, '1'
    .by 20, '2'
    .by 21, '3'
