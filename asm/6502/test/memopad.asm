@@ -110,6 +110,8 @@ print_key:
    jeq cursor_up
    cmp #17
    jeq cursor_down
+   cmp #32
+   jeq backspace
 
    mwa DISPLAY_START VRAM_TO_RAM
    jsr lib_vram_to_ram
@@ -183,12 +185,37 @@ calc_screen_offset:
    adc pos_offset+1
    sta pos_offset+1
    rts
+
+backspace:
+   lda pos_x
+   cmp #0
+   beq backspace_wrap_left
+   dec pos_x
+   jmp backspace_del
+backspace_wrap_left:
+   lda pos_y
+   cmp #0
+   beq backspace_abort
+   lda #39
+   sta pos_x
+   dec pos_y
+backspace_del:
+   mwa DISPLAY_START VRAM_TO_RAM
+   jsr lib_vram_to_ram
+
+   jsr calc_screen_offset
+   adw RAM_TO_VRAM pos_offset
+   lda #' '
+   ldy #0
+   sta (RAM_TO_VRAM), y
+backspace_abort:   
+   rts
    
 line_feed:
    lda pos_y
    cmp #24
    beq line_feed_end
-   lda #2
+   lda #0
    sta pos_x
    inc pos_y
 line_feed_end
@@ -200,7 +227,7 @@ cursor_left:
    beq cursor_wrap_left
    dec pos_x
    jmp calc_screen_offset
-cursor_wrap_left   
+cursor_wrap_left:   
    lda #39
    sta pos_x
    jmp calc_screen_offset
@@ -270,7 +297,7 @@ last_key_pressed:
    
 is_cursor_on: .byte 0
    
-pos_x:  .byte 2
+pos_x:  .byte 0
 pos_y:  .byte 0
 pos_offset: .word 0
 
