@@ -93,6 +93,13 @@ static int translation_table[] = {
 		SDLK_RGUI,  SCANCODE_RIGHT_META,
 		SDLK_RALT,  SCANCODE_RIGHT_ALT,
 		SDLK_RCTRL, SCANCODE_RIGHT_CTRL,
+
+		// probably only in ES layout
+		44, SCANCODE_COMMA,
+		46, SCANCODE_DOT,
+		123, SCANCODE_BRACKET_OPEN,
+		125, SCANCODE_BRACKET_CLOSE,
+
 		0
 };
 

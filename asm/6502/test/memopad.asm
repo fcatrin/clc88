@@ -350,6 +350,13 @@ key_conversion_normal:
    .by 64, 'n',
    .by 65, 'm',
  
+   .by 29, '-',
+   .by 30, '+',
+   .by 44, '{',
+   .by 45, '}',
+   .by 75, '<',
+   .by 78, ',',
+   .by 79, '.',
 	.by 0
 	
 key_conversion_shift:
@@ -394,6 +401,13 @@ key_conversion_shift:
    .by 64, 'N',
    .by 65, 'M',
 	
+	.by 29, '_',
+	.by 30, '*',
+   .by 44, '[',
+   .by 45, ']',
+   .by 75, '>',
+   .by 78, ';',
+   .by 79, ':',
 	.by 0
 	
    icl '../os/stdlib.asm'
