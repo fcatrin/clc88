@@ -113,33 +113,33 @@ no_alt:
 	jmp print_alt
 	
 print_caps:
-   mwa #key_caps R1
-   mwa #POS_CAPS R3
+   mwa #key_caps R0
+   mwa #POS_CAPS R2
    jmp print
 
 print_shift:
-	mwa #key_shift R1
-	mwa #POS_SHIFT R3
+	mwa #key_shift R0
+	mwa #POS_SHIFT R2
 	jmp print
 
 print_ctrl:
-	mwa #key_ctrl R1
-	mwa #POS_CTRL R3
+	mwa #key_ctrl R0
+	mwa #POS_CTRL R2
 	jmp print
 
 print_alt:
-	mwa #key_alt R1
-	mwa #POS_alt R3
+	mwa #key_alt R0
+	mwa #POS_alt R2
 	jmp print
 
 print:
    mwa DISPLAY_START VRAM_TO_RAM
    jsr lib_vram_to_ram
-	adw RAM_TO_VRAM R3
+	adw RAM_TO_VRAM R2
 
 	ldy #0
 print_c:
-	lda (R1), y
+	lda (R0), y
 	beq end_print
 	and R5
 	sta (RAM_TO_VRAM), y
@@ -191,27 +191,27 @@ print_key_noctrl:
    jsr calc_screen_offset
    adw RAM_TO_VRAM pos_offset
 
-   mwa #key_conversion_shift R1
+   mwa #key_conversion_shift R0
    lda KEY_META
    and #KEY_META_SHIFT
    bne search_key_start
    
-   MWA #key_conversion_alt R1
+   MWA #key_conversion_alt R0
    lda KEY_META
    and #KEY_META_ALT
    bne search_key_start
    
-   MWA #key_conversion_normal R1
+   MWA #key_conversion_normal R0
    
 search_key_start:
    ldy #0
 search_key:   
-   lda (R1), y
+   lda (R0), y
    beq end_print_key
    cmp last_key_pressed
    bne next_char
    iny
-   lda (R1), y
+   lda (R0), y
    ldx caps
    beq normal_key
    
@@ -394,7 +394,7 @@ cursor_home:
    jsr lib_vram_to_ram
 
    lda pos_x
-   sta R1
+   sta R0
    bne cursor_home_start
    rts
    
@@ -409,7 +409,7 @@ cursor_home_next:
    lda (RAM_TO_VRAM), y
    bne cursor_home_found
    iny
-   cpy R1
+   cpy R0
    bne cursor_home_next
    ldy #0
 cursor_home_found:
@@ -421,7 +421,7 @@ cursor_end:
    jsr lib_vram_to_ram
 
    lda pos_x
-   sta R1
+   sta R0
    cmp #39
    bne cursor_end_start
    rts
@@ -437,7 +437,7 @@ cursor_end_next:
    lda (RAM_TO_VRAM), y
    bne cursor_end_found
    dey
-   cpy R1
+   cpy R0
    bne cursor_end_next
    ldy #39
 cursor_end_found:

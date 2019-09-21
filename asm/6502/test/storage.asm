@@ -91,7 +91,7 @@ end:
 	
 	
 .proc storage_write
-   stx R1
+   stx R0
    
 @:
    ldx ST_WRITE_ENABLE
@@ -100,12 +100,12 @@ end:
    ldx #$FF
    stx ST_WRITE_ENABLE
 
-   ldx R1   
+   ldx R0   
    rts
 .endp 
 
 .proc storage_read
-   stx R1
+   stx R0
    
 @:
    ldx ST_READ_ENABLE
@@ -113,7 +113,7 @@ end:
    lda ST_READ_DATA
    ldx #$FF
    stx ST_READ_ENABLE
-   ldx R1   
+   ldx R0   
    rts
 .endp
 
@@ -127,11 +127,11 @@ end:
 .endp
    
 .proc screen_putc
-   sty R1
+   sty R0
    ldy #0
    sta (RAM_TO_VRAM), y
    inw RAM_TO_VRAM
-   ldy R1
+   ldy R0
    rts
 .endp  
    

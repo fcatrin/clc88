@@ -36,11 +36,11 @@ set_chars_full:
 	adw RAM_TO_VRAM #(40*4)+4 R6
 	
 	lda #$32
-	sta R2
+	sta R1
 	jsr write_charset
 	
 	lda #$43
-	sta R2
+	sta R1
 	adw R4 #120
 	adw R6 #120
 	
@@ -71,15 +71,15 @@ loop:
    
 write_charset:
    ldx #0
-   stx R1
+   stx R0
 set_chars_line:
    ldy #0
 set_chars:   
-   lda R1
+   lda R0
    sta (R4), y
-   lda R2
+   lda R1
    sta (R6), y
-   inc R1
+   inc R0
    iny
    cpy #32
    bne set_chars

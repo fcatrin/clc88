@@ -175,19 +175,19 @@ vmode_set_lines:
    ldx SCREEN_SIZE+1
    jsr word_div2
    
-   adw DISPLAY_START ROS1 ATTRIB_START
+   adw DISPLAY_START ROS0 ATTRIB_START
    
    lda ATTRIB_SIZE
    ldx ATTRIB_SIZE+1
    jsr word_div2
    
-   adw ATTRIB_START ROS1 SUBPAL_START
+   adw ATTRIB_START ROS0 SUBPAL_START
 
    lda SUBPAL_SIZE
    ldx SUBPAL_SIZE+1
    jsr word_div2
    
-   adw SUBPAL_START ROS1 VRAM_FREE
+   adw SUBPAL_START ROS0 VRAM_FREE
 
 ; set values on LMS command
    mwa DISPLAY_START VRAM_SCREEN+4
@@ -230,12 +230,12 @@ vram_copy:
 ; naive and slow implementation for now
 ; it will carefully walk through memory until the end of the current bank
 vram_set_bytes:
-   sta R1
+   sta R0
    lda VPAGE
-   sta R2
+   sta R1
    
    ldy #0
-   lda R1
+   lda R0
 vram_set_bytes_loop:   
    sta (COPY_DST_ADDR), y
    inc COPY_DST_ADDR
@@ -247,7 +247,7 @@ vram_set_bytes_loop:
    
    ldx #$a0
    inc VPAGE
-   lda R1    ; restore byte to be written
+   lda R0    ; restore byte to be written
    
 vram_set_bytes_next_page:
    stx COPY_DST_ADDR+1
@@ -260,7 +260,7 @@ vram_set_bytes_next:
    cpx #$ff
    bne vram_set_bytes_loop
    
-   lda R2
+   lda R1
    sta VPAGE
    rts
 
@@ -269,7 +269,7 @@ vram_set_bytes_next:
 
 ram_vram_copy:
    lda VPAGE
-   sta R1
+   sta R0
    
    ldy #0
 ram_vram_copy_loop:
@@ -301,7 +301,7 @@ ram_vram_copy_no_src_page:
    cpx #$ff
    bne ram_vram_copy_loop
    
-   lda R1
+   lda R0
    sta VPAGE
    rts
 
@@ -360,20 +360,20 @@ vram2ram:
 
 ; in: a = low byte
 ;     x = high byte
-; out: ROS2 = in / 2
+; out: ROS1 = in / 2
 
 word_div2:
-   stx ROS2
-   lsr ROS2
+   stx ROS1
+   lsr ROS1
    ror
-   sta ROS1
+   sta ROS0
    rts
    
 word_mul2:
-   stx ROS2
+   stx ROS1
    asl
-   sta ROS1
-   rol ROS2
+   sta ROS0
+   rol ROS1 
    rts
 
 video_mode_params_0:
