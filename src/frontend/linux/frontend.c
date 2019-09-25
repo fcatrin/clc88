@@ -38,7 +38,7 @@ int  frontend_start_audio_stream(int stereo) {
 
 	SDL_memset(&want, 0, sizeof(want)); /* or SDL_zero(want) */
 	want.freq = 44100;
-	want.format = AUDIO_S16LSB;
+	want.format = AUDIO_S16SYS;
 	want.channels = stereo ? 2 : 1;
 	want.samples = 4096;
 	want.callback = NULL;

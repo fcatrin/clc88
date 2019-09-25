@@ -12,19 +12,10 @@
    sta VSTATUS
    	
    mwa #vblank VBLANK_VECTOR_USER
-   mwa #dli    HBLANK_VECTOR_USER
 
    lda VSTATUS
    ora #VSTATUS_EN_INTS
    sta VSTATUS
-	
-	mwa DLIST VRAM_TO_RAM
-	jsr lib_vram_to_ram
-
-   ldy #10
-   lda (RAM_TO_VRAM), y
-   ora #$80
-   sta (RAM_TO_VRAM), y
 
    mwa DISPLAY_START VRAM_TO_RAM
    jsr lib_vram_to_ram
@@ -45,33 +36,50 @@ rainbow:
 	; sta WSYNC
 	; sta VCOLOR0
 	jmp rainbow
-	
-dli:
-   pha
-   lda #$66
-   sta VCOLOR0
-   pla
-   rts
 
 vblank:
    pha
    lda #$BF
    sta VCOLOR0
    
-   lda #$AF
-   sta POKEY0_AUDC1
-   sta POKEY1_AUDC1
+   ; lda #$AF
+   ; sta POKEY0_AUDC1
+   ; sta POKEY1_AUDC1
    
    lda FRAMECOUNT
    sta POKEY0_AUDF1
+   sta POKEY0_AUDF2
+   sta POKEY0_AUDF3
+   sta POKEY0_AUDF4
+   
+   cmp #255
+   bne noinc
+   inc vol
+noinc:
+   lda vol
+   and #$0F
+   ora #$A0
+
+   sta POKEY0_AUDC1
+   sta POKEY0_AUDC2
+   sta POKEY0_AUDC3
+   sta POKEY0_AUDC4
+
+   lda vol
+   asl
+   sta VCOLOR0
    
    lda #30
    sta POKEY1_AUDF1
+   lda #$AF
+   sta POKEY1_AUDC1
       
    pla
    rts
 	
 message:
    .by "Hello world!!!!", 96, 255
+
+vol: .byte 0
 
    icl '../os/stdlib.asm'
