@@ -75,7 +75,7 @@ set_video_mode_std:
    jsr set_video_mode_screen
    jsr set_video_mode_dl
 
-   lda ROS8 ; palette type
+   lda ROS7 ; palette type
    bne use_spectrum_palette
    
    mwa #VRAM_PAL_ATARI RAM_TO_VRAM

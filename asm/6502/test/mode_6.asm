@@ -2,7 +2,7 @@
    
    org BOOTADDR
    
-   mva #0 ROS8
+   mva #0 ROS7
    lda #6
    ldx #OS_SET_VIDEO_MODE
    jsr OS_CALL
