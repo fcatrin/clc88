@@ -288,23 +288,23 @@ ri1	lda (ns),y
 rmt_silence
 	IFT STEREOMODE>0
 	lda #0
-	sta $d208
-	sta $d218
+	sta POKEY0_AUDCTL
+	sta POKEY1_AUDCTL
 	ldy #3
-	sty $d20f
-	sty $d21f
+	; sty $d20f
+	; sty $d21f
 	ldy #8
-si1	sta $d200,y
-	sta $d210,y
+si1	sta POKEY0_AUDF1,y
+	sta POKEY1_AUDF1,y
 	dey
 	bpl si1
 	ELS
 	lda #0
-	sta $d208
+	sta POKEY0_AUDCTL
 	ldy #3
-	sty $d20f
+	; sty $d20f
 	ldy #8
-si1	sta $d200,y
+si1	sta POKEY0_AUDF1,y
 	dey
 	bpl si1
 	EIF
@@ -1250,107 +1250,107 @@ SetPokey
 v_audctl2 equ *-1
 	lda trackn_audf+0+4
 	ldx trackn_audf+0
-xstastx01	sta $d210
-	stx $d200
+xstastx01	sta POKEY1_AUDF1
+	stx POKEY0_AUDF1
 	lda trackn_audc+0+4
 	ldx trackn_audc+0
-xstastx02	sta $d211
-	stx $d201
+xstastx02	sta POKEY1_AUDC1
+	stx POKEY0_AUDC1
 	lda trackn_audf+1+4
 	ldx trackn_audf+1
-xstastx03	sta $d212
-	stx $d202
+xstastx03	sta POKEY1_AUDF2
+	stx POKEY0_AUDF2
 	lda trackn_audc+1+4
 	ldx trackn_audc+1
-xstastx04	sta $d213
-	stx $d203
+xstastx04	sta POKEY1_AUDC2
+	stx POKEY0_AUDC2
 	lda trackn_audf+2+4
 	ldx trackn_audf+2
-xstastx05	sta $d214
-	stx $d204
+xstastx05	sta POKEY1_AUDF3
+	stx POKEY0_AUDF3
 	lda trackn_audc+2+4
 	ldx trackn_audc+2
-xstastx06	sta $d215
-	stx $d205
+xstastx06	sta POKEY1_AUDC3
+	stx POKEY0_AUDC3
 	lda trackn_audf+3+4
 	ldx trackn_audf+3
-xstastx07	sta $d216
-	stx $d206
+xstastx07	sta POKEY1_AUDF4
+	stx POKEY0_AUDF4
 	lda trackn_audc+3+4
 	ldx trackn_audc+3
-xstastx08	sta $d217
-	stx $d207
+xstastx08	sta POKEY1_AUDC4
+	stx POKEY0_AUDC4
 	lda #$ff
 v_audctl equ *-1
-xstysta01	sty $d218
-	sta $d208
+xstysta01	sty POKEY1_AUDCTL
+	sta POKEY0_AUDCTL
 	ELI STEREOMODE==0		;* L1 L2 L3 L4
 	ldy #$ff
 v_audctl equ *-1
 	lda trackn_audf+0
 	ldx trackn_audc+0
-	sta $d200
-	stx $d201
+	sta POKEY0_AUDF1
+	stx POKEY0_AUDC1
 	lda trackn_audf+1
 	ldx trackn_audc+1
-	sta $d200+2
-	stx $d201+2
+	sta POKEY0_AUDF1+2
+	stx POKEY0_AUDC1+2
 	lda trackn_audf+2
 	ldx trackn_audc+2
-	sta $d200+4
-	stx $d201+4
+	sta POKEY0_AUDF1+4
+	stx POKEY0_AUDC1+4
 	lda trackn_audf+3
 	ldx trackn_audc+3
-	sta $d200+6
-	stx $d201+6
-	sty $d208
+	sta POKEY0_AUDF1+6
+	stx POKEY0_AUDC1+6
+	sty POKEY0_AUDCTL
 	ELI STEREOMODE==2		;* L1 R2 R3 L4
 	ldy #$ff
 v_audctl equ *-1
 	lda trackn_audf+0
 	ldx trackn_audc+0
-	sta $d200
-	stx $d201
-	sta $d210
+	sta POKEY0_AUDF1
+	stx POKEY0_AUDC1
+	sta POKEY1_AUDF1
 	lda trackn_audf+1
 	ldx trackn_audc+1
-	sta $d210+2
-	stx $d211+2
+	sta POKEY1_AUDF1+2
+	stx POKEY1_AUDC1+2
 	lda trackn_audf+2
 	ldx trackn_audc+2
-	sta $d210+4
-	stx $d211+4
-	sta $d200+4
+	sta POKEY1_AUDF1+4
+	stx POKEY1_AUDC1+4
+	sta POKEY0_AUDF1+4
 	lda trackn_audf+3
 	ldx trackn_audc+3
-	sta $d200+6
-	stx $d201+6
-	sta $d210+6
-	sty $d218
-	sty $d208
+	sta POKEY0_AUDF1+6
+	stx POKEY0_AUDC1+6
+	sta POKEY1_AUDF1+6
+	sty POKEY1_AUDCTL
+	sty POKEY0_AUDCTL
 	ELI STEREOMODE==3		;* L1 L2 R3 R4
 	ldy #$ff
 v_audctl equ *-1
 	lda trackn_audf+0
 	ldx trackn_audc+0
-	sta $d200
-	stx $d201
+	sta POKEY0_AUDF1
+	stx POKEY0_AUDC1
 	lda trackn_audf+1
 	ldx trackn_audc+1
-	sta $d200+2
-	stx $d201+2
+	sta POKEY0_AUDF1+2
+	stx POKEY0_AUDC1+2
 	lda trackn_audf+2
 	ldx trackn_audc+2
-	sta $d210+4
-	stx $d211+4
-	sta $d200+4
+	sta POKEY1_AUDF1+4
+	stx POKEY1_AUDC1+4
+	sta POKEY0_AUDF1+4
 	lda trackn_audf+3
 	ldx trackn_audc+3
-	sta $d210+6
-	stx $d211+6
-	sta $d200+6
-	sty $d218
-	sty $d208
+	sta POKEY1_AUDF1+6
+	stx POKEY1_AUDC1+6
+	sta POKEY0_AUDF1+6
+	sty POKEY1_AUDCTL
+	sty POKEY0_AUDCTL
 	EIF
 	rts
 RMTPLAYEREND

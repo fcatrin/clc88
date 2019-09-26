@@ -1,3 +1,5 @@
+	icl '../../os/symbols.asm'
+
 ;
 ; MUSIC init & play
 ; example by Raster/C.P.U., 2003-2004
@@ -18,12 +20,24 @@ STEREOMODE	equ 0				;0 => compile RMTplayer for mono 4 tracks
 ;
 ;
 MODUL	equ $4000				;address of RMT module
-VCOUNT	equ $d40b				;vertical screen lines counter address
+; VCOUNT	equ $d40b				;vertical screen lines counter address
 KEY		equ $2fc				;keypressed code
 VLINE	equ 16					;screen line for synchronization
 ;
+
+	org BOOTADDR
+	jmp start
+
 	org $3e00
+
 start
+
+   lda #0
+   sta ROS7
+   lda #0
+   ldx #OS_SET_VIDEO_MODE
+   jsr OS_CALL
+	
 ;
 	ldx #<MODUL					;low byte of RMT module to X reg
 	ldy #>MODUL					;hi byte of RMT module to Y reg
