@@ -31,7 +31,7 @@ PLAYER		equ $3400
 ;*
 ;* RMT FEATures definitions file
 ;* For optimizations of RMT player routine to concrete RMT modul only!
-	icl "rmt_feat.a65"
+	icl "rmt_feat.asm"
 ;*
 ;* RMT ZeroPage addresses
 	org 203

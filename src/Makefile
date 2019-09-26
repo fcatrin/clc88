@@ -77,6 +77,7 @@ XEX = $(addprefix $(ASMDIR)/, \
 	6502/test/sound.xex \
 	6502/test/keyb.xex \
 	6502/test/memopad.xex \
+	6502/demos/rmt/music.xex \
 	)
 
 ifeq ($(FRONTEND), linux)

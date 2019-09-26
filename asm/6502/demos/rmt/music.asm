@@ -9,7 +9,7 @@ STEREOMODE	equ 0				;0 => compile RMTplayer for mono 4 tracks
 ;								;3 => compile RMTplayer for 4 tracks stereo L1 L2 R3 R4
 ;
 ;
-	icl "rmtplayr.a65"			;include RMT player routine
+	icl "rmtplayr.asm"			;include RMT player routine
 ;
 ;
 	opt h-						;RMT module is standard Atari binary file already
