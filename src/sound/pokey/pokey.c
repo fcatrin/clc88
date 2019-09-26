@@ -139,6 +139,9 @@ static uint8 Num_pokeys;
 static uint8 AUDF[4 * MAXPOKEYS];   /* AUDFx (D200, D202, D204, D206) */
 static uint8 AUDC[4 * MAXPOKEYS];   /* AUDCx (D201, D203, D205, D207) */
 static uint8 AUDCTL[MAXPOKEYS];     /* AUDCTL (D208) */
+static uint8 AUDPAN[MAXPOKEYS];       /* AUDPAN (D20C) New register for individual channel panning */
+
+static uint8 PAN_MASK[4];
 
 static uint8 AUDV[4 * MAXPOKEYS];   /* Channel volume - derived */
 
@@ -236,6 +239,11 @@ void pokey_sound_init (uint32 freq17, uint16 playback_freq, uint8 num_pokeys)
    P9 = 0;
    P17 = 0;
 
+   PAN_MASK[0] = 0x01;
+   PAN_MASK[1] = 0x04;
+   PAN_MASK[2] = 0x10;
+   PAN_MASK[3] = 0x40;
+
    /* calculate the sample 'divide by N' value based on the playback freq. */
    Samp_n_max = ((uint32)freq17 << 8) / playback_freq;
 
@@ -256,6 +264,7 @@ void pokey_sound_init (uint32 freq17, uint16 playback_freq, uint8 num_pokeys)
    for (chip = 0; chip < MAXPOKEYS; chip++)
    {
       AUDCTL[chip] = 0;
+      AUDPAN[chip] = 0xFF;
       Base_mult[chip] = DIV_64;
    }
 
@@ -516,14 +525,17 @@ void pokey_process(unsigned char *buffer, uint16 n, uint8 chip)
 {
     uint32 *samp_cnt_w_ptr;
 #ifdef CLIP                      /* if clipping is selected */
-    int16 cur_val;      /* then we have to count as 16-bit signed */
+    int16 cur_val_l;      /* then we have to count as 16-bit signed */
+    int16 cur_val_r;      /* then we have to count as 16-bit signed */
 #else
-    uint8 cur_val;      /* otherwise we'll simplify as 8-bit unsgnd */
+    uint8 cur_val_l;      /* otherwise we'll simplify as 8-bit unsgnd */
+    uint8 cur_val_r;      /* otherwise we'll simplify as 8-bit unsgnd */
 #endif
     uint8 *out_ptr;
     uint8 audc;
     uint8 toggle;
     uint8 *vol_ptr;
+    uint8 *pan_ptr;
 
     uint8 chip_offs;
 
@@ -537,27 +549,45 @@ void pokey_process(unsigned char *buffer, uint16 n, uint8 chip)
     /* set a pointer for optimization */
     out_ptr = Outvol + chip_offs;
     vol_ptr = AUDV   + chip_offs;
+    pan_ptr = AUDPAN + chip;
 
     /* The current output is pre-determined and then adjusted based on each */
     /* output change for increased performance (less over-all math). */
     /* add the output values of all 4 channels */
-    cur_val = 128;
+    cur_val_l = 128;
+    cur_val_r = 128;
 
     // JH - took out multiple pokey loop here
-    cur_val -= *vol_ptr/2;
-    if (*out_ptr++) cur_val += *vol_ptr;
+    cur_val_l -= *pan_ptr & 0x1 ? *vol_ptr/2 : 0;
+    cur_val_r -= *pan_ptr & 0x2 ? *vol_ptr/2 : 0;
+    if (*out_ptr++) {
+    	cur_val_l += *pan_ptr & 0x1 ? *vol_ptr : 0;
+    	cur_val_r += *pan_ptr & 0x2 ? *vol_ptr : 0;
+    }
     vol_ptr++;
 
-    cur_val -= *vol_ptr/2;
-    if (*out_ptr++) cur_val += *vol_ptr;
+    cur_val_l -= *pan_ptr & 0x4 ? *vol_ptr/2 : 0;
+    cur_val_r -= *pan_ptr & 0x8 ? *vol_ptr/2 : 0;
+    if (*out_ptr++) {
+    	cur_val_l += *pan_ptr & 0x4 ? *vol_ptr : 0;
+    	cur_val_r += *pan_ptr & 0x8 ? *vol_ptr : 0;
+    }
     vol_ptr++;
 
-    cur_val -= *vol_ptr/2;
-    if (*out_ptr++) cur_val += *vol_ptr;
+    cur_val_l -= *pan_ptr & 0x10 ? *vol_ptr/2 : 0;
+    cur_val_r -= *pan_ptr & 0x20 ? *vol_ptr/2 : 0;
+    if (*out_ptr++) {
+    	cur_val_l += *pan_ptr & 0x10 ? *vol_ptr : 0;
+    	cur_val_r += *pan_ptr & 0x20 ? *vol_ptr : 0;
+    }
     vol_ptr++;
 
-    cur_val -= *vol_ptr/2;
-    if (*out_ptr++) cur_val += *vol_ptr;
+    cur_val_l -= *pan_ptr & 0x40 ? *vol_ptr/2 : 0;
+    cur_val_r -= *pan_ptr & 0x80 ? *vol_ptr/2 : 0;
+    if (*out_ptr++) {
+    	cur_val_l += *pan_ptr & 0x40 ? *vol_ptr : 0;
+    	cur_val_r += *pan_ptr & 0x80 ? *vol_ptr : 0;
+    }
     vol_ptr++;
 
     /* loop until the buffer is filled */
@@ -687,10 +717,13 @@ void pokey_process(unsigned char *buffer, uint16 n, uint8 chip)
           /* if the current output bit has changed */
           if (toggle)
           {
+          	 uint8 pan_left  = AUDPAN[chip] & PAN_MASK[next_event];
+          	 uint8 pan_right = AUDPAN[chip] & (PAN_MASK[next_event] << 1);
              if (*out_ptr)
              {
                 /* remove this channel from the signal */
-                cur_val -= AUDV[next_event + chip_offs];
+                cur_val_l -= pan_left  ? AUDV[next_event + chip_offs] : 0;
+                cur_val_r -= pan_right ? AUDV[next_event + chip_offs] : 0;
 
                 /* and turn the output off */
                 *out_ptr = 0;
@@ -701,7 +734,8 @@ void pokey_process(unsigned char *buffer, uint16 n, uint8 chip)
                 *out_ptr = 1;
 
                 /* and add it to the output signal */
-                cur_val += AUDV[next_event + chip_offs];
+                cur_val_l += pan_left  ? AUDV[next_event + chip_offs] : 0;
+                cur_val_r += pan_right ? AUDV[next_event + chip_offs] : 0;
              }
           }
        }
@@ -711,25 +745,22 @@ void pokey_process(unsigned char *buffer, uint16 n, uint8 chip)
              which includes an 8 bit fraction for accuracy */
           *Samp_n_cnt += Samp_n_max;
 
-#ifdef CLIP                         /* if clipping is selected */
-          if (cur_val > 255)        /* then check high limit */
-          {
-             *buffer++ = 255;       /* and limit if greater */
-          }
-          else if (cur_val < 0)     /* else check low limit */
-          {
-             *buffer++ = 0;         /* and limit if less */
-          }
-          else                      /* otherwise use raw value */
-          {
-             *buffer++ = (uint8)cur_val;
-          }
-#else
-          *buffer++ = (uint8)cur_val;  /* clipping not selected, use value */
-#endif
+          uint8 out_val_l;
+          uint8 out_val_r;
 
-          /* and indicate one less byte in the buffer */
-          n--;
+#ifdef CLIP
+          out_val_l = cur_val_l > 255 ? 255 : (cur_val_l < 0 ? 0 : (uint8)cur_val_l);
+          out_val_r = cur_val_r > 255 ? 255 : (cur_val_r < 0 ? 0 : (uint8)cur_val_r);
+
+#else
+          out_val_l = cur_val_l;
+          out_val_r = cur_val_r;
+#endif
+          *buffer++ = out_val_l;
+          *buffer++ = out_val_r;
+
+          /* and indicate two less bytes in the buffer */
+          n-=2;
        }
     }
 }

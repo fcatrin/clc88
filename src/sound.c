@@ -9,7 +9,7 @@
  * 44100 / 60 frames -> 735 samples per frame -> 147 samples per 1/5 frames
  */
 
-#define POKEY_BUFFER_SIZE 147
+#define POKEY_BUFFER_SIZE 147*2
 #define SOUND_BUFFER_SIZE (POKEY_BUFFER_SIZE*20)
 
 #define POKEY_CHIPS 2
@@ -43,15 +43,19 @@ void sound_process() {
 
 	INT16 *sound_buffer = sound_buffers[active_sound_buffer];
 	unsigned pokey_write_index = buffer_write_index[active_sound_buffer];
-	for(unsigned i=0; i<POKEY_BUFFER_SIZE && pokey_write_index < SOUND_BUFFER_SIZE; i++) {
-		int16 c0 = pokey_buffer_0[i] - 128;
-		if (c0 < 0) c0 = 256 + c0;
+	for(unsigned i=0; i<POKEY_BUFFER_SIZE && pokey_write_index < SOUND_BUFFER_SIZE; i+=2) {
+		int16 pokey0_l = pokey_buffer_0[i+0] - 128;
+		int16 pokey0_r = pokey_buffer_0[i+1] - 128;
+		int16 pokey1_l = pokey_buffer_1[i+0] - 128;
+		int16 pokey1_r = pokey_buffer_1[i+1] - 128;
 
-		int16 c1 = pokey_buffer_1[i] - 128;
-		if (c1 < 0) c1 = 256 + c1;
+		pokey0_l = pokey0_l < 0 ? 256 + pokey0_l : 0;
+		pokey0_r = pokey0_r < 0 ? 256 + pokey0_r : 0;
+		pokey1_l = pokey1_l < 0 ? 256 + pokey1_l : 0;
+		pokey1_r = pokey1_r < 0 ? 256 + pokey1_r : 0;
 
-		sound_buffer[pokey_write_index++] = c0 * 256;
-		sound_buffer[pokey_write_index++] = c1 * 256;
+		sound_buffer[pokey_write_index++] = pokey0_l * 256 + pokey1_l * 256;
+		sound_buffer[pokey_write_index++] = pokey0_r * 256 + pokey1_r * 256;
 	}
 
 	buffer_write_index[active_sound_buffer] = pokey_write_index;
