@@ -24,56 +24,48 @@
 copy:
 	lda message, y
 	cmp #255
-	beq rainbow
+	beq stop
 	sta (RAM_TO_VRAM), y
 	iny
 	bne copy
 	ldx #0
-rainbow:
-   ; clc
-	; lda VCOUNT
-	; adc FRAMECOUNT
-	; sta WSYNC
-	; sta VCOLOR0
-	jmp rainbow
+stop:
+	jmp stop
 
 vblank:
    pha
-   lda #$BF
-   sta VCOLOR0
-   
-   ; lda #$AF
-   ; sta POKEY0_AUDC1
-   ; sta POKEY1_AUDC1
-   
-   lda FRAMECOUNT
+   tya
+   pha
+   lda #128
    sta POKEY0_AUDF1
-   sta POKEY0_AUDF2
-   sta POKEY0_AUDF3
-   sta POKEY0_AUDF4
+   sta POKEY1_AUDF1
+
+   lda FRAMECOUNT
    
    cmp #255
    bne noinc
-   inc vol
+   inc dist
 noinc:
-   lda vol
-   and #$0F
-   ora #$A0
-
-   sta POKEY0_AUDC1
-   sta POKEY0_AUDC2
-   sta POKEY0_AUDC3
-   sta POKEY0_AUDC4
-
-   lda vol
+   lda dist
    asl
+   asl
+   asl
+   asl
+   asl
+   ora #$0F
    sta VCOLOR0
-   
-   lda #30
-   sta POKEY1_AUDF1
-   lda #$AF
+
+   lda #$2F
+   sta POKEY0_AUDC1
    sta POKEY1_AUDC1
-      
+
+   lda dist
+   adc #'0'
+   sta (RAM_TO_VRAM), y
+
+   pla
+   tay
+
    pla
    rts
 	
@@ -81,5 +73,7 @@ message:
    .by "Hello world!!!!", 96, 255
 
 vol: .byte 0
+dist: .byte 0
+
 
    icl '../os/stdlib.asm'
