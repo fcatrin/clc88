@@ -165,6 +165,8 @@ os_vector_table
 	.word storage_dir_close
 	.word storage_file_open
 	.word storage_file_read_byte
+	.word storage_file_read_block
+	.word storage_file_close
 
 copy_params_charset:
 	.word charset, VRAM_CHARSET, CHARSET_SIZE

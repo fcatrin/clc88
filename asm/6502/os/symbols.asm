@@ -88,7 +88,8 @@ OS_DIR_READ          = $09
 OS_DIR_CLOSE         = $0a
 OS_FILE_OPEN         = $0b
 OS_FILE_READ_BYTE    = $0c
-OS_FILE_CLOSE        = $0d
+OS_FILE_READ_BLOCK   = $0d
+OS_FILE_CLOSE        = $0e
 
 OS_CALL  = $F000
 

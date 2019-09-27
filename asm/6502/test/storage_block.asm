@@ -14,63 +14,38 @@
    jsr lib_vram_to_ram
    
 ; Call command to open file   
-   lda #ST_CMD_OPEN
-   jsr storage_write
-   
+   mwa #filename SRC_ADDR
    lda #ST_MODE_READ
-   jsr storage_write
+   ldx #OS_FILE_OPEN
+   jsr OS_CALL
    
-   ldx #0
-send_filename:   
-   lda filename, x
-   beq @+ 
-   jsr storage_write
-   inx
-   bne send_filename
-   lda #0
-   jsr storage_write
-   
-; Proceed with command  
-   
-@: 
-   jsr storage_proceed
-   
-   jsr storage_read ; length of response. Ignored in this example
-   jsr storage_read ; result of the operation
-   cmp #ST_RET_SUCCESS
-   bne end_with_error
-   
-   jsr storage_read ; file handle
    sta file_handle
    
-read_next_block:   
-   lda #ST_CMD_READ_BLOCK
-   jsr storage_write
+read_next_block:
    lda file_handle
-   jsr storage_write
-   
-   jsr storage_proceed
-   jsr storage_read ; length of response. Ignored in this example
-   jsr storage_read
-   cmp #ST_RET_SUCCESS
+   ldx #OS_FILE_READ_BLOCK
+   mwa buffer DST_ADDR
+   jsr OS_CALL
+
+   cpx #ST_RET_SUCCESS
    bne eof
-   jsr storage_read
-   
-   sta R1
-   ldx #0
-copy_block:   
-   jsr storage_read
+
+   ldy #0
+copy_block
+   lda (DST_ADDR), y
+   cmp #32
+   bcc skip
    jsr screen_putc
-   inx
-   cpx R1
-   bne copy_block
+skip:   
+   iny
+   cpy SIZE
+   bne copy_block   
    jmp read_next_block
+   
 eof:
-   lda #ST_CMD_CLOSE
-   jsr storage_write
+   ldx #OS_FILE_CLOSE
    lda file_handle
-   jsr storage_write
-   jsr storage_proceed
+   jsr OS_CALL
    jmp end
 
 end_with_error:
@@ -94,44 +69,7 @@ print_filename:
 end: 
    jmp end
       
-	
-	
-.proc storage_write
-   stx R0
-   
-@:
-   ldx ST_WRITE_ENABLE
-   bne @-
-   sta ST_WRITE_DATA
-   ldx #$FF
-   stx ST_WRITE_ENABLE
-
-   ldx R0   
-   rts
-.endp 
-
-.proc storage_read
-   stx R0
-   
-@:
-   ldx ST_READ_ENABLE
-   bne @-
-   lda ST_READ_DATA
-   ldx #$FF
-   stx ST_READ_ENABLE
-   ldx R0   
-   rts
-.endp
-
-.proc storage_proceed
-   sta ST_PROCEED
-@:
-   lda ST_STATUS
-   cmp #ST_STATUS_DONE
-   bne @-
-   rts
-.endp
-   
+  
 .proc screen_putc
    sty R0
    ldy #0
@@ -143,6 +81,11 @@ end:
    
 file_handle:
    .byte 0
+   
+buffer:
+   .rept 256
+   .byte 0
+   .endr
    
 filename:
    .by "../asm/6502/test/storage_block.asm", 0

@@ -165,6 +165,11 @@ get_file_handle:
 .endp
 
 .proc storage_file_read_byte
+; Read byte 
+; in:  file_handle in A
+; out: byte read in A
+; out: status in X
+
    tax
    lda #ST_CMD_READ_BYTE
    jsr storage_write
@@ -180,6 +185,41 @@ get_file_handle:
    rts
 read_byte:
    jsr storage_read
+   rts
+.endp
+
+.proc storage_file_read_block
+; Read block (256 bytes max)
+; in:  file_handle in A
+; in:  destination addr in DST_ADDR
+; out: bytes read at SIZE (0 = error or not read)
+; out: status in X
+
+   tax
+   lda #ST_CMD_READ_BLOCK
+   jsr storage_write
+   txa
+   jsr storage_write
+   mwa #0 SIZE
+   
+   jsr storage_proceed
+   jsr storage_read ; length of response. Ignored at this time
+   jsr storage_read
+   tax
+   cmp #ST_RET_SUCCESS
+   beq read_block
+   rts
+   
+read_block:   
+   jsr storage_read
+   sta SIZE
+   ldy #0
+copy_block:   
+   jsr storage_read
+   sta (DST_ADDR), y
+   iny
+   cpy SIZE
+   bne copy_block
    rts
 .endp
 
