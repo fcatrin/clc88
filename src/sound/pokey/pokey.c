@@ -369,7 +369,9 @@ void pokey_update_sound (uint16 addr, uint8 val, uint8 chip, uint8 gain)
              Base_mult[chip] = DIV_64;
 
           break;
-
+       case AUDPAN_C:
+    	   AUDPAN[chip] = val;
+    	   break;
        default:
           chan_mask = 0;
           break;

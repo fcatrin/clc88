@@ -67,6 +67,7 @@
 #define STIMER_C    0x09
 #define SKREST_C    0x0A
 #define POTGO_C     0x0B
+#define AUDPAN_C    0x0C
 #define SEROUT_C    0x0D
 #define IRQEN_C     0x0E
 #define SKCTL_C     0x0F
