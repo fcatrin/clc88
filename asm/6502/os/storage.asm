@@ -4,7 +4,6 @@
 ; out: dir handle at STORAGE_DIR_HANDLE
 ; out: dir size   at STORAGE_DIR_SIZE
 
-; Call command to open dir   
    lda #ST_CMD_DIR_OPEN
    jsr storage_write
    
@@ -122,6 +121,46 @@ name_ends:
    sta ST_FILE_NAME, x
    
    inw ST_DIR_INDEX
+   rts
+.endp
+
+
+.proc storage_file_open
+; Open File
+; in:  mode in A
+; in:  filename at SRC_ADDR
+; out: file handle in A or $FF if error
+
+   tax
+   lda #ST_CMD_OPEN
+   jsr storage_write
+   
+   txa
+   jsr storage_write
+   
+   ldy #0
+send_filename:   
+   lda (SRC_ADDR), y
+   beq @+ 
+   jsr storage_write
+   iny
+   bne send_filename
+@: 
+   lda #0
+   jsr storage_write
+
+; Proceed with command  
+   jsr storage_proceed
+   
+   jsr storage_read ; length of response. Ignored at this time
+   jsr storage_read ; result of the operation
+   cmp #ST_RET_SUCCESS
+   beq get_file_handle
+   
+   lda #$ff
+   rts
+get_file_handle:   
+   jsr storage_read ; file handle
    rts
 .endp
 

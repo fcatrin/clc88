@@ -13,34 +13,12 @@
    mwa DISPLAY_START VRAM_TO_RAM
    jsr lib_vram_to_ram
    
-; Call command to open file   
-   lda #ST_CMD_OPEN
-   jsr storage_write
-   
+; Call command to open file
+   mwa #filename SRC_ADDR
    lda #ST_MODE_READ
-   jsr storage_write
+   ldx #OS_FILE_OPEN
+   jsr OS_CALL
    
-   ldx #0
-send_filename:   
-   lda filename, x
-   beq @+ 
-   jsr storage_write
-   inx
-   bne send_filename
-   lda #0
-   jsr storage_write
-   
-; Proceed with command  
-   
-@: 
-   jsr storage_proceed
-   
-   jsr storage_read ; length of response. Ignored in this example
-   jsr storage_read ; result of the operation
-   cmp #ST_RET_SUCCESS
-   bne end_with_error
-   
-   jsr storage_read ; file handle
    sta file_handle
    
 read_next_byte:   

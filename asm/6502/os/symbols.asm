@@ -86,6 +86,7 @@ OS_KEYB_POLL         = $07
 OS_DIR_OPEN          = $08
 OS_DIR_READ          = $09
 OS_DIR_CLOSE         = $0a
+OS_FILE_OPEN         = $0b
 
 OS_CALL  = $F000
 
