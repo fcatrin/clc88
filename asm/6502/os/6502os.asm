@@ -160,6 +160,9 @@ os_vector_table
 	.word vram2ram
 	.word vram_set_bytes
 	.word keyb_poll
+	.word storage_dir_open
+	.word storage_dir_read
+	.word storage_dir_close
 
 copy_params_charset:
 	.word charset, VRAM_CHARSET, CHARSET_SIZE
@@ -230,6 +233,7 @@ irq:
    jmp (IRQ_VECTOR)
 
    icl 'graphics.asm'
+   icl 'storage.asm'
    
 charset:
 	ins '../../../res/charset.bin'
