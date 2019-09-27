@@ -49,11 +49,6 @@ void sound_process() {
 		int16 pokey1_l = pokey_buffer_1[i+0] - 128;
 		int16 pokey1_r = pokey_buffer_1[i+1] - 128;
 
-		pokey0_l = pokey0_l < 0 ? 256 + pokey0_l : 0;
-		pokey0_r = pokey0_r < 0 ? 256 + pokey0_r : 0;
-		pokey1_l = pokey1_l < 0 ? 256 + pokey1_l : 0;
-		pokey1_r = pokey1_r < 0 ? 256 + pokey1_r : 0;
-
 		sound_buffer[pokey_write_index++] = pokey0_l * 256 + pokey1_l * 256;
 		sound_buffer[pokey_write_index++] = pokey0_r * 256 + pokey1_r * 256;
 	}
