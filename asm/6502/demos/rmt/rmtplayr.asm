@@ -286,28 +286,15 @@ ri1	lda (ns),y
 	EIF
 	jsr GetSongLineTrackLineInitOfNewSetInstrumentsOnlyRmtp3
 rmt_silence
-	IFT STEREOMODE>0
 	lda #0
 	sta POKEY0_AUDCTL
 	sta POKEY1_AUDCTL
-	ldy #3
-	; sty $d20f
-	; sty $d21f
 	ldy #8
-si1	sta POKEY0_AUDF1,y
+si1	
+   sta POKEY0_AUDF1,y
 	sta POKEY1_AUDF1,y
 	dey
 	bpl si1
-	ELS
-	lda #0
-	sta POKEY0_AUDCTL
-	ldy #3
-	; sty $d20f
-	ldy #8
-si1	sta POKEY0_AUDF1,y
-	dey
-	bpl si1
-	EIF
 	IFT FEAT_INSTRSPEED==0
 	lda v_instrspeed
 	ELS
@@ -1245,7 +1232,6 @@ v_ainstrspeed equ *-1
 	EIF
 	rts
 SetPokey
-	IFT STEREOMODE==1		;* L1 L2 L3 L4 R1 R2 R3 R4
 	ldy #$ff
 v_audctl2 equ *-1
 	lda trackn_audf+0+4
@@ -1284,73 +1270,5 @@ xstastx08	sta POKEY1_AUDC4
 v_audctl equ *-1
 xstysta01	sty POKEY1_AUDCTL
 	sta POKEY0_AUDCTL
-	ELI STEREOMODE==0		;* L1 L2 L3 L4
-	ldy #$ff
-v_audctl equ *-1
-	lda trackn_audf+0
-	ldx trackn_audc+0
-	sta POKEY0_AUDF1
-	stx POKEY0_AUDC1
-	lda trackn_audf+1
-	ldx trackn_audc+1
-	sta POKEY0_AUDF1+2
-	stx POKEY0_AUDC1+2
-	lda trackn_audf+2
-	ldx trackn_audc+2
-	sta POKEY0_AUDF1+4
-	stx POKEY0_AUDC1+4
-	lda trackn_audf+3
-	ldx trackn_audc+3
-	sta POKEY0_AUDF1+6
-	stx POKEY0_AUDC1+6
-	sty POKEY0_AUDCTL
-	ELI STEREOMODE==2		;* L1 R2 R3 L4
-	ldy #$ff
-v_audctl equ *-1
-	lda trackn_audf+0
-	ldx trackn_audc+0
-	sta POKEY0_AUDF1
-	stx POKEY0_AUDC1
-	sta POKEY1_AUDF1
-	lda trackn_audf+1
-	ldx trackn_audc+1
-	sta POKEY1_AUDF1+2
-	stx POKEY1_AUDC1+2
-	lda trackn_audf+2
-	ldx trackn_audc+2
-	sta POKEY1_AUDF1+4
-	stx POKEY1_AUDC1+4
-	sta POKEY0_AUDF1+4
-	lda trackn_audf+3
-	ldx trackn_audc+3
-	sta POKEY0_AUDF1+6
-	stx POKEY0_AUDC1+6
-	sta POKEY1_AUDF1+6
-	sty POKEY1_AUDCTL
-	sty POKEY0_AUDCTL
-	ELI STEREOMODE==3		;* L1 L2 R3 R4
-	ldy #$ff
-v_audctl equ *-1
-	lda trackn_audf+0
-	ldx trackn_audc+0
-	sta POKEY0_AUDF1
-	stx POKEY0_AUDC1
-	lda trackn_audf+1
-	ldx trackn_audc+1
-	sta POKEY0_AUDF1+2
-	stx POKEY0_AUDC1+2
-	lda trackn_audf+2
-	ldx trackn_audc+2
-	sta POKEY1_AUDF1+4
-	stx POKEY1_AUDC1+4
-	sta POKEY0_AUDF1+4
-	lda trackn_audf+3
-	ldx trackn_audc+3
-	sta POKEY1_AUDF1+6
-	stx POKEY1_AUDC1+6
-	sta POKEY0_AUDF1+6
-	sty POKEY1_AUDCTL
-	sty POKEY0_AUDCTL
-	EIF
 	rts
 RMTPLAYEREND
