@@ -12,104 +12,61 @@
    
    mwa DISPLAY_START VRAM_TO_RAM
    jsr lib_vram_to_ram
+   mwa RAM_TO_VRAM vram_line
    
-; Call command to open dir   
-   lda #ST_CMD_DIR_OPEN
-   jsr storage_write
+   mwa #dirname COPY_SRC_ADDR
+   ldx #OS_DIR_OPEN
+   jsr OS_CALL
+
+   lda ST_DIR_HANDLE
+   cmp #$FF
+   jeq end_with_error
    
-   ldx #0
-send_dirname:   
-   lda dirname, x
-   beq @+ 
-   jsr storage_write
-   inx
-   bne send_dirname
-@: 
-   lda #0
-   jsr storage_write
-   
-; Proceed with command  
-   
-   jsr storage_proceed
-   
-   jsr storage_read ; length of response. Ignored in this example
-   jsr storage_read ; result of the operation
-   cmp #ST_RET_SUCCESS
-   jne end_with_error
-   
-   jsr storage_read ; dir handle
-   sta dir_handle
-   
-   jsr storage_read ; dir length
-   sta dir_length
-   jsr storage_read
-   sta dir_length+1
-   
-read_next_entry:   
-   lda #ST_CMD_DIR_READ
-   jsr storage_write
-   
-   lda dir_handle
-   jsr storage_write
-   
-   lda dir_index
-   jsr storage_write
-   lda dir_index+1
-   jsr storage_write
-   
-   jsr storage_proceed
-   jsr storage_read ; length of response. Ignored in this example
-   jsr storage_read
-   cmp #ST_RET_SUCCESS
-   bne end_of_dir
+read_next_entry:
+   ldx #OS_DIR_READ
+   jsr OS_CALL
+
+   lda ST_FILE_TYPE
+   cmp #$FF      
+   beq end_of_dir
 
    ldy #0
-
-   jsr storage_read ; is_dir
-.rept 4
-   jsr storage_read ; size
-.endr
-
 copy_date:
-   jsr storage_read ; date
+   lda ST_FILE_DATE, y
    sta (RAM_TO_VRAM), y
    iny
    cpy #08
    bne copy_date
-   iny
+   adw RAM_TO_VRAM #9
 
+   ldy #0
 copy_time:
-   jsr storage_read ; time
+   lda ST_FILE_TIME, y
    sta (RAM_TO_VRAM), y
    iny
-   cpy #13
+   cpy #4
    bne copy_time
-   iny
-   jsr storage_read ; time
-   jsr storage_read ; time
+   adw RAM_TO_VRAM #5
 
+   ldy #0
 copy_name:   
-   jsr storage_read
+   lda ST_FILE_NAME, y
    cmp #0
    beq name_ends
    sta (RAM_TO_VRAM), y
 
    iny
-   cpy #40
+   cpy #40 - 9 - 5
    bne copy_name
 name_ends:
-   adw RAM_TO_VRAM #40
-   inw dir_index
-   lda dir_index
+   adw RAM_TO_VRAM #(40 - 9 - 5)
+   lda ST_DIR_INDEX
    cmp #24
    jne read_next_entry
 
 end_of_dir:
-   lda #ST_CMD_DIR_CLOSE
-   jsr storage_write
-   lda dir_handle
-   jsr storage_write
-   jsr storage_proceed
+   ldx #OS_DIR_CLOSE
+   jsr OS_CALL
    jmp end
 
 end_with_error:
@@ -132,45 +89,7 @@ print_filename:
    
 end: 
    jmp end
-      
-	
-	
-.proc storage_write
-   stx R0
-   
-@:
-   ldx ST_WRITE_ENABLE
-   bne @-
-   sta ST_WRITE_DATA
-   ldx #$FF
-   stx ST_WRITE_ENABLE
 
-   ldx R0   
-   rts
-.endp 
-
-.proc storage_read
-   stx R0
-   
-@:
-   ldx ST_READ_ENABLE
-   bne @-
-   lda ST_READ_DATA
-   ldx #$FF
-   stx ST_READ_ENABLE
-   ldx R0   
-   rts
-.endp
-
-.proc storage_proceed
-   sta ST_PROCEED
-@:
-   lda ST_STATUS
-   cmp #ST_STATUS_DONE
-   bne @-
-   rts
-.endp
-   
 .proc screen_putc
    sty R0
    ldy #0
@@ -180,13 +99,8 @@ end:
    rts
 .endp  
 
-dir_handle:
-   .byte 0
-dir_length:
-	.word 0
-dir_index:
-	.word 0
-	
+vram_line .word 0
+      
 dirname:
    .by "./", 0
    

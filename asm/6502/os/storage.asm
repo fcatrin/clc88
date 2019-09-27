@@ -28,7 +28,7 @@ send_dirname:
    cmp #ST_RET_SUCCESS
    beq read_dir_data
    
-   lda #0
+   lda #0               ; on failure return Hanle = $FF
    sta ST_DIR_LENGTH
    sta ST_DIR_LENGTH+1
    
@@ -75,6 +75,10 @@ read_dir_data:
    jsr storage_read
    cmp #ST_RET_SUCCESS
    beq read_entry
+   
+   lda #$FF           ; on failure return file type = $FF
+   sta ST_FILE_TYPE
+   rts
 
 read_entry:
    jsr storage_read ; is dir
@@ -116,6 +120,8 @@ copy_name:              ; file name ends with 0. Max size = 128 bytes including 
    lda #0
 name_ends:
    sta ST_FILE_NAME, x
+   
+   inw ST_DIR_INDEX
    rts
 .endp
 
