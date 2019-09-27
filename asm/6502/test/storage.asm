@@ -22,17 +22,13 @@
    sta file_handle
    
 read_next_byte:   
-   lda #ST_CMD_READ_BYTE
-   jsr storage_write
    lda file_handle
-   jsr storage_write
+   ldx #OS_FILE_READ_BYTE
+   jsr OS_CALL
    
-   jsr storage_proceed
-   jsr storage_read ; length of response. Ignored in this example
-   jsr storage_read
-   cmp #ST_RET_SUCCESS
+   cpx #ST_RET_SUCCESS
    bne eof
-   jsr storage_read
+   
    cmp #32
    bcc read_next_byte
    jsr screen_putc

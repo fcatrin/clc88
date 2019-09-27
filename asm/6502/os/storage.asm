@@ -164,6 +164,25 @@ get_file_handle:
    rts
 .endp
 
+.proc storage_file_read_byte
+   tax
+   lda #ST_CMD_READ_BYTE
+   jsr storage_write
+   txa
+   jsr storage_write
+   
+   jsr storage_proceed
+   jsr storage_read ; length of response. Ignored at this time
+   jsr storage_read
+   tax
+   cmp #ST_RET_SUCCESS
+   beq read_byte
+   rts
+read_byte:
+   jsr storage_read
+   rts
+.endp
+
 .proc storage_write
    stx ROS0
 @:
