@@ -10,7 +10,7 @@
    
    ldy #0
 send_dirname:   
-   lda (COPY_SRC_ADDR), y
+   lda (SRC_ADDR), y
    beq @+ 
    jsr storage_write
    iny

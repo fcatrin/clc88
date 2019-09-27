@@ -24,8 +24,8 @@ set_subpal:
    mwa ATTRIB_START VRAM_TO_RAM
    jsr lib_vram_to_ram
    
-   mwa RAM_TO_VRAM COPY_DST_ADDR
-   mwa SCREEN_SIZE COPY_SIZE
+   mwa RAM_TO_VRAM DST_ADDR
+   mwa SCREEN_SIZE SIZE
    lda #$0F
    jsr lib_vram_set_bytes
 

@@ -67,7 +67,7 @@ set_video_mode_std:
    pha
    asl
    tax
-   mwa video_mode_params,x COPY_SRC_ADDR
+   mwa video_mode_params,x SRC_ADDR
    pla
    clc
    adc #2
@@ -129,8 +129,8 @@ set_video_mode_screen:
    tya
    pha
    
-   mwa #11 COPY_SIZE
-   mwa #SCREEN_LINES COPY_DST_ADDR
+   mwa #11 SIZE
+   mwa #SCREEN_LINES DST_ADDR
    jsr copy_block
 
    pla
@@ -195,18 +195,18 @@ vmode_set_lines:
    mwa SUBPAL_START  VRAM_SCREEN+8
    
    mwa DISPLAY_START VRAM_TO_RAM
-   mwa SCREEN_SIZE COPY_SIZE
+   mwa SCREEN_SIZE SIZE
    
    jsr vram_clear
    
    mwa ATTRIB_START VRAM_TO_RAM
-   mwa ATTRIB_SIZE COPY_SIZE
+   mwa ATTRIB_SIZE SIZE
    lda ATTRIB_DEFAULT
    jsr vram_clear_to
 
    mwa SUBPAL_START VRAM_TO_RAM
-   mwa SUBPAL_SIZE  COPY_SIZE
-   mwa SUBPAL_ADDR  COPY_SRC_ADDR
+   mwa SUBPAL_SIZE  SIZE
+   mwa SUBPAL_ADDR  SRC_ADDR
    jmp vram_copy
    
 vram_clear:
@@ -215,7 +215,7 @@ vram_clear:
 vram_clear_to:
    pha
    jsr vram2ram
-   mwa RAM_TO_VRAM COPY_DST_ADDR
+   mwa RAM_TO_VRAM DST_ADDR
    mva VRAM_PAGE   VPAGE
    pla
    jmp vram_set_bytes
@@ -223,7 +223,7 @@ vram_clear_to:
    
 vram_copy:
    jsr vram2ram
-   mwa RAM_TO_VRAM COPY_DST_ADDR
+   mwa RAM_TO_VRAM DST_ADDR
    mva VRAM_PAGE   VPAGE
    jmp ram_vram_copy
    
@@ -237,10 +237,10 @@ vram_set_bytes:
    ldy #0
    lda R0
 vram_set_bytes_loop:   
-   sta (COPY_DST_ADDR), y
-   inc COPY_DST_ADDR
+   sta (DST_ADDR), y
+   inc DST_ADDR
    bne vram_set_bytes_next
-   ldx COPY_DST_ADDR+1
+   ldx DST_ADDR+1
    inx
    cpx #$e0
    bne vram_set_bytes_next_page
@@ -250,13 +250,13 @@ vram_set_bytes_loop:
    lda R0    ; restore byte to be written
    
 vram_set_bytes_next_page:
-   stx COPY_DST_ADDR+1
+   stx DST_ADDR+1
       
 vram_set_bytes_next:
-   dec COPY_SIZE
+   dec SIZE
    bne vram_set_bytes_loop
-   dec COPY_SIZE+1
-   ldx COPY_SIZE+1
+   dec SIZE+1
+   ldx SIZE+1
    cpx #$ff
    bne vram_set_bytes_loop
    
@@ -273,11 +273,11 @@ ram_vram_copy:
    
    ldy #0
 ram_vram_copy_loop:
-   lda (COPY_SRC_ADDR), y   
-   sta (COPY_DST_ADDR), y
-   inc COPY_DST_ADDR
+   lda (SRC_ADDR), y   
+   sta (DST_ADDR), y
+   inc DST_ADDR
    bne ram_vram_copy_next
-   ldx COPY_DST_ADDR+1
+   ldx DST_ADDR+1
    inx
    cpx #$e0
    bne ram_vram_copy_next_page
@@ -286,18 +286,18 @@ ram_vram_copy_loop:
    inc VPAGE
    
 ram_vram_copy_next_page:
-   stx COPY_DST_ADDR+1
+   stx DST_ADDR+1
       
 ram_vram_copy_next:
-   inc COPY_SRC_ADDR
+   inc SRC_ADDR
    bne ram_vram_copy_no_src_page
-   inc COPY_SRC_ADDR+1
+   inc SRC_ADDR+1
    
 ram_vram_copy_no_src_page:
-   dec COPY_SIZE
+   dec SIZE
    bne ram_vram_copy_loop
-   dec COPY_SIZE+1
-   ldx COPY_SIZE+1
+   dec SIZE+1
+   ldx SIZE+1
    cpx #$ff
    bne ram_vram_copy_loop
    

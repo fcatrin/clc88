@@ -175,44 +175,44 @@ copy_block_with_params:
 	ldy #5
 copy_block_params:
 	lda (COPY_PARAMS), y
-	sta COPY_SRC_ADDR, y
+	sta SRC_ADDR, y
 	dey
 	bpl copy_block_params
 
 copy_block:
 	ldy #0
 copy_block_short:
-	lda (COPY_SRC_ADDR), y
-	sta (COPY_DST_ADDR), y
+	lda (SRC_ADDR), y
+	sta (DST_ADDR), y
 	iny
-	cpy COPY_SIZE
+	cpy SIZE
 	bne copy_block_short
-	inc COPY_SRC_ADDR+1
-	inc COPY_DST_ADDR+1
+	inc SRC_ADDR+1
+	inc DST_ADDR+1
 copy_skip_short:
-	lda COPY_SIZE+1
+	lda SIZE+1
 	beq copy_block_end
-	dec COPY_SIZE+1
+	dec SIZE+1
 	jmp copy_block_short
 copy_block_end
 	rts
 
 mem_set_bytes:
 	ldy #0
-	ldx COPY_SIZE+1
+	ldx SIZE+1
 	beq mem_set_bytes_short
 mem_set_bytes_page:
-	sta (COPY_DST_ADDR), y
+	sta (DST_ADDR), y
 	iny
 	bne mem_set_bytes_page
-	inc COPY_DST_ADDR+1
+	inc DST_ADDR+1
 	dex
 	bne mem_set_bytes_page
 
-	ldx COPY_SIZE
+	ldx SIZE
 	beq mem_set_bytes_end
 mem_set_bytes_short:
-	sta (COPY_DST_ADDR), y
+	sta (DST_ADDR), y
 	iny
 	dex
 	bne mem_set_bytes_short

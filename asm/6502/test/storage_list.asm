@@ -14,7 +14,7 @@
    jsr lib_vram_to_ram
    mwa RAM_TO_VRAM vram_line
    
-   mwa #dirname COPY_SRC_ADDR
+   mwa #dirname SRC_ADDR
    ldx #OS_DIR_OPEN
    jsr OS_CALL
 
