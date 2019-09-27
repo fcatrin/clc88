@@ -103,7 +103,7 @@ read_date:              ; 8 bytes per date. Format is YYYYMMDD
    ldx #0
 read_time:              ; 6 bytes per time. Format is HHMMSS
    jsr storage_read 
-   sta ST_FILE_TIME, y
+   sta ST_FILE_TIME, x
    inx
    cpx #6
    bne read_time
