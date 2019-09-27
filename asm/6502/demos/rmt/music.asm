@@ -5,7 +5,7 @@
 ; example by Raster/C.P.U., 2003-2004
 ;
 ;
-STEREOMODE	equ 0				;0 => compile RMTplayer for mono 4 tracks
+STEREOMODE	equ 1				;0 => compile RMTplayer for mono 4 tracks
 ;								;1 => compile RMTplayer for stereo 8 tracks
 ;								;2 => compile RMTplayer for 4 tracks stereo L1 R2 R3 L4
 ;								;3 => compile RMTplayer for 4 tracks stereo L1 L2 R3 R4
@@ -15,7 +15,7 @@ STEREOMODE	equ 0				;0 => compile RMTplayer for mono 4 tracks
 ;
 ;
 	opt h-						;RMT module is standard Atari binary file already
-	ins "music.rmt"				;include music RMT module
+	ins "songs/tyrian_zanac5.rmt"				;include music RMT module
 	opt h+
 ;
 ;
@@ -38,6 +38,9 @@ start
    ldx #OS_SET_VIDEO_MODE
    jsr OS_CALL
 	
+	mwa DISPLAY_START VRAM_TO_RAM
+   jsr lib_vram_to_ram
+	
 ;
 	ldx #<MODUL					;low byte of RMT module to X reg
 	ldy #>MODUL					;hi byte of RMT module to Y reg
@@ -49,6 +52,27 @@ start
 	sta acpapx2+1				;sync counter spacing
 	lda #16+0
 	sta acpapx1+1				;sync counter init
+
+   lda v_tracks
+   pha
+   ora #'0'
+   ldy #0
+   sta (RAM_TO_VRAM), y
+   pla
+   cmp #4
+   beq set_pokey_mono
+   lda #$55
+   sta POKEY0_PANCTL
+   lda #$AA
+   sta POKEY1_PANCTL
+   jmp set_pokey_done
+set_pokey_mono:   
+   lda #$FF
+   sta POKEY0_PANCTL
+   lda #$00
+   sta POKEY1_PANCTL
+set_pokey_done:
+
 ;
 	lda #255
 	sta KEY						;no key pressed
@@ -66,7 +90,12 @@ waipap
 	cmp VCOUNT					;vertical line counter synchro
 	bne waipap
 ;
+   lda #10
+   sta VCOLOR0
 	jsr RASTERMUSICTRACKER+3	;1 play
+
+   lda #0
+   sta VCOLOR0
 ;
 	lda KEY						;keyboard
 	cmp #28						;ESCape key?
@@ -84,5 +113,7 @@ tabpp  dta 156,78,52,39			;line counter spacing table for instrument speed from 
 ;
 ;
 	run start					;run addr
+
+   icl '../../os/stdlib.asm'
 ;
 ;that's all... ;-)
