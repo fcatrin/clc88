@@ -14,7 +14,7 @@
 #include "utils.h"
 
 void utils_load_xex(char *filename) {
-	UINT8 buffer[0x1000];
+	UINT8 buffer[0x10000];
 
 	FILE *f = fopen(filename, "rb");
 	if (!f) {
