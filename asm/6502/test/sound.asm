@@ -20,6 +20,12 @@
    mwa DISPLAY_START VRAM_TO_RAM
    jsr lib_vram_to_ram
 	
+	lda #255
+   sta POKEY0_AUDF1
+	
+	lda #$CF
+	sta POKEY0_AUDC1
+	
 	ldy #0
 copy:
 	lda message, y
@@ -37,8 +43,8 @@ vblank:
    tya
    pha
    lda #128
-   sta POKEY0_AUDF1
-   sta POKEY1_AUDF1
+   ; sta POKEY0_AUDF1
+   ; sta POKEY1_AUDF1
 
    lda FRAMECOUNT
    
@@ -56,8 +62,8 @@ noinc:
    sta VCOLOR0
 
    lda #$2F
-   sta POKEY0_AUDC1
-   sta POKEY1_AUDC1
+   ; sta POKEY0_AUDC1
+   ; sta POKEY1_AUDC1
 
    lda dist
    adc #'0'

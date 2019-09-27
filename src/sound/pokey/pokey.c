@@ -139,7 +139,7 @@ static uint8 Num_pokeys;
 static uint8 AUDF[4 * MAXPOKEYS];   /* AUDFx (D200, D202, D204, D206) */
 static uint8 AUDC[4 * MAXPOKEYS];   /* AUDCx (D201, D203, D205, D207) */
 static uint8 AUDCTL[MAXPOKEYS];     /* AUDCTL (D208) */
-static uint8 AUDPAN[MAXPOKEYS];       /* AUDPAN (D20C) New register for individual channel panning */
+static uint8 AUDPAN[MAXPOKEYS];     /* AUDPAN (D20C) New register for individual channel panning */
 
 static uint8 PAN_MASK[4];
 
@@ -168,13 +168,13 @@ static uint8 bit17[POLY17_SIZE];  /* Rather than have a table with 131071 */
                             /* It shouldn't make much difference since */
                             /* the pattern rarely repeats anyway. */
 
-static uint32 Poly_adjust; /* the amount that the polynomial will need */
+static uint32 Poly_adjust[MAXPOKEYS]; /* the amount that the polynomial will need */
                            /* to be adjusted to process the next bit */
 
-static uint32 P4=0,   /* Global position pointer for the 4-bit  POLY array */
-              P5=0,   /* Global position pointer for the 5-bit  POLY array */
-              P9=0,   /* Global position pointer for the 9-bit  POLY array */
-              P17=0;  /* Global position pointer for the 17-bit POLY array */
+static uint32 P4[MAXPOKEYS],   /* Global position pointer for the 4-bit  POLY array */
+              P5[MAXPOKEYS],   /* Global position pointer for the 5-bit  POLY array */
+              P9[MAXPOKEYS],   /* Global position pointer for the 9-bit  POLY array */
+              P17[MAXPOKEYS];  /* Global position pointer for the 17-bit POLY array */
 
 static uint32 Div_n_cnt[4 * MAXPOKEYS],   /* Divide by n counter. one for each channel */
               Div_n_max[4 * MAXPOKEYS];   /* Divide by n maximum, one for each channel */
@@ -232,13 +232,6 @@ void pokey_sound_init (uint32 freq17, uint16 playback_freq, uint8 num_pokeys)
    /* disable interrupts to handle critical sections */
    //_disable(); //JH
 
-   /* start all of the polynomial counters at zero */
-   Poly_adjust = 0;
-   P4 = 0;
-   P5 = 0;
-   P9 = 0;
-   P17 = 0;
-
    PAN_MASK[0] = 0x01;
    PAN_MASK[1] = 0x04;
    PAN_MASK[2] = 0x10;
@@ -266,6 +259,11 @@ void pokey_sound_init (uint32 freq17, uint16 playback_freq, uint8 num_pokeys)
       AUDCTL[chip] = 0;
       AUDPAN[chip] = 0xFF;
       Base_mult[chip] = DIV_64;
+      P4[chip] = 0;
+      P5[chip] = 0;
+      P9[chip] = 0;
+      P17[chip] = 0;
+      Poly_adjust[chip] = 0;
    }
 
    /* set the number of pokey chips currently emulated */
@@ -499,8 +497,6 @@ void pokey_update_sound (uint16 addr, uint8 val, uint8 chip, uint8 gain)
           }
        }
     }
-
-    //_enable(); JH
 }
 
 
@@ -644,19 +640,24 @@ void pokey_process(unsigned char *buffer, uint16 n, uint8 chip)
           division, I don't adjust the polynomials on the SAMPLE events,
           only the CHAN events.  I have to keep track of the change,
           though. */
-       Poly_adjust += event_min;
+       Poly_adjust[chip] += event_min;
 
        /* if the next event is a channel change */
        if (next_event != SAMPLE)
        {
           /* shift the polynomial counters */
-          P4  = (P4  + Poly_adjust) % POLY4_SIZE;
-          P5  = (P5  + Poly_adjust) % POLY5_SIZE;
-          P9  = (P9  + Poly_adjust) % POLY9_SIZE;
-          P17 = (P17 + Poly_adjust) % POLY17_SIZE;
+          P4[chip]  = (P4[chip]  + Poly_adjust[chip]) % POLY4_SIZE;
+          P5[chip]  = (P5[chip]  + Poly_adjust[chip]) % POLY5_SIZE;
+          P9[chip]  = (P9[chip]  + Poly_adjust[chip]) % POLY9_SIZE;
+          P17[chip] = (P17[chip] + Poly_adjust[chip]) % POLY17_SIZE;
+
+          uint32 p4  = P4[chip];
+          uint32 p5  = P5[chip];
+          uint32 p9  = P9[chip];
+          uint32 p17 = P17[chip];
 
           /* reset the polynomial adjust counter to zero */
-          Poly_adjust = 0;
+          Poly_adjust[chip] = 0;
 
           /* adjust channel counter */
           Div_n_cnt[next_event + chip_offs] += Div_n_max[next_event + chip_offs];
@@ -676,7 +677,7 @@ void pokey_process(unsigned char *buffer, uint16 n, uint8 chip)
 
           /* if the output is pure or the output is poly5 and the poly5 bit */
           /* is set */
-          if ((audc & NOTPOLY5) || bit5[P5])
+          if ((audc & NOTPOLY5) || bit5[p5])
           {
              /* if the PURE bit is set */
              if (audc & PURE)
@@ -688,7 +689,7 @@ void pokey_process(unsigned char *buffer, uint16 n, uint8 chip)
              else if (audc & POLY4)
              {
                 /* then compare to the poly4 bit */
-                toggle = (bit4[P4] == !(*out_ptr));
+                toggle = (bit4[p4] == !(*out_ptr));
              }
              else
              {
@@ -696,12 +697,12 @@ void pokey_process(unsigned char *buffer, uint16 n, uint8 chip)
                 if (AUDCTL[(next_event >> 2) + chip] & POLY9)
                 {
                    /* compare to the poly9 bit */
-                   toggle = (bit17[P9] == !(*out_ptr));
+                   toggle = (bit17[p9] == !(*out_ptr));
                 }
                 else
                 {
                    /* otherwise compare to the poly17 bit */
-                   toggle = (bit17[P17] == !(*out_ptr));
+                   toggle = (bit17[p17] == !(*out_ptr));
                 }
              }
           }
@@ -717,26 +718,19 @@ void pokey_process(unsigned char *buffer, uint16 n, uint8 chip)
           /* if the current output bit has changed */
           if (toggle)
           {
-          	 uint8 pan_left  = AUDPAN[chip] & PAN_MASK[next_event];
-          	 uint8 pan_right = AUDPAN[chip] & (PAN_MASK[next_event] << 1);
-             if (*out_ptr)
-             {
-                /* remove this channel from the signal */
-                cur_val_l -= pan_left  ? AUDV[next_event + chip_offs] : 0;
-                cur_val_r -= pan_right ? AUDV[next_event + chip_offs] : 0;
+        	 uint8 vol = AUDV[next_event + chip_offs];
+          	 uint8 out_val_l = AUDPAN[chip] & PAN_MASK[next_event]        ? vol : 0;
+          	 uint8 out_val_r = AUDPAN[chip] & (PAN_MASK[next_event] << 1) ? vol : 0;
 
-                /* and turn the output off */
-                *out_ptr = 0;
+             if (*out_ptr) {
+                cur_val_l -= out_val_l;
+                cur_val_r -= out_val_r;
+             } else {
+                cur_val_l += out_val_l;
+                cur_val_r += out_val_r;
              }
-             else
-             {
-                /* turn the output on */
-                *out_ptr = 1;
+             *out_ptr = (1 - *out_ptr);
 
-                /* and add it to the output signal */
-                cur_val_l += pan_left  ? AUDV[next_event + chip_offs] : 0;
-                cur_val_r += pan_right ? AUDV[next_event + chip_offs] : 0;
-             }
           }
        }
        else /* otherwise we're processing a sample */
@@ -756,6 +750,7 @@ void pokey_process(unsigned char *buffer, uint16 n, uint8 chip)
           out_val_l = cur_val_l;
           out_val_r = cur_val_r;
 #endif
+
           *buffer++ = out_val_l;
           *buffer++ = out_val_r;
 
