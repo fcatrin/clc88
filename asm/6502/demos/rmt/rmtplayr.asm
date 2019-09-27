@@ -16,16 +16,9 @@
 ;*
 ;* 3. Because of RMTplayer provides a lot of effects, it spent a lot of CPU time.
 ;*
-;* STEREOMODE	equ 0..3			;0 => compile RMTplayer for 4 tracks mono
-;*									;1 => compile RMTplayer for 8 tracks stereo
-;*									;2 => compile RMTplayer for 4 tracks stereo L1 R2 R3 L4
-;*									;3 => compile RMTplayer for 4 tracks stereo L1 L2 R3 R4
-;*
-	IFT STEREOMODE==1
+
 TRACKS		equ 8
-	ELS
-TRACKS		equ 4
-	EIF
+
 ;*
 PLAYER		equ $3400
 ;*
@@ -119,6 +112,8 @@ trackn_audc	org *+TRACKS
 trackn_audctl	org *+TRACKS
 	EIF
 v_aspeed		org *+1
+v_tracks    org *+1
+v_tracks_p  org *+1
 track_endvariables
 		org PLAYER-$100-$140-$40+2
 INSTRPAR	equ 12
@@ -227,7 +222,14 @@ ri0	sta track_variables-1,y
 	dey
 	bne ri0
 	EIF
-	ldy #4
+	ldy #3
+	lda (ns),y
+	and #$0F
+	sta v_tracks
+	sta v_tracks_p
+	dec v_tracks_p
+	iny
+
 	lda (ns),y
 	sta v_maxtracklen
 	iny
@@ -253,7 +255,9 @@ ri1	lda (ns),y
 	IFT FEAT_NOSTARTINGSONGLINE==0
 	pla
 	pha
-	IFT TRACKS>4
+	ldx v_tracks
+	cpx #4
+	beq init_tracks_4
 	asl @
 	asl @
 	asl @
@@ -267,7 +271,8 @@ ri1	lda (ns),y
 	rol @
 	rol @
 	rol @
-	ELS
+	jmp init_tracks_done
+init_tracks_4
 	asl @
 	asl @
 	clc
@@ -279,7 +284,7 @@ ri1	lda (ns),y
 	asl @
 	rol @
 	rol @
-	EIF
+init_tracks_done	
 	plp
 	adc p_song+1
 	sta p_song+1
@@ -323,11 +328,11 @@ nn1a2 sta trackn_pause,x
 	lda #$80
 	sta trackn_instrx2,x
 	inx
-xtracks01	cpx #TRACKS
+xtracks01	cpx v_tracks
 	bne nn1
 	lda p_song
 	clc
-xtracks02	adc #TRACKS
+xtracks02	adc v_tracks
 	sta p_song
 	bcc GetTrackLine
 	inc p_song+1
@@ -406,7 +411,7 @@ voig
 	and #$f0
 	sta trackn_volume,x
 oo1x
-xtracks03sub1	cpx #TRACKS-1
+	cpx v_tracks_p
 	bne oo1
 	IFT FEAT_CONSTANTSPEED==0
 	lda #$ff
@@ -604,7 +609,7 @@ go_ppnext	jmp ppnext
 rmt_p3
 	lda #>frqtab
 	sta nr+1
-xtracks05sub1	ldx #TRACKS-1
+xtracks05sub1	ldx v_tracks_p
 pp1
 	lda trackn_instrhb,x
 	beq go_ppnext
@@ -631,7 +636,9 @@ pp1b
 	lda trackn_instrlop,x
 pp2	sta trackn_instridx,x
 	lda reg1
-	IFT TRACKS>4
+	ldy v_tracks
+	cpy #4
+	beq pp2s
 	cpx #4
 	bcc pp2s
 	lsr @
@@ -639,7 +646,6 @@ pp2	sta trackn_instridx,x
 	lsr @
 	lsr @
 pp2s
-	EIF
 	and #$0f
 	ora trackn_volume,x
 	tay
@@ -1104,16 +1110,17 @@ qq4a
 	EIF
 qq5
 	stx v_audctl
-	IFT TRACKS>4
+	ldx #0
+	ldy v_tracks
+	cpy #4
+	beq audctl_no_stereo
 	IFT FEAT_AUDCTLMANUALSET
 	lda trackn_audctl+4
 	ora trackn_audctl+5
 	ora trackn_audctl+6
 	ora trackn_audctl+7
 	tax
-	ELS
-	ldx #0
-	EIF
+audctl_no_stereo:	
 	stx v_audctl2
 	IFT FEAT_FILTER
 	IFT FEAT_FILTERG0R
