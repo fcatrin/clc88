@@ -30,23 +30,20 @@ read_next_entry:
    cmp #$FF      
    beq end_of_dir
 
-   ldy #0
-copy_date:
-   lda ST_FILE_DATE, y
-   sta (RAM_TO_VRAM), y
-   iny
-   cpy #08
-   bne copy_date
-   adw RAM_TO_VRAM #9
+   mwa #ST_FILE_DATE SRC_ADDR
+   mwa RAM_TO_VRAM  DST_ADDR
+   mwa #8 SIZE
+   ldx #OS_COPY_BLOCK
+   jsr OS_CALL
 
-   ldy #0
-copy_time:
-   lda ST_FILE_TIME, y
-   sta (RAM_TO_VRAM), y
-   iny
-   cpy #4
-   bne copy_time
-   adw RAM_TO_VRAM #5
+   mwa #ST_FILE_TIME SRC_ADDR
+   mwa RAM_TO_VRAM  DST_ADDR
+   adw DST_ADDR #9
+   mwa #4 SIZE
+   ldx #OS_COPY_BLOCK
+   jsr OS_CALL
+
+   adw RAM_TO_VRAM #14
 
    ldy #0
 copy_name:   
@@ -56,10 +53,10 @@ copy_name:
    sta (RAM_TO_VRAM), y
 
    iny
-   cpy #40 - 9 - 5
+   cpy #40 - 14
    bne copy_name
 name_ends:
-   adw RAM_TO_VRAM #(40 - 9 - 5)
+   adw RAM_TO_VRAM #(40 - 14)
    lda ST_DIR_INDEX
    cmp #24
    jne read_next_entry
