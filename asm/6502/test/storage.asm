@@ -34,11 +34,9 @@ read_next_byte:
    jsr screen_putc
    jmp read_next_byte
 eof:
-   lda #ST_CMD_CLOSE
-   jsr storage_write
+   ldx #OS_FILE_CLOSE
    lda file_handle
-   jsr storage_write
-   jsr storage_proceed
+   jsr OS_CALL
    jmp end
 
 end_with_error:
@@ -62,44 +60,6 @@ print_filename:
 end: 
    jmp end
       
-	
-	
-.proc storage_write
-   stx R0
-   
-@:
-   ldx ST_WRITE_ENABLE
-   bne @-
-   sta ST_WRITE_DATA
-   ldx #$FF
-   stx ST_WRITE_ENABLE
-
-   ldx R0   
-   rts
-.endp 
-
-.proc storage_read
-   stx R0
-   
-@:
-   ldx ST_READ_ENABLE
-   bne @-
-   lda ST_READ_DATA
-   ldx #$FF
-   stx ST_READ_ENABLE
-   ldx R0   
-   rts
-.endp
-
-.proc storage_proceed
-   sta ST_PROCEED
-@:
-   lda ST_STATUS
-   cmp #ST_STATUS_DONE
-   bne @-
-   rts
-.endp
-   
 .proc screen_putc
    sty R0
    ldy #0

@@ -183,6 +183,15 @@ read_byte:
    rts
 .endp
 
+.proc storage_file_close
+   tax
+   lda #ST_CMD_CLOSE
+   jsr storage_write
+   txa
+   jsr storage_write
+   jmp storage_proceed
+.endp
+
 .proc storage_write
    stx ROS0
 @:
