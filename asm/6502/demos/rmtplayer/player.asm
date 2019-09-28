@@ -132,17 +132,12 @@ read_xex_header:
    mwa xex_start song_text
    mwa xex_start DST_ADDR
    
-   ; use slow "carretero" method
-
-read_next_byte
-   jsr read_byte
-   bne eof
-   ldy #0
-   sta (DST_ADDR), y
-   cpw DST_ADDR xex_end
+   mwa xex_end SIZE
+   sbw SIZE xex_start
+   inw SIZE
+   
+   jsr read_block
    beq read_xex_header
-   inw DST_ADDR
-   jmp read_next_byte
    
 eof:
    lda file_handle
@@ -153,6 +148,13 @@ eof:
 
 .proc read_byte
    ldx #OS_FILE_READ_BYTE
+   lda file_handle
+   jsr OS_CALL
+   rts
+.endp
+
+.proc read_block
+   ldx #OS_FILE_READ_BLOCK
    lda file_handle
    jsr OS_CALL
    rts
