@@ -1,3 +1,8 @@
+; Max 256 entries 
+DIR_ENTRIES       = $6000 ; pointer to names
+DIR_ENTRIES_TYPES = $6200 ; type of each file, $FF marks end
+DIR_ENTRIES_NAMES = $6300 ; starting addres for names
+
 .proc build_path
    ldx #0
 copy_dirname:   
@@ -35,12 +40,26 @@ copy_done:
    rts
 .endp
 
-.proc list_files
+/*
    mwa DISPLAY_START VRAM_TO_RAM
    jsr lib_vram_to_ram
    
    adw RAM_TO_VRAM #40+2
 
+   cmp #ST_TYPE_FILE
+   beq copy_name
+   
+   lda #'['
+   sta (RAM_TO_VRAM), y
+   iny
+
+
+*/
+
+.proc list_files
+   mwa #0 file_index
+   mwa #DIR_ENTRIES_NAMES file_name
+   
    mwa #dirname SRC_ADDR
    lda #0
    ldx #OS_DIR_OPEN
@@ -48,7 +67,7 @@ copy_done:
    
    lda ST_DIR_HANDLE
    cmp #$FF
-   beq display_end
+   beq list_end
    
    mwa #0 ST_DIR_INDEX
    
@@ -56,44 +75,41 @@ read_next_entry:
    ldx #OS_DIR_READ
    jsr OS_CALL
 
+   ldx file_index
    lda ST_FILE_TYPE
-   cmp #$FF      
-   beq display_end
+   sta DIR_ENTRIES_TYPES, x
 
-   ldy #0
+   cmp #$FF      
+   beq list_end
+
+   txa
+   asl
+   tax
+   mwa file_name DIR_ENTRIES,x
+   mwa file_name DST_ADDR
+
    ldx #0
-   
-   cmp #ST_TYPE_FILE
-   beq copy_name
-   
-   lda #'['
-   sta (RAM_TO_VRAM), y
-   iny
-   
-copy_name:   
+   ldy #0   
+copy_name:
    lda ST_FILE_NAME, x
-   cmp #0
+   sta (DST_ADDR), y
+   inw DST_ADDR
+   
+   lda ST_FILE_NAME, x
    beq name_ends
-   sta (RAM_TO_VRAM), y
+
    inx
-   iny
-   cpy #40
    bne copy_name
 name_ends:
-   lda ST_FILE_TYPE
-   cmp #ST_TYPE_FILE
-   beq next_file
-   
-   lda #']'
-   sta (RAM_TO_VRAM), y
-   
-next_file:
-   adw RAM_TO_VRAM #40
-   lda ST_DIR_INDEX
-   cmp #20
-   bcc read_next_entry
-display_end:      
+   mwa DST_ADDR file_name
+   inc file_index
+   bne read_next_entry
+list_end:
+      
    rts
+
+file_index .byte 0
+file_name  .word 0
 
 .endp
 
