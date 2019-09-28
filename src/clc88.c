@@ -28,6 +28,7 @@ static void emulator_init(int argc, char *argv[]) {
 	for(int i=1; i<argc; i++) {
 		if (!strcmp(argv[i], "-M")) arg_monitor_enabled = TRUE;
 		else if (!strcmp(argv[i], "-m")) arg_monitor_stop_on_xex = TRUE;
+		else if (argv[i][0] == '-') i++;
 		else {
 			strcpy(xexfile, argv[i]);
 		}
@@ -53,7 +54,7 @@ void compy_init(int argc, char *argv[]) {
 	emulator_init(argc, argv);
 
 	screen_init();
-	storage_init();
+	storage_init(argc, argv);
 	machine_init();
 	sound_init();
 

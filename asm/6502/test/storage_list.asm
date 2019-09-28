@@ -100,7 +100,7 @@ end:
 vram_line .word 0
       
 dirname:
-   .by "./", 0
+   .by  0
    
 message_not_found:
    .by "Cannot open dir: ", 0   

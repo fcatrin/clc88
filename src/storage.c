@@ -51,6 +51,8 @@
 #define MAX_OPEN_FILES 128
 FILE *file_handles[MAX_OPEN_FILES];
 
+char root[FILENAME_MAX_SIZE];
+
 typedef struct dir_entry {
 	char *name;
 	unsigned size;
@@ -140,11 +142,23 @@ UINT8 storage_register_read(UINT8 index) {
 	return 0;
 }
 
+static void build_path(char *fullpath, char *path) {
+	strncpy(fullpath, root, FILENAME_MAX_SIZE);
+
+	if (path[0]) {
+		if (path[0] != '/') {
+			strcat(fullpath, "/");
+		}
+		strncat(fullpath, path, FILENAME_MAX_SIZE - strlen(fullpath));
+	}
+}
+
 static void cmd_storage_open() {
 	char filename[FILENAME_MAX_SIZE+1];
 	char *mode = (cmd[1] == 0) ? "rb":"wb";
 
-	strncpy(filename, (char *)(cmd+2), FILENAME_MAX_SIZE);
+	build_path(filename, (char *)(cmd+2));
+
 	LOGV(LOGTAG, "try open file %s mode %s", filename, mode);
 	FILE *file_handle = fopen(filename, mode);
 	if (!file_handle) {
@@ -266,11 +280,9 @@ static void cmd_read_dir() {
 	int mode = cmd[1];
 
 	char dirname[FILENAME_MAX_SIZE];
-	if (cmd[2]) {
-		strncpy(dirname, (char *)&cmd[2], FILENAME_MAX_SIZE);
-	} else {
-		strcpy(dirname, ".");
-	}
+	build_path(dirname, (char *)(&cmd[2]));
+
+	bool is_root = !strcmp(root, dirname);
 
 	struct dirent **namelist;
 	dir_entry *head = NULL;
@@ -280,8 +292,11 @@ static void cmd_read_dir() {
 		struct dirent *dirent = namelist[i];
 
 		if (!strcmp(dirent->d_name, ".")) continue;
-
-		if (!(mode & 1) && dirent->d_name[0] == '.' && strcmp(dirent->d_name, "..")) continue;
+		if (!strcmp(dirent->d_name, "..")) {
+			if (is_root) continue;
+		} else {
+			if (!(mode & 1) && dirent->d_name[0] == '.') continue;
+		}
 
 		dir_entry *entry = malloc(sizeof(dir_entry));
 		entry->name = strdup(dirent->d_name);
@@ -409,12 +424,22 @@ static void *processor_thread_function(void *data) {
 	return NULL;
 }
 
-void storage_init() {
+void storage_init(int argc, char *argv[]) {
 	processor_thread_running = TRUE;
 	int ret = pthread_create(&processor_thread, NULL, processor_thread_function, NULL);
 	if (ret) {
 		fprintf(stderr,"Error - pthread_create() return code: %d\n",ret);
 		exit(EXIT_FAILURE);
+	}
+
+	getcwd(root, FILENAME_MAX_SIZE);
+
+	for(int i=0; i<argc-1; i++) {
+		if (!strcmp(argv[i], "-storage")) {
+			strncpy(root, argv[i+1], FILENAME_MAX_SIZE);
+			int last_char = strlen(root)-1;
+			if (root[last_char] == '/') root[last_char] = 0;
+		}
 	}
 }
 
