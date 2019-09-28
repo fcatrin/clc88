@@ -194,34 +194,74 @@ read_byte:
 ; Read block (256 bytes max)
 ; in:  file_handle in A
 ; in:  destination addr in DST_ADDR
+; in:  max size in SIZE
 ; out: bytes read at SIZE (0 = error or not read)
 ; out: status in X
 
-   tax
+; internal: 
+;    ROS1 = file_handle
+;    ROS2 = bytes read block (word)
+;    ROS4 = bytes read total (word)
+
+   sta ROS1
+   mwa #0 ROS4
+   
+read_next_block   
+   mwa #0 ROS2
+   lda SIZE+1
+   jeq read_remaining_bytes  ; first read 256 bytes blocks then remaining bytes
+   
    lda #ST_CMD_READ_BLOCK
    jsr storage_write
-   txa
+   lda ROS1
    jsr storage_write
-   mwa #0 SIZE
    
    jsr storage_proceed
    jsr storage_read ; length of response. Ignored at this time
    jsr storage_read
    tax
-   cmp #ST_RET_SUCCESS
+   cpx #ST_RET_SUCCESS
    beq read_block
    rts
    
 read_block:   
    jsr storage_read
-   sta SIZE
+   sta ROS2
    ldy #0
 copy_block:   
    jsr storage_read
    sta (DST_ADDR), y
    iny
-   cpy SIZE
+   cpy ROS2
    bne copy_block
+   
+   lda ROS2
+   bne not_256
+   inc ROS3
+not_256:   
+   adw DST_ADDR ROS2
+   adw ROS4 ROS2
+   sbw SIZE ROS2
+   jmp read_next_block
+   
+read_remaining_bytes:
+
+   lda SIZE
+   beq no_more_bytes
+   
+read_next_byte:
+   lda ROS1
+   jsr storage_file_read_byte
+   bne no_more_bytes
+   
+   ldy #0
+   sta (DST_ADDR), y
+   inw DST_ADDR
+   inw ROS4
+   dec SIZE
+   bne read_next_byte
+   ldx #0
+no_more_bytes:   
    rts
 .endp
 

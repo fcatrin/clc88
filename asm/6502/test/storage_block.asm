@@ -22,17 +22,16 @@
    sta file_handle
    
 read_next_block:
-   lda file_handle
+   mwa #buffer DST_ADDR
+   mwa #$100 SIZE
    ldx #OS_FILE_READ_BLOCK
-   mwa buffer DST_ADDR
+   lda file_handle
    jsr OS_CALL
-
-   cpx #ST_RET_SUCCESS
    bne eof
 
    ldy #0
 copy_block
-   lda (DST_ADDR), y
+   lda buffer, y
    cmp #32
    bcc skip
    jsr screen_putc
