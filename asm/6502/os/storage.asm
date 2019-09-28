@@ -1,12 +1,19 @@
 .proc storage_dir_open
 ; Open Dir
+; in:  mode in A
+;      bit 0 - skip hidden files
+;      bit 1 - skip directories
+;      bit 2 - use mask at DST_ADDR
 ; in:  dirname at SRC_ADDR
 ; out: dir handle at STORAGE_DIR_HANDLE
 ; out: dir size   at STORAGE_DIR_SIZE
 
+   tax
    lda #ST_CMD_DIR_OPEN
    jsr storage_write
-   
+   txa
+   jsr storage_write ; mode
+
    ldy #0
 send_dirname:   
    lda (SRC_ADDR), y

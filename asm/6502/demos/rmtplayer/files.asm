@@ -38,8 +38,11 @@ copy_done:
 .proc list_files
    mwa DISPLAY_START VRAM_TO_RAM
    jsr lib_vram_to_ram
+   
+   adw RAM_TO_VRAM #40+2
 
    mwa #dirname SRC_ADDR
+   lda #0
    ldx #OS_DIR_OPEN
    jsr OS_CALL
    
@@ -58,15 +61,33 @@ read_next_entry:
    beq display_end
 
    ldy #0
+   ldx #0
+   
+   cmp #ST_TYPE_FILE
+   beq copy_name
+   
+   lda #'['
+   sta (RAM_TO_VRAM), y
+   iny
+   
 copy_name:   
-   lda ST_FILE_NAME, y
+   lda ST_FILE_NAME, x
    cmp #0
    beq name_ends
    sta (RAM_TO_VRAM), y
+   inx
    iny
    cpy #40
    bne copy_name
-name_ends:   
+name_ends:
+   lda ST_FILE_TYPE
+   cmp ST_TYPE_FILE
+   beq next_file
+   
+   lda #']'
+   sta (RAM_TO_VRAM), y
+   
+next_file:
    adw RAM_TO_VRAM #40
    lda ST_DIR_INDEX
    cmp #20
@@ -77,7 +98,7 @@ display_end:
 .endp
 
 dirname:
-   .byte '/', 0
+   .byte '/home/fcatrin', 0
    .rept 256
    .byte 0
    .endr

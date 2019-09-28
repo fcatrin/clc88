@@ -263,9 +263,11 @@ static void cmd_read_dir() {
 		return;
 	}
 
+	int mode = cmd[1];
+
 	char dirname[FILENAME_MAX_SIZE];
-	if (cmd[1]) {
-		strncpy(dirname, (char *)&cmd[1], FILENAME_MAX_SIZE);
+	if (cmd[2]) {
+		strncpy(dirname, (char *)&cmd[2], FILENAME_MAX_SIZE);
 	} else {
 		strcpy(dirname, ".");
 	}
@@ -277,11 +279,21 @@ static void cmd_read_dir() {
 	for (int i = 0; i < n; i++) {
 		struct dirent *dirent = namelist[i];
 
+		if (!strcmp(dirent->d_name, ".")) continue;
+
+		if (!(mode & 1) && dirent->d_name[0] == '.' && strcmp(dirent->d_name, "..")) continue;
+
 		dir_entry *entry = malloc(sizeof(dir_entry));
 		entry->name = strdup(dirent->d_name);
 		entry->next = NULL;
 
 		stat_dir_entry(dirname, entry);
+
+		if ((mode & 2) && entry->is_dir) {
+			free(entry);
+			continue;
+		}
+
 		if (head == NULL) {
 			head = entry;
 			dir_handles[dir_handle] = head;

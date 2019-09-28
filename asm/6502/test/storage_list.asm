@@ -15,6 +15,7 @@
    mwa RAM_TO_VRAM vram_line
    
    mwa #dirname SRC_ADDR
+   lda #0
    ldx #OS_DIR_OPEN
    jsr OS_CALL
 
