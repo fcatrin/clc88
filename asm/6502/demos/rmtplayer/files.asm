@@ -1,7 +1,7 @@
 ; Max 256 entries 
-DIR_ENTRIES       = $6000 ; pointer to names
-DIR_ENTRIES_TYPES = $6200 ; type of each file, $FF marks end
-DIR_ENTRIES_NAMES = $6300 ; starting addres for names
+DIR_ENTRIES       = $8000 ; pointer to names
+DIR_ENTRIES_TYPES = $8200 ; type of each file, $FF marks end
+DIR_ENTRIES_NAMES = $8300 ; starting addres for names
 
 .proc build_path
    ldx #0

@@ -25,7 +25,43 @@ start
 
    jsr update_selected_file
    
-   ldx #3
+loop
+   lda is_playing
+   beq skip_player
+
+acpapx1	lda #$ff				;parameter overwrite (sync line counter value)
+	clc
+acpapx2	adc #$ff				;parameter overwrite (sync line counter spacing)
+	cmp #156
+	bcc lop4
+	sbc #156
+lop4
+	sta acpapx1+1
+waipap
+	cmp VCOUNT					;vertical line counter synchro
+	bne waipap
+
+   lda #10
+   sta VCOLOR0
+	jsr RASTERMUSICTRACKER+3	;1 play
+
+   lda #0
+   sta VCOLOR0
+
+skip_player:   
+   jsr process_keyboard
+
+	jmp loop
+
+stop_player:
+   jmp RASTERMUSICTRACKER+9
+
+tabpp  dta 156,78,52,39			;line counter spacing table for instrument speed from 1 to 4
+
+.proc start_song
+   jsr stop_player
+   
+   ldx selected_file
    jsr file_name_get
 
    jsr load_song
@@ -46,23 +82,35 @@ next_song_char:
 song_text_done:
 
 ;
-	ldx #<MODUL					;low byte of RMT module to X reg
-	ldy #>MODUL					;hi byte of RMT module to Y reg
-	lda #0						;starting song line 0-255 to A reg
-	jsr RASTERMUSICTRACKER		;Init
+   ldx #<MODUL             ;low byte of RMT module to X reg
+   ldy #>MODUL             ;hi byte of RMT module to Y reg
+   lda #0                  ;starting song line 0-255 to A reg
+   jsr RASTERMUSICTRACKER     ;Init
 ;Init returns instrument speed (1..4 => from 1/screen to 4/screen)
-	tay
-	lda tabpp-1,y
-	sta acpapx2+1				;sync counter spacing
-	lda #16+0
-	sta acpapx1+1				;sync counter init
+   tay
+   lda tabpp-1,y
+   sta acpapx2+1           ;sync counter spacing
+   lda #16+0
+   sta acpapx1+1           ;sync counter init
 
+   adw RAM_TO_VRAM #40
+
+   mwa mono_label SRC_ADDR
    lda v_tracks
-   pha
-   ora #'0'
+   cmp #4
+   beq display_mono
+   mwa stereo_label SRC_ADDR
+display_mono:
    ldy #0
+copy_type_label:   
+   lda (SRC_ADDR), y
    sta (RAM_TO_VRAM), y
-   pla
+   beq setup_stereo_pokey
+   iny
+   bne copy_type_label
+   
+setup_stereo_pokey:   
+   lda v_tracks
    cmp #4
    beq set_pokey_mono
    lda #$55
@@ -77,40 +125,10 @@ set_pokey_mono:
    sta POKEY1_PANCTL
 set_pokey_done:
 
-loop
-acpapx1	lda #$ff				;parameter overwrite (sync line counter value)
-	clc
-acpapx2	adc #$ff				;parameter overwrite (sync line counter spacing)
-	cmp #156
-	bcc lop4
-	sbc #156
-lop4
-	sta acpapx1+1
-waipap
-	cmp VCOUNT					;vertical line counter synchro
-	bne waipap
-;
-   lda #10
-   sta VCOLOR0
-	jsr RASTERMUSICTRACKER+3	;1 play
-
-   lda #0
-   sta VCOLOR0
-   
-   jsr process_keyboard
-;
-	jmp loop					;no => loop
-;
-stopmusic
-;
-	jsr RASTERMUSICTRACKER+9	;all sounds off
-halt:
-   jmp halt
-;
-;
-tabpp  dta 156,78,52,39			;line counter spacing table for instrument speed from 1 to 4
-;
-;
+   lda #1
+   sta is_playing
+   rts
+.endp
 
 .proc load_song
    jsr file_open_read
@@ -184,13 +202,10 @@ key_down:
    jmp update_selected_file
    
 key_enter:
-   lda selected_file
-   jmp aload_song
+   jmp start_song
    
 last_key .byte 0
 .endp
-
-aload_song: rts
 
 .proc update_selected_file
    lda selected_file
@@ -205,6 +220,10 @@ xex_end:
    .word 0
 song_text:
    .word 0
+   
+is_playing:   .byte 0
+stereo_label: .by 'STEREO', 0
+mono_label:   .by 'MONO  ', 0
    
    icl 'files.asm'
    icl '../../os/stdlib.asm'
