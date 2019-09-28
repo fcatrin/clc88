@@ -320,24 +320,24 @@ static void cmd_get_dir_entry() {
 		entry = entry->next;
 	}
 
-	ret[0] = 0;
-	ret[1] = RET_SUCCESS;
-	ret[2] = entry->is_dir ? 1 : 0;
-	ret[3] = entry->size & 0xFF;
-	ret[4] = (entry->size & 0x0000FF00) >> 8;
-	ret[5] = (entry->size & 0x00FF0000) >> 16;
-	ret[6] = (entry->size & 0xFF000000) >> 24;
-	strcpy((char *)&ret[7], entry->date);
-	strcpy((char *)&ret[15], entry->time);
-	strcpy((char *)&ret[21], entry->name);
+	if (index == 0) {
+		ret[0] = 0;
+		ret[1] = RET_SUCCESS;
+		ret[2] = entry->is_dir ? 1 : 0;
+		ret[3] = entry->size & 0xFF;
+		ret[4] = (entry->size & 0x0000FF00) >> 8;
+		ret[5] = (entry->size & 0x00FF0000) >> 16;
+		ret[6] = (entry->size & 0xFF000000) >> 24;
+		strcpy((char *)&ret[7], entry->date);
+		strcpy((char *)&ret[15], entry->time);
+		strcpy((char *)&ret[21], entry->name);
 
-	LOGV(LOGTAG, "get dir entry %s %s %s %s %d", entry->name, BOOLSTR(entry->is_dir),
-			entry->date, entry->time, entry->size);
-	for(int i=0; i<21 + strlen(entry->name); i++) {
-		printf("%02X ", ret[i]);
+		LOGV(LOGTAG, "get dir entry %s %s %s %s %d", entry->name, BOOLSTR(entry->is_dir),
+				entry->date, entry->time, entry->size);
+	} else {
+		ret[0] = 1;
+		ret[1] = ERR_EOF;
 	}
-	printf("\n");
-
 }
 
 static void cmd_close_dir() {
