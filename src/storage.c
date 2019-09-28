@@ -436,7 +436,8 @@ void storage_init(int argc, char *argv[]) {
 
 	for(int i=0; i<argc-1; i++) {
 		if (!strcmp(argv[i], "-storage")) {
-			strncpy(root, argv[i+1], FILENAME_MAX_SIZE);
+			realpath(argv[i+1], root);
+
 			int last_char = strlen(root)-1;
 			if (root[last_char] == '/') root[last_char] = 0;
 		}

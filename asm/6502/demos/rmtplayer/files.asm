@@ -81,7 +81,7 @@ copy_name:
    bne copy_name
 name_ends:
    lda ST_FILE_TYPE
-   cmp ST_TYPE_FILE
+   cmp #ST_TYPE_FILE
    beq next_file
    
    lda #']'
@@ -98,7 +98,6 @@ display_end:
 .endp
 
 dirname:
-   .byte '/home/fcatrin', 0
    .rept 256
    .byte 0
    .endr
