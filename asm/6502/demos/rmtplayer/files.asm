@@ -135,6 +135,7 @@ copy_loop:
    tax
    
    mwa DIR_ENTRIES,x SRC_ADDR
+   mwa RAM_TO_VRAM   DST_ADDR
    
    ldy #0
    
@@ -143,13 +144,13 @@ copy_loop:
    beq copy_name
    
    lda #'['
-   sta (RAM_TO_VRAM), y
+   sta (DST_ADDR), y
    inw DST_ADDR
    
 copy_name:
    lda (SRC_ADDR), y
    beq copy_name_done
-   sta (RAM_TO_VRAM), y
+   sta (DST_ADDR), y
    iny
    bne copy_name
    
@@ -158,9 +159,8 @@ copy_name_done:
    cmp #ST_TYPE_FILE
    beq next_line
    
-   iny
    lda #']'
-   sta (RAM_TO_VRAM), y
+   sta (DST_ADDR), y
    
 next_line:
    inc file_index
