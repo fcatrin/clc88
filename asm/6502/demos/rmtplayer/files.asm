@@ -101,7 +101,7 @@ file_name  .word 0
    sta file_index
    mva #0 line
 
-   ldx #2
+   ldx #1
    ldy #1
    jsr screen_position   
    
@@ -122,6 +122,7 @@ copy_loop:
    mwa RAM_TO_VRAM   DST_ADDR
    
    ldy #0
+   sty col
    
    lda file_type
    cmp #ST_TYPE_FILE
@@ -130,17 +131,25 @@ copy_loop:
    lda #'['
    sta (DST_ADDR), y
    inw DST_ADDR
+   inc col
    
 copy_name:
    lda (SRC_ADDR), y
    beq copy_name_done
    sta (DST_ADDR), y
    iny
+   inc col
+   lda col
+   cmp #23   
    bne copy_name
    
 copy_name_done:
    lda file_type
    cmp #ST_TYPE_FILE
+   beq next_line
+   
+   lda col
+   cmp #23   
    beq next_line
    
    lda #']'
@@ -159,6 +168,7 @@ next_line:
 display_end:
    rts
    
+col        .byte 0
 line       .byte 0
 file_index .byte 0
 file_type  .word 0
@@ -186,33 +196,15 @@ no_erase_row:
 
 .proc paint_file_row
    sta R0
-   jsr line_to_offset
    
-   mwa ATTRIB_START VRAM_TO_RAM
-   jsr lib_vram_to_ram
-   adw RAM_TO_VRAM #40
-   adw RAM_TO_VRAM line_offset
+   stx screen_margin_top
+   inx
+   stx screen_margin_bottom
+   mva #1  screen_margin_left
+   mva #24 screen_margin_right
    
-   ldy #2
    lda R0
-next_attrib:   
-   sta (RAM_TO_VRAM), y
-   iny
-   cpy #38
-   bne next_attrib
-   rts
-.endp
-
-.proc line_to_offset
-   mwa #0 line_offset
-   jmp while
-next_mul:   
-   adw line_offset #40 ; forgive me lord!
-while:
-   dex   
-   cpx #$FF
-   bne next_mul
-   rts
+   jmp screen_fill_attrib
 .endp
 
 .proc file_name_get

@@ -85,11 +85,11 @@ tabpp  dta 156,78,52,39			;line counter spacing table for instrument speed from 
 
    jsr load_song
    
-   ; print song name at position 2, 22 with margins (2, 20) - (38, 22)
+   ; print song name at position 1, 22 with margins (1, 20) - (39, 22)
    
-   lda #2
+   lda #1
    sta screen_margin_left
-   lda #38
+   lda #39
    sta screen_margin_right
 
    lda #20
@@ -99,12 +99,12 @@ tabpp  dta 156,78,52,39			;line counter spacing table for instrument speed from 
    
    jsr screen_clear
    
-   ldx #2
+   ldx #1
    ldy #20
    mwa #song_label SRC_ADDR
    jsr screen_print_at
    
-   ldx #8
+   ldx #7
    ldy #20
    mwa song_text SRC_ADDR
    jsr screen_print_at
@@ -128,7 +128,7 @@ tabpp  dta 156,78,52,39			;line counter spacing table for instrument speed from 
    seq
    mwa #stereo_label SRC_ADDR
    
-   ldx #2
+   ldx #1
    ldy #22
    jsr screen_position
    jsr screen_print
