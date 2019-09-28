@@ -270,28 +270,31 @@ static void cmd_read_dir() {
 		strcpy(dirname, ".");
 	}
 
+	struct dirent **namelist;
 	dir_entry *head = NULL;
 	unsigned entries = 0;
-	DIR *dir = opendir(dirname);
-	if (dir) {
-		struct dirent *dirent;
-		while ((dirent = readdir(dir))!=NULL) {
-			dir_entry *entry = malloc(sizeof(dir_entry));
-			entry->name = strdup(dirent->d_name);
-			entry->next = NULL;
+	int n = scandir(dirname, &namelist, 0, alphasort);
+	for (int i = 0; i < n; i++) {
+		struct dirent *dirent = namelist[i];
 
-			stat_dir_entry(dirname, entry);
-			if (head == NULL) {
-				head = entry;
-				dir_handles[dir_handle] = head;
-			} else {
-				head->next = entry;
-				head = entry;
-			}
-			entries++;
+		dir_entry *entry = malloc(sizeof(dir_entry));
+		entry->name = strdup(dirent->d_name);
+		entry->next = NULL;
+
+		stat_dir_entry(dirname, entry);
+		if (head == NULL) {
+			head = entry;
+			dir_handles[dir_handle] = head;
+		} else {
+			head->next = entry;
+			head = entry;
 		}
+		entries++;
+
+		free(dirent);
 	}
-	closedir(dir);
+	free(namelist);
+
 	ret[0] = 4;
 	ret[1] = RET_SUCCESS;
 	ret[2] = dir_handle;
