@@ -197,6 +197,7 @@ no_erase_row:
 .proc paint_file_row
    sta R0
    
+   inx
    stx screen_margin_top
    inx
    stx screen_margin_bottom

@@ -80,6 +80,12 @@ tabpp  dta 156,78,52,39			;line counter spacing table for instrument speed from 
 .proc start_song
    jsr stop_player
    
+   jsr clear_song_info
+   ldx #12
+   ldy #21
+   mwa #label_loading SRC_ADDR
+   jsr screen_print_at 
+   
    ldx selected_file
    jsr file_name_get
 
@@ -87,21 +93,11 @@ tabpp  dta 156,78,52,39			;line counter spacing table for instrument speed from 
    
    ; print song name at position 1, 22 with margins (1, 20) - (39, 22)
    
-   lda #1
-   sta screen_margin_left
-   lda #39
-   sta screen_margin_right
-
-   lda #20
-   sta screen_margin_top
-   lda #22
-   sta screen_margin_bottom
-   
-   jsr screen_clear
+   jsr clear_song_info
    
    ldx #1
    ldy #20
-   mwa #song_label SRC_ADDR
+   mwa #label_song SRC_ADDR
    jsr screen_print_at
    
    ldx #7
@@ -122,11 +118,11 @@ tabpp  dta 156,78,52,39			;line counter spacing table for instrument speed from 
    sta acpapx1+1           ;sync counter init
 
 ; Display MONO / STEREO label
-   mwa #mono_label SRC_ADDR
+   mwa #label_mono SRC_ADDR
    lda v_tracks
    cmp #4
    seq
-   mwa #stereo_label SRC_ADDR
+   mwa #label_stereo SRC_ADDR
    
    ldx #1
    ldy #22
@@ -154,6 +150,19 @@ set_pokey_done:
    rts
 .endp
 
+.proc clear_song_info
+   lda #1
+   sta screen_margin_left
+   lda #39
+   sta screen_margin_right
+
+   lda #20
+   sta screen_margin_top
+   lda #24
+   sta screen_margin_bottom
+   
+   jmp screen_clear
+.endp
 
 .proc process_keyboard
    jsr keyb_read
@@ -225,9 +234,11 @@ song_text:
    .word 0
    
 is_playing:   .byte 0
-song_label:   .by 'SONG: ', 0
-stereo_label: .by 'TYPE: STEREO', 0
-mono_label:   .by 'TYPE: MONO  ', 0
+label_song:   .by 'SONG: ', 0
+label_stereo: .by 'TYPE: STEREO', 0
+label_mono:   .by 'TYPE: MONO  ', 0
+
+label_loading .by 'Loading song...', 0
 
 player_info_0 .by 'RMT player by', 0
 player_info_1 .by 'Radek Sterba', 0
