@@ -19,9 +19,11 @@ start
    ldx #OS_SET_VIDEO_MODE
    jsr OS_CALL
 	
-	mwa DISPLAY_START VRAM_TO_RAM
-   jsr lib_vram_to_ram
+   jsr list_files
    
+   jmp halt
+   
+   /*
    jsr load_song
    mwa song_text SRC_ADDR
    ldy #0
@@ -31,7 +33,7 @@ next_song_char:
    beq song_text_done
    iny
    bne next_song_char
-   
+   */
 song_text_done:
 
 ;
@@ -141,40 +143,6 @@ eof:
    
 .endp
 
-.proc build_path
-   ldx #0
-copy_dirname:   
-   lda dirname, x
-   beq add_filename
-   sta path,x
-   inx
-   bne copy_dirname
-   
-add_filename:   
-   lda #'/'
-   sta path,x
-   inx
-   
-   txa
-   clc
-   adc #<path
-   sta DST_ADDR
-   lda #>path
-   adc #0
-   sta DST_ADDR+1
-   
-   ldx #0
-copy_filename:
-   lda filename,x
-   sta path,x
-   beq copy_done
-   inx
-   cpx #128
-   bne copy_filename
-copy_done:
-   rts
-.endp
-
 xex_start:
    .word 0
 xex_end:
@@ -182,20 +150,5 @@ xex_end:
 song_text:
    .word 0
    
-dirname:
-   .rept 256
-   .byte 0
-   .endr
-filename:
-   .rept 128
-   .byte 0
-   .endr
-path:
-   .rept 128+256
-   .byte 0
-   .endr
-   
-test_path:
-   .byte '/home/fcatrin/git/clc88/asm/6502/demos/rmt/songs/commando.rmt', 0
-   
+   icl 'files.asm'
    icl '../../os/stdlib.asm'

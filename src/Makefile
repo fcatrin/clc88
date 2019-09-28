@@ -105,6 +105,7 @@ $(ASMDIR)/%.xex: $(ASMDIR)/%.asm $(ASMDIR)/6502/os/symbols.asm
 $(ASMDIR)/6502/os/6502os.xex : $(ASMDIR)/6502/os/graphics.asm $(ASMDIR)/6502/os/storage.asm 	
 $(ASMDIR)/6502/test/memopad.xex: $(ASMDIR)/6502/os/keyboard.asm
 $(ASMDIR)/6502/demos/rmt/music.xex: $(ASMDIR)/6502/demos/rmt/rmtplayr.asm
+$(ASMDIR)/6502/demos/rmtplayer/player.xex: $(ASMDIR)/6502/demos/rmtplayer/files.asm
 
 $(TARGET): $(OBJS)
 	$(CC) -o $@ $(LDFLAGS) $(OBJS) $(LIBS)
