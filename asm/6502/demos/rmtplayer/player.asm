@@ -19,6 +19,9 @@ start
    ldx #OS_SET_VIDEO_MODE
    jsr OS_CALL
 	
+	jsr display_credits
+	
+	; paint Song Info area
 	mva #0  screen_margin_left
 	mva #40 screen_margin_right
 	mva #19 screen_margin_top
@@ -26,6 +29,14 @@ start
 	
 	lda #$52
 	jsr screen_fill_attrib
+
+   mva #25  screen_margin_left
+   mva #40 screen_margin_right
+   mva #0 screen_margin_top
+   mva #19 screen_margin_bottom
+   
+   lda #$1A
+   jsr screen_fill_attrib
 	
    jsr list_files
    lda #0
@@ -180,6 +191,29 @@ key_enter:
 last_key .byte 0
 .endp
 
+.proc display_credits
+next_info_string   
+   lda info_string_ndx
+   asl
+   tax
+   mwa player_info_strings,x SRC_ADDR
+   lda SRC_ADDR
+   ora SRC_ADDR+1
+   sne
+   rts
+
+   ldx info_string_ndx
+   lda player_info_pos_y, x
+   tay
+   lda player_info_pos_x, x
+   tax
+   jsr screen_print_at
+
+   inc info_string_ndx   
+   jmp next_info_string
+info_string_ndx .byte 0
+.endp
+
 .proc update_selected_file
    lda selected_file
    jmp display_file_row
@@ -194,6 +228,16 @@ is_playing:   .byte 0
 song_label:   .by 'SONG: ', 0
 stereo_label: .by 'TYPE: STEREO', 0
 mono_label:   .by 'TYPE: MONO  ', 0
+
+player_info_0 .by 'RMT player by', 0
+player_info_1 .by 'Radek Sterba', 0
+player_info_2 .by 'Raster/C.P.U.', 0
+player_info_3 .by 'CLC88 port by', 0
+player_info_4 .by 'Franco Catrin', 0
+
+player_info_strings .word  player_info_0, player_info_1, player_info_2, player_info_3, player_info_4, 0
+player_info_pos_x .byte 26, 26, 26, 26, 26
+player_info_pos_y .byte 6, 7, 8, 10, 11
    
    icl 'files.asm'
    icl 'loader.asm'

@@ -40,22 +40,6 @@ copy_done:
    rts
 .endp
 
-/*
-   mwa DISPLAY_START VRAM_TO_RAM
-   jsr lib_vram_to_ram
-   
-   adw RAM_TO_VRAM #40+2
-
-   cmp #ST_TYPE_FILE
-   beq copy_name
-   
-   lda #'['
-   sta (RAM_TO_VRAM), y
-   iny
-
-
-*/
-
 .proc list_files
    mwa #0 file_index
    mwa #DIR_ENTRIES_NAMES file_name
