@@ -50,8 +50,19 @@ lib_vram_set_bytes:
 .endp
 
 .proc screen_position
+   mwa DISPLAY_START VRAM_TO_RAM
+   jmp screen_position_offset
+.endp
+
+.proc screen_position_attrib
+   mwa ATTRIB_START VRAM_TO_RAM
+   jmp screen_position_offset
+.endp
+
+.proc screen_position_offset
    stx screen_pos_x
    sty screen_pos_y
+
    mwa #0 screen_offset
    cpy #0
    beq calc_x
@@ -68,9 +79,7 @@ calc_x:
    scc
    inc screen_offset+1
   
-   mwa DISPLAY_START VRAM_TO_RAM
    jsr lib_vram_to_ram
-   
    adw RAM_TO_VRAM screen_offset
    rts
 screen_offset: .word 0   
@@ -120,38 +129,51 @@ offset_string .word 0
 
 .proc screen_clear
    lda #0
-   sta screen_fill_byte
    jmp screen_fill
 .endp
 
 .proc screen_fill
+   sta screen_fill_byte
    ldx screen_margin_left
    ldy screen_margin_top
-   sty clear_y
    jsr screen_position
+   jmp screen_fill_internal
+.endp
+
+.proc screen_fill_attrib
+   sta screen_fill_byte
+   ldx screen_margin_left
+   ldy screen_margin_top
+   jsr screen_position_attrib
+   jmp screen_fill_internal
+.endp
+
+.local screen_fill_internal
+   lda screen_margin_top
+   sta fill_y
    
-clear_next_line:   
+fill_next_line:   
    ldx screen_margin_left
    ldy #0
    lda screen_fill_byte
-clear_line:   
+fill_line:   
    sta (RAM_TO_VRAM), y
    iny
    inx
    cpx screen_margin_right
-   bne clear_line
+   bne fill_line
 
-   ldx clear_y
+   ldx fill_y
    inx
-   stx clear_y
+   stx fill_y
    cpx screen_margin_bottom 
    sne
    rts
    
    adw RAM_TO_VRAM #40
-   jmp clear_next_line
-clear_y: .byte 0
-.endp
+   jmp fill_next_line
+fill_y: .byte 0
+.endl
 
 screen_fill_byte .byte 0
 

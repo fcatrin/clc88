@@ -166,7 +166,7 @@ next_line:
    inc file_index
    inc line
    lda line
-   cmp #20
+   cmp #17
    beq display_end
    
    adw RAM_TO_VRAM #40

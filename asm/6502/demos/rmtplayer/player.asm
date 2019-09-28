@@ -19,6 +19,14 @@ start
    ldx #OS_SET_VIDEO_MODE
    jsr OS_CALL
 	
+	mva #0  screen_margin_left
+	mva #40 screen_margin_right
+	mva #19 screen_margin_top
+	mva #24 screen_margin_bottom
+	
+	lda #$52
+	jsr screen_fill_attrib
+	
    jsr list_files
    lda #0
    jsr display_files
