@@ -17,6 +17,10 @@
 ;* 3. Because of RMTplayer provides a lot of effects, it spent a lot of CPU time.
 ;*
 
+; Port to CLC88 by Franco Catrin, September 2019
+; - Added support for not-hardcoded 4-8 tracks
+; - Changed POKEY registers from fixed addresses to labels
+
 TRACKS		equ 8
 
 ;*
