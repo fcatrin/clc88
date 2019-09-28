@@ -65,23 +65,32 @@ tabpp  dta 156,78,52,39			;line counter spacing table for instrument speed from 
    jsr file_name_get
 
    jsr load_song
+   
+   ; print song name at position 2, 22 with margins (2, 20) - (38, 22)
+   
+   lda #2
+   sta screen_margin_left
+   lda #38
+   sta screen_margin_right
+
+   lda #20
+   sta screen_margin_top
+   lda #22
+   sta screen_margin_bottom
+   
+   jsr screen_clear
+   
+   ldx #2
+   ldy #20
+   mwa #song_label SRC_ADDR
+   jsr screen_print_at
+   
+   ldx #8
+   ldy #20
    mwa song_text SRC_ADDR
+   jsr screen_print_at
    
-   mwa DISPLAY_START VRAM_TO_RAM
-   jsr lib_vram_to_ram
-   adw RAM_TO_VRAM #20*40+2
    
-   ldy #0
-next_song_char:   
-   lda (SRC_ADDR), y
-   sta (RAM_TO_VRAM), y
-   beq song_text_done
-   iny
-   bne next_song_char
-
-song_text_done:
-
-;
    ldx #<MODUL             ;low byte of RMT module to X reg
    ldy #>MODUL             ;hi byte of RMT module to Y reg
    lda #0                  ;starting song line 0-255 to A reg
@@ -93,21 +102,17 @@ song_text_done:
    lda #16+0
    sta acpapx1+1           ;sync counter init
 
-   adw RAM_TO_VRAM #40
-
-   mwa mono_label SRC_ADDR
+; Display MONO / STEREO label
+   mwa #mono_label SRC_ADDR
    lda v_tracks
    cmp #4
-   beq display_mono
-   mwa stereo_label SRC_ADDR
-display_mono:
-   ldy #0
-copy_type_label:   
-   lda (SRC_ADDR), y
-   sta (RAM_TO_VRAM), y
-   beq setup_stereo_pokey
-   iny
-   bne copy_type_label
+   seq
+   mwa #stereo_label SRC_ADDR
+   
+   ldx #2
+   ldy #22
+   jsr screen_position
+   jsr screen_print
    
 setup_stereo_pokey:   
    lda v_tracks
@@ -178,8 +183,9 @@ song_text:
    .word 0
    
 is_playing:   .byte 0
-stereo_label: .by 'STEREO', 0
-mono_label:   .by 'MONO  ', 0
+song_label:   .by 'SONG: ', 0
+stereo_label: .by 'TYPE: STEREO', 0
+mono_label:   .by 'TYPE: MONO  ', 0
    
    icl 'files.asm'
    icl 'loader.asm'

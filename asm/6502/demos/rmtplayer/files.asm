@@ -116,11 +116,10 @@ file_name  .word 0
 .proc display_files
    sta file_index
    mva #0 line
-   
-   mwa DISPLAY_START VRAM_TO_RAM
-   jsr lib_vram_to_ram
-   
-   adw RAM_TO_VRAM #40+2
+
+   ldx #2
+   ldy #1
+   jsr screen_position   
    
 copy_loop:   
    lda file_index
@@ -136,7 +135,6 @@ copy_loop:
    tax
    
    mwa DIR_ENTRIES,x SRC_ADDR
-   mwa RAM_TO_VRAM DST_ADDR
    
    ldy #0
    
@@ -145,13 +143,13 @@ copy_loop:
    beq copy_name
    
    lda #'['
-   sta (DST_ADDR), y
+   sta (RAM_TO_VRAM), y
    inw DST_ADDR
    
 copy_name:
    lda (SRC_ADDR), y
    beq copy_name_done
-   sta (DST_ADDR), y
+   sta (RAM_TO_VRAM), y
    iny
    bne copy_name
    
@@ -162,7 +160,7 @@ copy_name_done:
    
    iny
    lda #']'
-   sta (DST_ADDR), y
+   sta (RAM_TO_VRAM), y
    
 next_line:
    inc file_index

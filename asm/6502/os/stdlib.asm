@@ -49,4 +49,119 @@ lib_vram_set_bytes:
    rts
 .endp
 
+.proc screen_position
+   stx screen_pos_x
+   sty screen_pos_y
+   mwa #0 screen_offset
+   cpy #0
+   beq calc_x
+calc_y:   
+   adw screen_offset #40
+   dey
+   bne calc_y
+calc_x:
+
+   txa
+   clc
+   adc screen_offset
+   sta screen_offset
+   scc
+   inc screen_offset+1
+  
+   mwa DISPLAY_START VRAM_TO_RAM
+   jsr lib_vram_to_ram
+   
+   adw RAM_TO_VRAM screen_offset
+   rts
+screen_offset: .word 0   
+.endp
+
+.proc screen_print_at
+   jsr screen_position
+   jmp screen_print
+.endp
+
+.proc screen_print
+   lda #0
+   sta offset_string
+   sta offset_vram
+next_char:
+   ldy offset_string
+   lda (SRC_ADDR), y
+   beq print_end
+   
+   ldy offset_vram
+   sta (RAM_TO_VRAM), y
+   inc offset_vram
+   inc offset_string
+   
+   inc screen_pos_x         ; check right margin for line wrap / stop
+   lda screen_pos_x
+   cmp screen_margin_right
+   bne next_char
+   
+   lda screen_line_no_wrap  ; right margin reached. Stop if no wrap
+   bne print_end
+
+   inc screen_pos_y         ; check bottom margin 
+   ldy screen_pos_y
+   cpy screen_margin_bottom
+   beq print_end
+   
+   ldx screen_margin_left   ; recalculate vram address for next line inside margins
+   jsr screen_position
+   mva #0 offset_vram
+   beq next_char
+print_end
+   rts
+offset_vram   .word 0
+offset_string .word 0    
+.endp
+
+.proc screen_clear
+   lda #0
+   sta screen_fill_byte
+   jmp screen_fill
+.endp
+
+.proc screen_fill
+   ldx screen_margin_left
+   ldy screen_margin_top
+   sty clear_y
+   jsr screen_position
+   
+clear_next_line:   
+   ldx screen_margin_left
+   ldy #0
+   lda screen_fill_byte
+clear_line:   
+   sta (RAM_TO_VRAM), y
+   iny
+   inx
+   cpx screen_margin_right
+   bne clear_line
+
+   ldx clear_y
+   inx
+   stx clear_y
+   cpx screen_margin_bottom 
+   sne
+   rts
+   
+   adw RAM_TO_VRAM #40
+   jmp clear_next_line
+clear_y: .byte 0
+.endp
+
+screen_fill_byte .byte 0
+
+screen_line_no_wrap:  .byte 0
+screen_margin_left:   .byte 0
+screen_margin_right:  .byte 0
+screen_margin_top:    .byte 0
+screen_margin_bottom: .byte 0
+
+screen_pos_x:  .byte 0
+screen_pos_y:  .byte 0
+
 file_handle: .byte 0

@@ -99,7 +99,7 @@ $(OBJDIR)/%.o: %.c
 	@mkdir -p $(dir $@) 2> /dev/null 
 	$(CC) -c -o $@ $(DEFS) -I. $(CFLAGS) $<
 
-$(ASMDIR)/%.xex: $(ASMDIR)/%.asm $(ASMDIR)/6502/os/symbols.asm
+$(ASMDIR)/%.xex: $(ASMDIR)/%.asm $(ASMDIR)/6502/os/symbols.asm $(ASMDIR)/6502/os/stdlib.asm
 	mads $< -l -s -o:$@
 	
 $(ASMDIR)/6502/os/6502os.xex : $(ASMDIR)/6502/os/graphics.asm $(ASMDIR)/6502/os/storage.asm 	
