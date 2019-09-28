@@ -15,18 +15,10 @@
    
 ; Call command to open file
    mwa #filename SRC_ADDR
-   lda #ST_MODE_READ
-   ldx #OS_FILE_OPEN
-   jsr OS_CALL
-   
-   sta file_handle
+   jsr file_open_read
    
 read_next_byte:   
-   lda file_handle
-   ldx #OS_FILE_READ_BYTE
-   jsr OS_CALL
-   
-   cpx #ST_RET_SUCCESS
+   jsr file_read_byte
    bne eof
    
    cmp #32
@@ -34,9 +26,7 @@ read_next_byte:
    jsr screen_putc
    jmp read_next_byte
 eof:
-   ldx #OS_FILE_CLOSE
-   lda file_handle
-   jsr OS_CALL
+   jsr file_close
    jmp end
 
 end_with_error:
@@ -68,9 +58,6 @@ end:
    ldy R0
    rts
 .endp  
-   
-file_handle:
-   .byte 0
    
 filename:
    .by "../asm/6502/test/storage.asm", 0

@@ -101,10 +101,7 @@ tabpp  dta 156,78,52,39			;line counter spacing table for instrument speed from 
 
 .proc load_song
    mwa #test_path SRC_ADDR
-   lda #ST_MODE_READ
-   ldx #OS_FILE_OPEN
-   jsr OS_CALL
-   sta file_handle
+   jsr file_open_read
    cmp #$FF
    bne read_xex_header
    lda #$4F ; bright border on error
@@ -112,20 +109,20 @@ tabpp  dta 156,78,52,39			;line counter spacing table for instrument speed from 
 halt: jmp halt
 
 read_xex_header:
-   jsr read_byte           ; read start address skipping $FFFF values
+   jsr file_read_byte           ; read start address skipping $FFFF values
    bne eof
    sta xex_start
-   jsr read_byte
+   jsr file_read_byte
    bne eof
    sta xex_start+1
    and xex_start
    cmp #$FF
    beq read_xex_header
    
-   jsr read_byte
+   jsr file_read_byte
    bne eof
    sta xex_end
-   jsr read_byte
+   jsr file_read_byte
    bne eof
    sta xex_end+1
    
@@ -136,28 +133,12 @@ read_xex_header:
    sbw SIZE xex_start
    inw SIZE
    
-   jsr read_block
+   jsr file_read_block
    beq read_xex_header
    
 eof:
-   lda file_handle
-   ldx #OS_FILE_CLOSE
-   jsr OS_CALL 
+   jmp file_close 
    
-.endp
-
-.proc read_byte
-   ldx #OS_FILE_READ_BYTE
-   lda file_handle
-   jsr OS_CALL
-   rts
-.endp
-
-.proc read_block
-   ldx #OS_FILE_READ_BLOCK
-   lda file_handle
-   jsr OS_CALL
-   rts
 .endp
 
 .proc build_path
@@ -194,8 +175,6 @@ copy_done:
    rts
 .endp
 
-file_handle:
-   .byte 0
 xex_start:
    .word 0
 xex_end:

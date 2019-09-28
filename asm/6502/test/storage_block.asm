@@ -24,9 +24,7 @@
 read_next_block:
    mwa #buffer DST_ADDR
    mwa #$100 SIZE
-   ldx #OS_FILE_READ_BLOCK
-   lda file_handle
-   jsr OS_CALL
+   jsr file_read_block
    bne eof
 
    ldy #0
@@ -42,9 +40,7 @@ skip:
    jmp read_next_block
    
 eof:
-   ldx #OS_FILE_CLOSE
-   lda file_handle
-   jsr OS_CALL
+   jsr file_close
    jmp end
 
 end_with_error:
@@ -78,9 +74,7 @@ end:
    rts
 .endp  
    
-file_handle:
-   .byte 0
-   
+ 
 buffer:
    .rept 256
    .byte 0
