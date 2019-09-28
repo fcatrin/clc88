@@ -113,6 +113,75 @@ file_name  .word 0
 
 .endp
 
+.proc display_files
+   sta file_index
+   mva #0 line
+   
+   mwa DISPLAY_START VRAM_TO_RAM
+   jsr lib_vram_to_ram
+   
+   adw RAM_TO_VRAM #40+2
+   
+copy_loop:   
+   lda file_index
+   tax
+   
+   lda DIR_ENTRIES_TYPES,x
+   sta file_type
+   cmp #$FF
+   beq display_end
+   
+   txa
+   asl
+   tax
+   
+   mwa DIR_ENTRIES,x SRC_ADDR
+   mwa RAM_TO_VRAM DST_ADDR
+   
+   ldy #0
+   
+   lda file_type
+   cmp #ST_TYPE_FILE
+   beq copy_name
+   
+   lda #'['
+   sta (DST_ADDR), y
+   inw DST_ADDR
+   
+copy_name:
+   lda (SRC_ADDR), y
+   beq copy_name_done
+   sta (DST_ADDR), y
+   iny
+   bne copy_name
+   
+copy_name_done:
+   lda file_type
+   cmp #ST_TYPE_FILE
+   beq next_line
+   
+   iny
+   lda #']'
+   sta (DST_ADDR), y
+   
+next_line:
+   inc file_index
+   inc line
+   lda line
+   cmp #20
+   beq display_end
+   
+   adw RAM_TO_VRAM #40
+   jmp copy_loop
+   
+display_end:
+   rts
+   
+line       .byte 0
+file_index .byte 0
+file_type  .word 0
+.endp
+
 dirname:
    .rept 256
    .byte 0

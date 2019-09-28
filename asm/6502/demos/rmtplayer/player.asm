@@ -20,6 +20,8 @@ start
    jsr OS_CALL
 	
    jsr list_files
+   lda #0
+   jsr display_files
    
    jmp halt
    
