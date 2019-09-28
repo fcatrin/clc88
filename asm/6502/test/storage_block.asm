@@ -15,11 +15,7 @@
    
 ; Call command to open file   
    mwa #filename SRC_ADDR
-   lda #ST_MODE_READ
-   ldx #OS_FILE_OPEN
-   jsr OS_CALL
-   
-   sta file_handle
+   jsr file_open_read
    
 read_next_block:
    mwa #buffer DST_ADDR

@@ -27,7 +27,7 @@ send_dirname:
    cmp #ST_RET_SUCCESS
    beq read_dir_data
    
-   lda #0               ; on failure return Hanle = $FF
+   lda #0               ; on failure return Handle = $FF
    sta ST_DIR_LENGTH
    sta ST_DIR_LENGTH+1
    
@@ -41,8 +41,6 @@ read_dir_data:
    sta ST_DIR_LENGTH
    jsr storage_read
    sta ST_DIR_LENGTH+1
-   rts
-   
    rts
 .endp
 
@@ -242,7 +240,12 @@ not_256:
    adw DST_ADDR ROS2
    adw ROS4 ROS2
    sbw SIZE ROS2
-   jmp read_next_block
+   
+   lda ROS2
+   beq read_next_block ; read next block if the full 256 bytes was read
+   mwa ROS4 SIZE
+   ldx #0 ; return success with partial block read
+   rts
    
 read_remaining_bytes:
 
@@ -260,8 +263,9 @@ read_next_byte:
    inw ROS4
    dec SIZE
    bne read_next_byte
+no_more_bytes:
+   mwa ROS4 SIZE
    ldx #0
-no_more_bytes:   
    rts
 .endp
 
