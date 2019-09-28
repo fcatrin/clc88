@@ -115,7 +115,7 @@ static void update_screen(void *pixels) {
 	SDL_DestroyTexture(texture);
 }
 
-bool is_alt_pressed = FALSE;
+bool is_ctrl_pressed = FALSE;
 
 void frontend_process_events() {
 	SDL_Event event;
@@ -129,21 +129,21 @@ void frontend_process_events() {
 		case SDL_KEYDOWN:
 			switch( event.key.keysym.sym ){
 				case SDLK_F1:
-					if (is_alt_pressed) {
+					if (is_ctrl_pressed) {
 						monitor_enable();
 						return;
 					}
 					break;
-				case SDLK_LALT:
-					is_alt_pressed = TRUE;
+				case SDLK_LCTRL:
+					is_ctrl_pressed = TRUE;
 					break;
 			}
 			keyb_update(event.key.keysym.sym, TRUE);
 			break;
 		case SDL_KEYUP:
 			switch( event.key.keysym.sym ){
-				case SDLK_LALT:
-					is_alt_pressed = FALSE;
+				case SDLK_LCTRL:
+					is_ctrl_pressed = FALSE;
 					break;
 			}
 			keyb_update(event.key.keysym.sym, FALSE);
