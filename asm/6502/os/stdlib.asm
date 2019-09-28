@@ -41,4 +41,12 @@ lib_vram_set_bytes:
    jmp OS_CALL
 .endp
 
+.proc keyb_read
+   ldx #OS_KEYB_POLL
+   jsr OS_CALL
+   
+   lda KEY_PRESSED
+   rts
+.endp
+
 file_handle: .byte 0

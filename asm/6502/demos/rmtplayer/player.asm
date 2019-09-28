@@ -22,11 +22,10 @@ start
    jsr list_files
    lda #0
    jsr display_files
+
+   jsr update_selected_file
    
-   lda #0
-   jsr display_file_row
-   
-   ldx #2
+   ldx #3
    jsr file_name_get
 
    jsr load_song
@@ -97,6 +96,8 @@ waipap
 
    lda #0
    sta VCOLOR0
+   
+   jsr process_keyboard
 ;
 	jmp loop					;no => loop
 ;
@@ -151,6 +152,52 @@ eof:
    jmp file_close 
    
 .endp
+
+.proc process_keyboard
+   jsr keyb_read
+   cmp last_key
+   beq process_end
+   sta last_key
+   
+   cmp #16
+   jeq key_up
+   cmp #17
+   jeq key_down
+   cmp #46
+   jeq key_enter
+process_end:   
+   rts
+   
+key_up:
+   lda selected_file
+   cmp #0
+   beq process_end
+   dec selected_file
+   jmp update_selected_file
+   
+key_down:
+   ldx selected_file
+   inx
+   cpx files_read
+   beq process_end
+   inc selected_file
+   jmp update_selected_file
+   
+key_enter:
+   lda selected_file
+   jmp aload_song
+   
+last_key .byte 0
+.endp
+
+aload_song: rts
+
+.proc update_selected_file
+   lda selected_file
+   jmp display_file_row
+.endp   
+
+selected_file: .byte 0
 
 xex_start:
    .word 0

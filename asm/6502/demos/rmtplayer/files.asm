@@ -105,7 +105,7 @@ name_ends:
    inc file_index
    bne read_next_entry
 list_end:
-      
+   mva file_index files_read
    rts
 
 file_index .byte 0
@@ -184,24 +184,35 @@ file_type  .word 0
 
 .proc display_file_row
    pha
-   mwa ATTRIB_START VRAM_TO_RAM
-   jsr lib_vram_to_ram
-   adw RAM_TO_VRAM #40
 
    ldx last_row
    cpx #$FF
    beq no_erase_row
-   
+
+   lda #$10
+   jsr paint_file_row
+  
 no_erase_row:
+
    pla
    sta last_row
    tax
+   
+   lda #$34
+   jmp paint_file_row
+.endp
+
+.proc paint_file_row
+   sta R0
    jsr line_to_offset
    
+   mwa ATTRIB_START VRAM_TO_RAM
+   jsr lib_vram_to_ram
+   adw RAM_TO_VRAM #40
    adw RAM_TO_VRAM line_offset
    
    ldy #2
-   lda #$34
+   lda R0
 next_attrib:   
    sta (RAM_TO_VRAM), y
    iny
@@ -231,7 +242,9 @@ while:
 .endp
 
 line_offset .word 0
-last_row    .byte 0   
+last_row    .byte 0
+
+files_read .byte 0  
 
 dirname:
    .rept 256
