@@ -23,9 +23,9 @@ start
    lda #0
    jsr display_files
    
-   jmp halt
-   
-   /*
+   ldx #1
+   jsr file_name_get
+
    jsr load_song
    mwa song_text SRC_ADDR
    ldy #0
@@ -35,7 +35,7 @@ next_song_char:
    beq song_text_done
    iny
    bne next_song_char
-   */
+
 song_text_done:
 
 ;
@@ -104,7 +104,6 @@ tabpp  dta 156,78,52,39			;line counter spacing table for instrument speed from 
 ;
 
 .proc load_song
-   mwa #test_path SRC_ADDR
    jsr file_open_read
    cmp #$FF
    bne read_xex_header

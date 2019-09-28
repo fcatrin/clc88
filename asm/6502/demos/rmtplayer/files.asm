@@ -182,6 +182,14 @@ file_index .byte 0
 file_type  .word 0
 .endp
 
+.proc file_name_get
+   txa
+   asl
+   tax
+   mwa DIR_ENTRIES,x SRC_ADDR
+   rts
+.endp
+
 dirname:
    .rept 256
    .byte 0
