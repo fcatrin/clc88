@@ -169,6 +169,7 @@ get_file_handle:
 ; in:  file_handle in A
 ; out: byte read in A
 ; out: status in X
+; statu zero = success
 
    tax
    lda #ST_CMD_READ_BYTE
@@ -185,6 +186,7 @@ get_file_handle:
    rts
 read_byte:
    jsr storage_read
+   cpx #ST_RET_SUCCESS
    rts
 .endp
 

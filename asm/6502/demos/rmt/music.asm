@@ -5,12 +5,6 @@
 ; example by Raster/C.P.U., 2003-2004
 ;
 ;
-STEREOMODE	equ 1				;0 => compile RMTplayer for mono 4 tracks
-;								;1 => compile RMTplayer for stereo 8 tracks
-;								;2 => compile RMTplayer for 4 tracks stereo L1 R2 R3 L4
-;								;3 => compile RMTplayer for 4 tracks stereo L1 L2 R3 R4
-;
-;
 	icl "rmtplayr.asm"			;include RMT player routine
 ;
 ;
