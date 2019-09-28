@@ -182,6 +182,46 @@ file_index .byte 0
 file_type  .word 0
 .endp
 
+.proc display_file_row
+   pha
+   mwa ATTRIB_START VRAM_TO_RAM
+   jsr lib_vram_to_ram
+   adw RAM_TO_VRAM #40
+
+   ldx last_row
+   cpx #$FF
+   beq no_erase_row
+   
+no_erase_row:
+   pla
+   sta last_row
+   tax
+   jsr line_to_offset
+   
+   adw RAM_TO_VRAM line_offset
+   
+   ldy #2
+   lda #$34
+next_attrib:   
+   sta (RAM_TO_VRAM), y
+   iny
+   cpy #38
+   bne next_attrib
+   rts
+.endp
+
+.proc line_to_offset
+   mwa #0 line_offset
+   jmp while
+next_mul:   
+   adw line_offset #40 ; forgive me lord!
+while:
+   dex   
+   cpx #$FF
+   bne next_mul
+   rts
+.endp
+
 .proc file_name_get
    txa
    asl
@@ -189,6 +229,9 @@ file_type  .word 0
    mwa DIR_ENTRIES,x SRC_ADDR
    rts
 .endp
+
+line_offset .word 0
+last_row    .byte 0   
 
 dirname:
    .rept 256

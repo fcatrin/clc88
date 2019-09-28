@@ -23,11 +23,19 @@ start
    lda #0
    jsr display_files
    
-   ldx #1
+   lda #0
+   jsr display_file_row
+   
+   ldx #2
    jsr file_name_get
 
    jsr load_song
    mwa song_text SRC_ADDR
+   
+   mwa DISPLAY_START VRAM_TO_RAM
+   jsr lib_vram_to_ram
+   adw RAM_TO_VRAM #20*40+2
+   
    ldy #0
 next_song_char:   
    lda (SRC_ADDR), y
