@@ -94,6 +94,7 @@ set_video_mode_finish:
    sta VRAM_PAGE
    jsr ram2vram
    mwa VRAM_TO_RAM VPALETTE
+   mwa VRAM_TO_RAM PALETTE_START
    rts
   
 set_video_enabled:

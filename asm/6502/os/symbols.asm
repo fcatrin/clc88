@@ -21,6 +21,7 @@ VRAM_TO_RAM   = $22 ; vram address / 2
 VRAM_PAGE     = $24 ; vram address page
 DLIST         = $30
 FRAMECOUNT    = $32
+PALETTE_START = $34
 
 OS_VECTOR     = $7E
 OS_VECTORS    = $80
