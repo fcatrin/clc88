@@ -260,6 +260,9 @@ tail_found
    bne chdir_parent
    
    ldy #0
+   lda #'/'
+   sta dirname, x
+   inx
 copy_dir_name:   
    lda (SRC_ADDR), y
    sta dirname, x
