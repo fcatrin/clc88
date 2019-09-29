@@ -322,6 +322,35 @@ static void cmd_read_dir() {
 	}
 	free(namelist);
 
+	// put folders first
+	if (!(mode % 4) && entries>0) {
+		int sorted_entries = 0;
+		dir_entry *sorted[entries];
+		head = dir_handles[dir_handle];
+
+		// add folders
+		dir_entry *entry = head;
+		while(entry) {
+			if (entry->is_dir) sorted[sorted_entries++] = entry;
+			entry = entry->next;
+		}
+
+		// add files
+		entry = head;
+		while(entry) {
+			if (!entry->is_dir) sorted[sorted_entries++] = entry;
+			entry = entry->next;
+		}
+		head = sorted[0];
+		dir_handles[dir_handle] = head;
+		for(int i=1; i<entries; i++) {
+			head->next = sorted[i];
+			head = sorted[i];
+		}
+		head->next = NULL;
+
+	}
+
 	ret[0] = 4;
 	ret[1] = RET_SUCCESS;
 	ret[2] = dir_handle;
