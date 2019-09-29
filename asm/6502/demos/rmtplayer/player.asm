@@ -42,7 +42,7 @@ start
    lda #0
    jsr display_files
 
-   jsr update_selected_file
+   jsr update_selected_line
    
 loop
    lda is_playing
@@ -86,7 +86,10 @@ tabpp  dta 156,78,52,39			;line counter spacing table for instrument speed from 
    mwa #label_loading SRC_ADDR
    jsr screen_print_at 
    
-   ldx selected_file
+   clc
+   lda selected_line
+   adc files_offset
+   tax
    jsr file_name_get
 
    jsr load_song
@@ -180,19 +183,55 @@ process_end:
    rts
    
 key_up:
-   lda selected_file
+   lda selected_line
    cmp #0
+   bne line_up
+   
+   lda files_offset
    beq process_end
-   dec selected_file
-   jmp update_selected_file
+   
+   jsr files_scroll_down
+   dec files_offset
+   
+   ldx #1
+   ldy #1
+   jsr screen_position
+   
+   ldx files_offset
+   jmp files_print_one
+   
+line_up   
+   dec selected_line
+   jmp update_selected_line
    
 key_down:
-   ldx selected_file
-   inx
-   cpx files_read
-   beq process_end
-   inc selected_file
-   jmp update_selected_file
+   clc
+   ldx selected_line
+   adc files_offset
+   cmp files_read
+   bpl process_end
+
+   lda selected_line
+   cmp #16
+   bne line_down
+   
+   jsr files_scroll_up
+   inc files_offset
+
+   ldx #1
+   ldy #17
+   jsr screen_position
+   
+   clc
+   lda files_offset
+   adc selected_line
+   tax
+   jsr files_print_one
+   jmp update_selected_line
+   
+line_down   
+   inc selected_line
+   jmp update_selected_line
    
 key_enter:
    jmp start_song
@@ -223,15 +262,18 @@ next_info_string
 info_string_ndx .byte 0
 .endp
 
-.proc update_selected_file
-   lda selected_file
+.proc update_selected_line
+   lda selected_line
    jmp display_file_row
 .endp   
 
-selected_file: .byte 0
+
+files_offset  .byte 0
+selected_line .byte 0
 
 song_text:
    .word 0
+
    
 is_playing:   .byte 0
 label_song:   .by 'SONG: ', 0

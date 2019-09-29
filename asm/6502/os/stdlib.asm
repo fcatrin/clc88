@@ -175,6 +175,78 @@ fill_line:
 fill_y: .byte 0
 .endl
 
+.proc screen_scroll_up
+   ldx screen_margin_left
+   ldy screen_margin_top
+   jsr screen_position
+   
+   mwa RAM_TO_VRAM SRC_ADDR
+   adw SRC_ADDR #40
+
+   lda screen_margin_right
+   sec
+   sbc screen_margin_left
+   sta scroll_width
+   
+   lda screen_margin_bottom
+   sec
+   sbc screen_margin_top
+   sta scroll_height
+
+copy_next_row
+   ldy #0
+copy_row   
+   lda (SRC_ADDR), y
+   sta (RAM_TO_VRAM), y
+   iny
+   cpy scroll_width
+   bne copy_row
+   adw SRC_ADDR #40
+   adw RAM_TO_VRAM #40
+   dec scroll_height
+   bne copy_next_row
+   rts
+scroll_width  .byte 0
+scroll_height .byte 0   
+.endp
+
+.proc screen_scroll_down
+   ldx screen_margin_left
+   ldy screen_margin_bottom
+   dey
+   jsr screen_position
+   
+   mwa RAM_TO_VRAM SRC_ADDR
+   sbw SRC_ADDR #40
+
+   lda screen_margin_right
+   sec
+   sbc screen_margin_left
+   sta scroll_width
+   
+   lda screen_margin_bottom
+   sec
+   sbc screen_margin_top
+   sta scroll_height
+
+copy_next_row
+   ldy #0
+copy_row   
+   lda (SRC_ADDR), y
+   sta (RAM_TO_VRAM), y
+   iny
+   cpy scroll_width
+   bne copy_row
+   sbw SRC_ADDR #40
+   sbw RAM_TO_VRAM #40
+   dec scroll_height
+   bne copy_next_row
+   rts
+scroll_width  .byte 0
+scroll_height .byte 0   
+.endp
+
+
 screen_fill_byte .byte 0
 
 screen_line_no_wrap:  .byte 0

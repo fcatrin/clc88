@@ -98,21 +98,33 @@ file_name  .word 0
 .endp
 
 .proc display_files
-   sta file_index
-   mva #0 line
+   mva #0 file_index
+   mva #17 line
 
    ldx #1
    ldy #1
    jsr screen_position   
    
 copy_loop:   
-   lda file_index
-   tax
+   ldx file_index
+   jsr files_print_one
    
+   adw RAM_TO_VRAM #40
+   inc file_index
+   dec line
+   bne copy_loop
+   
+display_end:
+   rts
+line       .byte 0
+file_index .byte 0
+.endp
+
+.proc files_print_one
    lda DIR_ENTRIES_TYPES,x
    sta file_type
    cmp #$FF
-   beq display_end
+   beq print_end
    
    txa
    asl
@@ -121,8 +133,10 @@ copy_loop:
    mwa DIR_ENTRIES,x SRC_ADDR
    mwa RAM_TO_VRAM   DST_ADDR
    
+   lda #23
+   sta col
+   
    ldy #0
-   sty col
    
    lda file_type
    cmp #ST_TYPE_FILE
@@ -138,40 +152,26 @@ copy_name:
    beq copy_name_done
    sta (DST_ADDR), y
    iny
-   inc col
-   lda col
-   cmp #23   
+   dec col
    bne copy_name
    
 copy_name_done:
    lda file_type
    cmp #ST_TYPE_FILE
-   beq next_line
+   beq print_end
    
-   lda col
-   cmp #23   
-   beq next_line
+   dec col  
+   beq print_end
    
    lda #']'
    sta (DST_ADDR), y
-   
-next_line:
-   inc file_index
-   inc line
-   lda line
-   cmp #17
-   beq display_end
-   
-   adw RAM_TO_VRAM #40
-   jmp copy_loop
-   
-display_end:
-   rts
-   
+
+print_end
+   rts   
+
 col        .byte 0
-line       .byte 0
-file_index .byte 0
 file_type  .word 0
+   
 .endp
 
 .proc display_file_row
@@ -215,6 +215,23 @@ no_erase_row:
    mwa DIR_ENTRIES,x SRC_ADDR
    rts
 .endp
+
+.proc files_scroll_up
+   mva #1  screen_margin_left
+   mva #1  screen_margin_top
+   mva #24 screen_margin_right
+   mva #18 screen_margin_bottom
+   jmp screen_scroll_up
+.endp
+
+.proc files_scroll_down
+   mva #1  screen_margin_left
+   mva #1  screen_margin_top
+   mva #24 screen_margin_right
+   mva #18 screen_margin_bottom
+   jmp screen_scroll_down
+.endp
+   
 
 line_offset .word 0
 last_row    .byte 0
