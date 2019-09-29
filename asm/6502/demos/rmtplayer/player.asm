@@ -19,6 +19,17 @@ start
    ldx #OS_SET_VIDEO_MODE
    jsr OS_CALL
 	
+	mwa SUBPAL_START VRAM_TO_RAM
+   mwa #custom_subpal SRC_ADDR
+   mwa #10 SIZE
+   jsr lib_copy_to_vram
+	
+	mwa PALETTE_START VRAM_TO_RAM
+   mwa #custom_palette SRC_ADDR
+   mwa #16*2 SIZE
+	jsr lib_copy_to_vram
+
+	
 	jsr display_credits
 	
 	; paint Song Info area
@@ -27,7 +38,7 @@ start
 	mva #19 screen_margin_top
 	mva #24 screen_margin_bottom
 	
-	lda #$52
+	lda #$32
 	jsr screen_fill_attrib
 
    ; paint Credits Info area
@@ -36,7 +47,7 @@ start
    mva #0  screen_margin_top
    mva #19 screen_margin_bottom
    
-   lda #$1A
+   lda #$54
    jsr screen_fill_attrib
 	
    jsr list_files
@@ -60,7 +71,7 @@ waipap
 	cmp VCOUNT					;vertical line counter synchro
 	bne waipap
 
-   lda #10
+   lda #8
    sta VCOLOR0
 	jsr RASTERMUSICTRACKER+3	;1 play
 
@@ -296,7 +307,6 @@ selected_line .byte 0
 song_text:
    .word 0
 
-   
 is_playing:   .byte 0
 label_song:   .by 'SONG: ', 0
 label_stereo: .by 'TYPE: STEREO', 0
@@ -313,6 +323,20 @@ player_info_4 .by 'Franco Catrin', 0
 player_info_strings .word  player_info_0, player_info_1, player_info_2, player_info_3, player_info_4, 0
 player_info_pos_x .byte 26, 26, 26, 26, 26
 player_info_pos_y .byte 6, 7, 8, 10, 11
+
+custom_palette
+   .word $0000 ; border default
+   .word $2AAE ; file list background
+   .word $CE59 ; file list text
+   .word $1189 ; song info background
+   .word $ffff ; song info text
+   .word $0107 ; credits background
+   .word $EDE6 ; credits text
+   .word $FE25 ; highlight text 
+   .word $640D ; player bars
+   
+custom_subpal
+   .byte 1, 2, 3, 4, 5, 6, 7, 8, 9, 10   
    
    icl 'files.asm'
    icl 'loader.asm'

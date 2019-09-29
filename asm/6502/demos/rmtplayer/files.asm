@@ -195,7 +195,7 @@ no_erase_row:
    sta last_row
    tax
    
-   lda #$34
+   lda #$62
    jmp paint_file_row
 .endp
 
