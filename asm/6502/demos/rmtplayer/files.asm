@@ -4,34 +4,35 @@ DIR_ENTRIES_TYPES = $8200 ; type of each file, $FF marks end
 DIR_ENTRIES_NAMES = $8300 ; starting addres for names
 
 .proc build_path
-   ldx #0
+   mwa #path DST_ADDR
+   
+   ldy #0
 copy_dirname:   
-   lda dirname, x
+   lda dirname, y
    beq add_filename
-   sta path,x
-   inx
+   sta (DST_ADDR),y
+   iny
    bne copy_dirname
    
 add_filename:   
    lda #'/'
-   sta path,x
-   inx
+   sta (DST_ADDR), y
+   iny
    
-   txa
+   tya
    clc
-   adc #<path
+   adc DST_ADDR
    sta DST_ADDR
-   lda #>path
-   adc #0
-   sta DST_ADDR+1
+   scc
+   inc DST_ADDR+1
    
-   ldx #0
+   ldy #0
 copy_filename:
-   lda filename,x
-   sta path,x
+   lda filename,y
+   sta (DST_ADDR),y
    beq copy_done
-   inx
-   cpx #128
+   iny
+   cpy #128
    bne copy_filename
 copy_done:
 
@@ -98,7 +99,7 @@ file_name  .word 0
 .endp
 
 .proc display_files
-   mva #0 file_index
+   mva #0  file_index
    mva #17 line
 
    ldx #1
@@ -108,9 +109,13 @@ file_name  .word 0
 copy_loop:   
    ldx file_index
    jsr files_print_one
+
+   inc file_index
+   lda file_index
+   cmp files_read
+   beq display_end
    
    adw RAM_TO_VRAM #40
-   inc file_index
    dec line
    bne copy_loop
    
@@ -213,25 +218,98 @@ no_erase_row:
    asl
    tax
    mwa DIR_ENTRIES,x SRC_ADDR
+   
+   ldy #0
+copy_filename   
+   lda (SRC_ADDR), y
+   sta filename, y
+   beq eos
+   iny
+   bne copy_filename
+eos
+   jsr build_path
+   mwa #path SRC_ADDR
+   rts
+.endp
+
+.proc files_change_folder
+   txa
+   asl
+   tax
+   mwa DIR_ENTRIES,x SRC_ADDR
+   
+   ; check if ".."
+   lda #1
+   sta is_parent
+   mwa #parent_dir_name DST_ADDR
+   jsr string_cmp
+   beq parent_confirmed
+   lda #0
+   sta is_parent
+
+parent_confirmed
+   ldx #0
+look_for_tail   
+   lda dirname, x
+   beq tail_found
+   inx
+   bne look_for_tail
+
+tail_found   
+   lda is_parent
+   bne chdir_parent
+   
+   ldy #0
+copy_dir_name:   
+   lda (SRC_ADDR), y
+   sta dirname, x
+   beq eos
+   iny
+   inx
+   bne copy_dir_name
+eos:   
+   rts
+   
+chdir_parent:
+   lda dirname, x
+   tay
+   lda #0
+   sta dirname, x
+   cpy #'/'
+   beq eos
+   dex
+   cpx #$FF
+   bne chdir_parent
+   rts
+   
+is_parent .byte 0
+   
+.endp
+
+.proc set_files_area_margins
+   mva #1  screen_margin_left
+   mva #1  screen_margin_top
+   mva #24 screen_margin_right
+   mva #18 screen_margin_bottom
    rts
 .endp
 
 .proc files_scroll_up
-   mva #1  screen_margin_left
-   mva #1  screen_margin_top
-   mva #24 screen_margin_right
-   mva #18 screen_margin_bottom
+   jsr set_files_area_margins
    jmp screen_scroll_up
 .endp
 
 .proc files_scroll_down
-   mva #1  screen_margin_left
-   mva #1  screen_margin_top
-   mva #24 screen_margin_right
-   mva #18 screen_margin_bottom
+   jsr set_files_area_margins
    jmp screen_scroll_down
 .endp
+
+.proc files_display_clear
+   jsr set_files_area_margins
+   jmp screen_clear
+.endp
    
+parent_dir_name .byte '..', 0
 
 line_offset .word 0
 last_row    .byte 0

@@ -14,6 +14,23 @@ lib_vram_set_bytes:
    ldx #OS_VRAM_SET_BYTES
    jmp OS_CALL
    
+
+.proc string_cmp
+   ldy #0
+next_char:   
+   lda (SRC_ADDR), y
+   cmp (DST_ADDR), y
+   bne eos
+   
+   lda (SRC_ADDR), y
+   beq eos
+   
+   iny
+   bne next_char
+   
+eos:
+   rts   
+.endp
    
 .proc file_open_read
    lda #ST_MODE_READ
@@ -149,29 +166,36 @@ offset_string .word 0
 .endp
 
 .local screen_fill_internal
-   lda screen_margin_top
+   lda screen_margin_bottom
+   sec
+   sbc screen_margin_top
    sta fill_y
    
-fill_next_line:   
-   ldx screen_margin_left
+   lda screen_margin_right
+   sec
+   sbc screen_margin_left
+   sta fill_x
+   sta save_x
+
+fill_next_line:
    ldy #0
    lda screen_fill_byte
 fill_line:   
    sta (RAM_TO_VRAM), y
    iny
-   inx
-   cpx screen_margin_right
+   dec fill_x
    bne fill_line
 
-   ldx fill_y
-   inx
-   stx fill_y
-   cpx screen_margin_bottom 
+   dec fill_y
    sne
    rts
    
    adw RAM_TO_VRAM #40
+   lda save_x
+   sta fill_x
    jmp fill_next_line
+save_x  .byte 0
+fill_x: .byte 0
 fill_y: .byte 0
 .endl
 

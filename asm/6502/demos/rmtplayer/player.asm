@@ -30,16 +30,16 @@ start
 	lda #$52
 	jsr screen_fill_attrib
 
-   mva #25  screen_margin_left
+   ; paint Credits Info area
+   mva #25 screen_margin_left
    mva #40 screen_margin_right
-   mva #0 screen_margin_top
+   mva #0  screen_margin_top
    mva #19 screen_margin_bottom
    
    lda #$1A
    jsr screen_fill_attrib
 	
    jsr list_files
-   lda #0
    jsr display_files
 
    jsr update_selected_line
@@ -206,10 +206,11 @@ line_up
    
 key_down:
    clc
-   ldx selected_line
+   lda selected_line
    adc files_offset
+   adc #1
    cmp files_read
-   bpl process_end
+   beq process_end
 
    lda selected_line
    cmp #16
@@ -234,7 +235,28 @@ line_down
    jmp update_selected_line
    
 key_enter:
-   jmp start_song
+   clc
+   lda files_offset
+   adc selected_line
+   tax
+   lda DIR_ENTRIES_TYPES,x
+   cmp #ST_TYPE_FILE
+   jeq start_song
+
+   txa
+   pha
+   lda #0
+   sta files_offset
+   sta selected_line
+   jsr update_selected_line
+   jsr files_display_clear
+
+   pla
+   tax
+   jsr files_change_folder
+   jsr list_files
+   
+   jmp display_files
    
 last_key .byte 0
 .endp
