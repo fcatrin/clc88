@@ -54,8 +54,8 @@ static UINT8 pixel_color_r;
 static UINT8 pixel_color_g;
 static UINT8 pixel_color_b;
 
-#define STATUS_VBLANK         0x01
-#define STATUS_HBLANK         0x02
+#define STATUS_VBLANK         0x80
+#define STATUS_HBLANK         0x40
 #define STATUS_ENABLE_INTS    0x04
 #define STATUS_ENABLE_SPRITES 0x08
 #define STATUS_ENABLE_CHRONI  0x10
@@ -124,7 +124,7 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 		CPU_HALT();
 		break;
 	case 9:
-		status = (status & 0x3) | (value & 0xFC);
+		status = (status & 0xC0) | (value & 0x3F);
 		break;
 	case 0xa:
 		reg_addr_low(&sprites, value);
