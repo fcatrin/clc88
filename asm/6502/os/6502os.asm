@@ -76,19 +76,13 @@ interrupt_vectors:
 
 nmi_os:
    cld
-   pha
-   lda VSTATUS
-   ror
-   bcc nmi_check_hblank
-   pla
+   bit VSTATUS
+   bpl nmi_check_hblank
    jmp (VBLANK_VECTOR)
 nmi_check_hblank:
-   ror
-   bcc nmi_done
-   pla
+   bvc nmi_done
    jmp (HBLANK_VECTOR)
 nmi_done:
-   pla
    rti
 
 irq_os:
