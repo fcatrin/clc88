@@ -22,6 +22,7 @@ VRAM_PAGE     = $24 ; vram address page
 DLIST         = $30
 FRAMECOUNT    = $32
 PALETTE_START = $34
+CHARSET_START = $36
 
 OS_VECTOR     = $7E
 OS_VECTORS    = $80

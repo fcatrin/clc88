@@ -46,8 +46,11 @@ copy_vector:
    cpx #$0C
    bne copy_vector
 	
-	mwa #copy_params_charset COPY_PARAMS
-	jsr copy_block_with_params
+   mwa #0 CHARSET_START
+   mwa #0 VCHARSET
+   
+   mwa #copy_params_charset COPY_PARAMS
+   jsr copy_block_with_params
 	
    mwa #copy_params_pal_atari COPY_PARAMS
 	jsr copy_block_with_params

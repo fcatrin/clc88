@@ -17,8 +17,12 @@ lib_vram_set_bytes:
 .proc lib_copy_to_vram
    jsr lib_vram_to_ram
    mwa RAM_TO_VRAM DST_ADDR
-   ldx #OS_COPY_BLOCK
-   jmp OS_CALL 
+   jmp memcpy
+.endp
+
+.proc memcpy
+  ldx #OS_COPY_BLOCK
+  jmp OS_CALL
 .endp   
 
 .proc string_cmp
