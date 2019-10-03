@@ -1,5 +1,7 @@
    icl '../os/symbols.asm'
 	
+CHARSET_EDIT = $4000	
+	
    org BOOTADDR
 
    lda #0
@@ -7,6 +9,21 @@
    ldx #OS_SET_VIDEO_MODE
    jsr OS_CALL
 
+   jsr set_scanline_interrupt
+
+   mwa VRAM_FREE VRAM_TO_RAM
+   mwa VRAM_FREE charset_edit_start_vram
+   jsr lib_vram_to_ram
+   mwa RAM_TO_VRAM charset_edit_start
+
+   mwa CHARSET_START VRAM_TO_RAM
+   jsr lib_vram_to_ram
+
+   mwa RAM_TO_VRAM        SRC_ADDR
+   mwa charset_edit_start DST_ADDR
+   mwa #$400 SIZE
+   jsr memcpy
+   
    jsr prepare_editor_charset
    jsr draw_char_editor_borders
    jsr display_charset
@@ -86,9 +103,7 @@ border_left
    rol SRC_ADDR+1
    sta SRC_ADDR
    
-   mwa CHARSET_START VRAM_TO_RAM
-   jsr lib_vram_to_ram
-   adw SRC_ADDR RAM_TO_VRAM
+   adw SRC_ADDR charset_edit_start
    
    ldx #3
    ldy #3
@@ -122,8 +137,47 @@ next_bit
 charset_index .byte 0
 .endp
 
+.proc set_scanline_interrupt
+   lda VSTATUS
+   and #(255 - VSTATUS_EN_INTS)
+   sta VSTATUS
+      
+   mwa #dli    HBLANK_VECTOR_USER
+   mwa #vblank VBLANK_VECTOR_USER
+   
+   lda #20*8
+   sta VLINEINT
+
+   lda VSTATUS
+   ora #VSTATUS_EN_INTS
+   sta VSTATUS
+   rts
+.endp
+
+.proc dli
+   pha
+   lda #$66
+   sta WSYNC
+   sta VCOLOR0
+   mwa charset_edit_start_vram VCHARSET
+   pla
+   rts
+.endp
+
+.proc vblank
+   pha
+   lda #0
+   sta VCOLOR0
+   mwa #0 VCHARSET
+   pla
+   rts
+.endp   
+
 char_index
 	.byte 65
+	
+charset_edit_start .word 0
+charset_edit_start_vram .word 0
 
 block_chars:
 	.byte 0, 0, 0, 0, 0, 0, 0, 1
