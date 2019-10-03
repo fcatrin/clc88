@@ -80,11 +80,11 @@ interrupt_vectors:
 nmi_os:
    cld
    bit VSTATUS
-   bpl nmi_check_hblank
-   jmp (VBLANK_VECTOR)
-nmi_check_hblank:
-   bvc nmi_done
+   bvc nmi_check_vblank
    jmp (HBLANK_VECTOR)
+nmi_check_vblank:
+   bpl nmi_done
+   jmp (VBLANK_VECTOR)
 nmi_done:
    rti
 
