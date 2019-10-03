@@ -13,6 +13,9 @@
    	
    mwa #vblank VBLANK_VECTOR_USER
    mwa #dli    HBLANK_VECTOR_USER
+   
+   lda #1
+   sta VLINEINT
 
    lda VSTATUS
    ora #VSTATUS_EN_INTS
@@ -49,6 +52,7 @@ rainbow:
 dli:
    pha
    lda #$66
+   sta WSYNC
    sta VCOLOR0
    pla
    rts
