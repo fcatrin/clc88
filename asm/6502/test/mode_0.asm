@@ -21,14 +21,6 @@
    ora #VSTATUS_EN_INTS
    sta VSTATUS
 	
-	mwa DLIST VRAM_TO_RAM
-	jsr lib_vram_to_ram
-
-   ldy #10
-   lda (RAM_TO_VRAM), y
-   ora #$80
-   sta (RAM_TO_VRAM), y
-
    mwa DISPLAY_START VRAM_TO_RAM
    jsr lib_vram_to_ram
 	
