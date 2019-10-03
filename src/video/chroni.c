@@ -30,6 +30,7 @@ UINT8 vram[VRAM_MAX];
 #define PAGE_BASE(x)    (x << PAGE_SHIFT)
 
 static UINT16 scanline;
+static UINT16 scanline_interrupt;
 static UINT8  page;
 static UINT32 offset;
 
@@ -61,7 +62,6 @@ static UINT8 pixel_color_b;
 #define STATUS_ENABLE_CHRONI  0x10
 
 static UINT8 status;
-static UINT8 post_dli = 0;
 
 static UINT8 vscroll;
 static UINT8 hscroll;
@@ -77,6 +77,7 @@ void chroni_reset() {
 	tileset_small = 0;
 	vscroll = 0;
 	hscroll = 0;
+	scanline_interrupt = 0;
 }
 
 void chroni_vram_write(UINT16 index, UINT8 value) {
@@ -95,6 +96,15 @@ static void reg_addr_low(UINT32 *reg, UINT8 value) {
 static void reg_addr_high(UINT32 *reg, UINT8 value) {
 	*reg = (*reg & 0x001FF) | (value << 9);
 }
+
+static void reg_low(UINT16 *reg, UINT8 value) {
+	*reg = (*reg & 0xFF00) | (value);
+}
+
+static void reg_high(UINT16 *reg, UINT8 value) {
+	*reg = (*reg & 0x00FF) | (value << 8);
+}
+
 
 void chroni_register_write(UINT8 index, UINT8 value) {
 	LOGV(LOGTAG, "chroni reg write: 0x%04X = 0x%02X", index, value);
@@ -153,6 +163,12 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 	case 0x12:
 		vscroll = value;
 		break;
+	case 0x14:
+		reg_low(&scanline_interrupt, value);
+		break;
+	case 0x15:
+		reg_high(&scanline_interrupt, value);
+		break;
 	}
 }
 
@@ -189,11 +205,10 @@ static UINT8 sprite_scanlines[SPRITES_MAX];
 
 static void do_scan_start() {
 	status |= STATUS_HBLANK;
-	if (post_dli && (status & STATUS_ENABLE_INTS)) {
+	if ((scanline_interrupt == scanline + 1) && (status & STATUS_ENABLE_INTS)) {
 		LOGV(LOGTAG, "do_scan_start fire DLI");
 		cpuexec_nmi(1);
 	}
-	post_dli = 0;
 
 	CPU_RUN(22);
 	status &= (255 - STATUS_HBLANK);
@@ -662,7 +677,6 @@ static void do_screen() {
 	int dlpos = 0;
 	while(ypos < screen_height && (status & STATUS_ENABLE_CHRONI)) {
 		instruction = VRAM_DATA(dl + dlpos);
-		int scan_post_dli = instruction & 0x80;
 		LOGV(LOGTAG, "DL instruction %05X = %02X", dl + dlpos, instruction);
 		dlpos++;
 		UINT8 mode = instruction & 0x0F;
@@ -672,7 +686,6 @@ static void do_screen() {
 			UINT8 lines = 1 + ((instruction & 0x70) >> 4);
 			LOGV(LOGTAG, "do_scan_blank lines %d", lines);
 			for(int line=0; line<lines; line++) {
-				if (line == lines - 1) post_dli = scan_post_dli;
 				do_scan_blank();
 				scanline++;
 				ypos++;
@@ -694,7 +707,6 @@ static void do_screen() {
 			UINT8 pitch = use_hscroll ? bytes_per_scan_scroll[mode] : bytes_per_scan[mode];
 
 			for(int line=0; line<lines; line++) {
-				if (line == lines - 1) post_dli = scan_post_dli;
 
 				do_scan_start();
 
