@@ -203,7 +203,7 @@ charset_index .byte 0
    dec charset_char_x
    spl
    mva #31 charset_char_x
-   jmp charset_char_update
+   jmp charset_char_highlight
 .endp
 
 .proc charset_char_select_right
@@ -212,14 +212,14 @@ charset_index .byte 0
    cmp #32
    sne
    mva #0 charset_char_x
-   jmp charset_char_update
+   jmp charset_char_highlight
 .endp
 
 .proc charset_char_select_up
    dec charset_char_y
    spl
    mva #3 charset_char_y
-   jmp charset_char_update
+   jmp charset_char_highlight
 .endp
 
 .proc charset_char_select_down
@@ -228,8 +228,23 @@ charset_index .byte 0
    cmp #4
    sne
    mva #0 charset_char_y
-   jmp charset_char_update
+   jmp charset_char_highlight
 .endp
+
+.proc charset_char_highlight
+   jsr charset_char_update
+   lda charset_char_y
+   asl
+   asl
+   asl
+   asl
+   asl
+   clc
+   adc charset_char_x
+   sta charset_char_index
+   jmp draw_char_editor
+.endp
+
 
 .proc charset_char_update
    mwa charset_char_attrib_last RAM_TO_VRAM
@@ -253,7 +268,6 @@ not_reset_attrib
    mva #$23 (RAM_TO_VRAM),y
    rts
 .endp   
-   
 
 charset_edit_start .word 0
 charset_edit_start_vram .word 0
