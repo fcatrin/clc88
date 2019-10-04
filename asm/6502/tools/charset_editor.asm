@@ -1,6 +1,9 @@
    icl '../os/symbols.asm'
 	
 CHARSET_EDIT = $4000	
+
+CHARSET_POS_X = 4
+CHARSET_POS_Y = 19
 	
    org BOOTADDR
 
@@ -30,12 +33,23 @@ CHARSET_EDIT = $4000
    
    jsr draw_char_editor
    
-halt 
-   jsr halt
+   jsr charset_char_update
+   
+main_loop 
+
+   jsr keyb_read
+   cmp last_key
+   beq no_key_pressed
+   sta last_key
+
+   jsr charset_char_onkey
+   
+no_key_pressed:
+   jmp main_loop
    
 .proc display_charset
-   ldx #4
-   ldy #19
+   ldx #CHARSET_POS_X
+   ldy #CHARSET_POS_Y
    jsr screen_position
 
    ldx #0
@@ -94,7 +108,7 @@ border_left
 
 .proc draw_char_editor
    mwa #0 SRC_ADDR
-   lda char_index
+   lda charset_char_index
    asl
    rol SRC_ADDR+1
    asl
@@ -173,11 +187,83 @@ charset_index .byte 0
    rts
 .endp   
 
-char_index
-	.byte 65
-	
+.proc charset_char_onkey
+   cmp #16
+   jeq charset_char_select_up
+   cmp #17
+   jeq charset_char_select_down
+   cmp #14
+   jeq charset_char_select_left
+   cmp #15
+   jeq charset_char_select_right
+   rts
+.endp
+
+.proc charset_char_select_left
+   dec charset_char_x
+   spl
+   mva #31 charset_char_x
+   jmp charset_char_update
+.endp
+
+.proc charset_char_select_right
+   inc charset_char_x
+   lda charset_char_x
+   cmp #32
+   sne
+   mva #0 charset_char_x
+   jmp charset_char_update
+.endp
+
+.proc charset_char_select_up
+   dec charset_char_y
+   spl
+   mva #3 charset_char_y
+   jmp charset_char_update
+.endp
+
+.proc charset_char_select_down
+   inc charset_char_y
+   lda charset_char_y
+   cmp #4
+   sne
+   mva #0 charset_char_y
+   jmp charset_char_update
+.endp
+
+.proc charset_char_update
+   mwa charset_char_attrib_last RAM_TO_VRAM
+   lda RAM_TO_VRAM
+   ora RAM_TO_VRAM+1
+   beq not_reset_attrib
+   
+   ldy #0
+   mva #$10 (RAM_TO_VRAM),y
+   
+not_reset_attrib
+   adb charset_char_x #CHARSET_POS_X screen_pos_x
+   adb charset_char_y #CHARSET_POS_Y screen_pos_y
+   ldx screen_pos_x
+   ldy screen_pos_y
+   jsr screen_position_attrib
+   
+   mwa RAM_TO_VRAM charset_char_attrib_last
+   
+   ldy #0
+   mva #$23 (RAM_TO_VRAM),y
+   rts
+.endp   
+   
+
 charset_edit_start .word 0
 charset_edit_start_vram .word 0
+
+charset_char_x .byte 0
+charset_char_y .byte 0
+charset_char_index .byte 0
+charset_char_attrib_last .word 0
+
+last_key .byte 0
 
 block_chars:
 	.byte 0, 0, 0, 0, 0, 0, 0, 1
