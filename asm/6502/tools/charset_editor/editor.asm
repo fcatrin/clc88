@@ -36,7 +36,7 @@ CHARPIX_POS_Y = 3
    
    jsr draw_char_editor
    
-   jsr charset_char_update
+   jsr charpix_char_update
    
 main_loop 
 
@@ -109,8 +109,8 @@ border_left
    rts
 .endp
 
-.proc draw_char_editor
-   mwa #0 SRC_ADDR
+.proc get_char_addr
+   mwa #0 SRC_ADDR ; SRC_ADDR = charset_char_index * 8 + charset_edit_start
    lda charset_char_index
    asl
    rol SRC_ADDR+1
@@ -121,6 +121,11 @@ border_left
    sta SRC_ADDR
    
    adw SRC_ADDR charset_edit_start
+   rts
+.endp
+
+.proc draw_char_editor
+   jsr get_char_addr
    
    ldx #CHARPIX_POS_X
    ldy #CHARPIX_POS_Y

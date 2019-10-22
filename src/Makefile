@@ -10,7 +10,7 @@ DEFS = -DHAVE_CONFIG_H -DINLINE=inline -DMAME_DEBUG
 # DEFS += -DTRACE_UTILS
 # DEFS += -DTRACE_STORAGE
 # DEFS += -DTRACE_KEYB
-# DEFS += -DTRACE_KEYB_IN
+DEFS += -DTRACE_KEYB_IN
 # DEFS += -DDUMP_AUDIO
 
 LIBS = -lm -lz -lpthread
@@ -107,7 +107,7 @@ $(ASMDIR)/6502/os/6502os.xex : $(ASMDIR)/6502/os/graphics.asm $(ASMDIR)/6502/os/
 $(ASMDIR)/6502/test/memopad.xex: $(ASMDIR)/6502/os/keyboard.asm
 $(ASMDIR)/6502/demos/rmt/music.xex: $(ASMDIR)/6502/demos/rmt/rmtplayr.asm
 $(ASMDIR)/6502/demos/rmtplayer/player.xex: $(ASMDIR)/6502/demos/rmtplayer/files.asm $(ASMDIR)/6502/demos/rmtplayer/loader.asm
-$(ASMDIR)/6502/tools/charset_editor/editor.xex: $(ASMDIR)/6502/tools/charset_editor/charset_nav.asm 
+$(ASMDIR)/6502/tools/charset_editor/editor.xex: $(ASMDIR)/6502/tools/charset_editor/charset_nav.asm  $(ASMDIR)/6502/tools/charset_editor/charpix_nav.asm
 
 $(TARGET): $(OBJS)
 	$(CC) -o $@ $(LDFLAGS) $(OBJS) $(LIBS)

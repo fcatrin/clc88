@@ -7,6 +7,8 @@
    jeq charpix_char_select_left
    cmp #15
    jeq charpix_char_select_right
+   cmp #66
+   jeq charpix_toggle
    rts
 .endp
 
@@ -67,8 +69,36 @@ not_reset_attrib
    ldy #0
    mva #$23 (RAM_TO_VRAM),y
    rts
+.endp
+
+.proc charpix_toggle
+   jsr get_char_addr
+
+   adb SRC_ADDR charpix_char_y
+   scc
+   inc SRC_ADDR+1
+   
+   ldy #0
+   ldx charpix_char_x
+   lda charpix_bitmask, x
+   tax
+   
+   and (SRC_ADDR), y
+   beq set_on
+   txa
+   eor #$FF
+   and (SRC_ADDR), y
+   sta (SRC_ADDR), y
+   jmp draw_char_editor
+   
+set_on:
+   txa
+   ora (SRC_ADDR), y
+   sta (SRC_ADDR), y
+   jmp draw_char_editor
 .endp   
 
 charpix_char_x .byte 0
 charpix_char_y .byte 0
 charpix_char_attrib_last .word 0
+charpix_bitmask .byte 128, 64, 32, 16, 8, 4, 2, 1
