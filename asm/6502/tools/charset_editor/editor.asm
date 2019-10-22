@@ -4,6 +4,9 @@ CHARSET_EDIT = $4000
 
 CHARSET_POS_X = 4
 CHARSET_POS_Y = 19
+
+CHARPIX_POS_X = 3
+CHARPIX_POS_Y = 3
 	
    org BOOTADDR
 
@@ -42,7 +45,7 @@ main_loop
    beq no_key_pressed
    sta last_key
 
-   jsr charset_char_onkey
+   jsr charpix_char_onkey
    
 no_key_pressed:
    jmp main_loop
@@ -119,8 +122,8 @@ border_left
    
    adw SRC_ADDR charset_edit_start
    
-   ldx #3
-   ldy #3
+   ldx #CHARPIX_POS_X
+   ldy #CHARPIX_POS_Y
    jsr screen_position
    
    mva #0 charset_index
@@ -201,5 +204,6 @@ block_chars:
 	.byte 1, 1, 1, 1, 1, 1, 1, 255
 	.byte 255, 255, 255, 255, 255, 255, 255 ,255
 
+   icl 'charpix_nav.asm'
    icl 'charset_nav.asm'
    icl '../../os/stdlib.asm'
