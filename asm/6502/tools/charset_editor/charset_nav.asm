@@ -1,4 +1,5 @@
-.proc charset_char_onkey
+.proc charset_on_key
+   lda last_key
    cmp #16
    jeq charset_char_select_up
    cmp #17

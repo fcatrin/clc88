@@ -45,7 +45,7 @@ main_loop
    beq no_key_pressed
    sta last_key
 
-   jsr charpix_char_onkey
+   jsr editor_on_key
    
 no_key_pressed:
    jmp main_loop
@@ -159,6 +159,34 @@ next_bit
 charset_index .byte 0
 .endp
 
+.proc editor_on_key
+   lda last_key
+   cmp #19
+   beq set_edit_mode_0
+   cmp #20
+   beq set_edit_mode_1
+   cmp #21
+   beq set_edit_mode_2
+   lda edit_mode
+   jeq charpix_on_key
+   cmp #1
+   nop
+   cmp #2
+   jeq charset_on_key
+   rts
+   
+set_edit_mode_0:
+   mva #0 edit_mode
+   rts
+set_edit_mode_1:
+   mva #1 edit_mode
+   rts
+set_edit_mode_2:
+   mva #2 edit_mode
+   rts
+
+.endp
+
 .proc set_scanline_interrupt
    lda VSTATUS
    and #(255 - VSTATUS_EN_INTS)
@@ -201,6 +229,8 @@ charset_edit_start_vram .word 0
 charset_char_index .byte 0
 
 last_key .byte 0
+
+edit_mode .byte ; 0 = char, 1 = text, 2 = charset
 
 block_chars:
 	.byte 0, 0, 0, 0, 0, 0, 0, 1

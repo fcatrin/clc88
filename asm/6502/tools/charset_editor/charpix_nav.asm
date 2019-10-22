@@ -1,4 +1,5 @@
-.proc charpix_char_onkey
+.proc charpix_on_key
+   lda last_key
    cmp #16
    jeq charpix_char_select_up
    cmp #17
