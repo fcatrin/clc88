@@ -195,7 +195,7 @@ set_edit_mode_2:
    mwa #dli    HBLANK_VECTOR_USER
    mwa #vblank VBLANK_VECTOR_USER
    
-   lda #20*8
+   lda #21*8
    sta VLINEINT
 
    lda VSTATUS
