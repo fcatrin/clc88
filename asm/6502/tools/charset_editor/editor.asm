@@ -2,11 +2,14 @@
 	
 CHARSET_EDIT = $4000	
 
-CHARSET_POS_X = 4
-CHARSET_POS_Y = 19
-
 CHARPIX_POS_X = 3
 CHARPIX_POS_Y = 3
+
+TEXTAREA_POS_X = 2
+TEXTAREA_POS_Y = 13
+
+CHARSET_POS_X = 4
+CHARSET_POS_Y = 19
 	
    org BOOTADDR
 
@@ -170,7 +173,7 @@ charset_index .byte 0
    lda edit_mode
    jeq charpix_on_key
    cmp #1
-   nop
+   jeq textarea_on_key
    cmp #2
    jeq charset_on_key
    rts
@@ -241,4 +244,5 @@ block_chars:
 
    icl 'charpix_nav.asm'
    icl 'charset_nav.asm'
+   icl 'textarea_nav.asm'
    icl '../../os/stdlib.asm'
