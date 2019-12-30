@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "emu.h"
 #include "cpu.h"
 #include "cpuexec.h"
@@ -81,6 +82,8 @@ void chroni_reset() {
 	hscroll = 0;
 	scanline_interrupt = 0;
 	clock_multiplier = clock_multipliers[0];
+
+	srand(time());
 }
 
 void chroni_vram_write(UINT16 index, UINT8 value) {
@@ -186,6 +189,7 @@ UINT8 chroni_register_read(UINT8 index) {
 	case 0x10 : return border_color;
 	case 0x11 : return hscroll;
 	case 0x12 : return vscroll;
+	case 0x17 : return rand() & 0xFF;
 	}
 	return 0;
 }
