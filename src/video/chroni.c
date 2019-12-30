@@ -11,10 +11,9 @@
 #endif
 #include "trace.h"
 
-
-#define CPU_RUN(X) for(int nx=0; nx<X; nx++) CPU_GO(1)
+#define CPU_RUN(X) for(int nx=0; nx<X; nx++) CPU_GO(clock_multiplier)
 #define CPU_SCANLINE() CPU_RUN(144-8);CPU_RESUME();CPU_RUN(8)
-#define CPU_XPOS() if ((xpos++ & 3) == 0) CPU_GO(1)
+#define CPU_XPOS() if ((xpos++ & 3) == 0) CPU_GO(clock_multiplier)
 
 #define VRAM_WORD(addr) (WORD(VRAM_DATA(addr), VRAM_DATA(addr+1)))
 #define VRAM_PTR(addr) (VRAM_WORD(addr) << 1)
@@ -66,6 +65,9 @@ static UINT8 status;
 static UINT8 vscroll;
 static UINT8 hscroll;
 
+static UINT8 clock_multiplier;
+static UINT8 clock_multipliers[] = {1, 2, 4, 8};
+
 void (*scan_callback)(unsigned scanline) = NULL;
 
 void chroni_reset() {
@@ -78,6 +80,7 @@ void chroni_reset() {
 	vscroll = 0;
 	hscroll = 0;
 	scanline_interrupt = 0;
+	clock_multiplier = clock_multipliers[0];
 }
 
 void chroni_vram_write(UINT16 index, UINT8 value) {
@@ -168,6 +171,9 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 		break;
 	case 0x15:
 		reg_high(&scanline_interrupt, value);
+		break;
+	case 0x16:
+		clock_multiplier = clock_multipliers[value & 0x03];
 		break;
 	}
 }
