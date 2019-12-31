@@ -108,14 +108,14 @@
 
 #ifndef __RAINE__
 #include "driver.h"		/* use M.A.M.E. */
-#include "state.h"
 #else
 #include "deftypes.h"		/* use RAINE */
 #include "support.h"		/* use RAINE */
 #endif
 
-#include "ay8910.h"
-#include "../opn/fm.h"
+#include "../ay8910/ay8910.h"
+#include "2608intf.h"
+#include "fm.h"
 
 
 #ifndef PI

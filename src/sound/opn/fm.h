@@ -5,8 +5,6 @@
 #ifndef _H_FM_FM_
 #define _H_FM_FM_
 
-#include <retro_inline.h>
-
 /* --- select emulation chips --- */
 #define BUILD_YM2203  (HAS_YM2203)		/* build YM2203(OPN)   emulator */
 #define BUILD_YM2608  (HAS_YM2608)		/* build YM2608(OPNA)  emulator */
