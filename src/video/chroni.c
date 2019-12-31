@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include "emu.h"
 #include "cpu.h"
 #include "cpuexec.h"
@@ -83,7 +84,7 @@ void chroni_reset() {
 	scanline_interrupt = 0;
 	clock_multiplier = clock_multipliers[0];
 
-	srand(time());
+	srand(time(NULL));
 }
 
 void chroni_vram_write(UINT16 index, UINT8 value) {
