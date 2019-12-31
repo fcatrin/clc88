@@ -4,6 +4,7 @@
 #include "fm.h"
 #ifdef BUILD_YM2608
   void YM2608UpdateRequest(int chip);
+  void YM2608UpdateOne(int num, INT16 **buffer, int length);
 #endif
 
 #define   MAX_2608    (2)

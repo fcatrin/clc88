@@ -10,11 +10,9 @@
   - Data Write B
 
 ***************************************************************************/
-
 #include "driver.h"
 #include "../ay8910/ay8910.h"
 #include "2608intf.h"
-#include "fm.h"
 
 #ifdef BUILD_YM2608
 
