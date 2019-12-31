@@ -2,7 +2,7 @@ FRONTEND = linux
 
 CC = gcc
 
-DEFS = -DHAVE_CONFIG_H -DINLINE=inline -DMAME_DEBUG
+DEFS = -DHAVE_CONFIG_H -DINLINE=inline -DMAME_DEBUG -DHAS_YM2608
 # DEFS += -DTRACE_COMPY
 # DEFS += -DTRACE_CPU 
 # DEFS += -DTRACE_BUS 
@@ -49,6 +49,7 @@ OBJS = $(addprefix $(OBJDIR)/, \
 	cpu/m6502/6502dasm.o \
 	sound/pokey/pokey.o \
 	sound/ay8910/ay8910.o \
+	sound/opn/ymdeltat.o \
 	video/screen.o \
 	video/chroni.o \
 	)
