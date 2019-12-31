@@ -48,6 +48,7 @@ OBJS = $(addprefix $(OBJDIR)/, \
 	cpu/m6502/m6502.o \
 	cpu/m6502/6502dasm.o \
 	sound/pokey/pokey.o \
+	sound/ay8910/ay8910.o \
 	video/screen.o \
 	video/chroni.o \
 	)

@@ -52,4 +52,17 @@ void  mem_write(UINT16 addr, UINT8 *values, UINT16 size);
 #define WRITE32_HANDLER(name)	void     name(UNUSEDARG offs_t offset, UNUSEDARG data32_t data, UNUSEDARG data32_t mem_mask)
 #define OPBASE_HANDLER(name)	offs_t   name(UNUSEDARG offs_t address)
 
+/***************************************************************************
+
+        Helper macros
+
+***************************************************************************/
+
+/* ----- 16-bit memory accessing ----- */
+#define ACCESSING_LSB16                         ((mem_mask & 0x00ff) == 0)
+#define ACCESSING_MSB16                         ((mem_mask & 0xff00) == 0)
+#define ACCESSING_LSB                           ACCESSING_LSB16
+#define ACCESSING_MSB                           ACCESSING_MSB16
+
+
 #endif
