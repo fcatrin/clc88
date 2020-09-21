@@ -1,8 +1,9 @@
-	icl '../os/symbols.asm'
+	icl '../../os/symbols.asm'
 	
 	org BOOTADDR
 	
-	lda #4
+	mva #0 ROS7
+	lda #5
 	ldx #OS_SET_VIDEO_MODE
 	jsr OS_CALL
 	
@@ -32,22 +33,26 @@ copy:
 	lda message, y
 	sta (RAM_TO_VRAM), y
 	iny
-	cpy #28
+	cpy #32
 	bne copy
 	
-	adw RAM_TO_VRAM #40
+	adw RAM_TO_VRAM #80
 	dex
 	bne copy_line
 stop:
 	jmp stop
 	
 message:
-	.byte $AA, $AA, $AA, $AA
+   .byte $45, $45, $45, $45
+   .byte $12, $34, $56, $78
+   .byte $9A, $BC, $DE, $FF
+	.byte $11, $11, $11, $11
+	.byte $22, $22, $22, $22
+	.byte $33, $33, $33, $33
+	.byte $44, $44, $44, $44
 	.byte $55, $55, $55, $55
-	.byte $A5, $A5, $A5, $A5
-	.byte $FF, $FF, $FF, $FF
-	.byte $00, $00, $11, $11
-	.byte $22, $22, $33, $33
-   .byte $64, $e6, $6e, $46
+	.byte $66, $66, $66, $66
+	.byte $77, $77, $77, $77
+   .byte $88, $88, $88, $88
 
-   icl '../os/stdlib.asm'
+   icl '../../os/stdlib.asm'

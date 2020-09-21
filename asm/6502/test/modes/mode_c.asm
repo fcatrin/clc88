@@ -1,4 +1,4 @@
-	icl '../os/symbols.asm'
+	icl '../../os/symbols.asm'
 	
 	org BOOTADDR
 
@@ -61,4 +61,4 @@ tile:
    .byte $12, $00, $00, $06, $60, $00, $00, $31
    
 
-   icl '../os/stdlib.asm'
+   icl '../../os/stdlib.asm'

@@ -1,8 +1,8 @@
-	icl '../os/symbols.asm'
+	icl '../../os/symbols.asm'
 	
 	org BOOTADDR
 	
-	lda #3
+	lda #4
 	ldx #OS_SET_VIDEO_MODE
 	jsr OS_CALL
 	
@@ -50,4 +50,4 @@ message:
 	.byte $22, $22, $33, $33
    .byte $64, $e6, $6e, $46
 
-   icl '../os/stdlib.asm'
+   icl '../../os/stdlib.asm'

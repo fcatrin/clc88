@@ -59,20 +59,20 @@ OBJS = $(addprefix $(OBJDIR)/, \
 ASMDIR= ../asm
 XEX = $(addprefix $(ASMDIR)/, \
 	6502/os/6502os.xex \
-	6502/test/mode_0.xex \
-	6502/test/mode_0_attribs.xex \
-	6502/test/mode_1.xex \
-	6502/test/mode_2.xex \
-	6502/test/mode_3.xex \
-	6502/test/mode_4.xex \
-	6502/test/mode_5.xex \
-	6502/test/mode_6.xex \
-	6502/test/mode_7.xex \
-	6502/test/mode_8.xex \
-	6502/test/mode_9.xex \
-	6502/test/mode_a.xex \
-	6502/test/mode_b.xex \
-	6502/test/mode_c.xex \
+	6502/test/modes/mode_0.xex \
+	6502/test/modes/mode_0_attribs.xex \
+	6502/test/modes/mode_1.xex \
+	6502/test/modes/mode_2.xex \
+	6502/test/modes/mode_3.xex \
+	6502/test/modes/mode_4.xex \
+	6502/test/modes/mode_5.xex \
+	6502/test/modes/mode_6.xex \
+	6502/test/modes/mode_7.xex \
+	6502/test/modes/mode_8.xex \
+	6502/test/modes/mode_9.xex \
+	6502/test/modes/mode_a.xex \
+	6502/test/modes/mode_b.xex \
+	6502/test/modes/mode_c.xex \
 	6502/test/sprites.xex \
 	6502/test/scroll.xex \
 	6502/test/storage.xex \

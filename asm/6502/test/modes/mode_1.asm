@@ -1,10 +1,10 @@
-	icl '../os/symbols.asm'
+	icl '../../os/symbols.asm'
 	
 	org BOOTADDR
 
    lda #0
    sta ROS7
-   lda #$0A
+   lda #1
    ldx #OS_SET_VIDEO_MODE
    jsr OS_CALL
 	
@@ -27,4 +27,4 @@ stop:
 message:
 	.by "Hello world!!!!", 255
 
-   icl '../os/stdlib.asm'
+   icl '../../os/stdlib.asm'

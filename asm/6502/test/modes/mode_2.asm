@@ -1,4 +1,4 @@
-	icl '../os/symbols.asm'
+	icl '../../os/symbols.asm'
 	
 	org BOOTADDR
 
@@ -26,4 +26,4 @@ stop:
 message:
 	.by "Hello world!!!!", 255
 
-   icl '../os/stdlib.asm'
+   icl '../../os/stdlib.asm'
