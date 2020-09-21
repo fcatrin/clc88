@@ -34,11 +34,11 @@ copy:
 	bne copy
 	ldx #0
 rainbow:
-   ; clc
-	; lda VCOUNT
-	; adc FRAMECOUNT
-	; sta WSYNC
-	; sta VCOLOR0
+    clc
+	lda VCOUNT
+	adc FRAMECOUNT
+	sta WSYNC
+	sta VCOLOR0
 	jmp rainbow
 	
 dli:
