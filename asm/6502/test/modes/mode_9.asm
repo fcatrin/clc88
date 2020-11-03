@@ -36,7 +36,7 @@ copy:
    cpy #32
    bne copy
    
-   adw RAM_TO_VRAM #160
+   adw RAM_TO_VRAM #80
    dex
    bne copy_line
 stop:

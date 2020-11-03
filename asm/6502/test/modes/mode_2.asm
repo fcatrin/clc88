@@ -7,6 +7,7 @@
    lda #2
    ldx #OS_SET_VIDEO_MODE
    jsr OS_CALL
+	
 
    mwa DISPLAY_START VRAM_TO_RAM
    jsr lib_vram_to_ram

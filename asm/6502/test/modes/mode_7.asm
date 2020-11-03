@@ -14,7 +14,7 @@
    lda #$9A
    sta (RAM_TO_VRAM), y
    iny
-   lda #$9F
+   lda #$38
    sta (RAM_TO_VRAM), y
    iny
    lda #$C8
@@ -36,7 +36,7 @@ copy:
    cpy #32
    bne copy
    
-   adw RAM_TO_VRAM #40
+   adw RAM_TO_VRAM #80
    dex
    bne copy_line
 stop:

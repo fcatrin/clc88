@@ -328,7 +328,7 @@ static void do_scan_blank() {
 	}
 }
 
-static void do_scan_text_attribs(bool use_hscroll, bool use_vscroll, UINT8 pitch, UINT8 line) {
+static void do_scan_text_attribs(bool use_hscroll, bool use_vscroll, UINT8 pitch, UINT8 line, bool cols80) {
 	LOGV(LOGTAG, "do_scan_text_attribs line %d", line);
 
 	UINT8 row;
@@ -340,7 +340,9 @@ static void do_scan_text_attribs(bool use_hscroll, bool use_vscroll, UINT8 pitch
 	int line_offset  = (line + scan_offset) & 7;
 	int char_offset  = (pixel_offset >> 3) + ((line + scan_offset) >> 3) * pitch;
 
-	for(int i=0; i<SCREEN_XRES/2; i++) {
+	int width = cols80 ? SCREEN_XRES : (SCREEN_XRES/2);
+
+	for(int i=0; i<width; i++) {
 		if (i  == 0 || (pixel_offset & 7) == 0) {
 			UINT8 attrib = VRAM_DATA(attribs + char_offset);
 			foreground = (attrib & 0xF0) >> 4;
@@ -357,9 +359,11 @@ static void do_scan_text_attribs(bool use_hscroll, bool use_vscroll, UINT8 pitch
 		put_pixel(offset, row & bit ?
 				VRAM_DATA(subpals + foreground) :
 				VRAM_DATA(subpals + background));
-		put_pixel(offset, row & bit ?
-				VRAM_DATA(subpals + foreground) :
-				VRAM_DATA(subpals + background));
+		if (!cols80) {
+			put_pixel(offset, row & bit ?
+					VRAM_DATA(subpals + foreground) :
+					VRAM_DATA(subpals + background));
+		}
 
 		pixel_offset++;
 		bit >>= 1;
@@ -660,25 +664,25 @@ static void do_scan_pixels_1bpp() {
 }
 
 static UINT8 bytes_per_scan[] = {
-		0, 0, 40, 20,
-		20, 40, 40, 80,
-		80, 40, 80, 160,
-		40, 10, 20
+		0, 0, 40, 80,
+		20, 20, 40, 40,
+		80, 80, 40, 80,
+		160, 40, 10, 20
 };
 
 static UINT8 bytes_per_scan_scroll[] = {
-		0, 0, 48, 20,
-		20, 40, 40, 80,
-		80, 40, 80, 160,
-		40, 10, 20
+		0, 0, 48, 88,
+		20, 20, 40, 40,
+		80, 80, 40, 80,
+		160, 40, 10, 20
 };
 
 
 static UINT8 lines_per_mode[] = {
 		0, 0, 8, 8,
-		16, 1, 2, 1,
-		2, 1, 1, 1,
-		8, 16, 16
+		8, 16, 1, 2,
+		1, 2, 1, 1,
+		1, 8, 16, 16
 };
 
 
@@ -740,19 +744,20 @@ static void do_screen() {
 				do_border(offset, SCREEN_XBORDER);
 
 				switch(mode) {
-				case 0x2: do_scan_text_attribs(use_hscroll, use_vscroll, pitch, line); break;
-				case 0x3: do_scan_text_attribs_double(line); break;
-				case 0x4: do_scan_text_attribs_double(line >> 1); break;
-				case 0x5: do_scan_pixels_wide_2bpp(); break;
+				case 0x2: do_scan_text_attribs(use_hscroll, use_vscroll, pitch, line, FALSE); break;
+				case 0x3: do_scan_text_attribs(use_hscroll, use_vscroll, pitch, line, TRUE); break;
+				case 0x4: do_scan_text_attribs_double(line); break;
+				case 0x5: do_scan_text_attribs_double(line >> 1); break;
 				case 0x6: do_scan_pixels_wide_2bpp(); break;
-				case 0x7: do_scan_pixels_wide_4bpp(); break;
+				case 0x7: do_scan_pixels_wide_2bpp(); break;
 				case 0x8: do_scan_pixels_wide_4bpp(); break;
-				case 0x9: do_scan_pixels_1bpp(); break;
-				case 0xA: do_scan_pixels_2bpp(); break;
-				case 0xB: do_scan_pixels_4bpp(); break;
-				case 0xC: do_scan_tile_wide_2bpp(line); break;
-				case 0xD: do_scan_tile_wide_4bpp(line); break;
-				case 0xE: do_scan_tile_4bpp(line); break;
+				case 0x9: do_scan_pixels_wide_4bpp(); break;
+				case 0xA: do_scan_pixels_1bpp(); break;
+				case 0xB: do_scan_pixels_2bpp(); break;
+				case 0xC: do_scan_pixels_4bpp(); break;
+				case 0xD: do_scan_tile_wide_2bpp(line); break;
+				case 0xE: do_scan_tile_wide_4bpp(line); break;
+				case 0xF: do_scan_tile_4bpp(line); break;
 				}
 
 				do_border(offset, SCREEN_XBORDER);
