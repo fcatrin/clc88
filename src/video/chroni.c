@@ -257,9 +257,9 @@ static inline PAIR do_sprites() {
 		UINT8 sprite_scanline = sprite_scanlines[s];
 		if (sprite_scanline == SPRITE_SCAN_INVALID) continue;
 
-		int sprite_x = VRAM_WORD(sprites + SPRITES_X + s*2) - 24;
+		int sprite_x = (VRAM_WORD(sprites + SPRITES_X + s*2) - 24) * 2;
 
-		int sprite_pixel_x = xpos - sprite_x;
+		int sprite_pixel_x = xpos/2 - sprite_x;
 		if (sprite_pixel_x < 0) continue; // not yet
 		if (sprite_pixel_x >=16) { // not anymore
 			sprite_scanlines[s] = SPRITE_SCAN_INVALID;
@@ -340,7 +340,7 @@ static void do_scan_text_attribs(bool use_hscroll, bool use_vscroll, UINT8 pitch
 	int line_offset  = (line + scan_offset) & 7;
 	int char_offset  = (pixel_offset >> 3) + ((line + scan_offset) >> 3) * pitch;
 
-	for(int i=0; i<SCREEN_XRES; i++) {
+	for(int i=0; i<SCREEN_XRES/2; i++) {
 		if (i  == 0 || (pixel_offset & 7) == 0) {
 			UINT8 attrib = VRAM_DATA(attribs + char_offset);
 			foreground = (attrib & 0xF0) >> 4;
@@ -357,6 +357,9 @@ static void do_scan_text_attribs(bool use_hscroll, bool use_vscroll, UINT8 pitch
 		put_pixel(offset, row & bit ?
 				VRAM_DATA(subpals + foreground) :
 				VRAM_DATA(subpals + background));
+		put_pixel(offset, row & bit ?
+				VRAM_DATA(subpals + foreground) :
+				VRAM_DATA(subpals + background));
 
 		pixel_offset++;
 		bit >>= 1;
@@ -370,7 +373,7 @@ static void do_scan_text_attribs_double(UINT8 line) {
 	UINT8 foreground, background;
 	int char_offset = 0;
 	bool first = TRUE;
-	for(int i=0; i<SCREEN_XRES; i++) {
+	for(int i=0; i<SCREEN_XRES/2; i++) {
 		if (i % 0x10 == 0) {
 			UINT8 attrib = VRAM_DATA(attribs + char_offset);
 			foreground = (attrib & 0xF0) >> 4;
@@ -381,6 +384,9 @@ static void do_scan_text_attribs_double(UINT8 line) {
 			char_offset++;
 		}
 
+		put_pixel(offset, row & 0x80 ?
+				VRAM_DATA(subpals + foreground) :
+				VRAM_DATA(subpals + background));
 		put_pixel(offset, row & 0x80 ?
 				VRAM_DATA(subpals + foreground) :
 				VRAM_DATA(subpals + background));
@@ -396,7 +402,7 @@ static void do_scan_tile_wide_2bpp(UINT8 line) {
 	UINT8  pixel = 0;
 	UINT8  pixel_data = 0;
 	int tile_offset = 0;
-	for(int i=0; i<SCREEN_XRES; i++) {
+	for(int i=0; i<SCREEN_XRES/2; i++) {
 		if ((i & 7) == 0) {
 			palette = VRAM_DATA(attribs + tile_offset);
 
@@ -413,6 +419,7 @@ static void do_scan_tile_wide_2bpp(UINT8 line) {
 		UINT8 color = VRAM_DATA(subpals + palette*4 + pixel);
 
 		put_pixel(offset, color);
+		put_pixel(offset, color);
 	}
 }
 
@@ -425,7 +432,7 @@ static void do_scan_tile_wide_4bpp(UINT8 line) {
 	UINT8  tile = 0;
 	UINT8  tile_data;
 	int tile_offset = 0;
-	for(int i=0; i<SCREEN_XRES; i++) {
+	for(int i=0; i<SCREEN_XRES/2; i++) {
 		if ((i & 31) == 0) {
 			palette = VRAM_DATA(attribs + tile_offset);
 			tile    = VRAM_DATA(lms + tile_offset);
@@ -447,6 +454,7 @@ static void do_scan_tile_wide_4bpp(UINT8 line) {
 		UINT8 color = VRAM_DATA(subpals + palette*16 + pixel);
 
 		put_pixel(offset, color);
+		put_pixel(offset, color);
 	}
 }
 
@@ -459,7 +467,7 @@ static void do_scan_tile_4bpp(UINT8 line) {
 	UINT8  tile = 0;
 	UINT8  tile_data;
 	int tile_offset = 0;
-	for(int i=0; i<SCREEN_XRES; i++) {
+	for(int i=0; i<SCREEN_XRES/2; i++) {
 		if ((i & 15) == 0) {
 			palette = VRAM_DATA(attribs + tile_offset);
 			tile    = VRAM_DATA(lms + tile_offset);
@@ -479,6 +487,7 @@ static void do_scan_tile_4bpp(UINT8 line) {
 		UINT8 color = VRAM_DATA(subpals + palette*16 + pixel);
 
 		put_pixel(offset, color);
+		put_pixel(offset, color);
 	}
 }
 
@@ -491,7 +500,7 @@ static void do_scan_pixels_2bpp() {
 	UINT8  pixel = 0;
 	UINT8  pixel_data = 0;
 	UINT16 pixel_data_offset = 0;
-	for(int i=0; i<SCREEN_XRES; i++) {
+	for(int i=0; i<SCREEN_XRES/2; i++) {
 		if ((i & 3) == 0) {
 			LOGV(LOGTAG, "vram offset: %05X pixel:%05X attrib:%05X",
 					pixel_data_offset, lms+pixel_data_offset, attribs+pixel_data_offset);
@@ -511,6 +520,7 @@ static void do_scan_pixels_2bpp() {
 			subpals, palette, pixel, color);
 
 		put_pixel(offset, color);
+		put_pixel(offset, color);
 
 	}
 }
@@ -524,7 +534,7 @@ static void do_scan_pixels_4bpp() {
 	UINT8  pixel = 0;
 	UINT8  pixel_data = 0;
 	UINT16 pixel_data_offset = 0;
-	for(int i=0; i<SCREEN_XRES; i++) {
+	for(int i=0; i<SCREEN_XRES/2; i++) {
 		if ((i & 1) == 0) {
 			LOGV(LOGTAG, "vram offset: %05X pixel:%05X attrib:%05X",
 					pixel_data_offset, lms+pixel_data_offset, attribs+pixel_data_offset);
@@ -544,6 +554,7 @@ static void do_scan_pixels_4bpp() {
 			subpals, palette, pixel, color);
 
 		put_pixel(offset, color);
+		put_pixel(offset, color);
 	}
 }
 
@@ -555,7 +566,7 @@ static void do_scan_pixels_wide_2bpp() {
 	UINT8  pixel = 0;
 	UINT8  pixel_data = 0;
 	UINT16 pixel_data_offset = 0;
-	for(int i=0; i<SCREEN_XRES; i++) {
+	for(int i=0; i<SCREEN_XRES/2; i++) {
 		if ((i & 7) == 0) {
 			LOGV(LOGTAG, "vram offset: %05X pixel:%05X attrib:%05X",
 					pixel_data_offset, lms+pixel_data_offset, attribs+pixel_data_offset);
@@ -577,6 +588,7 @@ static void do_scan_pixels_wide_2bpp() {
 			subpals, palette, pixel, color);
 
 		put_pixel(offset, color);
+		put_pixel(offset, color);
 
 	}
 }
@@ -589,7 +601,7 @@ static void do_scan_pixels_wide_4bpp() {
 	UINT8  pixel = 0;
 	UINT8  pixel_data = 0;
 	UINT16 pixel_data_offset = 0;
-	for(int i=0; i<SCREEN_XRES; i++) {
+	for(int i=0; i<SCREEN_XRES/2; i++) {
 		if ((i & 3) == 0) {
 			LOGV(LOGTAG, "vram offset: %05X pixel:%05X attrib:%05X",
 					pixel_data_offset, lms+pixel_data_offset, attribs+pixel_data_offset);
@@ -611,6 +623,7 @@ static void do_scan_pixels_wide_4bpp() {
 			subpals, palette, pixel, color);
 
 		put_pixel(offset, color);
+		put_pixel(offset, color);
 	}
 }
 
@@ -622,7 +635,7 @@ static void do_scan_pixels_1bpp() {
 	UINT8  pixel = 0;
 	UINT8  pixel_data = 0;
 	UINT16 pixel_data_offset = 0;
-	for(int i=0; i<SCREEN_XRES; i++) {
+	for(int i=0; i<SCREEN_XRES/2; i++) {
 		if ((i & 7) == 0) {
 			LOGV(LOGTAG, "vram offset: %05X pixel:%05X attrib:%05X",
 					pixel_data_offset, lms+pixel_data_offset, attribs+pixel_data_offset);
@@ -641,6 +654,7 @@ static void do_scan_pixels_1bpp() {
 		LOGV(LOGTAG, "vram data subpals:%05X palette:%04X pixel:%02X color:%02X",
 			subpals, palette, pixel, color);
 
+		put_pixel(offset, color);
 		put_pixel(offset, color);
 	}
 }
