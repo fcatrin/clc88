@@ -129,88 +129,119 @@ always @ (posedge vga_clk)
 //----------------------------------------------------------------
 ////////// ROM读字地址产生模块
 //----------------------------------------------------------------
-reg[4:0] bit_count;
-reg[10:0] text_rom_addra;
+
+parameter state_read_text_a = 0;
+parameter state_read_font_a = 2;
+parameter state_write_font_a = 4;
+parameter state_read_text_b = 8;
+parameter state_read_font_b = 10;
+parameter state_write_font_b = 12;
+parameter state_read_text_end = 15;
+
+reg[10:0] text_rom_addr;
+reg[10:0] font_rom_addr;
+reg[7:0] font_reg_a;
+reg[7:0] font_reg_b;
+reg use_font_a;
+
+reg[3:0] read_rom_state;
+reg [2:0] font_scan;
+
 wire text_rom_read;
+assign text_rom_read = (x_cnt >= Hde_start-4 && x_cnt < Hde_end-4 && vsync_de) ? 1'b1 : 1'b0;
 
-assign text_rom_read = (x_cnt >= Hde_start-2 && x_cnt < Hde_end-2 && vsync_de) ? 1'b1 : 1'b0;
+// state machine to read char or font from rom
+always @(posedge vga_clk)
+begin
+	if(text_rom_read) begin
+		if (read_rom_state == state_read_text_a || read_rom_state == state_read_text_b)
+			text_rom_addr <= text_rom_addr;
+		else if (read_rom_state == state_read_font_a || read_rom_state == state_read_font_b)
+			font_rom_addr <= {1'b1, y_cnt[2:0]};
+		else if (read_rom_state == state_write_font_a)
+			font_reg_a <= {rom_data};
+		else if (read_rom_state == state_write_font_b)
+			font_reg_b <= {rom_data};
+		
+		if (read_rom_state == state_read_text_end)
+			read_rom_state <= 0;
+		else 
+			read_rom_state <= read_rom_state + 1;
+	end
+end
+
+reg[4:0] font_bit;
+always @(posedge vga_clk)
+begin
+	if (~reset_n) begin
+		font_bit <= 7;
+		text_rom_addr <= 15;
+		use_font_a <= 1'b1;
+	end
+	else begin
+		if (vsync_r == 1'b0) begin
+			text_rom_addr <= 15;
+			font_bit <= 7;
+			use_font_a <= 1'b1;
+		end
+		if (hsync_de) begin
+			if (font_bit == 0) begin
+				if (text_rom_addr == 31)
+					text_rom_addr <= 15;
+				else
+					text_rom_addr <= text_rom_addr + 1;
+				font_bit <= 7;
+				use_font_a <= ~use_font_a;
+			end
+			else begin
+				font_bit <= font_bit - 1;
+			end
+		end
+	end
+end 
 
 always @(posedge vga_clk)
    begin
 	  if (~reset_n) begin
-		  bit_count <= 0;
-		  text_rom_addra <= 0;
+		  font_scan <= 0;
 	  end
-	  else begin
-		  if (vsync_r == 1'b0) begin
-		     text_rom_addra <= 0;
-			  bit_count <= 0;
-        end
-		  else if(text_rom_read == 1'b1) begin
-			   if (bit_count == 7) begin
-              text_rom_addra <= text_rom_addra + 1'b1;
-				  bit_count <= 0;
-				end
-            else begin
-					bit_count <= bit_count + 1'b1;
-					text_rom_addra <= text_rom_addra;				  
-				end
-        end
-        else begin
-			  bit_count <= 0;
-			  text_rom_addra <= text_rom_addra;	
-		  end	  
-		end	  
-  end     
-
-
-/* keep rotating bits from 7 to 0 for the entire line */ 
-reg [4:0] font_bit;
-
-always @(posedge vga_clk)
-   begin
-	  if (~reset_n) begin
-		  font_bit <= 7;
+	  if(vsync_de && x_cnt == 1) begin
+	     if (font_scan == 7)
+		     font_scan <= 0;
+		  else
+           font_scan <= font_scan + 1'b1;
 	  end
-	  else begin
-        if(hsync_de == 1'b1) begin
-			   if (font_bit == 0)      
-				  font_bit <= 7;
-            else 
-				  font_bit <= font_bit - 1'b1;
-        end
-        else begin
-			  font_bit <= 7;
-		  end	  
-		end	  
-  end 
- 
+end
+
  
 //----------------------------------------------------------------
 ////////// VGA数据输出
 //---------------------------------------------------------------- 
-wire [4:0] vga_r_reg;
-assign vga_r_reg = {5{rom_data[font_bit]}};                 //显示单色的数据1
+wire font_bit_on;
+assign font_bit_on = use_font_a ? {font_reg_a[font_bit]} : {font_reg_b[font_bit]};
   
 //----------------------------------------------------------------
 ////////// ROM实例化
 //----------------------------------------------------------------	
-wire [10:0] rom_addra;
+wire [10:0] rom_addr;
 wire [7:0] rom_data;
-assign rom_addra = text_rom_addra; //rom的地址选择          
+assign rom_addr =
+	((read_rom_state >= state_read_text_a && read_rom_state < state_read_font_a) ||
+	 (read_rom_state >= state_read_text_b && read_rom_state < state_read_font_b)) ?
+	text_rom_addr : font_rom_addr;
 
 	rom rom_inst (
 	  .clock(vga_clk), // input clka
-	  .address(rom_addra), // input [10 : 0] addra
+	  .address(rom_addr), // input [10 : 0] addra
 	  .q(rom_data) // output [7 : 0] douta
 	);
 	
 	
   assign vga_hs = hsync_r;
   assign vga_vs = vsync_r;  
-  assign vga_r = (hsync_de & vsync_de) ? (vga_r_reg ? 5'b10011  : 5'b00000) : 5'b00000;
-  assign vga_g = (hsync_de & vsync_de) ? (vga_r_reg ? 6'b100111 : 6'b010111)  : 6'b000000;
-  assign vga_b = (hsync_de & vsync_de) ? (vga_r_reg ? 5'b10011  : 5'b01011) : 5'b00000;
+  assign vga_r = (hsync_de & vsync_de) ? (font_bit_on ? 5'b10011  : 5'b00000)  : 5'b00000;
+  assign vga_g = (hsync_de & vsync_de) ? (font_bit_on ? 6'b100111 : 6'b000111) : 6'b000000;
+  assign vga_b = (hsync_de & vsync_de) ? (font_bit_on ? 5'b10011  : 5'b01011)  : 5'b00000;
   assign vga_clk = CLK_OUT2;  //VGA时钟频率选择40Mhz
   
   
