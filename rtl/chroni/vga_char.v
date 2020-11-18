@@ -129,68 +129,58 @@ always @ (posedge vga_clk)
 //----------------------------------------------------------------
 ////////// ROM读字地址产生模块
 //----------------------------------------------------------------
-reg[4:0] x1_count;
-reg[10:0] word1_rom_addra;
-wire y_word1;
-wire x_word1;
-wire pre_x_word1;
+reg[4:0] bit_count;
+reg[10:0] text_rom_addra;
+wire text_rom_read;
 
-assign x_word1=(x_cnt >= Pos_X1 && x_cnt < Pos_X1 + 56) ? 1'b1 : 1'b0;        //第一个字体的X坐标的位置显示范围,字体宽度为56
-assign y_word1=(y_cnt >= Pos_Y1 && y_cnt < Pos_Y1 + 75) ? 1'b1 : 1'b0;        //第一个字体的Y坐标的位置显示范围,字体高度为75
-assign pre_x_word1=(x_cnt >= Pos_X1 - 2 && x_cnt < Pos_X1 + 54) ? 1'b1 : 1'b0;//提前2个时钟准备数据（ROM的数据输出延迟地址2个时钟周期）
+assign text_rom_read = (x_cnt >= Hde_start-2 && x_cnt < Hde_end-2 && vsync_de) ? 1'b1 : 1'b0;
 
 always @(posedge vga_clk)
    begin
 	  if (~reset_n) begin
-		  x1_count<=0;
-		  word1_rom_addra<=0;              //第一个字体在ROM中的位置
+		  bit_count <= 0;
+		  text_rom_addra <= 0;
 	  end
 	  else begin
-		  if (vsync_r==1'b0) begin
-		     word1_rom_addra<=0;             //第一个字体在ROM中的位置
-			  x1_count<=0;
+		  if (vsync_r == 1'b0) begin
+		     text_rom_addra <= 0;
+			  bit_count <= 0;
         end
-		  else if((y_word1==1'b1) && (pre_x_word1==1'b1)) begin //读第一个字体，提前2个时钟产生地址
-			   if (x1_count==7) begin                        //ROM里的每个字节显示8个像数，8个时钟ROM地址加1
-              word1_rom_addra<=word1_rom_addra+1'b1;          //ROM地址加1
-				  x1_count<=0;
+		  else if(text_rom_read == 1'b1) begin
+			   if (bit_count == 7) begin
+              text_rom_addra <= text_rom_addra + 1'b1;
+				  bit_count <= 0;
 				end
             else begin
-					x1_count<=x1_count+1'b1;
-					word1_rom_addra<=word1_rom_addra;				  
+					bit_count <= bit_count + 1'b1;
+					text_rom_addra <= text_rom_addra;				  
 				end
         end
         else begin
-			  x1_count<=0;
-			  word1_rom_addra<=word1_rom_addra;	
+			  bit_count <= 0;
+			  text_rom_addra <= text_rom_addra;	
 		  end	  
 		end	  
   end     
 
- 
-//----------------------------------------------------------------
-////////// 延迟2个节拍,因为ROM的数据输出延迟地址2个时钟周期
-//---------------------------------------------------------------- 
-reg [4:0] x1_bit_count;
 
+/* keep rotating bits from 7 to 0 for the entire line */ 
+reg [4:0] font_bit;
 
- always @(posedge vga_clk)
+always @(posedge vga_clk)
    begin
 	  if (~reset_n) begin
-		  x1_bit_count<=7;
+		  font_bit <= 7;
 	  end
 	  else begin
-		  if (vsync_r==1'b0) begin
-		     x1_bit_count<=7;
-        end
-		  else if((y_word1==1'b1) && (x_word1==1'b1)) begin //读第一个字体，提前2个时钟产生地址
-			   if (x1_bit_count==0)      
-				  x1_bit_count<=7;
+        if(hsync_de == 1'b1) begin
+			   if (font_bit == 0)      
+				  font_bit <= 7;
             else 
-					x1_bit_count<=x1_bit_count-1'b1;
+				  font_bit <= font_bit - 1'b1;
         end
         else begin
-			  x1_bit_count<=7;
+			  font_bit <= 7;
 		  end	  
 		end	  
   end 
@@ -200,14 +190,14 @@ reg [4:0] x1_bit_count;
 ////////// VGA数据输出
 //---------------------------------------------------------------- 
 wire [4:0] vga_r_reg;
-assign vga_r_reg = {5{rom_data[x1_bit_count]}};                 //显示单色的数据1
+assign vga_r_reg = {5{rom_data[font_bit]}};                 //显示单色的数据1
   
 //----------------------------------------------------------------
 ////////// ROM实例化
 //----------------------------------------------------------------	
 wire [10:0] rom_addra;
 wire [7:0] rom_data;
-assign rom_addra = word1_rom_addra; //rom的地址选择          
+assign rom_addra = text_rom_addra; //rom的地址选择          
 
 	rom rom_inst (
 	  .clock(vga_clk), // input clka
@@ -218,9 +208,9 @@ assign rom_addra = word1_rom_addra; //rom的地址选择
 	
   assign vga_hs = hsync_r;
   assign vga_vs = vsync_r;  
-  assign vga_r = ((y_word1==1'b1) && (x_word1==1'b1)) ? vga_r_reg:5'b00000;
-  assign vga_g = (hsync_de & vsync_de) ? 6'b00011 : 6'b000000;
-  assign vga_b = (hsync_de & vsync_de) ? 5'b00011 : 5'b00000;
+  assign vga_r = (hsync_de & vsync_de) ? (vga_r_reg ? 5'b10011  : 5'b00000) : 5'b00000;
+  assign vga_g = (hsync_de & vsync_de) ? (vga_r_reg ? 6'b100111 : 6'b010111)  : 6'b000000;
+  assign vga_b = (hsync_de & vsync_de) ? (vga_r_reg ? 5'b10011  : 5'b01011) : 5'b00000;
   assign vga_clk = CLK_OUT2;  //VGA时钟频率选择40Mhz
   
   
