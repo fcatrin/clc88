@@ -24,6 +24,10 @@ module vga_char(
 //parameter Hde_start=296;
 //parameter Hde_end=1320;
 
+// Hde_start = H_SyncPulse+H_BackPorch
+// Hde_end   = H_SyncPulse+H_BackPorch + H_ActivePix
+// LinePeriod = Hde_end + H_FrontPorch
+
 //-----------------------------------------------------------//
 // 垂直扫描参数的设定1024*768 60Hz VGA
 //-----------------------------------------------------------//
@@ -95,7 +99,7 @@ always @ (posedge vga_clk)
        else if(x_cnt == H_SyncPulse) hsync_r <= 1'b1;
 		 
 		 		 
-	    if(1'b0) hsync_de <= 1'b0;
+	    if(~reset_n) hsync_de <= 1'b0;
        else if(x_cnt == Hde_start) hsync_de <= 1'b1;    //产生hsync_de信号
        else if(x_cnt == Hde_end) hsync_de <= 1'b0;	
 	end
@@ -117,7 +121,7 @@ always @ (posedge vga_clk)
        else if(y_cnt == 1) vsync_r <= 1'b0;    //产生vsync信号
        else if(y_cnt == V_SyncPulse) vsync_r <= 1'b1;
 		 
-	    if(1'b0) vsync_de <= 1'b0;
+	    if(~reset_n) vsync_de <= 1'b0;
        else if(y_cnt == Vde_start) vsync_de <= 1'b1;    //产生vsync_de信号
        else if(y_cnt == Vde_end) vsync_de <= 1'b0;	 
   end	 
