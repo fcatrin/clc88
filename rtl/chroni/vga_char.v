@@ -118,9 +118,9 @@ begin
 	end
 	if(text_rom_read) begin
 		if (read_rom_state == state_read_font_a || read_rom_state == state_read_font_b)
-			font_rom_addr <= {1'b1, font_scan};
+			font_rom_addr <= {rom_data, font_scan};
 		else if (read_rom_state == state_write_font_a || read_rom_state == state_write_font_b)
-			font_reg <= {rom_data};
+			font_reg <= rom_data;
 		
 		if (read_rom_state == state_read_text_end)
 			read_rom_state <= 0;
@@ -173,18 +173,16 @@ end
 
 // read font to set bit to display on/off
 wire font_bit_on;
-assign font_bit_on = rom_data[font_bit];
+assign font_bit_on = font_reg[font_bit];
 
 // read ROM  
 wire [10:0] rom_addr;
 wire [7:0] rom_data;
-assign rom_addr = font_rom_addr;
-/*
+
 assign rom_addr =
 	((read_rom_state >= state_read_text_a && read_rom_state < state_read_font_a) ||
 	 (read_rom_state >= state_read_text_b && read_rom_state < state_read_font_b)) ?
 	text_rom_addr : font_rom_addr;
-*/
 
 	rom rom_inst (
 	  .clock(vga_clk),
