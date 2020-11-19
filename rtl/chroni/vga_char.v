@@ -97,7 +97,7 @@ parameter state_read_font_b = 10;
 parameter state_write_font_b = 12;
 parameter state_read_text_end = 15;
 
-reg[10:0] horizontal_de;
+reg[10:0] text_rom_addr;
 reg[10:0] font_rom_addr;
 reg[7:0]  font_reg;
 
@@ -105,14 +105,20 @@ reg[3:0] read_rom_state;
 reg[2:0] font_scan;
 
 wire text_rom_read;
-assign text_rom_read = (x_cnt >= Hde_start-4 && x_cnt < Hde_end-4 && v_de) ? 1'b1 : 1'b0;
+assign text_rom_read = (x_cnt >= Hde_start-4 && x_cnt < Hde_end && v_de) ? 1'b1 : 1'b0;
 
 // state machine to read char or font from rom
 always @(posedge vga_clk)
 begin
+	if (~reset_n) begin
+		read_rom_state <= state_read_text_a;
+	end
+	if (hsync_r == 1'b0) begin
+		read_rom_state <= state_read_text_a;
+	end
 	if(text_rom_read) begin
 		if (read_rom_state == state_read_font_a || read_rom_state == state_read_font_b)
-			font_rom_addr <= {rom_data, font_scan};
+			font_rom_addr <= {1'b1, font_scan};
 		else if (read_rom_state == state_write_font_a || read_rom_state == state_write_font_b)
 			font_reg <= {rom_data};
 		
@@ -128,20 +134,20 @@ reg[4:0] font_bit;
 always @(posedge vga_clk)
 begin
 	if (~reset_n) begin
-		font_bit <= 7;
-		horizontal_de <= 15;
+		font_bit <= 3;
+		text_rom_addr <= 16;
 	end
 	else begin
-		if (vsync_r == 1'b0) begin
-			horizontal_de <= 15;
-			font_bit <= 7;
+		if (hsync_r == 1'b0) begin
+			text_rom_addr <= 16;
+			font_bit <= 3;
 		end
-		if (h_de) begin
+		if (text_rom_read) begin
 			if (font_bit == 0) begin
-				if (horizontal_de == 31)
-					horizontal_de <= 15;
+				if (text_rom_addr == 31)
+					text_rom_addr <= 16;
 				else
-					horizontal_de <= horizontal_de + 1;
+					text_rom_addr <= text_rom_addr + 1;
 				font_bit <= 7;
 			end
 			else begin
@@ -167,15 +173,18 @@ end
 
 // read font to set bit to display on/off
 wire font_bit_on;
-assign font_bit_on = font_reg[font_bit];
+assign font_bit_on = rom_data[font_bit];
 
 // read ROM  
 wire [10:0] rom_addr;
 wire [7:0] rom_data;
+assign rom_addr = font_rom_addr;
+/*
 assign rom_addr =
 	((read_rom_state >= state_read_text_a && read_rom_state < state_read_font_a) ||
 	 (read_rom_state >= state_read_text_b && read_rom_state < state_read_font_b)) ?
-	horizontal_de : font_rom_addr;
+	text_rom_addr : font_rom_addr;
+*/
 
 	rom rom_inst (
 	  .clock(vga_clk),
