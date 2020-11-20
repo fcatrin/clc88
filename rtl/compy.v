@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-module vga_char(
+module compy (
 			input clk,
 			input reset_n,
 			output vga_hs,
