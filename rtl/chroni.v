@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 
 module chroni (
-		input clock,
+		input vga_clk,
 		input reset_n,
 		output vga_hs,
 		output vga_vs,
@@ -42,8 +42,6 @@ reg hsync_r;
 reg vsync_r; 
 reg h_de;
 reg v_de;
-
-wire vga_clk;
 
 // x position counter  
 always @ (posedge vga_clk)
@@ -91,6 +89,7 @@ parameter state_write_font_a = 5;
 parameter state_read_text_b = 8;
 parameter state_read_font_b = 10;
 parameter state_write_font_b = 13;
+
 parameter state_read_text_end = 15;
 
 reg[10:0] text_rom_addr;
@@ -120,10 +119,7 @@ begin
 		else if (read_rom_state == state_write_font_a || read_rom_state == state_write_font_b)
 			font_reg <= data_in;
 		
-		if (read_rom_state == state_read_text_end)
-			read_rom_state <= 0;
-		else 
-			read_rom_state <= read_rom_state + 1;
+		read_rom_state <= read_rom_state == state_read_text_end ? 0 : read_rom_state + 1;
 	end
 end
 
@@ -132,20 +128,17 @@ reg[4:0] font_bit;
 always @(posedge vga_clk)
 begin
 	if (~reset_n) begin
-		font_bit <= 3;
+		font_bit <= 2;
 		text_rom_addr <= 16;
 	end
 	else begin
 		if (hsync_r == 1'b0) begin
 			text_rom_addr <= 16;
-			font_bit <= 3;
+			font_bit <= 2;
 		end
 		if (text_rom_read) begin
 			if (font_bit == 0) begin
-				if (text_rom_addr == 31)
-					text_rom_addr <= 16;
-				else
-					text_rom_addr <= text_rom_addr + 1;
+				text_rom_addr <= text_rom_addr == 31 ? 16 : text_rom_addr + 1;
 				font_bit <= 7;
 			end
 			else begin
@@ -162,10 +155,7 @@ begin
 		font_scan <= 0;
 	end
 	if(v_de && x_cnt == LinePeriod) begin
-		if (font_scan == 7)
-			font_scan <= 0;
-		else
-			font_scan <= font_scan + 1'b1;
+		font_scan <= font_scan == 7 ? 0 : font_scan + 1;
 	end
 end
 
@@ -178,7 +168,6 @@ assign vga_vs = vsync_r;
 assign vga_r = (h_de & v_de) ? (font_bit_on ? 5'b10011  : 5'b00000)  : 5'b00000;
 assign vga_g = (h_de & v_de) ? (font_bit_on ? 6'b100111 : 6'b000111) : 6'b000000;
 assign vga_b = (h_de & v_de) ? (font_bit_on ? 5'b10011  : 5'b01011)  : 5'b00000;
-assign vga_clk = clock;
- 
+
 endmodule
 	 

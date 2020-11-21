@@ -16,10 +16,13 @@ module compy (
 	wire CLK_OUT1;
 	wire CLK_OUT2;
 	wire CLK_OUT3;
-	wire CLK_OUT4; 
+	wire CLK_OUT4;
+	
+	wire chroni_clock;
+	assign chroni_clock = CLK_OUT2;
 
 	rom rom_inst (
-		.clock(CLK_OUT2),
+		.clock(chroni_clock),
 		.address(rom_addr),
 		.q(rom_data)
 	);
@@ -35,7 +38,7 @@ module compy (
 	);        // OUT
 
 	chroni chroni_inst (
-		.clock(CLK_OUT2),
+		.vga_clk(chroni_clock),
 		.reset_n(reset_n),
 		.vga_hs(vga_hs),
 		.vga_vs(vga_vs),
