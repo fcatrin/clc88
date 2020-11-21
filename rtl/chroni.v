@@ -85,10 +85,10 @@ end
 
 parameter state_read_text_a = 0;
 parameter state_read_font_a = 2;
-parameter state_write_font_a = 5;
+parameter state_write_font_a = 4;
 parameter state_read_text_b = 8;
 parameter state_read_font_b = 10;
-parameter state_write_font_b = 13;
+parameter state_write_font_b = 12;
 
 parameter state_read_text_end = 15;
 
@@ -115,7 +115,7 @@ begin
 		if (read_rom_state == state_read_text_a || read_rom_state == state_read_text_b)
 			addr_out <= text_rom_addr;
 		else if (read_rom_state == state_read_font_a || read_rom_state == state_read_font_b)
-			addr_out <= {1'b1, font_scan};
+			addr_out <= {data_in, font_scan};
 		else if (read_rom_state == state_write_font_a || read_rom_state == state_write_font_b)
 			font_reg <= data_in;
 		
@@ -128,13 +128,13 @@ reg[4:0] font_bit;
 always @(posedge vga_clk)
 begin
 	if (~reset_n) begin
-		font_bit <= 2;
+		font_bit <= 3;
 		text_rom_addr <= 16;
 	end
 	else begin
 		if (hsync_r == 1'b0) begin
 			text_rom_addr <= 16;
-			font_bit <= 2;
+			font_bit <= 3;
 		end
 		if (text_rom_read) begin
 			if (font_bit == 0) begin

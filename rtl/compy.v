@@ -18,18 +18,23 @@ module compy (
 	wire CLK_OUT3;
 	wire CLK_OUT4;
 	
-	wire chroni_clock;
-	assign chroni_clock = CLK_OUT2;
+	reg chroni_clock;
 
+	always @(posedge CLK_OUT1)
+	begin
+	  chroni_clock <= !chroni_clock;
+	end
+
+	
 	rom rom_inst (
-		.clock(chroni_clock),
+		.clock(CLK_OUT1),
 		.address(rom_addr),
 		.q(rom_data)
 	);
 
 	pll pll_inst (// Clock in ports
 		.inclk0(clk),      // IN
-		.c0(CLK_OUT1),     // 21.175Mhz for 640x480(60hz)
+		.c0(CLK_OUT1),     // 80.0Mhz
 		.c1(CLK_OUT2),     // 40.0Mhz for 800x600(60hz)
 		.c2(CLK_OUT3),     // 65.0Mhz for 1024x768(60hz)
 		.c3(CLK_OUT4),     // 108.0Mhz for 1280x1024(60hz)
