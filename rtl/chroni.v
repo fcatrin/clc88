@@ -129,16 +129,16 @@ always @(posedge vga_clk)
 begin
 	if (~reset_n) begin
 		font_bit <= 3;
-		text_rom_addr <= 16;
+		text_rom_addr <= 1024;
 	end
 	else begin
 		if (hsync_r == 1'b0) begin
-			text_rom_addr <= 16;
+			text_rom_addr <= 1024;
 			font_bit <= 3;
 		end
 		if (text_rom_read) begin
 			if (font_bit == 0) begin
-				text_rom_addr <= text_rom_addr == 31 ? 16 : text_rom_addr + 1;
+				text_rom_addr <= text_rom_addr == 1092 ? 1024 : text_rom_addr + 1;
 				font_bit <= 7;
 			end
 			else begin
