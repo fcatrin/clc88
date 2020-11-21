@@ -20,14 +20,14 @@ module compy (
 	
 	reg chroni_clock;
 
-	always @(posedge CLK_OUT1)
+	always @(posedge CLK_OUT2)
 	begin
 	  chroni_clock <= !chroni_clock;
 	end
 
 	
 	rom rom_inst (
-		.clock(CLK_OUT1),
+		.clock(CLK_OUT2),
 		.address(rom_addr),
 		.q(rom_data)
 	);
