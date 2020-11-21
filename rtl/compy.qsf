@@ -94,4 +94,5 @@ set_location_assignment PIN_N3 -to vga_vs
 set_location_assignment PIN_E1 -to clk
 set_global_assignment -name ENABLE_SIGNALTAP OFF
 set_global_assignment -name USE_SIGNALTAP_FILE stp1.stp
+set_global_assignment -name VERILOG_FILE chroni.v
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
