@@ -14,26 +14,23 @@ module chroni (
 );
 
 // 640x480 no borders
-/*
 // Horizontal mode def
-parameter H_ActivePix=640;
-parameter H_FrontPorch=16;
-parameter H_SyncPulse=96;
-parameter H_BackPorch=48;
-parameter LinePeriod =800;
-parameter Hde_start=144;
-parameter Hde_end=744;
+parameter Mode1_H_Display    = 640;
+parameter Mode1_H_FrontPorch = 16;
+parameter Mode1_H_SyncPulse  = 96;
+parameter Mode1_H_BackPorch  = 48;
+parameter Mode1_H_DeStart = Mode1_H_SyncPulse + Mode1_H_BackPorch;
+parameter Mode1_H_DeEnd   = Mode1_H_DeStart   + Mode1_H_Display;
+parameter Mode1_H_Total   = Mode1_H_DeEnd     + Mode1_H_FrontPorch;
 
 // Vertical mode def
-parameter V_ActivePix=480;
-parameter V_FrontPorch=11;
-parameter V_SyncPulse=2;
-parameter V_BackPorch=31;
-parameter FramePeriod =524;
-parameter Vde_start=33;
-parameter Vde_end=513;
-*/
-
+parameter Mode1_V_Display    = 480;
+parameter Mode1_V_FrontPorch = 11;
+parameter Mode1_V_SyncPulse  = 2;
+parameter Mode1_V_BackPorch  = 31;
+parameter Mode1_V_DeStart = Mode1_V_SyncPulse + Mode1_V_BackPorch;
+parameter Mode1_V_DeEnd   = Mode1_V_DeStart   + Mode1_V_Display;
+parameter Mode1_V_Total   = Mode1_V_DeEnd     + Mode1_V_FrontPorch;
 
 // 800x600 => 640x480 + borders
 // Horizontal mode def
@@ -99,7 +96,16 @@ reg v_de;
 always @ (posedge vga_clk)
 begin
 	 if(~reset_n) begin
-		if (vga_mode == 2'b10) begin
+		if (vga_mode == 2'b01) begin
+			h_sync_pulse = Mode1_H_SyncPulse;
+			h_total      = Mode1_H_Total;
+			h_de_start   = Mode1_H_DeStart;
+			h_de_end     = Mode1_H_DeEnd;
+			v_sync_pulse = Mode1_V_SyncPulse;
+			v_total      = Mode1_V_Total;
+			v_de_start   = Mode1_V_DeStart;
+			v_de_end     = Mode1_V_DeEnd;
+		end else if (vga_mode == 2'b10) begin
 			h_sync_pulse = Mode2_H_SyncPulse;
 			h_total      = Mode2_H_Total;
 			h_de_start   = Mode2_H_DeStart;
