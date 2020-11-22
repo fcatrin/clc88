@@ -10,24 +10,36 @@ module compy (
 	output [4:0] vga_b
 );
 
+parameter VGA_MODE_640x480  = 2'b01;
+parameter VGA_MODE_800x600  = 2'b10;
+parameter VGA_MODE_1280x720 = 2'b11;
+
 	wire[10:0] rom_addr;
 	wire[7:0]  rom_data;
+	
+	wire[2:0] vga_mode;
+	assign vga_mode = VGA_MODE_1280x720;
 
 	wire CLK_OUT1;
 	wire CLK_OUT2;
 	wire CLK_OUT3;
 	wire CLK_OUT4;
 	
-	reg chroni_clock;
+   wire system_clock;
+	reg  chroni_clock;
+	
+	assign system_clock = 
+		 vga_mode == VGA_MODE_640x480 ? CLK_OUT1 : 
+		(vga_mode == VGA_MODE_800x600 ? CLK_OUT2 : CLK_OUT3);
 
-	always @(posedge CLK_OUT3)
+	always @(posedge system_clock)
 	begin
 	  chroni_clock <= !chroni_clock;
 	end
 
 	
 	rom rom_inst (
-		.clock(CLK_OUT3),
+		.clock(system_clock),
 		.address(rom_addr),
 		.q(rom_data)
 	);
@@ -44,6 +56,7 @@ module compy (
 	chroni chroni_inst (
 		.vga_clk(chroni_clock),
 		.reset_n(reset_n),
+		.vga_mode(vga_mode),
 		.vga_hs(vga_hs),
 		.vga_vs(vga_vs),
 		.vga_r(vga_r),
