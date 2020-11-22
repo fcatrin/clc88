@@ -18,7 +18,7 @@ parameter VGA_MODE_1280x720 = 2'b11;
 	wire[7:0]  rom_data;
 	
 	wire[2:0] vga_mode;
-	assign vga_mode = VGA_MODE_1280x720;
+	assign vga_mode = VGA_MODE_800x600;
 
 	wire CLK_OUT1;
 	wire CLK_OUT2;

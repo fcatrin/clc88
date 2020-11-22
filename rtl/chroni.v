@@ -34,27 +34,25 @@ parameter Vde_start=33;
 parameter Vde_end=513;
 */
 
-/*
+
 // 800x600 => 640x480 + borders
 // Horizontal mode def
-parameter H_ActivePix=800;
-parameter H_FrontPorch=40;
-parameter H_SyncPulse=128;
-parameter H_BackPorch=88;
-parameter LinePeriod=1056;
-parameter Hde_start=216;
-parameter Hde_end=1016;
+parameter Mode2_H_Display    = 800;
+parameter Mode2_H_FrontPorch = 40;
+parameter Mode2_H_SyncPulse  = 128;
+parameter Mode2_H_BackPorch  = 88;
+parameter Mode2_H_DeStart = Mode2_H_SyncPulse + Mode2_H_BackPorch;
+parameter Mode2_H_DeEnd   = Mode2_H_DeStart   + Mode2_H_Display;
+parameter Mode2_H_Total   = Mode2_H_DeEnd     + Mode2_H_FrontPorch;
 
 // Vertical mode def
-parameter V_ActivePix=600;
-parameter V_FrontPorch=1;
-parameter V_SyncPulse=4;
-parameter V_BackPorch=23;
-parameter FramePeriod=628;
-parameter Vde_start=27;
-parameter Vde_end=627;
-*/
-
+parameter Mode2_V_Display  = 600;
+parameter Mode2_V_FrontPorch = 1;
+parameter Mode2_V_SyncPulse  = 4;
+parameter Mode2_V_BackPorch  = 23;
+parameter Mode2_V_DeStart = Mode2_V_SyncPulse + Mode2_V_BackPorch;
+parameter Mode2_V_DeEnd   = Mode2_V_DeStart   + Mode2_V_Display;
+parameter Mode2_V_Total   = Mode2_V_DeEnd     + Mode2_V_FrontPorch;
 
 // 1280x720 mode
 // Horizontal mode def
@@ -101,7 +99,16 @@ reg v_de;
 always @ (posedge vga_clk)
 begin
 	 if(~reset_n) begin
-		if (vga_mode == 2'b11) begin
+		if (vga_mode == 2'b10) begin
+			h_sync_pulse = Mode2_H_SyncPulse;
+			h_total      = Mode2_H_Total;
+			h_de_start   = Mode2_H_DeStart;
+			h_de_end     = Mode2_H_DeEnd;
+			v_sync_pulse = Mode2_V_SyncPulse;
+			v_total      = Mode2_V_Total;
+			v_de_start   = Mode2_V_DeStart;
+			v_de_end     = Mode2_V_DeEnd;
+		end else if (vga_mode == 2'b11) begin
 			h_sync_pulse = Mode3_H_SyncPulse;
 			h_total      = Mode3_H_Total;
 			h_de_start   = Mode3_H_DeStart;
