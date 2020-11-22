@@ -16,7 +16,7 @@ module compy (
 	wire[7:0]  rom_data;
 	
 	wire[2:0] vga_mode;
-	assign vga_mode = VGA_MODE_640x480;
+	assign vga_mode = VGA_MODE_1280x720;
 
 	wire CLK_OUT1;
 	wire CLK_OUT2;

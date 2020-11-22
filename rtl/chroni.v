@@ -20,11 +20,15 @@ reg[10:0] h_sync_pulse;
 reg[10:0] h_total;
 reg[10:0] h_de_start;
 reg[10:0] h_de_end;
+reg[10:0] h_pf_start;
+reg[10:0] h_pf_end;
 
 reg[10:0] v_sync_pulse;
 reg[10:0] v_total;
 reg[10:0] v_de_start;
 reg[10:0] v_de_end;
+reg[10:0] v_pf_start;
+reg[10:0] v_pf_end;
 
 reg[10 : 0] x_cnt;
 reg[9 : 0]  y_cnt;
@@ -32,7 +36,10 @@ reg hsync_r;
 reg vsync_r; 
 reg h_de;
 reg v_de;
+reg h_pf;
+reg v_pf;
 reg[8:0] scanline;
+reg dbl_scan;
 
 always @ (posedge vga_clk) begin
 	if(~reset_n) begin
@@ -41,28 +48,40 @@ always @ (posedge vga_clk) begin
 			h_total      = Mode1_H_Total;
 			h_de_start   = Mode1_H_DeStart;
 			h_de_end     = Mode1_H_DeEnd;
+			h_pf_start   = Mode1_H_PfStart;
+			h_pf_end     = Mode1_H_PfEnd;
 			v_sync_pulse = Mode1_V_SyncPulse;
 			v_total      = Mode1_V_Total;
 			v_de_start   = Mode1_V_DeStart;
 			v_de_end     = Mode1_V_DeEnd;
+			v_pf_start   = Mode1_V_PfStart;
+			v_pf_end     = Mode1_V_PfEnd;
 		end else if (vga_mode == VGA_MODE_800x600) begin
 			h_sync_pulse = Mode2_H_SyncPulse;
 			h_total      = Mode2_H_Total;
 			h_de_start   = Mode2_H_DeStart;
 			h_de_end     = Mode2_H_DeEnd;
+			h_pf_start   = Mode2_H_PfStart;
+			h_pf_end     = Mode2_H_PfEnd;
 			v_sync_pulse = Mode2_V_SyncPulse;
 			v_total      = Mode2_V_Total;
 			v_de_start   = Mode2_V_DeStart;
 			v_de_end     = Mode2_V_DeEnd;
+			v_pf_start   = Mode2_V_PfStart;
+			v_pf_end     = Mode2_V_PfEnd;
 		end else if (vga_mode == VGA_MODE_1280x720) begin
 			h_sync_pulse = Mode3_H_SyncPulse;
 			h_total      = Mode3_H_Total;
 			h_de_start   = Mode3_H_DeStart;
 			h_de_end     = Mode3_H_DeEnd;
+			h_pf_start   = Mode3_H_PfStart;
+			h_pf_end     = Mode3_H_PfEnd;
 			v_sync_pulse = Mode3_V_SyncPulse;
 			v_total      = Mode3_V_Total;
 			v_de_start   = Mode3_V_DeStart;
 			v_de_end     = Mode3_V_DeEnd;
+			v_pf_start   = Mode3_V_PfStart;
+			v_pf_end     = Mode3_V_PfEnd;
 		end
 	end
 end
@@ -76,10 +95,17 @@ always @ (posedge vga_clk)
 // y position counter  
 always @ (posedge vga_clk) begin
 	if(~reset_n) y_cnt <= 1;
-	else if(y_cnt == v_total) y_cnt <= 1;
-	else if(x_cnt == h_total) y_cnt <= y_cnt+1;
-	
-	scanline <= y_cnt == v_de_start ? 0 : y_cnt[9:1];
+	else if(y_cnt == v_total) begin
+		y_cnt <= 1;
+		scanline <= 0;
+		dbl_scan <= 0;
+	end else if(x_cnt == h_total) begin
+		y_cnt <= y_cnt+1;
+		if (y_cnt >= v_pf_start) begin
+			if (~dbl_scan) scanline <= scanline + 1;
+			dbl_scan = ~dbl_scan;
+		end
+	end
 end
 
 // hsync / h display enable signals	 
@@ -92,6 +118,10 @@ begin
 	if(~reset_n) h_de <= 1'b0;
 	else if(x_cnt == h_de_start) h_de <= 1'b1;
 	else if(x_cnt == h_de_end) h_de <= 1'b0;	
+	
+	if(~reset_n) h_pf <= 1'b0;
+	else if(x_cnt == h_pf_start) h_pf <= 1'b1;
+	else if(x_cnt == h_pf_end) h_pf <= 1'b0;	
 end
 
 // vsync / v display enable signals	 
@@ -104,6 +134,10 @@ begin
 	if(~reset_n) v_de <= 1'b0;
 	else if(y_cnt == v_de_start) v_de <= 1'b1;
 	else if(y_cnt == v_de_end) v_de <= 1'b0;	 
+	
+	if(~reset_n) v_pf <= 1'b0;
+	else if(y_cnt == v_pf_start) v_pf <= 1'b1;
+	else if(y_cnt == v_pf_end) v_pf <= 1'b0;	 
 end	 
 
 parameter state_read_text_a = 0;
@@ -123,7 +157,7 @@ reg[3:0] read_rom_state;
 reg[2:0] font_scan;
 
 wire text_rom_read;
-assign text_rom_read = (x_cnt >= h_de_start-4 && x_cnt < h_de_end && v_de) ? 1'b1 : 1'b0;
+assign text_rom_read = (x_cnt >= h_pf_start-4 && x_cnt < h_pf_end && v_pf) ? 1'b1 : 1'b0;
 
 // state machine to read char or font from rom
 always @(posedge vga_clk)
@@ -177,7 +211,7 @@ begin
 	if (~reset_n) begin
 		font_scan <= 0;
 	end
-	if(v_de && x_cnt == h_total) begin
+	if(v_pf && x_cnt == h_total) begin
 		font_scan <= scanline[2:0];
 	end
 end
@@ -185,12 +219,16 @@ end
 // read font to set bit to display on/off
 wire font_bit_on;
 assign font_bit_on = font_reg[font_bit];
+
+parameter border_r = 5'b00100;
+parameter border_g = 6'b001000;
+parameter border_b = 5'b00110;
 	
 assign vga_hs = hsync_r;
 assign vga_vs = vsync_r;  
-assign vga_r = (h_de & v_de) ? (font_bit_on ? 5'b10011  : 5'b00000)  : 5'b00000;
-assign vga_g = (h_de & v_de) ? (font_bit_on ? 6'b100111 : 6'b000111) : 6'b000000;
-assign vga_b = (h_de & v_de) ? (font_bit_on ? 5'b10011  : 5'b01011)  : 5'b00000;
+assign vga_r = (h_de & v_de) ? ((h_pf & v_pf) ? (font_bit_on ? 5'b10011  : 5'b00000)  : border_r) : 5'b00000;
+assign vga_g = (h_de & v_de) ? ((h_pf & v_pf) ? (font_bit_on ? 6'b100111 : 6'b000111) : border_g) : 6'b000000;
+assign vga_b = (h_de & v_de) ? ((h_pf & v_pf) ? (font_bit_on ? 5'b10011  : 5'b01011)  : border_b) : 5'b00000;
 
 endmodule
 	 
