@@ -20,24 +20,23 @@ module compy (
 	
 	reg chroni_clock;
 
-	always @(posedge CLK_OUT4)
+	always @(posedge CLK_OUT3)
 	begin
 	  chroni_clock <= !chroni_clock;
 	end
 
 	
 	rom rom_inst (
-		.clock(CLK_OUT4),
+		.clock(CLK_OUT3),
 		.address(rom_addr),
 		.q(rom_data)
 	);
 
 	pll pll_inst (// Clock in ports
 		.inclk0(clk),      // IN
-		.c0(CLK_OUT1),     // 80.0Mhz
-		.c1(CLK_OUT2),     // 40.0Mhz for 800x600(60hz)
-		.c2(CLK_OUT3),     // 265.0Mhz for 1920x1080(60hz) / * 2
-		.c3(CLK_OUT4),     
+		.c0(CLK_OUT1),     // 25.17Mhz *2  (640x480)
+		.c1(CLK_OUT2),     // 40Mhz    *2  (800x600)
+		.c2(CLK_OUT3),     // 74.48Mhz *2  (1280x720)
 		.areset(1'b0),     // reset input 
 		.locked(LOCKED)
 	);        // OUT

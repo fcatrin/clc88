@@ -13,8 +13,8 @@ module chroni (
 );
 
 // 640x480 no borders
-// Horizontal mode def
 /*
+// Horizontal mode def
 parameter H_ActivePix=640;
 parameter H_FrontPorch=16;
 parameter H_SyncPulse=96;
@@ -33,7 +33,29 @@ parameter Vde_start=33;
 parameter Vde_end=513;
 */
 
-// 960x540 mode
+/*
+// 800x600 => 640x480 + borders
+// Horizontal mode def
+parameter H_ActivePix=800;
+parameter H_FrontPorch=40;
+parameter H_SyncPulse=128;
+parameter H_BackPorch=88;
+parameter LinePeriod=1056;
+parameter Hde_start=216;
+parameter Hde_end=1016;
+
+// Vertical mode def
+parameter V_ActivePix=600;
+parameter V_FrontPorch=1;
+parameter V_SyncPulse=4;
+parameter V_BackPorch=23;
+parameter FramePeriod=628;
+parameter Vde_start=27;
+parameter Vde_end=627;
+*/
+
+
+// 1280x720 mode
 // Horizontal mode def
 parameter H_ActivePix=1280;
 parameter H_FrontPorch=56;
@@ -51,6 +73,7 @@ parameter V_BackPorch=22;
 parameter FramePeriod=746;
 parameter Vde_start=25;
 parameter Vde_end=745;
+
 
 // Hde_start = H_SyncPulse+H_BackPorch
 // Hde_end   = H_SyncPulse+H_BackPorch + H_ActivePix
