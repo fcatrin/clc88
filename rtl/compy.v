@@ -10,9 +10,7 @@ module compy (
 	output [4:0] vga_b
 );
 
-parameter VGA_MODE_640x480  = 2'b01;
-parameter VGA_MODE_800x600  = 2'b10;
-parameter VGA_MODE_1280x720 = 2'b11;
+`include "chroni.vh"
 
 	wire[10:0] rom_addr;
 	wire[7:0]  rom_data;

@@ -13,8 +13,9 @@ module chroni (
 		input [7:0] data_in
 );
 
+`include "chroni.vh"
+
 // 640x480 no borders
-// Horizontal mode def
 parameter Mode1_H_Display    = 640;
 parameter Mode1_H_FrontPorch = 16;
 parameter Mode1_H_SyncPulse  = 96;
@@ -22,8 +23,6 @@ parameter Mode1_H_BackPorch  = 48;
 parameter Mode1_H_DeStart = Mode1_H_SyncPulse + Mode1_H_BackPorch;
 parameter Mode1_H_DeEnd   = Mode1_H_DeStart   + Mode1_H_Display;
 parameter Mode1_H_Total   = Mode1_H_DeEnd     + Mode1_H_FrontPorch;
-
-// Vertical mode def
 parameter Mode1_V_Display    = 480;
 parameter Mode1_V_FrontPorch = 11;
 parameter Mode1_V_SyncPulse  = 2;
@@ -33,7 +32,6 @@ parameter Mode1_V_DeEnd   = Mode1_V_DeStart   + Mode1_V_Display;
 parameter Mode1_V_Total   = Mode1_V_DeEnd     + Mode1_V_FrontPorch;
 
 // 800x600 => 640x480 + borders
-// Horizontal mode def
 parameter Mode2_H_Display    = 800;
 parameter Mode2_H_FrontPorch = 40;
 parameter Mode2_H_SyncPulse  = 128;
@@ -41,8 +39,6 @@ parameter Mode2_H_BackPorch  = 88;
 parameter Mode2_H_DeStart = Mode2_H_SyncPulse + Mode2_H_BackPorch;
 parameter Mode2_H_DeEnd   = Mode2_H_DeStart   + Mode2_H_Display;
 parameter Mode2_H_Total   = Mode2_H_DeEnd     + Mode2_H_FrontPorch;
-
-// Vertical mode def
 parameter Mode2_V_Display  = 600;
 parameter Mode2_V_FrontPorch = 1;
 parameter Mode2_V_SyncPulse  = 4;
@@ -51,8 +47,7 @@ parameter Mode2_V_DeStart = Mode2_V_SyncPulse + Mode2_V_BackPorch;
 parameter Mode2_V_DeEnd   = Mode2_V_DeStart   + Mode2_V_Display;
 parameter Mode2_V_Total   = Mode2_V_DeEnd     + Mode2_V_FrontPorch;
 
-// 1280x720 mode
-// Horizontal mode def
+// 1280x720 => 640x480 + borders (wide screen compatible)
 parameter Mode3_H_Display    = 1280;
 parameter Mode3_H_FrontPorch = 56;
 parameter Mode3_H_SyncPulse  = 136;
@@ -60,8 +55,6 @@ parameter Mode3_H_BackPorch  = 192;
 parameter Mode3_H_DeStart = Mode3_H_SyncPulse + Mode3_H_BackPorch;
 parameter Mode3_H_DeEnd   = Mode3_H_DeStart   + Mode3_H_Display;
 parameter Mode3_H_Total   = Mode3_H_DeEnd     + Mode3_H_FrontPorch;
-
-// Vertical mode def
 parameter Mode3_V_Display    = 720;
 parameter Mode3_V_FrontPorch = 1;
 parameter Mode3_V_SyncPulse  = 3;
@@ -80,12 +73,6 @@ reg[10:0] v_total;
 reg[10:0] v_de_start;
 reg[10:0] v_de_end;
 
-
-// Hde_start = H_SyncPulse+H_BackPorch
-// Hde_end   = H_SyncPulse+H_BackPorch + H_ActivePix
-// LinePeriod = Hde_end + H_FrontPorch
-
-
 reg[10 : 0] x_cnt;
 reg[9 : 0]  y_cnt;
 reg hsync_r;
@@ -96,7 +83,7 @@ reg v_de;
 always @ (posedge vga_clk)
 begin
 	 if(~reset_n) begin
-		if (vga_mode == 2'b01) begin
+		if (vga_mode == VGA_MODE_640x480) begin
 			h_sync_pulse = Mode1_H_SyncPulse;
 			h_total      = Mode1_H_Total;
 			h_de_start   = Mode1_H_DeStart;
@@ -105,7 +92,7 @@ begin
 			v_total      = Mode1_V_Total;
 			v_de_start   = Mode1_V_DeStart;
 			v_de_end     = Mode1_V_DeEnd;
-		end else if (vga_mode == 2'b10) begin
+		end else if (vga_mode == VGA_MODE_800x600) begin
 			h_sync_pulse = Mode2_H_SyncPulse;
 			h_total      = Mode2_H_Total;
 			h_de_start   = Mode2_H_DeStart;
@@ -114,7 +101,7 @@ begin
 			v_total      = Mode2_V_Total;
 			v_de_start   = Mode2_V_DeStart;
 			v_de_end     = Mode2_V_DeEnd;
-		end else if (vga_mode == 2'b11) begin
+		end else if (vga_mode == VGA_MODE_1280x720) begin
 			h_sync_pulse = Mode3_H_SyncPulse;
 			h_total      = Mode3_H_Total;
 			h_de_start   = Mode3_H_DeStart;
@@ -162,10 +149,6 @@ begin
 	else if(y_cnt == v_de_start) v_de <= 1'b1;
 	else if(y_cnt == v_de_end) v_de <= 1'b0;	 
 end	 
-
-//----------------------------------------------------------------
-////////// ROM读字地址产生模块
-//----------------------------------------------------------------
 
 parameter state_read_text_a = 0;
 parameter state_read_font_a = 2;
