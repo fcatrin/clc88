@@ -32,10 +32,10 @@ reg hsync_r;
 reg vsync_r; 
 reg h_de;
 reg v_de;
+reg[8:0] scanline;
 
-always @ (posedge vga_clk)
-begin
-	 if(~reset_n) begin
+always @ (posedge vga_clk) begin
+	if(~reset_n) begin
 		if (vga_mode == VGA_MODE_640x480) begin
 			h_sync_pulse = Mode1_H_SyncPulse;
 			h_total      = Mode1_H_Total;
@@ -64,7 +64,7 @@ begin
 			v_de_start   = Mode3_V_DeStart;
 			v_de_end     = Mode3_V_DeEnd;
 		end
-	 end
+	end
 end
 
 // x position counter  
@@ -74,10 +74,13 @@ always @ (posedge vga_clk)
 	 else x_cnt <= x_cnt+ 1;
 
 // y position counter  
-always @ (posedge vga_clk)
+always @ (posedge vga_clk) begin
 	if(~reset_n) y_cnt <= 1;
 	else if(y_cnt == v_total) y_cnt <= 1;
 	else if(x_cnt == h_total) y_cnt <= y_cnt+1;
+	
+	scanline <= y_cnt == v_de_start ? 0 : y_cnt[9:1];
+end
 
 // hsync / h display enable signals	 
 always @ (posedge vga_clk)
@@ -175,7 +178,7 @@ begin
 		font_scan <= 0;
 	end
 	if(v_de && x_cnt == h_total) begin
-		font_scan <= font_scan == 7 ? 0 : font_scan + 1;
+		font_scan <= scanline[2:0];
 	end
 end
 
