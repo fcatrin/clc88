@@ -40,6 +40,7 @@ reg h_pf;
 reg v_pf;
 reg[8:0] scanline;
 reg dbl_scan;
+reg[1:0] tri_scan;
 
 always @ (posedge vga_clk) begin
 	if(~reset_n) begin
@@ -99,9 +100,16 @@ always @ (posedge vga_clk) begin
 		y_cnt <= 1;
 		scanline <= 0;
 		dbl_scan <= 0;
+		tri_scan <= 0;
 	end else if(x_cnt == h_total) begin
 		y_cnt <= y_cnt+1;
-		if (y_cnt >= v_pf_start) begin
+		if (vga_mode == VGA_MODE_1280x720) begin
+			if (tri_scan == 2) begin
+				tri_scan <= 0;
+				scanline <= scanline + 1;
+			end else
+				tri_scan <= tri_scan + 1;
+		end else if (y_cnt >= v_pf_start) begin
 			if (~dbl_scan) scanline <= scanline + 1;
 			dbl_scan = ~dbl_scan;
 		end

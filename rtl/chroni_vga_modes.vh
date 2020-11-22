@@ -46,8 +46,8 @@ parameter Mode3_H_BackPorch  = 192;
 parameter Mode3_H_DeStart = Mode3_H_SyncPulse + Mode3_H_BackPorch;
 parameter Mode3_H_DeEnd   = Mode3_H_DeStart   + Mode3_H_Display;
 parameter Mode3_H_Total   = Mode3_H_DeEnd     + Mode3_H_FrontPorch;
-parameter Mode3_H_PfStart = Mode3_H_DeStart   + 320;
-parameter Mode3_H_PfEnd   = Mode3_H_PfStart   + 640;
+parameter Mode3_H_PfStart = Mode3_H_DeStart   + 160;
+parameter Mode3_H_PfEnd   = Mode3_H_PfStart   + 960;
 parameter Mode3_V_Display    = 720;
 parameter Mode3_V_FrontPorch = 1;
 parameter Mode3_V_SyncPulse  = 3;
@@ -55,5 +55,23 @@ parameter Mode3_V_BackPorch  = 22;
 parameter Mode3_V_DeStart = Mode3_V_SyncPulse + Mode3_V_BackPorch;
 parameter Mode3_V_DeEnd   = Mode3_V_DeStart   + Mode3_V_Display;
 parameter Mode3_V_Total   = Mode3_V_DeEnd     + Mode3_V_FrontPorch;
-parameter Mode3_V_PfStart = Mode3_V_DeStart   + 120;
-parameter Mode3_V_PfEnd   = Mode3_V_PfStart   + 480;
+parameter Mode3_V_PfStart = Mode3_V_DeStart;
+parameter Mode3_V_PfEnd   = Mode3_V_DeEnd;
+
+/*
+
+Output Modes target different monitor setups and preferences about borders/overscan.
+Supported monitores are WIDE (16:9) and NONWIDE (4:3)
+
+Mode1 and Mode2 are designed to be used with NONWIDE monitors. With and without overscan
+Mode3 is designed for WIDE monitors. An overscan is added to keep the aspect ratio
+
+The standard resolution is 320x240, although the 80 character mode is 640x240
+
+Now, this is by accident:
+Mode1 and Mode2 allow 40 and 80 columns mode (320 and 640 pixels wide)
+Mode2 was too small using 640x480 so it is expanded to 960x720 keeping the aspect ratio
+problem is... 80 columns mode is impossible without glitches, but 120 columns is perfect.
+There you have it Aldrin Martoq!
+
+*/
