@@ -3,7 +3,7 @@
 module chroni (
 		input vga_clk,
 		input reset_n,
-		input [2:0] vga_mode,
+		input [1:0] vga_mode_in,
 		output vga_hs,
 		output vga_vs,
 		output [4:0] vga_r,
@@ -41,49 +41,51 @@ reg v_pf;
 reg[8:0] scanline;
 reg dbl_scan;
 reg[1:0] tri_scan;
+reg[1:0] vga_mode;
 
 always @ (posedge vga_clk) begin
-	if(~reset_n) begin
-		if (vga_mode == VGA_MODE_640x480) begin
-			h_sync_pulse = Mode1_H_SyncPulse;
-			h_total      = Mode1_H_Total;
-			h_de_start   = Mode1_H_DeStart;
-			h_de_end     = Mode1_H_DeEnd;
-			h_pf_start   = Mode1_H_PfStart;
-			h_pf_end     = Mode1_H_PfEnd;
-			v_sync_pulse = Mode1_V_SyncPulse;
-			v_total      = Mode1_V_Total;
-			v_de_start   = Mode1_V_DeStart;
-			v_de_end     = Mode1_V_DeEnd;
-			v_pf_start   = Mode1_V_PfStart;
-			v_pf_end     = Mode1_V_PfEnd;
-		end else if (vga_mode == VGA_MODE_800x600) begin
-			h_sync_pulse = Mode2_H_SyncPulse;
-			h_total      = Mode2_H_Total;
-			h_de_start   = Mode2_H_DeStart;
-			h_de_end     = Mode2_H_DeEnd;
-			h_pf_start   = Mode2_H_PfStart;
-			h_pf_end     = Mode2_H_PfEnd;
-			v_sync_pulse = Mode2_V_SyncPulse;
-			v_total      = Mode2_V_Total;
-			v_de_start   = Mode2_V_DeStart;
-			v_de_end     = Mode2_V_DeEnd;
-			v_pf_start   = Mode2_V_PfStart;
-			v_pf_end     = Mode2_V_PfEnd;
-		end else if (vga_mode == VGA_MODE_1280x720) begin
-			h_sync_pulse = Mode3_H_SyncPulse;
-			h_total      = Mode3_H_Total;
-			h_de_start   = Mode3_H_DeStart;
-			h_de_end     = Mode3_H_DeEnd;
-			h_pf_start   = Mode3_H_PfStart;
-			h_pf_end     = Mode3_H_PfEnd;
-			v_sync_pulse = Mode3_V_SyncPulse;
-			v_total      = Mode3_V_Total;
-			v_de_start   = Mode3_V_DeStart;
-			v_de_end     = Mode3_V_DeEnd;
-			v_pf_start   = Mode3_V_PfStart;
-			v_pf_end     = Mode3_V_PfEnd;
+	if(x_cnt <= 1 && y_cnt <= 1 && vga_mode_in != vga_mode) begin
+		if (vga_mode_in == VGA_MODE_640x480) begin
+			h_sync_pulse <= Mode1_H_SyncPulse;
+			h_total      <= Mode1_H_Total;
+			h_de_start   <= Mode1_H_DeStart;
+			h_de_end     <= Mode1_H_DeEnd;
+			h_pf_start   <= Mode1_H_PfStart;
+			h_pf_end     <= Mode1_H_PfEnd;
+			v_sync_pulse <= Mode1_V_SyncPulse;
+			v_total      <= Mode1_V_Total;
+			v_de_start   <= Mode1_V_DeStart;
+			v_de_end     <= Mode1_V_DeEnd;
+			v_pf_start   <= Mode1_V_PfStart;
+			v_pf_end     <= Mode1_V_PfEnd;
+		end else if (vga_mode_in == VGA_MODE_800x600) begin
+			h_sync_pulse <= Mode2_H_SyncPulse;
+			h_total      <= Mode2_H_Total;
+			h_de_start   <= Mode2_H_DeStart;
+			h_de_end     <= Mode2_H_DeEnd;
+			h_pf_start   <= Mode2_H_PfStart;
+			h_pf_end     <= Mode2_H_PfEnd;
+			v_sync_pulse <= Mode2_V_SyncPulse;
+			v_total      <= Mode2_V_Total;
+			v_de_start   <= Mode2_V_DeStart;
+			v_de_end     <= Mode2_V_DeEnd;
+			v_pf_start   <= Mode2_V_PfStart;
+			v_pf_end     <= Mode2_V_PfEnd;
+		end else if (vga_mode_in == VGA_MODE_1280x720) begin
+			h_sync_pulse <= Mode3_H_SyncPulse;
+			h_total      <= Mode3_H_Total;
+			h_de_start   <= Mode3_H_DeStart;
+			h_de_end     <= Mode3_H_DeEnd;
+			h_pf_start   <= Mode3_H_PfStart;
+			h_pf_end     <= Mode3_H_PfEnd;
+			v_sync_pulse <= Mode3_V_SyncPulse;
+			v_total      <= Mode3_V_Total;
+			v_de_start   <= Mode3_V_DeStart;
+			v_de_end     <= Mode3_V_DeEnd;
+			v_pf_start   <= Mode3_V_PfStart;
+			v_pf_end     <= Mode3_V_PfEnd;
 		end
+		vga_mode <= vga_mode_in;
 	end
 end
 

@@ -3,6 +3,7 @@
 module compy (
 	input clk,
 	input reset_n,
+	input key_mode,
 	output vga_hs,
 	output vga_vs,
 	output [4:0] vga_r,
@@ -15,14 +16,14 @@ module compy (
 	wire[10:0] rom_addr;
 	wire[7:0]  rom_data;
 	
-	wire[2:0] vga_mode;
+	wire[1:0] vga_mode;
 	assign vga_mode = VGA_MODE_1280x720;
 
 	wire CLK_OUT1;
 	wire CLK_OUT2;
 	wire CLK_OUT3;
 	wire CLK_OUT4;
-	
+
    wire system_clock;
 	reg  chroni_clock;
 	
@@ -32,9 +33,8 @@ module compy (
 
 	always @(posedge system_clock)
 	begin
-	  chroni_clock <= !chroni_clock;
+		chroni_clock <= !chroni_clock;
 	end
-
 	
 	rom rom_inst (
 		.clock(system_clock),
@@ -54,7 +54,7 @@ module compy (
 	chroni chroni_inst (
 		.vga_clk(chroni_clock),
 		.reset_n(reset_n),
-		.vga_mode(vga_mode),
+		.vga_mode_in(vga_mode),
 		.vga_hs(vga_hs),
 		.vga_vs(vga_vs),
 		.vga_r(vga_r),
