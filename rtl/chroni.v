@@ -32,12 +32,16 @@ reg[10:0] v_pf_end;
 
 reg[10 : 0] x_cnt;
 reg[9 : 0]  y_cnt;
+reg[10 : 0] h_pf_cnt;
+reg[9 : 0]  v_pf_cnt;
 reg hsync_r;
 reg vsync_r; 
 reg h_de;
 reg v_de;
 reg h_pf;
 reg v_pf;
+
+
 reg[8:0] scanline;
 reg dbl_scan;
 reg[1:0] tri_scan;
@@ -150,43 +154,29 @@ begin
 	else if(y_cnt == v_pf_end) v_pf <= 1'b0;	 
 end	 
 
-parameter state_read_text_a = 0;
-parameter state_read_font_a = 2;
-parameter state_write_font_a = 4;
-parameter state_read_text_b = 8;
-parameter state_read_font_b = 10;
-parameter state_write_font_b = 12;
-
-parameter state_read_text_end = 15;
-
 reg[10:0] text_rom_addr;
 reg[10:0] font_rom_addr;
-reg[7:0]  font_reg;
-
-reg[3:0] read_rom_state;
+reg[7:0] font_reg;
 reg[2:0] font_scan;
 
 wire text_rom_read;
-assign text_rom_read = (x_cnt >= h_pf_start-4 && x_cnt < h_pf_end && v_pf) ? 1'b1 : 1'b0;
+assign text_rom_read = (x_cnt >= h_pf_start-8 && x_cnt < h_pf_end && v_pf) ? 1'b1 : 1'b0;
 
 // state machine to read char or font from rom
 always @(posedge vga_clk)
 begin
-	if (~reset_n) begin
-		read_rom_state <= state_read_text_a;
-	end
-	if (hsync_r == 1'b0) begin
-		read_rom_state <= state_read_text_a;
-	end
 	if(text_rom_read) begin
-		if (read_rom_state == state_read_text_a || read_rom_state == state_read_text_b)
-			addr_out <= text_rom_addr;
-		else if (read_rom_state == state_read_font_a || read_rom_state == state_read_font_b)
-			addr_out <= {data_in, font_scan};
-		else if (read_rom_state == state_write_font_a || read_rom_state == state_write_font_b)
-			font_reg <= data_in;
-		
-		read_rom_state <= read_rom_state == state_read_text_end ? 0 : read_rom_state + 1;
+		case (h_pf_cnt[2:0])
+			3'b101 : begin
+				addr_out <= text_rom_addr;	
+			end
+			3'b110: begin
+				addr_out <= {data_in, font_scan};
+			end
+			3'b111: begin
+				font_reg <= data_in;
+			end
+		endcase
 	end
 end
 
@@ -195,22 +185,24 @@ reg[4:0] font_bit;
 always @(posedge vga_clk)
 begin
 	if (~reset_n) begin
-		font_bit <= 3;
-		text_rom_addr <= 1024;
+		font_bit <= 7;
+		text_rom_addr <= 1025;
 	end
 	else begin
 		if (hsync_r == 1'b0) begin
-			text_rom_addr <= 1024;
-			font_bit <= 3;
+			text_rom_addr <= 1025;
+			font_bit <= 7;
+			h_pf_cnt <= 0;
 		end
 		if (text_rom_read) begin
 			if (font_bit == 0) begin
-				text_rom_addr <= text_rom_addr == 1092 ? 1024 : text_rom_addr + 1;
+				text_rom_addr <= text_rom_addr == 1092 ? 1025 : text_rom_addr + 1;
 				font_bit <= 7;
 			end
 			else begin
 				font_bit <= font_bit - 1;
 			end
+			h_pf_cnt <= h_pf_cnt + 1;
 		end
 	end
 end 
