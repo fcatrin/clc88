@@ -25,34 +25,29 @@ module compy (
 	wire CLK_OUT4;
 
    wire system_clock;
-	reg  chroni_clock;
 	
 	assign system_clock = 
 		 vga_mode == VGA_MODE_640x480 ? CLK_OUT1 : 
 		(vga_mode == VGA_MODE_800x600 ? CLK_OUT2 : CLK_OUT3);
 
-	always @(posedge system_clock)
-	begin
-		chroni_clock <= !chroni_clock;
-	end
-	
 	rom rom_inst (
-		.clock(system_clock),
+		.clock(CLK_200),
 		.address(rom_addr),
 		.q(rom_data)
 	);
 
 	pll pll_inst (// Clock in ports
 		.inclk0(clk),      // IN
-		.c0(CLK_OUT1),     // 25.17Mhz *2  (640x480)
-		.c1(CLK_OUT2),     // 40Mhz    *2  (800x600)
-		.c2(CLK_OUT3),     // 74.48Mhz *2  (1280x720)
+		.c0(CLK_OUT1),     // 25.17Mhz  (640x480)
+		.c1(CLK_OUT2),     // 40Mhz     (800x600)
+		.c2(CLK_OUT3),     // 74.48Mhz  (1280x720)
+		.c3(CLK_200),      // 200Mhz (ROM)
 		.areset(1'b0),     // reset input 
 		.locked(LOCKED)
 	);        // OUT
 
 	chroni chroni_inst (
-		.vga_clk(chroni_clock),
+		.vga_clk(system_clock),
 		.reset_n(reset_n),
 		.vga_mode_in(vga_mode),
 		.vga_hs(vga_hs),
