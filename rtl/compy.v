@@ -8,7 +8,18 @@ module compy (
 	output vga_vs,
 	output [4:0] vga_r,
 	output [5:0] vga_g,
-	output [4:0] vga_b
+	output [4:0] vga_b,
+	
+	output        S_CLK,  //sdram clock
+	output        S_CKE,  //sdram clock enable
+	output        S_NCS,  //sdram chip select
+	output        S_NWE,  //sdram write enable
+	output        S_NCAS, //sdram column address strobe
+	output        S_NRAS, //sdram row address strobe
+	output  [1:0] S_DQM,  //sdram data enable 
+	output  [1:0] S_BA,   //sdram bank address
+	output [12:0] S_A,    //sdram address
+	inout  [15:0] S_DB    //sdram data	
 );
 
 `include "chroni.vh"
@@ -104,6 +115,40 @@ module compy (
 		.addr_out(chroni_addr),
 		.addr_out_page(chroni_page),
 		.data_in(vram_dbr_o)
+	);
+	
+	sdram_top		u_sdramtop (
+		//global clock
+		.clk				   (clk_ref),			//sdram reference clock
+		.rst_n				(sys_rst_n),			//global reset
+
+		//internal interface	
+		.sdram_wr_req		(sdram_wr_req), 	//sdram write request
+		.sdram_rd_req		(sdram_rd_req), 	//sdram write ack
+		.sdram_wr_ack		(sdram_wr_ack), 	//sdram read request
+		.sdram_rd_ack		(sdram_rd_ack),	//sdram read ack
+		.sys_wraddr			(sdram_wraddr), 	//sdram write address 
+		.sys_rdaddr			(sdram_rdaddr), 	//sdram read address
+		.sys_data_in		(sdram_din),    	//fifo 2 sdram data input
+		.sys_data_out		(sdram_dout),   	//sdram 2 fifo data input
+		.sdram_init_done	(sdram_init_done),	//sdram init done
+
+		//burst length
+		.sdwr_byte			(wr_length),		//sdram write burst length
+		.sdrd_byte			(rd_length),		//sdram read burst length
+
+		//sdram interface
+		//	.sdram_clk			(sdram_clk),		//sdram clock	
+		.sdram_cke			(S_CKE),		//sdram clock enable	
+		.sdram_cs_n			(S_NCS),		//sdram chip select	
+		.sdram_we_n			(S_NWE),		//sdram write enable	
+		.sdram_ras_n		(S_NRAS),		//sdram column address strobe	
+		.sdram_cas_n		(S_NCAS),		//sdram row address strobe	
+		.sdram_ba			(S_BA),			//sdram data enable (H:8)    
+		.sdram_addr			(S_A),		//sdram data enable (L:8)	
+		.sdram_data			(S_DB)		//sdram bank address	
+		//	.sdram_udqm			(sdram_udqm),		//sdram address	
+		//	.sdram_ldqm			(sdram_ldqm)		//sdram data	
 	);
  
 endmodule
