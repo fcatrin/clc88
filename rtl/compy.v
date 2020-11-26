@@ -17,8 +17,17 @@ module compy (
 	wire[15:0] addr;
 	wire[7:0]  data;
 	
-	wire[10:0] rom_addr;
+	wire[7:0]  chroni_page;
+	wire[13:0] chroni_addr;
+	
+	wire[10:0] rom_addr = addr[10:0];
+	wire[16:0] vga_addr = {chroni_page, 9'b000000000} + chroni_addr;
 	wire[7:0]  rom_data;
+
+	wire[7:0]  vram_dbr_o;
+	
+	assign vram_dbr_o = rom_data;
+	assign addr = vga_addr[15:0];
 	
 	wire[1:0] vga_mode;
 	assign vga_mode = VGA_MODE_1280x720;
@@ -92,8 +101,9 @@ module compy (
 		.vga_r(vga_r),
 		.vga_g(vga_g),
 		.vga_b(vga_b),
-		.addr_out(rom_addr),
-		.data_in(rom_data)
+		.addr_out(chroni_addr),
+		.addr_out_page(chroni_page),
+		.data_in(vram_dbr_o)
 	);
  
 endmodule

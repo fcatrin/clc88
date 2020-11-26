@@ -9,7 +9,8 @@ module chroni (
 		output [4:0] vga_r,
 		output [5:0] vga_g,
 		output [4:0] vga_b,
-		output reg [10:0] addr_out,
+		output reg [12:0] addr_out,
+		output reg [7:0]  addr_out_page,
 		input [7:0] data_in
 );
 
