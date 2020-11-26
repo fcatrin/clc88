@@ -12,7 +12,7 @@ module chroni (
 		output reg [12:0] addr_out,
 		output reg [7:0]  addr_out_page,
 		input [7:0] data_in,
-		output rd_req,
+		output reg rd_req,
 		input  rd_ack
 );
 
@@ -160,26 +160,56 @@ end
 reg[10:0] text_rom_addr;
 reg[10:0] font_rom_addr;
 reg[7:0] font_reg;
+reg[7:0] font_reg_next;
 reg[2:0] font_scan;
 
 wire text_rom_read;
 assign text_rom_read = (x_cnt >= h_pf_start-8 && x_cnt < h_pf_end && v_pf) ? 1'b1 : 1'b0;
 
+reg[3:0] vram_read_state;
+localparam VRAM_READ_STATE_IDLE = 0;
+localparam VRAM_READ_STATE_TEXT = 1;
+localparam VRAM_READ_STATE_TEXT_WAIT = 2;
+localparam VRAM_READ_STATE_FONT = 3;
+
 // state machine to read char or font from rom
 always @(posedge vga_clk)
 begin
+	if (!reset_n) begin
+		vram_read_state <= VRAM_READ_STATE_IDLE;
+		rd_req <= 0;
+	end
 	if(text_rom_read) begin
 		case (h_pf_cnt[2:0])
-			3'b101 : begin
-				addr_out <= text_rom_addr;	
+			3'b101:
+				vram_read_state <= VRAM_READ_STATE_TEXT;
+			3'b111:
+				font_reg <= font_reg_next;
+		endcase
+		
+		case (vram_read_state)
+			VRAM_READ_STATE_TEXT: begin
+				addr_out <= text_rom_addr;
+				rd_req <= 1;
+				vram_read_state <= VRAM_READ_STATE_TEXT_WAIT;
 			end
-			3'b110: begin
-				addr_out <= {data_in, font_scan};
-			end
-			3'b111: begin
-				font_reg <= data_in;
+			VRAM_READ_STATE_TEXT_WAIT:
+				if (rd_ack) begin
+					addr_out <= {data_in, font_scan};
+					rd_req <= 1;
+					vram_read_state <= VRAM_READ_STATE_FONT;
+				end else 
+					rd_req <= 0;
+			VRAM_READ_STATE_FONT: begin
+				rd_req <= 0;
+				if (rd_ack) begin
+					font_reg_next <= data_in;
+					vram_read_state <= VRAM_READ_STATE_IDLE;
+				end
 			end
 		endcase
+			
+				
 	end
 end
 
