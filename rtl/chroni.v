@@ -11,7 +11,9 @@ module chroni (
 		output [4:0] vga_b,
 		output reg [12:0] addr_out,
 		output reg [7:0]  addr_out_page,
-		input [7:0] data_in
+		input [7:0] data_in,
+		output rd_req,
+		input  rd_ack
 );
 
 `include "chroni.vh"

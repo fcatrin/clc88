@@ -28,14 +28,23 @@ module compy (
 	wire[15:0] addr;
 	wire[7:0]  data;
 	
-	wire[7:0]  chroni_page;
-	wire[13:0] chroni_addr;
+	wire[18:0] dram_addr;
+	reg[15:0] dram_data_wr;
+	reg[15:0] dram_data_rd;
 	
 	wire[10:0] rom_addr = addr[10:0];
-	wire[16:0] vga_addr = {chroni_page, 9'b000000000} + chroni_addr;
 	wire[7:0]  rom_data;
+	
+	assign dram_addr = ram_s ? addr : (vram_s ? {4'b001, vga_addr} : 19'b0);
 
-	wire[7:0]  vram_dbr_o;
+	wire[7:0]  chroni_page;
+	wire[13:0] chroni_addr;
+	wire chroni_rd_req;
+	reg  chroni_rd_ack;
+	
+	wire[16:0] vga_addr = {chroni_page, 9'b000000000} + chroni_addr;
+
+	reg[7:0]  vram_data_read;
 	
 	assign vram_dbr_o = rom_data;
 	assign addr = vga_addr[15:0];
@@ -49,6 +58,7 @@ module compy (
 	wire CLK_OUT4;
 
    wire system_clock;
+	reg  sdram_clock;
 	
 	assign system_clock = 
 		 vga_mode == VGA_MODE_640x480 ? CLK_OUT1 : 
@@ -67,6 +77,12 @@ module compy (
 	
 	reg rom_cs, ram_cs, vram_cs, chroni_cs, storage_cs, keyb_cs, pokey_cs;
 	
+	reg[3:0] bus_state;
+	
+	localparam BUS_STATE_INIT = 4'd0;
+	localparam BUS_STATE_READY = 4'd1;
+	localparam BUS_STATE_CHRONI_READ_REQ = 4'd2;
+	
 	always @ (posedge system_clock) begin
 		if (~reset_n) begin
 			rom_cs     <= 0;
@@ -76,6 +92,9 @@ module compy (
 			storage_cs <= 0;
 			keyb_cs    <= 0;
 			pokey_cs   <= 0;
+			bus_state  <= BUS_STATE_INIT;
+			sdram_bus_rd_req  <= 0;
+			sdram_bus_wr_req <= 0;
 		end else	begin
 			rom_cs     <= rom_s;
 			ram_cs     <= ram_s;
@@ -84,8 +103,98 @@ module compy (
 			storage_cs <= storage_s;
 			keyb_cs    <= keyb_s;
 			pokey_cs   <= pokey_s;
+			case (bus_state)
+				BUS_STATE_INIT : 
+					if (sdram_state != SDRAM_STATE_INIT) begin
+						bus_state <= BUS_STATE_READY;
+						chroni_rd_ack <= 0;
+					end
+				BUS_STATE_READY : 
+					if (chroni_rd_req) begin
+						sdram_bus_rd_req <=1;
+						bus_state <= BUS_STATE_CHRONI_READ_REQ;
+					end
+				BUS_STATE_CHRONI_READ_REQ :
+					if (sdram_bus_rd_ack) begin
+						sdram_bus_rd_req <= 0;
+						vram_data_read <= dram_data_rd;
+						chroni_rd_ack <= 1;
+						bus_state <=BUS_STATE_READY;
+					end
+			endcase
 		end
-	end	
+		
+		sdram_clock = ~sdram_clock;
+	end
+	
+	localparam SDRAM_STATE_INIT  = 4'd0;
+	localparam SDRAM_STATE_READY = 4'd1;
+	localparam SDRAM_STATE_WAIT_ACK_WRITE = 4'd2;
+	localparam SDRAM_STATE_WAIT_ACK_READ  = 4'd3;
+	
+	reg   [3:0] sdram_state;
+	reg         sdram_wr_req;
+	reg         sdram_rd_req;
+	wire        sdram_wr_ack;
+	wire        sdram_rd_ack;
+	reg   [8:0] wr_length;
+	reg   [8:0] rd_length;
+	reg  [22:0] wr_addr;
+	reg  [22:0] rd_addr;
+	reg  [15:0] sdram_din;
+	wire [15:0] sdram_dout;
+	wire        sdram_init_done;
+	
+	reg sdram_bus_rd_req;
+	reg sdram_bus_wr_req;
+	reg sdram_bus_rd_ack;
+	reg sdram_bus_wr_ack;
+
+	// SDRAM interface
+	always @ (posedge system_clock) begin
+		if (~reset_n) begin
+			sdram_state <= SDRAM_STATE_INIT;
+			wr_length <= 9'd0;
+			rd_length <= 9'd0;
+			sdram_wr_req <= 1'b0;
+			sdram_rd_req <= 1'b0;
+			wr_addr <= 23'd0;
+			rd_addr <= 23'd0;
+			sdram_din <= 16'd0;
+			sdram_bus_rd_ack <= 0;
+			sdram_bus_wr_ack <= 0;
+		end else begin
+			case (sdram_state)
+				SDRAM_STATE_INIT:
+					if (sdram_init_done) sdram_state <= SDRAM_STATE_READY;
+				SDRAM_STATE_READY:
+					if (sdram_bus_wr_req) begin
+						sdram_bus_wr_ack <= 0;
+						sdram_wr_req <= 1;
+						wr_addr <= dram_addr;
+						sdram_din <= dram_data_wr;
+						sdram_state = SDRAM_STATE_WAIT_ACK_WRITE;
+					end else if (sdram_bus_rd_req) begin
+						sdram_bus_rd_ack <= 0;
+						sdram_rd_req <= 1;
+						rd_addr <= dram_addr;
+						sdram_state = SDRAM_STATE_WAIT_ACK_READ;
+					end
+				SDRAM_STATE_WAIT_ACK_WRITE:
+					if (sdram_wr_ack) begin
+						sdram_state = SDRAM_STATE_READY;
+						sdram_bus_wr_ack <= 1;
+					end
+				SDRAM_STATE_WAIT_ACK_READ:
+					if (sdram_rd_ack) begin
+						dram_data_rd <= sdram_dout;
+						sdram_state = SDRAM_STATE_READY;
+						sdram_bus_rd_ack <= 1;
+					end
+			endcase
+		end
+	end
+
 	
 	rom rom_inst (
 		.clock(CLK_200),
@@ -114,13 +223,15 @@ module compy (
 		.vga_b(vga_b),
 		.addr_out(chroni_addr),
 		.addr_out_page(chroni_page),
-		.data_in(vram_dbr_o)
+		.data_in(vram_data_read),
+		.rd_req(chroni_rd_req),
+		.rd_ack(chroni_rd_ack)
 	);
 	
 	sdram_top		u_sdramtop (
 		//global clock
-		.clk				   (clk_ref),			//sdram reference clock
-		.rst_n				(sys_rst_n),			//global reset
+		.clk				   (sdram_clock),		//sdram reference clock
+		.rst_n				(reset_n),			//global reset
 
 		//internal interface	
 		.sdram_wr_req		(sdram_wr_req), 	//sdram write request
