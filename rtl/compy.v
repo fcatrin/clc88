@@ -58,13 +58,14 @@ module compy (
 	wire CLK_OUT4;
 
    wire system_clock;
+   wire chroni_clock;
 	reg  sdram_clock;
 	
-	assign system_clock = 
+	assign chroni_clock = 
 		 vga_mode == VGA_MODE_640x480 ? CLK_OUT1 : 
 		(vga_mode == VGA_MODE_800x600 ? CLK_OUT2 : CLK_OUT3);
-		
-		
+	
+   	
 	wire rom_s, ram_s, vram_s, chroni_s, storage_s, keyb_s, pokey_s;
 	
 	assign rom_s     = addr[15:13] ==  3'b111;                           // 0xE000 - 0xFFFF
@@ -83,7 +84,7 @@ module compy (
 	localparam BUS_STATE_READY = 4'd1;
 	localparam BUS_STATE_CHRONI_READ_REQ = 4'd2;
 	
-	always @ (posedge system_clock) begin
+	always @ (posedge CLK_200) begin
 		if (~reset_n) begin
 			rom_cs     <= 0;
 			ram_cs     <= 0;
@@ -151,7 +152,7 @@ module compy (
 	reg sdram_bus_wr_ack;
 
 	// SDRAM interface
-	always @ (posedge system_clock) begin
+	always @ (posedge sdram_clock) begin
 		if (~reset_n) begin
 			sdram_state <= SDRAM_STATE_INIT;
 			wr_length <= 9'd0;
@@ -213,7 +214,7 @@ module compy (
 	);        // OUT
 
 	chroni chroni_inst (
-		.vga_clk(system_clock),
+		.vga_clk(chroni_clock),
 		.reset_n(reset_n),
 		.vga_mode_in(vga_mode),
 		.vga_hs(vga_hs),
