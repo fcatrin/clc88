@@ -189,11 +189,13 @@ begin
 		case (h_pf_cnt[2:0])
 			3'b000:
          begin
-   				vram_read_state <= VRAM_READ_STATE_TEXT;
-               bg_color <= 0;
          end
 			3'b111:
+         begin
 				font_reg <= font_reg_next;
+            vram_read_state <= VRAM_READ_STATE_TEXT;
+            bg_color <= 0;
+         end
 		endcase
 		
 		case (vram_read_state)
