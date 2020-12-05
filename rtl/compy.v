@@ -109,7 +109,7 @@ module compy (
 			pokey_cs   <= pokey_s;
          
          chroni_clock_old <= chroni_clock;
-         start <= chroni_clock_old & !chroni_clock;
+         start <= !chroni_clock_old & chroni_clock;
          
 			case (bus_state)
 				BUS_STATE_INIT : 
