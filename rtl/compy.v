@@ -32,7 +32,7 @@ module compy (
 	reg[15:0] dram_data_wr;
 	reg[15:0] dram_data_rd;
 	
-	wire[10:0] rom_addr = addr[10:0];
+	reg[10:0] rom_addr;
 	wire[7:0]  rom_data;
 	
 	assign dram_addr = ram_s ? addr : (vram_s ? {4'b001, vga_addr} : 19'b0);
@@ -50,14 +50,14 @@ module compy (
 	assign addr = vga_addr[15:0];
 	
 	wire[1:0] vga_mode;
-	assign vga_mode = VGA_MODE_1280x720;
+	assign vga_mode = VGA_MODE_640x480;
 
 	wire CLK_OUT1;
 	wire CLK_OUT2;
 	wire CLK_OUT3;
 	wire CLK_OUT4;
 
-   wire system_clock;
+   wire system_clock = chroni_clock;
    wire chroni_clock;
 	reg  sdram_clock;
 	
@@ -82,9 +82,13 @@ module compy (
 	
 	localparam BUS_STATE_INIT = 4'd0;
 	localparam BUS_STATE_READY = 4'd1;
-	localparam BUS_STATE_CHRONI_READ_REQ = 4'd2;
+	localparam BUS_STATE_CHRONI_READ_REQ  = 4'd2;
+   localparam BUS_STATE_CHRONI_READ_REQ2 = 4'd3;
 	
 	always @ (posedge CLK_200) begin
+      reg system_clock_old;
+      reg start;
+      
 		if (~reset_n) begin
 			rom_cs     <= 0;
 			ram_cs     <= 0;
@@ -104,24 +108,41 @@ module compy (
 			storage_cs <= storage_s;
 			keyb_cs    <= keyb_s;
 			pokey_cs   <= pokey_s;
+         
+         system_clock_old <= system_clock;
+         start <= !system_clock_old & system_clock;
+         
 			case (bus_state)
 				BUS_STATE_INIT : 
 					if (sdram_state != SDRAM_STATE_INIT) begin
 						bus_state <= BUS_STATE_READY;
-						chroni_rd_ack <= 0;
 					end
-				BUS_STATE_READY : 
-					if (chroni_rd_req) begin
-						sdram_bus_rd_req <=1;
+				BUS_STATE_READY : begin
+               if (start && chroni_rd_req) begin
+                  chroni_rd_ack <= 0;
+                  rom_addr <= chroni_addr[10:0];
+						// sdram_bus_rd_req <=1;
 						bus_state <= BUS_STATE_CHRONI_READ_REQ;
 					end
-				BUS_STATE_CHRONI_READ_REQ :
+            end
+				BUS_STATE_CHRONI_READ_REQ : begin
+               rom_addr  <= rom_addr;
+               bus_state <= BUS_STATE_CHRONI_READ_REQ2;
+               /*
 					if (sdram_bus_rd_ack) begin
 						sdram_bus_rd_req <= 0;
 						vram_data_read <= dram_data_rd;
 						chroni_rd_ack <= 1;
 						bus_state <=BUS_STATE_READY;
 					end
+					*/
+            end
+            BUS_STATE_CHRONI_READ_REQ2 :
+               if (start) begin
+                  vram_data_read <= rom_data;
+                  bus_state <= BUS_STATE_READY;
+                  chroni_rd_ack <= 1;
+               end
 			endcase
 		end
 		

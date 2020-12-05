@@ -175,7 +175,8 @@ reg[3:0] vram_read_state;
 localparam VRAM_READ_STATE_IDLE = 0;
 localparam VRAM_READ_STATE_TEXT = 1;
 localparam VRAM_READ_STATE_TEXT_WAIT = 2;
-localparam VRAM_READ_STATE_FONT = 3;
+localparam VRAM_READ_STATE_FONT_PRE = 3;
+localparam VRAM_READ_STATE_FONT = 4;
 
 // state machine to read char or font from rom
 always @(posedge vga_clk)
@@ -193,28 +194,28 @@ begin
 		endcase
 		
 		case (vram_read_state)
-			VRAM_READ_STATE_TEXT: begin
-				addr_out <= text_rom_addr;
-				rd_req <= 1;
-				vram_read_state <= VRAM_READ_STATE_TEXT_WAIT;
-			end
+         VRAM_READ_STATE_IDLE: 
+            begin
+               rd_req <= 0;
+            end
+			VRAM_READ_STATE_TEXT: 
+            begin
+   				addr_out <= text_rom_addr;
+   				rd_req <= 1;
+   				vram_read_state <= VRAM_READ_STATE_TEXT_WAIT;
+   			end
 			VRAM_READ_STATE_TEXT_WAIT:
 				if (rd_ack) begin
 					addr_out <= {data_in, font_scan};
-					rd_req <= 1;
 					vram_read_state <= VRAM_READ_STATE_FONT;
-				end else 
-					rd_req <= 0;
-			VRAM_READ_STATE_FONT: begin
-				rd_req <= 0;
+				end 
+			VRAM_READ_STATE_FONT:
 				if (rd_ack) begin
+               rd_req <= 0;
 					font_reg_next <= data_in;
 					vram_read_state <= VRAM_READ_STATE_IDLE;
 				end
-			end
 		endcase
-			
-				
 	end
 end
 
