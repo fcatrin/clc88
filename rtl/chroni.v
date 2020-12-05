@@ -187,8 +187,11 @@ begin
 	end
 	if(text_rom_read) begin
 		case (h_pf_cnt[2:0])
-			3'b101:
-				vram_read_state <= VRAM_READ_STATE_TEXT;
+			3'b000:
+         begin
+   				vram_read_state <= VRAM_READ_STATE_TEXT;
+               bg_color <= 0;
+         end
 			3'b111:
 				font_reg <= font_reg_next;
 		endcase
@@ -208,12 +211,14 @@ begin
 				if (rd_ack) begin
 					addr_out <= {data_in, font_scan};
 					vram_read_state <= VRAM_READ_STATE_FONT;
+               bg_color <= 1;
 				end 
 			VRAM_READ_STATE_FONT:
 				if (rd_ack) begin
                rd_req <= 0;
 					font_reg_next <= data_in;
 					vram_read_state <= VRAM_READ_STATE_IDLE;
+               bg_color <= 2;
 				end
 		endcase
 	end
@@ -261,6 +266,10 @@ end
 wire font_bit_on;
 assign font_bit_on = font_reg[font_bit];
 
+reg[1:0] bg_color;
+wire[4:0] bg_b = bg_color == 0 ? 5'b01011 : (bg_color == 1 ? 5'b10000 : 5'b00000);
+wire[5:0] bg_g = bg_color == 0 ? 5'b010110 : (bg_color == 1 ? 6'b100000 : 6'b000000);
+
 parameter border_r = 5'b00100;
 parameter border_g = 6'b001000;
 parameter border_b = 5'b00110;
@@ -268,8 +277,8 @@ parameter border_b = 5'b00110;
 assign vga_hs = hsync_r;
 assign vga_vs = vsync_r;  
 assign vga_r = (h_de & v_de) ? ((h_pf & v_pf) ? (font_bit_on ? 5'b10011  : 5'b00000)  : border_r) : 5'b00000;
-assign vga_g = (h_de & v_de) ? ((h_pf & v_pf) ? (font_bit_on ? 6'b100111 : 6'b000111) : border_g) : 6'b000000;
-assign vga_b = (h_de & v_de) ? ((h_pf & v_pf) ? (font_bit_on ? 5'b10011  : 5'b01011)  : border_b) : 5'b00000;
+assign vga_g = (h_de & v_de) ? ((h_pf & v_pf) ? (font_bit_on ? 6'b100111 : bg_g) : border_g) : 6'b000000;
+assign vga_b = (h_de & v_de) ? ((h_pf & v_pf) ? (font_bit_on ? 5'b10011  : bg_b)  : border_b) : 5'b00000;
 
 endmodule
 	 
