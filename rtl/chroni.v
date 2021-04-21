@@ -55,6 +55,9 @@ reg dbl_scan;
 reg[1:0] tri_scan;
 reg[1:0] vga_mode;
 
+reg      pixel_x_dbl;
+reg[1:0] pixel_x_tri;
+
 always @ (posedge vga_clk) begin
    if(x_cnt <= 1 && y_cnt <= 1 && vga_mode_in != vga_mode) begin
       if (vga_mode_in == VGA_MODE_640x480) begin
@@ -102,10 +105,35 @@ always @ (posedge vga_clk) begin
 end
 
 // x position counter  
-always @ (posedge vga_clk)
-    if(~reset_n)    x_cnt <= 1;
-    else if(x_cnt == h_total) x_cnt <= 1;
-    else x_cnt <= x_cnt+ 1;
+always @ (posedge vga_clk) begin
+   if(~reset_n)    x_cnt <= 1;
+   else if(x_cnt == h_total) begin
+      x_cnt <= 1;
+      pixel_index_out <= scanline[0] ? 0 : 320;
+      pixel_x_dbl <= 0;
+      pixel_x_tri <= 0;
+   end else begin
+      if (h_pf && v_pf) begin
+         case(vga_mode_in)
+            VGA_MODE_640x480:
+            VGA_MODE_800x600:
+            begin
+               if (pixel_x_dbl)
+                  pixel_index_out <= pixel_index_out + 1;
+               pixel_x_dbl <= ~pixel_x_dbl;
+            end
+            VGA_MODE_1280x720:
+               if (pixel_x_tri == 3) begin
+                  pixel_index_out <= pixel_index_out + 1;
+                  pixel_x_tri <= 0;
+               end else begin
+                  pixel_x_tri <= pixel_x_tri + 1;
+               end
+         endcase
+      end
+      x_cnt <= x_cnt+ 1;
+   end
+end
 
 // y position counter  
 always @ (posedge vga_clk) begin
@@ -118,7 +146,7 @@ always @ (posedge vga_clk) begin
    end else if(x_cnt == h_total) begin
       y_cnt <= y_cnt+1;
       if (vga_mode == VGA_MODE_1280x720) begin
-         if (tri_scan == 2) begin
+         if (tri_scan == 3) begin
             tri_scan <= 0;
             scanline <= scanline + 1;
          end else
@@ -182,6 +210,7 @@ localparam FONT_DECODE_STATE_FONT_SHIFT = 5;
 
 reg[7:0] pixels [639:0]; // two lines of 320 pixels
 reg[9:0] pixel_index;
+reg[9:0] pixel_index_out;
 reg      pixel_row;
 
 // state machine to read char or font from rom
@@ -250,23 +279,15 @@ begin
    end
 end
 
-// read font to set bit to display on/off
-wire font_bit_on;
-assign font_bit_on = font_reg[font_bit];
-
-reg[1:0] bg_color;
-wire[4:0] bg_b = bg_color == 0 ? 5'b01011 : (bg_color == 1 ? 5'b10000 : 5'b00000);
-wire[5:0] bg_g = bg_color == 0 ? 5'b010110 : (bg_color == 1 ? 6'b100000 : 6'b000000);
-
 parameter border_r = 5'b00100;
 parameter border_g = 6'b001000;
 parameter border_b = 5'b00110;
    
 assign vga_hs = hsync_r;
 assign vga_vs = vsync_r;  
-assign vga_r = (h_de & v_de) ? ((h_pf & v_pf) ? (font_bit_on ? 5'b10011  : 5'b00000)  : border_r) : 5'b00000;
-assign vga_g = (h_de & v_de) ? ((h_pf & v_pf) ? (font_bit_on ? 6'b100111 : bg_g) : border_g) : 6'b000000;
-assign vga_b = (h_de & v_de) ? ((h_pf & v_pf) ? (font_bit_on ? 5'b10011  : bg_b)  : border_b) : 5'b00000;
+assign vga_r = (h_de & v_de) ? ((h_pf & v_pf) ? (pixels[pixel_index_out] ? 5'b10011  : 5'b00000)  : border_r) : 5'b00000;
+assign vga_g = (h_de & v_de) ? ((h_pf & v_pf) ? (pixels[pixel_index_out] ? 6'b100111 : 6'b000000) : border_g) : 6'b000000;
+assign vga_b = (h_de & v_de) ? ((h_pf & v_pf) ? (pixels[pixel_index_out] ? 5'b10011  : 5'b00000)  : border_b) : 5'b00000;
 
 endmodule
     
