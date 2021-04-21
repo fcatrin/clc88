@@ -106,9 +106,16 @@ end
 
 // x position counter  
 always @ (posedge vga_clk) begin
-   if(~reset_n)    x_cnt <= 1;
-   else if(x_cnt == h_total) begin
+   if(~reset_n || x_cnt == h_total) begin
       x_cnt <= 1;
+   end else begin
+      x_cnt <= x_cnt+ 1;
+   end
+end
+
+// pixel x counter
+always @ (posedge vga_clk) begin
+   if (~reset_n || x_cnt == 1) begin
       pixel_index_out <= scanline[0] ? 0 : 320;
       pixel_x_dbl <= 0;
       pixel_x_tri <= 0;
@@ -131,7 +138,6 @@ always @ (posedge vga_clk) begin
                end
          endcase
       end
-      x_cnt <= x_cnt+ 1;
    end
 end
 
