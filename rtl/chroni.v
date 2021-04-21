@@ -109,7 +109,16 @@ always @ (posedge vga_clk) begin
    if(~reset_n || x_cnt == h_total) begin
       x_cnt <= 1;
    end else begin
-      x_cnt <= x_cnt+ 1;
+      x_cnt <= x_cnt + 1;
+   end
+end
+
+// y position counter  
+always @ (posedge vga_clk) begin
+   if(~reset_n || y_cnt == v_total) begin
+      y_cnt <= 1;
+   end else if(x_cnt == h_total) begin
+      y_cnt <= y_cnt + 1;
    end
 end
 
@@ -121,14 +130,12 @@ always @ (posedge vga_clk) begin
       pixel_x_tri <= 0;
    end else begin
       if (h_pf && v_pf) begin
-         case(vga_mode_in)
-            VGA_MODE_640x480:
-            VGA_MODE_800x600:
-            begin
-               if (pixel_x_dbl)
-                  pixel_index_out <= pixel_index_out + 1;
-               pixel_x_dbl <= ~pixel_x_dbl;
-            end
+         case(vga_mode)
+            VGA_MODE_640x480, VGA_MODE_800x600:
+               begin
+                  if (pixel_x_dbl) pixel_index_out <= pixel_index_out + 1;
+                  pixel_x_dbl <= ~pixel_x_dbl;
+               end
             VGA_MODE_1280x720:
                if (pixel_x_tri == 3) begin
                   pixel_index_out <= pixel_index_out + 1;
@@ -141,28 +148,30 @@ always @ (posedge vga_clk) begin
    end
 end
 
-// y position counter  
+// pixel y counter  
 always @ (posedge vga_clk) begin
-   if(~reset_n) y_cnt <= 1;
-   else if(y_cnt == v_total) begin
-      y_cnt <= 1;
+   if (~reset_n || y_cnt == v_total) begin
       scanline <= 0;
       dbl_scan <= 0;
       tri_scan <= 0;
-   end else if(x_cnt == h_total) begin
-      y_cnt <= y_cnt+1;
-      if (vga_mode == VGA_MODE_1280x720) begin
-         if (tri_scan == 3) begin
-            tri_scan <= 0;
-            scanline <= scanline + 1;
-         end else
-            tri_scan <= tri_scan + 1;
-      end else if (y_cnt >= v_pf_start) begin
-         if (~dbl_scan) scanline <= scanline + 1;
-         dbl_scan = ~dbl_scan;
-      end
+      font_scan <= 1;
+   end else if (x_cnt == h_total && y_cnt >= v_pf_start) begin
+      case(vga_mode)
+         VGA_MODE_640x480, VGA_MODE_800x600:
+            begin
+               if (~dbl_scan) scanline <= scanline + 1;
+               dbl_scan <= ~dbl_scan;
+            end
+         VGA_MODE_1280x720:
+            if (tri_scan == 3) begin
+               tri_scan <= 0;
+               scanline <= scanline + 1;
+            end else
+               tri_scan <= tri_scan + 1;
+      endcase
    end
 end
+
 
 // hsync / h display enable signals    
 always @ (posedge vga_clk)
@@ -273,25 +282,13 @@ begin
    end      
 end         
 
-
-// current scanline relative to start of display
-always @(posedge vga_clk)
-begin
-   if (~reset_n) begin
-      font_scan <= 0;
-   end
-   if(v_pf && x_cnt == h_total) begin
-      font_scan <= scanline[2:0];
-   end
-end
-
 parameter border_r = 5'b00100;
 parameter border_g = 6'b001000;
 parameter border_b = 5'b00110;
    
 assign vga_hs = hsync_r;
 assign vga_vs = vsync_r;  
-assign vga_r = (h_de & v_de) ? ((h_pf & v_pf) ? (pixels[pixel_index_out] ? 5'b10011  : 5'b00000)  : border_r) : 5'b00000;
+assign vga_r = (h_de & v_de) ? ((h_pf & v_pf) ? (pixel_index_out[0] ? 5'b10011  : 5'b00000)  : border_r) : 5'b00000;
 assign vga_g = (h_de & v_de) ? ((h_pf & v_pf) ? (pixels[pixel_index_out] ? 6'b100111 : 6'b000000) : border_g) : 6'b000000;
 assign vga_b = (h_de & v_de) ? ((h_pf & v_pf) ? (pixels[pixel_index_out] ? 5'b10011  : 5'b00000)  : border_b) : 5'b00000;
 
