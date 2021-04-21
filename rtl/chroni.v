@@ -171,87 +171,73 @@ reg[2:0] font_scan;
 wire text_rom_read;
 assign text_rom_read = (x_cnt >= h_pf_start-8 && x_cnt < h_pf_end && v_pf) ? 1'b1 : 1'b0;
 
-reg[3:0] vram_read_state;
-localparam VRAM_READ_STATE_IDLE = 0;
-localparam VRAM_READ_STATE_TEXT = 1;
-localparam VRAM_READ_STATE_TEXT_WAIT = 2;
-localparam VRAM_READ_STATE_FONT_PRE = 3;
-localparam VRAM_READ_STATE_FONT = 4;
+reg[2:0] font_bit;
+reg[3:0] font_decode_state;
+localparam FONT_DECODE_STATE_IDLE       = 0;
+localparam FONT_DECODE_STATE_TEXT_READ  = 1;
+localparam FONT_DECODE_STATE_TEXT_WAIT  = 2;
+localparam FONT_DECODE_STATE_FONT_READ  = 3;
+localparam FONT_DECODE_STATE_FONT_WAIT  = 4;
+localparam FONT_DECODE_STATE_FONT_SHIFT = 5;
+
+reg[7:0] pixels [639:0]; // two lines of 320 pixels
+reg[9:0] pixel_index;
+reg      pixel_row;
 
 // state machine to read char or font from rom
 always @(posedge vga_clk)
 begin
    if (!reset_n) begin
-      vram_read_state <= VRAM_READ_STATE_IDLE;
+      font_decode_state <= FONT_DECODE_STATE_IDLE;
       rd_req <= 0;
+      pixel_row <= 0;
    end
-   if(text_rom_read) begin
-      case (h_pf_cnt[2:0])
-         3'b000:
-         begin
-         end
-         3'b111:
-         begin
-            font_reg <= font_reg_next;
-            vram_read_state <= VRAM_READ_STATE_TEXT;
-            bg_color <= 0;
-         end
-      endcase
-      
-      case (vram_read_state)
-         VRAM_READ_STATE_IDLE: 
+   if (text_rom_read) begin
+      if (x_cnt == 1) begin
+         pixel_index       <= pixel_row ? 0 : 320;
+         pixel_row         <= ~pixel_row;
+         font_bit <= 7;
+         text_rom_addr <= 1025;
+         font_decode_state <= FONT_DECODE_STATE_TEXT_READ;
+      end else begin
+         case (font_decode_state)
+         FONT_DECODE_STATE_IDLE: 
             begin
                rd_req <= 0;
             end
-         VRAM_READ_STATE_TEXT: 
+         FONT_DECODE_STATE_TEXT_READ: 
             begin
                addr_out <= text_rom_addr;
                rd_req <= 1;
-               vram_read_state <= VRAM_READ_STATE_TEXT_WAIT;
+               font_decode_state <= FONT_DECODE_STATE_TEXT_WAIT;
             end
-         VRAM_READ_STATE_TEXT_WAIT:
+         FONT_DECODE_STATE_TEXT_WAIT:
             if (rd_ack) begin
                addr_out <= {data_in, font_scan};
-               vram_read_state <= VRAM_READ_STATE_FONT;
-               bg_color <= 1;
+               font_decode_state <= FONT_DECODE_STATE_FONT_READ;
             end 
-         VRAM_READ_STATE_FONT:
+         FONT_DECODE_STATE_FONT_READ:
             if (rd_ack) begin
                rd_req <= 0;
                font_reg_next <= data_in;
-               vram_read_state <= VRAM_READ_STATE_IDLE;
-               bg_color <= 2;
+               font_decode_state <= FONT_DECODE_STATE_FONT_SHIFT;
             end
-      endcase
-   end
-end
+            FONT_DECODE_STATE_FONT_SHIFT:
+            if (pixel_index == 320 || pixel_index == 640) begin
+               font_decode_state <= FONT_DECODE_STATE_IDLE;
+            end else if (font_bit == 0) begin
+               font_decode_state <= FONT_DECODE_STATE_TEXT_READ;
+               text_rom_addr <= text_rom_addr == 1092 ? 1025 : text_rom_addr + 1;
+            end else begin
+               pixels[pixel_index] <= font_reg_next[font_bit] ? 1 : 0;
+               font_bit    <= font_bit - 1;
+               pixel_index <= pixel_index + 1;
+            end
+         endcase
+      end
+   end      
+end         
 
-// bit and char address to read
-reg[4:0] font_bit;
-always @(posedge vga_clk)
-begin
-   if (~reset_n) begin
-      font_bit <= 7;
-      text_rom_addr <= 1025;
-   end
-   else begin
-      if (hsync_r == 1'b0) begin
-         text_rom_addr <= 1025;
-         font_bit <= 7;
-         h_pf_cnt <= 0;
-      end
-      if (text_rom_read) begin
-         if (font_bit == 0) begin
-            text_rom_addr <= text_rom_addr == 1092 ? 1025 : text_rom_addr + 1;
-            font_bit <= 7;
-         end
-         else begin
-            font_bit <= font_bit - 1;
-         end
-         h_pf_cnt <= h_pf_cnt + 1;
-      end
-   end
-end 
 
 // current scanline relative to start of display
 always @(posedge vga_clk)
