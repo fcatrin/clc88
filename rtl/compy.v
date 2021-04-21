@@ -29,28 +29,28 @@ module compy (
    wire[7:0]  data;
    
    wire[18:0] dram_addr;
-   reg[15:0] dram_data_wr;
-   reg[15:0] dram_data_rd;
+   reg[15:0]  dram_data_wr;
+   reg[15:0]  dram_data_rd;
    
-   reg[10:0] rom_addr;
+   reg[10:0]  rom_addr;
    wire[7:0]  rom_data;
    
    assign dram_addr = ram_s ? addr : (vram_s ? {4'b001, vga_addr} : 19'b0);
 
    wire[7:0]  chroni_page;
    wire[13:0] chroni_addr;
-   wire chroni_rd_req;
-   reg  chroni_rd_ack;
+   wire       chroni_rd_req;
+   reg        chroni_rd_ack;
    
    wire[16:0] vga_addr = {chroni_page, 9'b000000000} + chroni_addr;
 
-   reg[7:0]  vram_data_read;
+   reg[7:0]   vram_data_read;
    
    assign vram_dbr_o = rom_data;
    assign addr = vga_addr[15:0];
    
-   wire[1:0] vga_mode;
-   assign vga_mode = VGA_MODE_800x600;
+   wire[1:0]  vga_mode;
+   assign     vga_mode = VGA_MODE_800x600;
 
    wire CLK_OUT1;
    wire CLK_OUT2;
@@ -97,7 +97,7 @@ module compy (
          keyb_cs    <= 0;
          pokey_cs   <= 0;
          bus_state  <= BUS_STATE_INIT;
-         sdram_bus_rd_req  <= 0;
+         sdram_bus_rd_req <= 0;
          sdram_bus_wr_req <= 0;
       end else   begin
          rom_cs     <= rom_s;
