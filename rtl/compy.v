@@ -50,7 +50,7 @@ module compy (
    assign addr = vga_addr[15:0];
    
    wire[1:0]  vga_mode;
-   assign     vga_mode = VGA_MODE_800x600;
+   assign     vga_mode = VGA_MODE_1280x720;
 
    wire CLK_OUT1;
    wire CLK_OUT2;

@@ -52,7 +52,7 @@ reg v_pf;
 
 reg[8:0] scanline;
 reg dbl_scan;
-reg[1:0] tri_scan;
+reg[4:0] tri_scan;
 reg[1:0] vga_mode;
 
 reg render_line;
@@ -128,7 +128,7 @@ end
 // pixel x counter
 always @ (posedge vga_clk) begin
    if (~reset_n || x_cnt == 1) begin
-      pixel_index_out <= scanline[0] ? 0 : 320;
+      pixel_index_out <= scanline[0] ? 960 : 0;
       pixel_x_dbl <= 0;
       pixel_x_tri <= 0;
    end else begin
@@ -140,12 +140,7 @@ always @ (posedge vga_clk) begin
                   pixel_x_dbl <= ~pixel_x_dbl;
                end
             VGA_MODE_1280x720:
-               if (pixel_x_tri == 3) begin
-                  pixel_index_out <= pixel_index_out + 1;
-                  pixel_x_tri <= 0;
-               end else begin
-                  pixel_x_tri <= pixel_x_tri + 1;
-               end
+               pixel_index_out <= pixel_index_out + 1;
          endcase
       end
    end
@@ -157,10 +152,10 @@ always @ (posedge vga_clk) begin
       scanline <= 0;
       dbl_scan <= 0;
       tri_scan <= 0;
-      font_scan <= 1;
       render_line <= 0;
+      font_scan <= 0;
    end else if (x_cnt == h_total && v_render) begin
-      font_scan <= scanline[3:0];
+      font_scan <= scanline[2:0];
       case(vga_mode)
          VGA_MODE_640x480, VGA_MODE_800x600:
             begin
@@ -171,8 +166,8 @@ always @ (posedge vga_clk) begin
             end
          VGA_MODE_1280x720:
             begin
-               render_line = tri_scan == 3; 
-               if (render_line) begin
+               render_line = tri_scan == 18; 
+               if (tri_scan == 18) begin
                   tri_scan <= 0;
                   scanline <= scanline + 1;
                end else
@@ -237,10 +232,10 @@ localparam FONT_DECODE_STATE_FONT_READ  = 3;
 localparam FONT_DECODE_STATE_FONT_WAIT  = 4;
 localparam FONT_DECODE_STATE_FONT_SHIFT = 5;
 
-reg[7:0] pixels [639:0]; // two lines of 320 pixels
-reg[9:0] pixel_index;
-reg[9:0] pixel_index_out;
-reg      pixel_row;
+reg[7:0]  pixels [1919:0]; // two lines of 960 pixels
+reg[10:0] pixel_index;
+reg[10:0] pixel_index_out;
+reg       pixel_row;
 
 // state machine to read char or font from rom
 always @(posedge vga_clk)
@@ -251,8 +246,8 @@ begin
       pixel_row <= 0;
    end
    if (render_line) begin
-      if (x_cnt == 1) begin
-         pixel_index       <= pixel_row ? 0 : 320;
+      if (x_cnt == h_pf_start) begin
+         pixel_index       <= pixel_row ? 0 : 960;
          pixel_row         <= ~pixel_row;
          text_rom_addr     <= 1025;
          font_decode_state <= FONT_DECODE_STATE_TEXT_READ;
@@ -263,20 +258,20 @@ begin
                rd_req <= 0;
             end
          FONT_DECODE_STATE_TEXT_READ:
-         begin
+            begin
                addr_out <= text_rom_addr;
                rd_req <= 1;
                font_decode_state <= FONT_DECODE_STATE_TEXT_WAIT;
             end
          FONT_DECODE_STATE_TEXT_WAIT:
             if (rd_ack) begin
-               addr_out <= {data_in, font_scan};
+               addr_out <= {8'd65, font_scan};
                font_decode_state <= FONT_DECODE_STATE_FONT_READ;
             end 
          FONT_DECODE_STATE_FONT_READ:
             if (rd_ack) begin
                rd_req <= 0;
-               font_reg_next <= data_in;
+               font_reg_next <= scanline[0] ? 8'b00000000 : 8'b00111100;
                font_decode_state <= FONT_DECODE_STATE_FONT_SHIFT;
             end
          FONT_DECODE_STATE_FONT_SHIFT:
@@ -291,10 +286,11 @@ begin
                pixels[pixel_index+7] <= font_reg_next[0] ? 1 : 0;
                
                text_rom_addr <= text_rom_addr == 1092 ? 1025 : text_rom_addr + 1;
-               if (pixel_index == (320-8) || pixel_index == (640-8)) begin
+               if (pixel_index == ((vga_mode == VGA_MODE_1280x720 ? 960       :      320)  - 8) || 
+                   pixel_index == ((vga_mode == VGA_MODE_1280x720 ? (960+960) : (960+320)) - 8)) begin
                   font_decode_state <= FONT_DECODE_STATE_IDLE;
                end else begin
-                  pixel_index   <= pixel_index + 8;
+                  pixel_index       <= pixel_index + 8;
                   font_decode_state <= FONT_DECODE_STATE_TEXT_READ;
                end
             end
@@ -309,9 +305,17 @@ parameter border_b = 5'b00110;
    
 assign vga_hs = hsync_r;
 assign vga_vs = vsync_r;  
-assign vga_r = (h_de & v_de) ? ((h_pf & v_pf) ? (pixels[pixel_index_out] ? 5'b10011  : 5'b00000)  : border_r) : 5'b00000;
+// assign vga_r = (h_de & v_de) ? ((h_pf & v_pf) ? (pixels[pixel_index_out] ? 5'b10011  : 5'b00000)  : border_r) : 5'b00000;
+/*
+assign vga_r = (h_de & v_de) & (rd_req || pixels[pixel_index_out]) ? 5'b10011  : 5'b00000;
 assign vga_g = (h_de & v_de) ? ((h_pf & v_pf) ? (pixels[pixel_index_out] ? 6'b100111 : 6'b000000) : border_g) : 6'b000000;
 assign vga_b = (h_de & v_de) ? ((h_pf & v_pf) ? (pixels[pixel_index_out] ? 5'b10011  : 5'b00000)  : border_b) : 5'b00000;
+*/
+
+assign vga_r = (h_de & v_de & (h_pf & v_pf) & pixels[pixel_index_out]) ? 5'b10011  : 5'b00000;
+assign vga_g = (h_de & v_de & (h_pf & v_pf) ) ? {1'b0, scanline[0],  4'b0111} : 6'b000000;
+assign vga_b = (h_de & v_de) ? ((h_pf & v_pf) ? (font_scan[2:0] != 0 ? 5'b01011  : 5'b00000)  : border_b) : 5'b00000;
+
 
 endmodule
     
