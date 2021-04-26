@@ -17,6 +17,8 @@ parameter Mode1_V_DeEnd   = Mode1_V_DeStart   + Mode1_V_Display;
 parameter Mode1_V_Total   = Mode1_V_DeEnd     + Mode1_V_FrontPorch;
 parameter Mode1_V_PfStart = Mode1_V_DeStart;
 parameter Mode1_V_PfEnd   = Mode1_V_DeEnd;
+parameter Mode1_H_SyncP   = 0;
+parameter Mode1_V_SyncP   = 0;
 
 // 800x600 => 640x480 + borders
 parameter Mode2_H_Display    = 800;
@@ -37,10 +39,12 @@ parameter Mode2_V_DeEnd   = Mode2_V_DeStart   + Mode2_V_Display;
 parameter Mode2_V_Total   = Mode2_V_DeEnd     + Mode2_V_FrontPorch;
 parameter Mode2_V_PfStart = Mode2_V_DeStart   + 60;
 parameter Mode2_V_PfEnd   = Mode2_V_PfStart   + 480;
+parameter Mode2_H_SyncP   = 0;
+parameter Mode2_V_SyncP   = 0;
 
 // Modeline "1920x1080_60.00" 172.80 1920 2040 2248 2576 1080 1081 1084 1118 -HSync +Vsync
 
-// 1280x720 => 640x480 + borders (wide screen compatible)
+// 1920x1080 => Allow 4x and 5x scaling mode. 5x assumes screens with a visible area of 320x216 pixels max
 parameter Mode3_H_Display    = 1920;
 parameter Mode3_H_FrontPorch = 88;
 parameter Mode3_H_SyncPulse  = 44;
@@ -59,21 +63,17 @@ parameter Mode3_V_DeEnd   = Mode3_V_DeStart   + Mode3_V_Display;
 parameter Mode3_V_Total   = Mode3_V_DeEnd     + Mode3_V_FrontPorch;
 parameter Mode3_V_PfStart = Mode3_V_DeStart;
 parameter Mode3_V_PfEnd   = Mode3_V_DeEnd;
+parameter Mode3_H_SyncP   = 0;
+parameter Mode3_V_SyncP   = 1;
 
 /*
 
 Output Modes target different monitor setups and preferences about borders/overscan.
-Supported monitores are WIDE (16:9) and NONWIDE (4:3)
+Supported monitors are WIDE (16:9) and NONWIDE (4:3)
 
 Mode1 and Mode2 are designed to be used with NONWIDE monitors. With and without overscan
 Mode3 is designed for WIDE monitors. An overscan is added to keep the aspect ratio
 
 The standard resolution is 320x240, although the 80 character mode is 640x240
-
-Now, this is by accident:
-Mode1 and Mode2 allow 40 and 80 columns mode (320 and 640 pixels wide)
-Mode2 was too small using 640x480 so it is expanded to 960x720 keeping the aspect ratio
-problem is... 80 columns mode is impossible without glitches, but 120 columns is perfect.
-There you have it Aldrin Martoq!
 
 */

@@ -48,7 +48,8 @@ reg h_de;
 reg v_de;
 reg h_pf;
 reg v_pf;
-
+reg h_sync_p;
+reg v_sync_p;
 
 reg[8:0] scanline;
 reg dbl_scan;
@@ -76,6 +77,8 @@ always @ (posedge vga_clk) begin
          v_de_end     <= Mode1_V_DeEnd;
          v_pf_start   <= Mode1_V_PfStart;
          v_pf_end     <= Mode1_V_PfEnd;
+         h_sync_p     <= Mode1_H_SyncP;
+         v_sync_p     <= Mode1_V_SyncP;
       end else if (vga_mode_in == VGA_MODE_800x600) begin
          h_sync_pulse <= Mode2_H_SyncPulse;
          h_total      <= Mode2_H_Total;
@@ -89,6 +92,8 @@ always @ (posedge vga_clk) begin
          v_de_end     <= Mode2_V_DeEnd;
          v_pf_start   <= Mode2_V_PfStart;
          v_pf_end     <= Mode2_V_PfEnd;
+         h_sync_p     <= Mode2_H_SyncP;
+         v_sync_p     <= Mode2_V_SyncP;
       end else if (vga_mode_in == VGA_MODE_1280x720) begin
          h_sync_pulse <= Mode3_H_SyncPulse;
          h_total      <= Mode3_H_Total;
@@ -102,6 +107,8 @@ always @ (posedge vga_clk) begin
          v_de_end     <= Mode3_V_DeEnd;
          v_pf_start   <= Mode3_V_PfStart;
          v_pf_end     <= Mode3_V_PfEnd;
+         h_sync_p     <= Mode3_H_SyncP;
+         v_sync_p     <= Mode3_V_SyncP;
       end
       vga_mode <= vga_mode_in;
    end
@@ -303,8 +310,9 @@ parameter border_r = 5'b00100;
 parameter border_g = 6'b001000;
 parameter border_b = 5'b00110;
    
-assign vga_hs = hsync_r;
-assign vga_vs = ~vsync_r;  
+assign vga_hs = h_sync_p ? ~hsync_r : hsync_r;
+assign vga_vs = v_sync_p ? ~vsync_r : vsync_r;
+
 // assign vga_r = (h_de & v_de) ? ((h_pf & v_pf) ? (pixels[pixel_index_out] ? 5'b10011  : 5'b00000)  : border_r) : 5'b00000;
 /*
 assign vga_r = (h_de & v_de) & (rd_req || pixels[pixel_index_out]) ? 5'b10011  : 5'b00000;
