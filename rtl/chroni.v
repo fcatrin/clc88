@@ -63,7 +63,7 @@ reg      pixel_x_dbl;
 reg[1:0] pixel_x_tri;
 
 always @ (posedge vga_clk) begin
-   if(x_cnt <= 1 && y_cnt <= 1 && vga_mode_in != vga_mode) begin
+   if (x_cnt == 1 && y_cnt == 1 && vga_mode_in != vga_mode) begin
       if (vga_mode_in == VGA_MODE_640x480) begin
          h_sync_pulse <= Mode1_H_SyncPulse;
          h_total      <= Mode1_H_Total;
