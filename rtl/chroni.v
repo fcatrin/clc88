@@ -24,24 +24,24 @@ module chroni (
 `include "chroni.vh"
 `include "chroni_vga_modes.vh"
 
-reg[10:0] h_sync_pulse;
-reg[10:0] h_total;
-reg[10:0] h_de_start;
-reg[10:0] h_de_end;
-reg[10:0] h_pf_start;
-reg[10:0] h_pf_end;
+reg[11:0] h_sync_pulse;
+reg[11:0] h_total;
+reg[11:0] h_de_start;
+reg[11:0] h_de_end;
+reg[11:0] h_pf_start;
+reg[11:0] h_pf_end;
 
-reg[10:0] v_sync_pulse;
-reg[10:0] v_total;
-reg[10:0] v_de_start;
-reg[10:0] v_de_end;
-reg[10:0] v_pf_start;
-reg[10:0] v_pf_end;
+reg[11:0] v_sync_pulse;
+reg[11:0] v_total;
+reg[11:0] v_de_start;
+reg[11:0] v_de_end;
+reg[11:0] v_pf_start;
+reg[11:0] v_pf_end;
 
-reg[10 : 0] x_cnt;
-reg[9 : 0]  y_cnt;
-reg[10 : 0] h_pf_cnt;
-reg[9 : 0]  v_pf_cnt;
+reg[11 : 0] x_cnt;
+reg[11 : 0] y_cnt;
+reg[11 : 0] h_pf_cnt;
+reg[11 : 0] v_pf_cnt;
 reg hsync_r;
 reg vsync_r; 
 reg h_de;
@@ -304,7 +304,7 @@ parameter border_g = 6'b001000;
 parameter border_b = 5'b00110;
    
 assign vga_hs = hsync_r;
-assign vga_vs = vsync_r;  
+assign vga_vs = ~vsync_r;  
 // assign vga_r = (h_de & v_de) ? ((h_pf & v_pf) ? (pixels[pixel_index_out] ? 5'b10011  : 5'b00000)  : border_r) : 5'b00000;
 /*
 assign vga_r = (h_de & v_de) & (rd_req || pixels[pixel_index_out]) ? 5'b10011  : 5'b00000;
@@ -312,9 +312,9 @@ assign vga_g = (h_de & v_de) ? ((h_pf & v_pf) ? (pixels[pixel_index_out] ? 6'b10
 assign vga_b = (h_de & v_de) ? ((h_pf & v_pf) ? (pixels[pixel_index_out] ? 5'b10011  : 5'b00000)  : border_b) : 5'b00000;
 */
 
-assign vga_r = (h_de & v_de) ? ((h_pf & v_pf) ? ((~x_cnt[2] &  y_cnt[2]) ? 5'b10011  : 5'b00000)  : border_r) : 5'b00000;
-assign vga_g = (h_de & v_de) ? ((h_pf & v_pf) ? ((~x_cnt[2] &  y_cnt[2]) ? 6'b100111 : 6'b000000) : border_g) : 6'b000000;
-assign vga_b = (h_de & v_de) ? ((h_pf & v_pf) ? (( x_cnt[2] & ~y_cnt[2]) ? 5'b10011  : 5'b00000)  : border_b) : 5'b00000;
+assign vga_r = (h_de & v_de) ? ((h_pf & v_pf) ? ((~x_cnt[4] &  y_cnt[3]) ? 5'b10011  : 5'b00000)  : border_r) : 5'b00000;
+assign vga_g = (h_de & v_de) ? ((h_pf & v_pf) ? ((~x_cnt[3] &  y_cnt[3]) ? 6'b100111 : 6'b000000) : border_g) : 6'b000000;
+assign vga_b = (h_de & v_de) ? ((h_pf & v_pf) ? (( x_cnt[3] & ~y_cnt[4]) ? 5'b10011  : 5'b00000)  : border_b) : 5'b00000;
 
 
 endmodule

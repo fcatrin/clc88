@@ -38,20 +38,22 @@ parameter Mode2_V_Total   = Mode2_V_DeEnd     + Mode2_V_FrontPorch;
 parameter Mode2_V_PfStart = Mode2_V_DeStart   + 60;
 parameter Mode2_V_PfEnd   = Mode2_V_PfStart   + 480;
 
+// Modeline "1920x1080_60.00" 172.80 1920 2040 2248 2576 1080 1081 1084 1118 -HSync +Vsync
+
 // 1280x720 => 640x480 + borders (wide screen compatible)
-parameter Mode3_H_Display    = 1280;
-parameter Mode3_H_FrontPorch = 56;
-parameter Mode3_H_SyncPulse  = 136;
-parameter Mode3_H_BackPorch  = 192;
+parameter Mode3_H_Display    = 1920;
+parameter Mode3_H_FrontPorch = 88;
+parameter Mode3_H_SyncPulse  = 44;
+parameter Mode3_H_BackPorch  = 148;
 parameter Mode3_H_DeStart = Mode3_H_SyncPulse + Mode3_H_BackPorch;
 parameter Mode3_H_DeEnd   = Mode3_H_DeStart   + Mode3_H_Display;
 parameter Mode3_H_Total   = Mode3_H_DeEnd     + Mode3_H_FrontPorch;
-parameter Mode3_H_PfStart = Mode3_H_DeStart   + 160;
-parameter Mode3_H_PfEnd   = Mode3_H_PfStart   + 960;
-parameter Mode3_V_Display    = 720;
-parameter Mode3_V_FrontPorch = 1;
-parameter Mode3_V_SyncPulse  = 3;
-parameter Mode3_V_BackPorch  = 22;
+parameter Mode3_H_PfStart = Mode3_H_DeStart   + 320;
+parameter Mode3_H_PfEnd   = Mode3_H_PfStart   + 1280;
+parameter Mode3_V_Display    = 1080;
+parameter Mode3_V_FrontPorch = 4;
+parameter Mode3_V_SyncPulse  = 5;
+parameter Mode3_V_BackPorch  = 36;
 parameter Mode3_V_DeStart = Mode3_V_SyncPulse + Mode3_V_BackPorch;
 parameter Mode3_V_DeEnd   = Mode3_V_DeStart   + Mode3_V_Display;
 parameter Mode3_V_Total   = Mode3_V_DeEnd     + Mode3_V_FrontPorch;
