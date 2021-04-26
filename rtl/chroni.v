@@ -94,7 +94,7 @@ always @ (posedge vga_clk) begin
          v_pf_end     <= Mode2_V_PfEnd;
          h_sync_p     <= Mode2_H_SyncP;
          v_sync_p     <= Mode2_V_SyncP;
-      end else if (vga_mode_in == VGA_MODE_1280x720) begin
+      end else if (vga_mode_in == VGA_MODE_1920x1080) begin
          h_sync_pulse <= Mode3_H_SyncPulse;
          h_total      <= Mode3_H_Total;
          h_de_start   <= Mode3_H_DeStart;
@@ -146,7 +146,7 @@ always @ (posedge vga_clk) begin
                   if (pixel_x_dbl) pixel_index_out <= pixel_index_out + 1;
                   pixel_x_dbl <= ~pixel_x_dbl;
                end
-            VGA_MODE_1280x720:
+            VGA_MODE_1920x1080:
                pixel_index_out <= pixel_index_out + 1;
          endcase
       end
@@ -171,7 +171,7 @@ always @ (posedge vga_clk) begin
                   scanline <= scanline + 1;
                dbl_scan <= ~dbl_scan;
             end
-         VGA_MODE_1280x720:
+         VGA_MODE_1920x1080:
             begin
                render_line = tri_scan == 18; 
                if (tri_scan == 18) begin
@@ -293,8 +293,8 @@ begin
                pixels[pixel_index+7] <= font_reg_next[0] ? 1 : 0;
                
                text_rom_addr <= text_rom_addr == 1092 ? 1025 : text_rom_addr + 1;
-               if (pixel_index == ((vga_mode == VGA_MODE_1280x720 ? 960       :      320)  - 8) || 
-                   pixel_index == ((vga_mode == VGA_MODE_1280x720 ? (960+960) : (960+320)) - 8)) begin
+               if (pixel_index == ((vga_mode == VGA_MODE_1920x1080 ? 960       :      320)  - 8) || 
+                   pixel_index == ((vga_mode == VGA_MODE_1920x1080 ? (960+960) : (960+320)) - 8)) begin
                   font_decode_state <= FONT_DECODE_STATE_IDLE;
                end else begin
                   pixel_index       <= pixel_index + 8;

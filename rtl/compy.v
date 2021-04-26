@@ -93,8 +93,8 @@ module compy (
             VGA_MODE_640x480:
                vga_mode <= VGA_MODE_800x600;
             VGA_MODE_800x600:
-               vga_mode <= VGA_MODE_1280x720;
-            VGA_MODE_1280x720:
+               vga_mode <= VGA_MODE_1920x1080;
+            VGA_MODE_1920x1080:
                vga_mode <= VGA_MODE_640x480;
          endcase
       end
@@ -244,7 +244,7 @@ module compy (
       .inclk0(clk),      // IN
       .c0(CLK_OUT1),     // 25.17Mhz  (640x480)
       .c1(CLK_OUT2),     // 40Mhz     (800x600)
-      .c2(CLK_OUT3),     // 74.48Mhz  (1280x720)
+      .c2(CLK_OUT3),     // 150Mhz    (1920x1080)
       .c3(CLK_200),      // 200Mhz (ROM)
       .areset(1'b0),     // reset input 
       .locked(LOCKED)
