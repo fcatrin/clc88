@@ -312,9 +312,9 @@ assign vga_g = (h_de & v_de) ? ((h_pf & v_pf) ? (pixels[pixel_index_out] ? 6'b10
 assign vga_b = (h_de & v_de) ? ((h_pf & v_pf) ? (pixels[pixel_index_out] ? 5'b10011  : 5'b00000)  : border_b) : 5'b00000;
 */
 
-assign vga_r = (h_de & v_de & (h_pf & v_pf) & pixels[pixel_index_out]) ? 5'b10011  : 5'b00000;
-assign vga_g = (h_de & v_de & (h_pf & v_pf) ) ? {1'b0, scanline[0],  4'b0111} : 6'b000000;
-assign vga_b = (h_de & v_de) ? ((h_pf & v_pf) ? (font_scan[2:0] != 0 ? 5'b01011  : 5'b00000)  : border_b) : 5'b00000;
+assign vga_r = (h_de & v_de) ? ((h_pf & v_pf) ? ((~x_cnt[2] &  y_cnt[2]) ? 5'b10011  : 5'b00000)  : border_r) : 5'b00000;
+assign vga_g = (h_de & v_de) ? ((h_pf & v_pf) ? ((~x_cnt[2] &  y_cnt[2]) ? 6'b100111 : 6'b000000) : border_g) : 6'b000000;
+assign vga_b = (h_de & v_de) ? ((h_pf & v_pf) ? (( x_cnt[2] & ~y_cnt[2]) ? 5'b10011  : 5'b00000)  : border_b) : 5'b00000;
 
 
 endmodule
