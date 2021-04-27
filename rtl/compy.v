@@ -49,7 +49,7 @@ module compy (
    assign vram_dbr_o = rom_data;
    assign addr = vga_addr[15:0];
    
-   reg[1:0]  vga_mode = VGA_MODE_800x600;
+   reg[1:0]  vga_mode = VGA_MODE_640x480;
 
    wire CLK_OUT1;
    wire CLK_OUT2;
@@ -142,7 +142,7 @@ module compy (
                   end
                end
             BUS_STATE_CHRONI_READ_REQ : 
-               begin
+               if (start) begin
                   bus_state <= BUS_STATE_CHRONI_READ_REQ2;
                   /*
                   if (sdram_bus_rd_ack) begin

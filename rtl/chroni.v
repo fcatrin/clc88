@@ -187,22 +187,19 @@ localparam FONT_DECODE_STATE_FONT_READ  = 3;
 localparam FONT_DECODE_STATE_FONT_WAIT  = 4;
 localparam FONT_DECODE_STATE_FONT_SHIFT = 5;
 
-reg render_line_prev;
-reg render_line_next;
-
 // state machine to read char or font from rom
 always @(posedge vga_clk)
 begin
+   reg render_line_prev;
+
    if (!reset_n) begin
       font_decode_state <= FONT_DECODE_STATE_IDLE;
       rd_req <= 0;
       pixel_row <= 0;
       render_line_prev <= 0;
-      render_line_next <= 0;
    end else begin
-      render_line_prev <= render_line_next;
-      render_line_next <= render_line;
-      if (~render_line_prev && render_line_next) begin
+      render_line_prev <= render_line;
+      if (~render_line_prev && render_line) begin
          pixel_index       <= pixel_row ? 0 : 640;
          pixel_row         <= ~pixel_row;
          text_rom_addr     <= 1025;
@@ -227,7 +224,7 @@ begin
          FONT_DECODE_STATE_FONT_READ:
             if (rd_ack) begin
                rd_req <= 0;
-               font_reg_next <= data_in;
+               font_reg_next <= font_scan[0] ? data_in : 8'b01010101;
                font_decode_state <= FONT_DECODE_STATE_FONT_SHIFT;
             end
          FONT_DECODE_STATE_FONT_SHIFT:
@@ -276,7 +273,11 @@ always @ (posedge vga_clk) begin
                pixel_x_dbl <= ~pixel_x_dbl;
             end
             VGA_MODE_1920x1080:
-               pixel_index_out <= pixel_index_out + 1;
+               if (pixel_x_tri == 3) begin
+                  pixel_index_out <= pixel_index_out + 1;
+                  pixel_x_tri <= 0;
+               end else 
+                  pixel_x_tri <= pixel_x_tri + 1;
          endcase
       end
    end
@@ -303,7 +304,7 @@ always @ (posedge vga_clk) begin
          VGA_MODE_1920x1080:
          begin
             render_line = tri_scan == 18; 
-            if (tri_scan == 18) begin
+            if (render_line) begin
                tri_scan <= 0;
                scanline <= scanline + 1;
             end else
@@ -327,7 +328,7 @@ assign vga_g = (h_de & v_de) ? ((h_pf & v_pf) ? (pixels[pixel_index_out] ? 6'b10
 assign vga_b = (h_de & v_de) ? ((h_pf & v_pf) ? (pixels[pixel_index_out] ? 5'b10011  : 5'b00000)  : border_b) : 5'b00000;
 */
 
-assign vga_r = (h_de & v_de) ? ((h_pf & v_pf) ? ((~x_cnt[4] &  y_cnt[3]) ? 5'b10011  : 5'b00000)  : border_r) : 5'b00000;
+assign vga_r = (h_de & v_de) ? ((h_pf & v_pf) ? ((pixels[pixel_index_out]) ? 5'b10011  : 5'b00000)  : border_r) : 5'b00000;
 assign vga_g = (h_de & v_de) ? ((h_pf & v_pf) ? ((pixels[pixel_index_out]) ? 6'b100111 : 6'b000000) : border_g) : 6'b000000;
 assign vga_b = (h_de & v_de) ? ((h_pf & v_pf) ? ((pixels[pixel_index_out]) ? 5'b10011  : 5'b00000)  : border_b) : 5'b00000;
 
