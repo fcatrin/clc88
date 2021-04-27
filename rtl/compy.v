@@ -49,7 +49,7 @@ module compy (
    assign vram_dbr_o = rom_data;
    assign addr = vga_addr[15:0];
    
-   reg[1:0]  vga_mode = VGA_MODE_640x480;
+   reg[1:0] vga_mode = VGA_MODE_1920x1080;
 
    wire CLK_OUT1;
    wire CLK_OUT2;
