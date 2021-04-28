@@ -60,9 +60,6 @@ reg[1:0] vga_mode;
 reg render_line;
 reg v_render;
 
-reg      pixel_x_dbl;
-reg[1:0] pixel_x_tri;
-
 always @ (posedge vga_clk) begin
    if (x_cnt == 1 && y_cnt == 1 && vga_mode_in != vga_mode) begin
       if (vga_mode_in == VGA_MODE_640x480) begin
@@ -219,7 +216,7 @@ begin
             end
          FONT_DECODE_STATE_TEXT_WAIT:
             if (rd_ack) begin
-               addr_out <= {8'd65, font_scan};
+               addr_out <= {data_in, font_scan};
                font_decode_state <= FONT_DECODE_STATE_FONT_READ;
             end 
          FONT_DECODE_STATE_FONT_READ:
@@ -261,6 +258,9 @@ reg       pixel_row;
 
 // pixel x counter
 always @ (posedge vga_clk) begin
+   reg      pixel_x_dbl;
+   reg[7:0] pixel_x_tri;
+
    if (~reset_n || x_cnt == 1) begin
       pixel_index_out <= scanline[0] ? 640 : 0;
       pixel_x_dbl <= 0;
@@ -274,7 +274,7 @@ always @ (posedge vga_clk) begin
                pixel_x_dbl <= ~pixel_x_dbl;
             end
             VGA_MODE_1920x1080:
-               if (pixel_x_tri == 3) begin
+               if (pixel_x_tri == 15) begin
                   pixel_index_out <= pixel_index_out + 1;
                   pixel_x_tri <= 0;
                end else 
