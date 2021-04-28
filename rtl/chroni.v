@@ -2,6 +2,7 @@
 
 module chroni (
       input vga_clk,
+      input sys_clk,
       input reset_n,
       input [1:0] vga_mode_in,
       output vga_hs,
@@ -188,7 +189,7 @@ localparam FONT_DECODE_STATE_FONT_WAIT  = 4;
 localparam FONT_DECODE_STATE_FONT_SHIFT = 5;
 
 // state machine to read char or font from rom
-always @(posedge vga_clk)
+always @(posedge sys_clk)
 begin
    reg render_line_prev;
 
@@ -224,7 +225,7 @@ begin
          FONT_DECODE_STATE_FONT_READ:
             if (rd_ack) begin
                rd_req <= 0;
-               font_reg_next <= font_scan[0] ? data_in : 8'b01010101;
+               font_reg_next <= data_in;
                font_decode_state <= FONT_DECODE_STATE_FONT_SHIFT;
             end
          FONT_DECODE_STATE_FONT_SHIFT:

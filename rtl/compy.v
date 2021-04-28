@@ -56,10 +56,10 @@ module compy (
    wire CLK_OUT3;
    wire CLK_OUT4;
 
-   wire chroni_clock;
+   wire vga_clock;
    reg  sdram_clock;
    
-   assign chroni_clock = 
+   assign vga_clock = 
        vga_mode == VGA_MODE_640x480 ? CLK_OUT1 : 
       (vga_mode == VGA_MODE_800x600 ? CLK_OUT2 : CLK_OUT3);
    
@@ -85,7 +85,7 @@ module compy (
    
    reg key_mode_prev;
    reg key_mode_current;
-   always @ (posedge CLK_200) begin
+   always @ (posedge sys_clk) begin
       key_mode_current <= key_mode;
       key_mode_prev    <= key_mode_current;
       if (key_mode_prev & ~key_mode_current) begin
@@ -100,7 +100,7 @@ module compy (
       end
    end
    
-   always @ (posedge CLK_200) begin
+   always @ (posedge sys_clk) begin
       reg chroni_clock_old;
       reg start;
       
@@ -124,16 +124,13 @@ module compy (
          keyb_cs    <= keyb_s;
          pokey_cs   <= pokey_s;
          
-         chroni_clock_old <= chroni_clock;
-         start <= !chroni_clock_old & chroni_clock;
-         
          case (bus_state)
             BUS_STATE_INIT : 
                if (sdram_state != SDRAM_STATE_INIT) begin
                   bus_state <= BUS_STATE_READY;
                end
             BUS_STATE_READY :
-               if (start) begin
+               begin
                   chroni_rd_ack <= 0;
                   if (chroni_rd_req) begin
                      rom_addr <= chroni_addr[10:0];
@@ -142,8 +139,7 @@ module compy (
                   end
                end
             BUS_STATE_CHRONI_READ_REQ : 
-               if (start) begin
-                  bus_state <= BUS_STATE_CHRONI_READ_REQ2;
+               bus_state <= BUS_STATE_CHRONI_READ_REQ2;
                   /*
                   if (sdram_bus_rd_ack) begin
                      sdram_bus_rd_req <= 0;
@@ -152,9 +148,8 @@ module compy (
                      bus_state <=BUS_STATE_READY;
                   end
                   */
-               end
             BUS_STATE_CHRONI_READ_REQ2 :
-               if (start) begin
+               begin
                   vram_data_read <= rom_data;
                   bus_state <= BUS_STATE_READY;
                   chroni_rd_ack <= 1;
@@ -235,7 +230,7 @@ module compy (
 
    
    rom rom_inst (
-      .clock(CLK_200),
+      .clock(sys_clk),
       .address(rom_addr),
       .q(rom_data)
    );
@@ -245,13 +240,14 @@ module compy (
       .c0(CLK_OUT1),     // 25.17Mhz  (640x480)
       .c1(CLK_OUT2),     // 40Mhz     (800x600)
       .c2(CLK_OUT3),     // 150Mhz    (1920x1080)
-      .c3(CLK_200),      // 200Mhz (ROM)
+      .c3(sys_clk),      // 200Mhz (ROM)
       .areset(1'b0),     // reset input 
       .locked(LOCKED)
    );        // OUT
 
    chroni chroni_inst (
-      .vga_clk(chroni_clock),
+      .vga_clk(vga_clock),
+      .sys_clk(sys_clk),
       .reset_n(reset_n),
       .vga_mode_in(vga_mode),
       .vga_hs(vga_hs),
