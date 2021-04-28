@@ -192,6 +192,7 @@ begin
 
    if (!reset_n) begin
       font_decode_state <= FONT_DECODE_STATE_IDLE;
+      addr_out <= 0;
       rd_req <= 0;
       pixel_row <= 0;
       render_line_prev <= 0;
@@ -200,8 +201,9 @@ begin
       if (~render_line_prev && render_line) begin
          pixel_index       <= pixel_row ? 0 : 640;
          pixel_row         <= ~pixel_row;
-         text_rom_addr     <= 1025;
+         text_rom_addr     <= 1027;
          font_decode_state <= FONT_DECODE_STATE_TEXT_READ;
+         
       end else begin
          case (font_decode_state)
          FONT_DECODE_STATE_IDLE: 
@@ -215,15 +217,21 @@ begin
                font_decode_state <= FONT_DECODE_STATE_TEXT_WAIT;
             end
          FONT_DECODE_STATE_TEXT_WAIT:
-            if (rd_ack) begin
-               addr_out <= {data_in, font_scan};
-               font_decode_state <= FONT_DECODE_STATE_FONT_READ;
-            end 
+            begin
+               if (rd_ack) begin
+                  addr_out <= {data_in, font_scan};
+                  font_decode_state <= FONT_DECODE_STATE_FONT_READ;
+                  rd_req <= 1;
+               end else
+                  rd_req <= 0;
+            end
          FONT_DECODE_STATE_FONT_READ:
-            if (rd_ack) begin
-               rd_req <= 0;
-               font_reg_next <= data_in;
-               font_decode_state <= FONT_DECODE_STATE_FONT_SHIFT;
+            begin
+               if (rd_ack) begin
+                  font_reg_next <= data_in;
+                  font_decode_state <= FONT_DECODE_STATE_FONT_SHIFT;
+                  rd_req <= 0;
+               end
             end
          FONT_DECODE_STATE_FONT_SHIFT:
             begin
@@ -236,7 +244,7 @@ begin
                pixels[pixel_index+6] <= font_reg_next[1] ? 1 : 0;
                pixels[pixel_index+7] <= font_reg_next[0] ? 1 : 0;
                
-               text_rom_addr <= text_rom_addr == 1092 ? 1025 : text_rom_addr + 1;
+               text_rom_addr <= text_rom_addr == 1092 ? 1027 : text_rom_addr + 1;
                if ((pixel_index == 640 - 8) || 
                    (pixel_index == 1280 -8 )) begin
                   font_decode_state <= FONT_DECODE_STATE_IDLE;
@@ -329,8 +337,8 @@ assign vga_g = (h_de & v_de) ? ((h_pf & v_pf) ? (pixels[pixel_index_out] ? 6'b10
 assign vga_b = (h_de & v_de) ? ((h_pf & v_pf) ? (pixels[pixel_index_out] ? 5'b10011  : 5'b00000)  : border_b) : 5'b00000;
 */
 
-assign vga_r = (h_de & v_de) ? ((h_pf & v_pf) ? ((pixels[pixel_index_out]) ? 5'b10011  : 5'b00000)  : border_r) : 5'b00000;
-assign vga_g = (h_de & v_de) ? ((h_pf & v_pf) ? ((pixels[pixel_index_out]) ? 6'b100111 : 6'b000000) : border_g) : 6'b000000;
+assign vga_r = (h_de & v_de) ? (rd_req ? 5'b10011  : ((h_pf & v_pf) ? 5'b00000 : border_r)) : 5'b00000;
+assign vga_g = (h_de & v_de) ? (rd_ack ? 6'b100111 : ((h_pf & v_pf) ? 6'b000000 : border_b)) : 6'b000000;
 assign vga_b = (h_de & v_de) ? ((h_pf & v_pf) ? ((pixels[pixel_index_out]) ? 5'b10011  : 5'b00000)  : border_b) : 5'b00000;
 
 

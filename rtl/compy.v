@@ -82,6 +82,7 @@ module compy (
    localparam BUS_STATE_READY = 4'd1;
    localparam BUS_STATE_CHRONI_READ_REQ  = 4'd2;
    localparam BUS_STATE_CHRONI_READ_REQ2 = 4'd3;
+   localparam BUS_STATE_WAIT = 4'd4;
    
    reg key_mode_prev;
    reg key_mode_current;
@@ -101,9 +102,7 @@ module compy (
    end
    
    always @ (posedge sys_clk) begin
-      reg chroni_clock_old;
-      reg start;
-      
+      reg chroni_rd_req_prev;
       if (~reset_n) begin
          rom_cs     <= 0;
          ram_cs     <= 0;
@@ -115,6 +114,10 @@ module compy (
          bus_state  <= BUS_STATE_INIT;
          sdram_bus_rd_req <= 0;
          sdram_bus_wr_req <= 0;
+         
+         chroni_rd_ack <= 0;
+         rom_addr <= 0;
+         vram_data_read <= 0;
       end else   begin
          rom_cs     <= rom_s;
          ram_cs     <= ram_s;
@@ -134,26 +137,20 @@ module compy (
                   chroni_rd_ack <= 0;
                   if (chroni_rd_req) begin
                      rom_addr <= chroni_addr[10:0];
-                     // sdram_bus_rd_req <=1;
                      bus_state <= BUS_STATE_CHRONI_READ_REQ;
                   end
                end
             BUS_STATE_CHRONI_READ_REQ : 
                bus_state <= BUS_STATE_CHRONI_READ_REQ2;
-                  /*
-                  if (sdram_bus_rd_ack) begin
-                     sdram_bus_rd_req <= 0;
-                     vram_data_read <= dram_data_rd;
-                     chroni_rd_ack <= 1;
-                     bus_state <=BUS_STATE_READY;
-                  end
-                  */
             BUS_STATE_CHRONI_READ_REQ2 :
                begin
                   vram_data_read <= rom_data;
-                  bus_state <= BUS_STATE_READY;
+                  bus_state <= BUS_STATE_WAIT;
                   chroni_rd_ack <= 1;
                end
+            BUS_STATE_WAIT:
+               if (!chroni_rd_req)
+                  bus_state <= BUS_STATE_READY;
          endcase
       end
       
