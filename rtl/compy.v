@@ -48,7 +48,7 @@ module compy (
    assign vram_dbr_o = rom_data;
    assign addr = vga_addr[15:0];
    
-   reg[1:0] vga_mode = VGA_MODE_1920x1080;
+   reg[1:0] vga_mode;
 
    wire CLK_OUT1;
    wire CLK_OUT2;
@@ -83,20 +83,25 @@ module compy (
    localparam BUS_STATE_CHRONI_READ_REQ2 = 4'd3;
    localparam BUS_STATE_WAIT = 4'd4;
    
-   reg key_mode_prev;
-   reg key_mode_current;
    always @ (posedge sys_clk) begin
-      key_mode_current <= key_mode;
-      key_mode_prev    <= key_mode_current;
-      if (key_mode_prev & ~key_mode_current) begin
-         case (vga_mode)
-            VGA_MODE_640x480:
-               vga_mode <= VGA_MODE_800x600;
-            VGA_MODE_800x600:
-               vga_mode <= VGA_MODE_1920x1080;
-            VGA_MODE_1920x1080:
-               vga_mode <= VGA_MODE_640x480;
-         endcase
+      reg key_mode_prev;
+      reg key_mode_current;
+
+      if (!vga_mode)
+         vga_mode <= VGA_MODE_800x600;
+      else begin
+         key_mode_current <= key_mode;
+         key_mode_prev    <= key_mode_current;
+         if (key_mode_prev & ~key_mode_current) begin
+            case (vga_mode)
+               VGA_MODE_640x480:
+                  vga_mode <= VGA_MODE_800x600;
+               VGA_MODE_800x600:
+                  vga_mode <= VGA_MODE_1920x1080;
+               VGA_MODE_1920x1080:
+                  vga_mode <= VGA_MODE_640x480;
+            endcase
+         end
       end
    end
    
@@ -116,6 +121,7 @@ module compy (
          
          chroni_rd_ack <= 0;
          rom_addr <= 0;
+         
       end else   begin
          rom_cs     <= rom_s;
          ram_cs     <= ram_s;

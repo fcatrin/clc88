@@ -60,8 +60,11 @@ reg[1:0] vga_mode;
 reg render_line;
 reg v_render;
 
+wire vga_mode_change;
+assign vga_mode_change = vga_mode_in != vga_mode;
+
 always @ (posedge vga_clk) begin
-   if (x_cnt == 1 && y_cnt == 1 && vga_mode_in != vga_mode) begin
+   if (x_cnt == 1 && y_cnt == 1 && vga_mode_change) begin
       if (vga_mode_in == VGA_MODE_640x480) begin
          h_sync_pulse <= Mode1_H_SyncPulse;
          h_total      <= Mode1_H_Total;
@@ -114,7 +117,7 @@ end
 
 // x position counter  
 always @ (posedge vga_clk) begin
-   if(~reset_n || x_cnt == h_total) begin
+   if(~reset_n || x_cnt == h_total || vga_mode_change) begin
       x_cnt <= 1;
    end else begin
       x_cnt <= x_cnt + 1;
@@ -123,7 +126,7 @@ end
 
 // y position counter  
 always @ (posedge vga_clk) begin
-   if(~reset_n || y_cnt == v_total) begin
+   if(~reset_n || y_cnt == v_total || vga_mode_change) begin
       y_cnt <= 1;
    end else if(x_cnt == h_total) begin
       y_cnt <= y_cnt + 1;
@@ -190,7 +193,7 @@ always @(posedge sys_clk)
 begin
    reg render_line_prev;
 
-   if (!reset_n) begin
+   if (!reset_n || vga_mode_change) begin
       font_decode_state <= FONT_DECODE_STATE_IDLE;
       addr_out <= 0;
       rd_req <= 0;
