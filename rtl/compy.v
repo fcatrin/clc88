@@ -27,6 +27,7 @@ module compy (
    // global bus
    wire[15:0] addr;
    wire[7:0]  data;
+   assign data = rom_data;
    
    wire[18:0] dram_addr;
    reg[15:0]  dram_data_wr;
@@ -44,12 +45,10 @@ module compy (
    
    wire[16:0] vga_addr = {chroni_page, 9'b000000000} + chroni_addr;
 
-   reg[7:0]   vram_data_read;
-   
    assign vram_dbr_o = rom_data;
    assign addr = vga_addr[15:0];
    
-   reg[1:0] vga_mode = VGA_MODE_800x600;
+   reg[1:0] vga_mode = VGA_MODE_1920x1080;
 
    wire CLK_OUT1;
    wire CLK_OUT2;
@@ -117,7 +116,6 @@ module compy (
          
          chroni_rd_ack <= 0;
          rom_addr <= 0;
-         vram_data_read <= 0;
       end else   begin
          rom_cs     <= rom_s;
          ram_cs     <= ram_s;
@@ -134,23 +132,21 @@ module compy (
                end
             BUS_STATE_READY :
                begin
-                  chroni_rd_ack <= 0;
                   if (chroni_rd_req) begin
                      rom_addr <= chroni_addr[10:0];
                      bus_state <= BUS_STATE_CHRONI_READ_REQ;
                   end
                end
-            BUS_STATE_CHRONI_READ_REQ : 
-               bus_state <= BUS_STATE_CHRONI_READ_REQ2;
+            BUS_STATE_CHRONI_READ_REQ :
+               begin
+                  chroni_rd_ack <= 1;
+                  bus_state <= BUS_STATE_CHRONI_READ_REQ2;
+               end
             BUS_STATE_CHRONI_READ_REQ2 :
                begin
-                  vram_data_read <= rom_data;
-                  bus_state <= BUS_STATE_WAIT;
-                  chroni_rd_ack <= 1;
-               end
-            BUS_STATE_WAIT:
-               if (!chroni_rd_req)
                   bus_state <= BUS_STATE_READY;
+                  chroni_rd_ack <= 0;
+               end
          endcase
       end
       
@@ -254,7 +250,7 @@ module compy (
       .vga_b(vga_b),
       .addr_out(chroni_addr),
       .addr_out_page(chroni_page),
-      .data_in(vram_data_read),
+      .data_in(data),
       .rd_req(chroni_rd_req),
       .rd_ack(chroni_rd_ack)
    );

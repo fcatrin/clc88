@@ -181,9 +181,9 @@ reg[3:0] font_decode_state;
 localparam FONT_DECODE_STATE_IDLE       = 0;
 localparam FONT_DECODE_STATE_TEXT_READ  = 1;
 localparam FONT_DECODE_STATE_TEXT_WAIT  = 2;
-localparam FONT_DECODE_STATE_FONT_READ  = 3;
-localparam FONT_DECODE_STATE_FONT_WAIT  = 4;
-localparam FONT_DECODE_STATE_FONT_SHIFT = 5;
+localparam FONT_DECODE_STATE_TEXT_DONE  = 3;
+localparam FONT_DECODE_STATE_FONT_READ  = 4;
+localparam FONT_DECODE_STATE_FONT_WAIT  = 5;
 
 // state machine to read char or font from rom
 always @(posedge sys_clk)
@@ -201,7 +201,7 @@ begin
       if (~render_line_prev && render_line) begin
          pixel_index       <= pixel_row ? 0 : 640;
          pixel_row         <= ~pixel_row;
-         text_rom_addr     <= 1027;
+         text_rom_addr     <= 1025;
          font_decode_state <= FONT_DECODE_STATE_TEXT_READ;
          
       end else begin
@@ -217,34 +217,33 @@ begin
                font_decode_state <= FONT_DECODE_STATE_TEXT_WAIT;
             end
          FONT_DECODE_STATE_TEXT_WAIT:
+            if (rd_ack) begin
+               rd_req <= 0;
+               font_decode_state <= FONT_DECODE_STATE_TEXT_DONE;
+            end
+         FONT_DECODE_STATE_TEXT_DONE:
             begin
-               if (rd_ack) begin
-                  addr_out <= {data_in, font_scan};
-                  font_decode_state <= FONT_DECODE_STATE_FONT_READ;
-                  rd_req <= 1;
-               end else
-                  rd_req <= 0;
+               addr_out <= {data_in, font_scan};
+               font_decode_state <= FONT_DECODE_STATE_FONT_WAIT;
+               rd_req <= 1;
+            end
+         FONT_DECODE_STATE_FONT_WAIT:
+            if (rd_ack) begin
+               rd_req <= 0;
+               font_decode_state <= FONT_DECODE_STATE_FONT_READ;
             end
          FONT_DECODE_STATE_FONT_READ:
             begin
-               if (rd_ack) begin
-                  font_reg_next <= data_in;
-                  font_decode_state <= FONT_DECODE_STATE_FONT_SHIFT;
-                  rd_req <= 0;
-               end
-            end
-         FONT_DECODE_STATE_FONT_SHIFT:
-            begin
-               pixels[pixel_index+0] <= font_reg_next[7] ? 1 : 0;
-               pixels[pixel_index+1] <= font_reg_next[6] ? 1 : 0;
-               pixels[pixel_index+2] <= font_reg_next[5] ? 1 : 0;
-               pixels[pixel_index+3] <= font_reg_next[4] ? 1 : 0;
-               pixels[pixel_index+4] <= font_reg_next[3] ? 1 : 0;
-               pixels[pixel_index+5] <= font_reg_next[2] ? 1 : 0;
-               pixels[pixel_index+6] <= font_reg_next[1] ? 1 : 0;
-               pixels[pixel_index+7] <= font_reg_next[0] ? 1 : 0;
+               pixels[pixel_index+0] <= data_in[7] ? 1 : 0;
+               pixels[pixel_index+1] <= data_in[6] ? 1 : 0;
+               pixels[pixel_index+2] <= data_in[5] ? 1 : 0;
+               pixels[pixel_index+3] <= data_in[4] ? 1 : 0;
+               pixels[pixel_index+4] <= data_in[3] ? 1 : 0;
+               pixels[pixel_index+5] <= data_in[2] ? 1 : 0;
+               pixels[pixel_index+6] <= data_in[1] ? 1 : 0;
+               pixels[pixel_index+7] <= data_in[0] ? 1 : 0;
                
-               text_rom_addr <= text_rom_addr == 1092 ? 1027 : text_rom_addr + 1;
+               text_rom_addr <= text_rom_addr == 1092 ? 1025 : text_rom_addr + 1;
                if ((pixel_index == 640 - 8) || 
                    (pixel_index == 1280 -8 )) begin
                   font_decode_state <= FONT_DECODE_STATE_IDLE;
