@@ -1,0 +1,6 @@
+
+* use font ideas from https://github.com/ianhan/BitmapFonts
+
+FPGA:
+* Add 5x scaling mode to 1920x1080
+* Add blend filter to 1920x1080
