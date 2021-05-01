@@ -196,10 +196,11 @@ begin
       rd_req <= 0;
       pixel_row <= 0;
       render_line_prev <= 0;
+      pixel_index <= 0;
    end else begin
       render_line_prev <= render_line;
       if (~render_line_prev && render_line) begin
-         pixel_index       <= pixel_row ? 0 : 640;
+         pixel_index       <= 0;
          pixel_row         <= ~pixel_row;
          text_rom_addr     <= 1025;
          font_decode_state <= FONT_DECODE_STATE_TEXT_READ;
@@ -239,9 +240,9 @@ begin
                pixels[pixel_index+2] <= data_in[5] ? 1 : 0;
                pixels[pixel_index+3] <= data_in[4] ? 1 : 0;
                pixels[pixel_index+4] <= data_in[3] ? 1 : 0;
-               pixels[pixel_index+5] <= data_in[2] ? 1 : 0;
-               pixels[pixel_index+6] <= data_in[1] ? 1 : 0;
-               pixels[pixel_index+7] <= data_in[0] ? 1 : 0;
+               pixels[pixel_index+5] <= font_scan[2] ? 1 : 0;
+               pixels[pixel_index+6] <= font_scan[1] ? 1 : 0;
+               pixels[pixel_index+7] <= font_scan[0] ? 1 : 0;
                
                text_rom_addr <= text_rom_addr == 1092 ? 1025 : text_rom_addr + 1;
                if ((pixel_index == 640 - 8) || 
@@ -269,7 +270,7 @@ always @ (posedge vga_clk) begin
    reg[7:0] pixel_x_tri;
 
    if (~reset_n || x_cnt == 1) begin
-      pixel_index_out <= scanline[0] ? 640 : 0;
+      pixel_index_out <= 0;
       pixel_x_dbl <= 0;
       pixel_x_tri <= 0;
    end else begin
@@ -312,7 +313,7 @@ always @ (posedge vga_clk) begin
          end
          VGA_MODE_1920x1080:
          begin
-            render_line = tri_scan == 18; 
+            render_line = tri_scan == 17; 
             if (render_line) begin
                tri_scan <= 0;
                scanline <= scanline + 1;
