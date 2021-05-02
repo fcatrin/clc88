@@ -166,8 +166,8 @@ begin
    else if(y_cnt == v_pf_end) v_pf <= 1'b0;
    
    if(~reset_n) v_render <= 1'b0;
-   else if(y_cnt == v_pf_start - 1) v_render <= 1'b1;
-   else if(y_cnt == v_pf_end   - 1) v_render <= 1'b0;
+   else if(y_cnt == v_pf_start - 2) v_render <= 1'b1;
+   else if(y_cnt == v_pf_end   - 2) v_render <= 1'b0;
    
 end    
 
@@ -328,15 +328,15 @@ always @ (posedge vga_clk) begin
       case(vga_mode)
          VGA_MODE_640x480, VGA_MODE_800x600:
          begin
-            render_line = ~dbl_scan;
-            if (render_line) begin
+            render_line <= dbl_scan == 1;
+            if (dbl_scan == 1) begin
                scanline <= scanline + 1;
             end
             dbl_scan <= ~dbl_scan;
          end
          VGA_MODE_1920x1080:
          begin
-            render_line = tri_scan == 17; 
+            render_line = tri_scan == 3; 
             if (render_line) begin
                tri_scan <= 0;
                scanline <= scanline + 1;
