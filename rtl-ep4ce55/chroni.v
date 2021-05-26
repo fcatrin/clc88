@@ -263,7 +263,7 @@ begin
             begin
                pixels[pixel_buffer_index_in+0] <= data_in[7] ? 1 : 0;
                pixels[pixel_buffer_index_in+1] <= data_in[6] ? 1 : 0;
-               pixels[pixel_buffer_index_in+2] <= data_in[5] ? 1 : 0;
+               pixels[pixel_buffer_index_in+2] <= data_in[5] ? 1 : 1;
                pixels[pixel_buffer_index_in+3] <= data_in[4] ? 1 : 0;
                pixels[pixel_buffer_index_in+4] <= data_in[3] ? 1 : 0;
                pixels[pixel_buffer_index_in+5] <= data_in[2] ? 1 : 0;
