@@ -289,25 +289,31 @@ reg[7:0]  pixels [1279:0]; // two lines of 640 pixels
 reg[10:0] pixel_buffer_index_in;
 reg[10:0] pixel_buffer_index_out;
 reg       pixel_buffer_row;
+reg       pixel;
 
 // pixel x counter
 always @ (posedge vga_clk) begin
+   reg      pixel_next;
    reg      pixel_x_dbl;
    reg[7:0] pixel_x_tri;
 
    if (~reset_n || x_cnt == 1) begin
       pixel_buffer_index_out <= pixel_buffer_row ? 0 : 640;
       pixel_x_dbl <= 0;
-      pixel_x_tri <= 0;
+      pixel_x_tri <= 3;
+		pixel <= 0;
+      pixel_next <= 0;
    end else begin
       if (h_pf && v_pf) begin
          case(vga_mode)
             VGA_MODE_640x480, VGA_MODE_800x600:
             begin
+               pixel <= pixels[pixel_buffer_index_out];
                pixel_buffer_index_out <= pixel_buffer_index_out + 1;
             end
-            VGA_MODE_1920x1080:
-               if (pixel_x_tri == 1) begin
+            VGA_MODE_1920x1080: 
+               if (pixel_x_tri == 3) begin
+                  pixel <= pixels[pixel_buffer_index_out];
                   pixel_buffer_index_out <= pixel_buffer_index_out + 1;
                   pixel_x_tri <= 0;
                end else 
@@ -354,8 +360,6 @@ parameter text_foreground_color = 16'hF75B;
 assign vga_hs = h_sync_p ? ~hsync_r : hsync_r;
 assign vga_vs = v_sync_p ? ~vsync_r : vsync_r;
 
-assign pixel = pixels[pixel_buffer_index_out];
-
 // assign vga_r = (h_de & v_de) ? ((h_pf & v_pf) ? (pixels[pixel_index_out] ? 5'b10011  : 5'b00000)  : border_r) : 5'b00000;
 /*
 assign vga_r = (h_de & v_de) & (rd_req || pixels[pixel_index_out]) ? 5'b10011  : 5'b00000;
@@ -363,9 +367,9 @@ assign vga_g = (h_de & v_de) ? ((h_pf & v_pf) ? (pixels[pixel_index_out] ? 6'b10
 assign vga_b = (h_de & v_de) ? ((h_pf & v_pf) ? (pixels[pixel_index_out] ? 5'b10011  : 5'b00000)  : border_b) : 5'b00000;
 */
 
-assign vga_r = (h_de & v_de) ? ((h_pf & v_pf) ? (pixels[pixel_buffer_index_out] ? text_foreground_color[15:11] : text_background_color[15:11])  : border_color[15:11]) : 5'b00000;
-assign vga_g = (h_de & v_de) ? ((h_pf & v_pf) ? (pixels[pixel_buffer_index_out] ? text_foreground_color[10:05] : text_background_color[10:05])  : border_color[10:05]) : 6'b000000;
-assign vga_b = (h_de & v_de) ? ((h_pf & v_pf) ? (pixels[pixel_buffer_index_out] ? text_foreground_color[04:00] : text_background_color[04:00])  : border_color[04:00]) : 5'b00000;
+assign vga_r = (h_de & v_de) ? ((h_pf & v_pf) ? (pixel ? text_foreground_color[15:11] : text_background_color[15:11])  : border_color[15:11]) : 5'b00000;
+assign vga_g = (h_de & v_de) ? ((h_pf & v_pf) ? (pixel ? text_foreground_color[10:05] : text_background_color[10:05])  : border_color[10:05]) : 6'b000000;
+assign vga_b = (h_de & v_de) ? ((h_pf & v_pf) ? (pixel ? text_foreground_color[04:00] : text_background_color[04:00])  : border_color[04:00]) : 5'b00000;
 
 
 endmodule
