@@ -107,7 +107,6 @@ module compy (
    end
    
    always @ (posedge sys_clk) begin
-      reg chroni_rd_req_prev;
       if (~reset_n) begin
          rom_cs     <= 0;
          ram_cs     <= 0;
@@ -134,9 +133,9 @@ module compy (
          
          case (bus_state)
             BUS_STATE_INIT : 
-               if (sdram_state != SDRAM_STATE_INIT) begin
+               // if (sdram_state != SDRAM_STATE_INIT) begin
                   bus_state <= BUS_STATE_READY;
-               end
+               // end
             BUS_STATE_READY :
                begin
                   if (chroni_rd_req) begin
