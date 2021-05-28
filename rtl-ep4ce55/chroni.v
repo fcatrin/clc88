@@ -304,7 +304,7 @@ always @ (posedge vga_clk) begin
    if (~reset_n || x_cnt == 1) begin
       pixel_buffer_index_out <= pixel_buffer_row ? 0 : 640;
       pixel_x_dbl <= 0;
-      pixel_x_tri <= 2;
+      pixel_x_tri <= 1;
 		pixel <= 0;
       pixel_next <= 0;
    end else begin
@@ -316,7 +316,7 @@ always @ (posedge vga_clk) begin
                pixel_buffer_index_out <= pixel_buffer_index_out + 1;
             end
             VGA_MODE_1920x1080: 
-               if (pixel_x_tri == 2) begin
+               if (pixel_x_tri == 1) begin
                   pixel <= pixels[pixel_buffer_index_out];
                   pixel_buffer_index_out <= pixel_buffer_index_out + 1;
                   pixel_x_tri <= 0;
