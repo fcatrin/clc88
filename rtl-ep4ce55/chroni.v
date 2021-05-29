@@ -189,39 +189,39 @@ reg[7:0] text_buffer[79:0];
 reg[7:0] text_buffer_index;
 
 reg render_line_prev;
+reg[2:0] render_line_flag;
+reg[2:0] text_path;
+
+reg text_engine_initialized;
 
 // state machine to read char or font from rom
 always @(posedge sys_clk)
 begin
 
-   if (!reset_n || vga_mode_change) begin
+   if (!reset_n || vga_mode_change || !text_engine_initialized || y_cnt == 1) begin
+      text_path <= 1;
+      render_line_flag <= 4;
       font_decode_state <= FD_IDLE;
-      addr_out <= 0;
       rd_req <= 0;
       pixel_buffer_row <= 0;
       render_line_prev <= 0;
-      pixel_buffer_index_in <= 0;
-      text_buffer_index <= 0;
-   end else if (y_cnt == 1) begin
-      render_line_prev <= 0;
-      font_decode_state <= FD_IDLE;
-      pixel_buffer_row <= 0;
       font_scan <= 0;
       text_rom_addr <= 1025;
-      rd_req <= 0;
+      pixel_buffer_index_in <= 0;
       text_buffer_index <= 0;
+      text_engine_initialized <= 1;
    end else begin
       render_line_prev <= render_line;
+      render_line_flag <= (~render_line_prev && render_line) ? 1 : 2;
       if (~render_line_prev && render_line) begin
+         text_path <= 3;
+         text_buffer_index <= 0;
          pixel_buffer_index_in <=  pixel_buffer_row ? 640 : 0;
          pixel_buffer_row      <= ~pixel_buffer_row;
-         text_buffer_index <= 0;
-         if (font_scan == 0) begin
-            font_decode_state <= FD_TEXT_READ;
-         end else begin
-            font_decode_state <= FD_FONT_READ;   
-         end
+         rd_req <= 0;
+         font_decode_state <= font_scan == 0 ? FD_TEXT_READ : FD_FONT_READ; 
       end else begin
+         text_path <= 4;
          case (font_decode_state)
          FD_IDLE: 
             begin
@@ -267,10 +267,10 @@ begin
             begin
                pixels[pixel_buffer_index_in+0] <= data_in[7] ? 1 : 0;
                pixels[pixel_buffer_index_in+1] <= data_in[6] ? 1 : 0;
-               pixels[pixel_buffer_index_in+2] <= data_in[5] ? 1 : 0;
-               pixels[pixel_buffer_index_in+3] <= data_in[4] ? 1 : 0;
-               pixels[pixel_buffer_index_in+4] <= data_in[3] ? 1 : 0;
-               pixels[pixel_buffer_index_in+5] <= data_in[2] ? 1 : 0;
+               pixels[pixel_buffer_index_in+2] <= data_in[5] ? 1 : text_path[0];
+               pixels[pixel_buffer_index_in+3] <= data_in[4] ? 1 : text_path[1];
+               pixels[pixel_buffer_index_in+4] <= data_in[3] ? 1 : text_path[2];
+               pixels[pixel_buffer_index_in+5] <= data_in[2] ? 1 : ( render_line_flag ? 1 : 0);
                pixels[pixel_buffer_index_in+6] <= data_in[1] ? 1 : 0;
                pixels[pixel_buffer_index_in+7] <= data_in[0] ? 1 : 0;
                
@@ -297,24 +297,20 @@ reg       pixel;
 
 // pixel x counter
 always @ (posedge vga_clk) begin
-   reg      pixel_next;
-   reg      pixel_x_dbl;
    reg[7:0] pixel_x_tri;
 
    if (~reset_n || x_cnt == 1) begin
       pixel_buffer_index_out <= pixel_buffer_row ? 0 : 640;
-      pixel_x_dbl <= 0;
       pixel_x_tri <= 1;
 		pixel <= 0;
-      pixel_next <= 0;
    end else begin
       if (h_pf && v_pf) begin
          case(vga_mode)
             VGA_MODE_640x480, VGA_MODE_800x600:
-            begin
-               pixel <= pixels[pixel_buffer_index_out];
-               pixel_buffer_index_out <= pixel_buffer_index_out + 1;
-            end
+               begin
+                  pixel <= pixels[pixel_buffer_index_out];
+                  pixel_buffer_index_out <= pixel_buffer_index_out + 1;
+               end
             VGA_MODE_1920x1080: 
                if (pixel_x_tri == 1) begin
                   pixel <= pixels[pixel_buffer_index_out];
