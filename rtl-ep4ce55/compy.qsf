@@ -54,9 +54,9 @@ set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "3.3-V LVTTL"
-set_location_assignment PIN_T2 -to clk
+set_location_assignment PIN_T2 -to clk50
 set_location_assignment PIN_Y13 -to key_mode
-set_location_assignment PIN_W13 -to reset_n
+set_location_assignment PIN_W13 -to key_reset
 set_global_assignment -name USE_CONFIGURATION_DEVICE OFF
 set_global_assignment -name CRC_ERROR_OPEN_DRAIN OFF
 set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
@@ -87,6 +87,8 @@ set_location_assignment PIN_M19 -to vga_r[0]
 set_location_assignment PIN_J22 -to vga_vs
 set_location_assignment PIN_H21 -to vga_b[4]
 set_global_assignment -name VERILOG_FILE compy.v
+set_global_assignment -name VERILOG_FILE chroni.v
+set_global_assignment -name VERILOG_FILE system.v
 set_global_assignment -name QIP_FILE pll.qip
 set_global_assignment -name CDF_FILE output_files/compy.cdf
 set_global_assignment -name ENABLE_SIGNALTAP ON
