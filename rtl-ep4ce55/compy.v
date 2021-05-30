@@ -12,21 +12,41 @@ module compy (
 );
    
    wire pll_locked;
-   reg reset = 0;
+   wire sys_reset;
+
+   reg boot_reset = 1;
+   reg user_reset = 0;
    
+   assign sys_reset = boot_reset || user_reset;
+   
+   // keep reset until pll locks
    always @ (posedge clk50) begin
       reg [4:0] counter = 5'd0;
       if (pll_locked) begin
          counter <= counter + 1'b1;
          if (counter == 5'b11111) begin 
-            reset <= 1;
+            boot_reset <= 0;
          end
       end
    end
-   
+
+   // handle user requested reset with debounce
+   always @ (posedge clk50) begin
+      reg [4:0] counter = 5'd0;
+      if (!key_reset && pll_locked) begin
+         counter <= counter + 1'b1;
+         if (counter == 5'b11111) begin 
+            user_reset <= 1;
+         end
+      end else begin
+         counter <= 0;
+         user_reset <= 0;
+      end
+   end
+
    system system_inst (
       .clk(clk50),
-      .reset_n(reset),
+      .reset_n(!sys_reset),
       .key_mode(key_mode),
       .vga_hs(vga_hs),
       .vga_vs(vga_vs),
