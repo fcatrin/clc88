@@ -13,28 +13,21 @@ module compy (
 
 `include "chroni.vh"
    
+   wire sys_clk;
+   
    // global bus
-   wire[15:0] addr;
    wire[7:0]  data;
    assign data = rom_data;
    
-   wire[18:0] dram_addr;
    reg[15:0]  dram_data_wr;
    reg[15:0]  dram_data_rd;
    
    reg[10:0]  rom_addr;
    wire[7:0]  rom_data;
    
-   assign dram_addr = ram_s ? addr : (vram_s ? {4'b001, vga_addr} : 19'b0);
-
-   wire[7:0]  chroni_page;
    wire[13:0] chroni_addr;
    wire       chroni_rd_req;
    reg        chroni_rd_ack;
-   
-   wire[16:0] vga_addr = {chroni_page, 9'b000000000} + chroni_addr;
-
-   assign addr = vga_addr[15:0];
    
    reg[1:0] vga_mode;
 
@@ -48,19 +41,6 @@ module compy (
    assign vga_clock = 
        vga_mode == VGA_MODE_640x480 ? CLK_OUT1 : 
       (vga_mode == VGA_MODE_800x600 ? CLK_OUT2 : CLK_OUT3);
-   
-      
-   wire rom_s, ram_s, vram_s, chroni_s, storage_s, keyb_s, pokey_s;
-   
-   assign rom_s     = addr[15:13] ==  3'b111;                           // 0xE000 - 0xFFFF
-   assign ram_s     = addr[15:15] ==  1'b0   || addr[15:12] == 4'b1000; // 0x0000 - 0x8FFF
-   assign vram_s    = addr[15:13] ==  3'b101 || addr[15:13] == 3'b110;  // 0xA000 - 0xDFFF
-   assign chroni_s  = addr[15:7]  ==  9'b100100000;                     // 0x9000 - 0x907F
-   assign storage_s = addr[15:4]  == 12'b100100001000;                  // 0x9080 - 0x908F
-   assign keyb_s    = addr[15:4]  == 12'b100100001001;                  // 0x9090 - 0x909F
-   assign pokey_s   = addr[15:5]  == 11'b10010001000;                   // 0x9100 - 0x911F
-   
-   reg rom_cs, ram_cs, vram_cs, chroni_cs, storage_cs, keyb_cs, pokey_cs;
    
    reg[3:0] bus_state;
    
@@ -94,27 +74,11 @@ module compy (
    
    always @ (posedge sys_clk) begin
       if (~reset_n) begin
-         rom_cs     <= 0;
-         ram_cs     <= 0;
-         vram_cs    <= 0;
-         chroni_cs  <= 0;
-         storage_cs <= 0;
-         keyb_cs    <= 0;
-         pokey_cs   <= 0;
          bus_state  <= BUS_STATE_INIT;
          
          chroni_rd_ack <= 0;
          rom_addr <= 0;
-         
       end else   begin
-         rom_cs     <= rom_s;
-         ram_cs     <= ram_s;
-         vram_cs    <= vram_s;
-         chroni_cs  <= chroni_s;
-         storage_cs <= storage_s;
-         keyb_cs    <= keyb_s;
-         pokey_cs   <= pokey_s;
-         
          case (bus_state)
             BUS_STATE_INIT : 
                bus_state <= BUS_STATE_READY;
@@ -166,7 +130,6 @@ module compy (
       .vga_g(vga_g),
       .vga_b(vga_b),
       .addr_out(chroni_addr),
-      .addr_out_page(chroni_page),
       .data_in(data),
       .rd_req(chroni_rd_req),
       .rd_ack(chroni_rd_ack)

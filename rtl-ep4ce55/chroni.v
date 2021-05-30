@@ -11,7 +11,6 @@ module chroni (
       output [5:0] vga_g,
       output [4:0] vga_b,
       output reg [12:0] addr_out,
-      output reg [7:0]  addr_out_page,
       input [7:0] data_in,
       output reg rd_req,
       input  rd_ack
@@ -115,7 +114,7 @@ always @ (posedge vga_clk) begin
    if(~reset_n || x_cnt == h_total || vga_mode_change) begin
       x_cnt <= 1;
    end else begin
-      x_cnt <= x_cnt + 1;
+      x_cnt <= x_cnt + 1'b1;
    end
 end
 
@@ -124,7 +123,7 @@ always @ (posedge vga_clk) begin
    if(~reset_n || y_cnt == v_total || vga_mode_change) begin
       y_cnt <= 1;
    end else if(x_cnt == h_total) begin
-      y_cnt <= y_cnt + 1;
+      y_cnt <= y_cnt + 1'b1;
    end
 end
 
@@ -184,8 +183,6 @@ reg[7:0] text_buffer[79:0];
 reg[7:0] text_buffer_index;
 
 reg render_line_prev;
-reg[2:0] render_line_flag;
-reg[2:0] text_path;
 
 reg text_engine_initialized;
 
@@ -194,8 +191,6 @@ always @(posedge sys_clk)
 begin
 
    if (!reset_n || vga_mode_change || !text_engine_initialized || y_cnt == 1) begin
-      text_path <= 1;
-      render_line_flag <= 4;
       font_decode_state <= FD_IDLE;
       rd_req <= 0;
       pixel_buffer_row <= 0;
@@ -207,16 +202,13 @@ begin
       text_engine_initialized <= 1;
    end else begin
       render_line_prev <= render_line;
-      render_line_flag <= (~render_line_prev && render_line) ? 1 : 2;
       if (~render_line_prev && render_line) begin
-         text_path <= 3;
          text_buffer_index <= 0;
-         pixel_buffer_index_in <=  pixel_buffer_row ? 640 : 0;
+         pixel_buffer_index_in <=  pixel_buffer_row ? 11'd640 : 11'd0;
          pixel_buffer_row      <= ~pixel_buffer_row;
          rd_req <= 0;
          font_decode_state <= font_scan == 0 ? FD_TEXT_READ : FD_FONT_READ; 
       end else begin
-         text_path <= 4;
          case (font_decode_state)
          FD_IDLE: 
             begin
@@ -225,7 +217,7 @@ begin
          FD_TEXT_READ:
             begin
                addr_out <= text_rom_addr;
-               text_rom_addr <= text_rom_addr == 1092 ? 1025 : text_rom_addr + 1;
+               text_rom_addr <= text_rom_addr == 11'd1092 ? 11'd1025 : (text_rom_addr + 1'b1);
 
                rd_req <= 1;
                font_decode_state <= FD_TEXT_WAIT;
@@ -242,7 +234,7 @@ begin
                   text_buffer_index <= 0;
                   font_decode_state <= FD_FONT_READ;
                end else begin
-                  text_buffer_index <= text_buffer_index + 1;
+                  text_buffer_index <= text_buffer_index + 1'b1;
                   font_decode_state <= FD_TEXT_READ;
                end
             end
@@ -260,21 +252,21 @@ begin
             end
          FD_FONT_DONE:
             begin
-               pixels[pixel_buffer_index_in+0] <= data_in[7] ? 1 : 0;
-               pixels[pixel_buffer_index_in+1] <= data_in[6] ? 1 : 0;
-               pixels[pixel_buffer_index_in+2] <= data_in[5] ? 1 : 0;
-               pixels[pixel_buffer_index_in+3] <= data_in[4] ? 1 : 0;
-               pixels[pixel_buffer_index_in+4] <= data_in[3] ? 1 : 0;
-               pixels[pixel_buffer_index_in+5] <= data_in[2] ? 1 : 0;
-               pixels[pixel_buffer_index_in+6] <= data_in[1] ? 1 : 0;
-               pixels[pixel_buffer_index_in+7] <= data_in[0] ? 1 : 0;
+               pixels[pixel_buffer_index_in+0] <= data_in[7] ? 1'b1 : 1'b0;
+               pixels[pixel_buffer_index_in+1] <= data_in[6] ? 1'b1 : 1'b0;
+               pixels[pixel_buffer_index_in+2] <= data_in[5] ? 1'b1 : 1'b0;
+               pixels[pixel_buffer_index_in+3] <= data_in[4] ? 1'b1 : 1'b0;
+               pixels[pixel_buffer_index_in+4] <= data_in[3] ? 1'b1 : 1'b0;
+               pixels[pixel_buffer_index_in+5] <= data_in[2] ? 1'b1 : 1'b0;
+               pixels[pixel_buffer_index_in+6] <= data_in[1] ? 1'b1 : 1'b0;
+               pixels[pixel_buffer_index_in+7] <= data_in[0] ? 1'b1 : 1'b0;
                
                if (text_buffer_index == 79) begin
                   font_decode_state <= FD_IDLE;
-                  font_scan <= font_scan + 1;
+                  font_scan <= font_scan + 1'b1;
                end else begin
-                  text_buffer_index     <= text_buffer_index + 1;
-                  pixel_buffer_index_in <= pixel_buffer_index_in + 8;
+                  text_buffer_index     <= text_buffer_index + 1'b1;
+                  pixel_buffer_index_in <= pixel_buffer_index_in + 4'd8;
                   font_decode_state     <= FD_FONT_READ;
                end
             end
@@ -288,14 +280,14 @@ reg[7:0]  pixels [1279:0]; // two lines of 640 pixels
 reg[10:0] pixel_buffer_index_in;
 reg[10:0] pixel_buffer_index_out;
 reg       pixel_buffer_row;
-reg       pixel;
+reg[7:0]  pixel;
 
 // pixel x counter
 always @ (posedge vga_clk) begin
    reg[7:0] pixel_x_tri;
 
    if (~reset_n || x_cnt == 1) begin
-      pixel_buffer_index_out <= pixel_buffer_row ? 0 : 640;
+      pixel_buffer_index_out <= pixel_buffer_row ? 11'd0 : 11'd640;
       pixel_x_tri <= 1;
 		pixel <= 0;
    end else begin
@@ -304,15 +296,15 @@ always @ (posedge vga_clk) begin
             VGA_MODE_640x480, VGA_MODE_800x600:
                begin
                   pixel <= pixels[pixel_buffer_index_out];
-                  pixel_buffer_index_out <= pixel_buffer_index_out + 1;
+                  pixel_buffer_index_out <= pixel_buffer_index_out + 1'b1;
                end
             VGA_MODE_1920x1080: 
                if (pixel_x_tri == 1) begin
                   pixel <= pixels[pixel_buffer_index_out];
-                  pixel_buffer_index_out <= pixel_buffer_index_out + 1;
+                  pixel_buffer_index_out <= pixel_buffer_index_out + 1'b1;
                   pixel_x_tri <= 0;
                end else 
-                  pixel_x_tri <= pixel_x_tri + 1;
+                  pixel_x_tri <= pixel_x_tri + 1'b1;
          endcase
       end
    end
@@ -331,7 +323,7 @@ always @ (posedge vga_clk) begin
          begin
             render_line <= dbl_scan == 1;
             if (dbl_scan == 1) begin
-               scanline <= scanline + 1;
+               scanline <= scanline + 1'b1;
             end
             dbl_scan <= ~dbl_scan;
          end
@@ -340,9 +332,9 @@ always @ (posedge vga_clk) begin
             render_line = tri_scan == 3; 
             if (render_line) begin
                tri_scan <= 0;
-               scanline <= scanline + 1;
+               scanline <= scanline + 1'b1;
             end else
-               tri_scan <= tri_scan + 1;
+               tri_scan <= tri_scan + 1'b1;
          end
       endcase
    end
