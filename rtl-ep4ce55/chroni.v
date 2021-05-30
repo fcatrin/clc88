@@ -10,11 +10,6 @@ module chroni (
       output [4:0] vga_r,
       output [5:0] vga_g,
       output [4:0] vga_b,
-      input [6:0] cpu_addr,
-      input [7:0] cpu_data_in,
-      output reg [7:0] cpu_data_out,
-      input cpu_we,
-      input cpu_re,
       output reg [12:0] addr_out,
       output reg [7:0]  addr_out_page,
       input [7:0] data_in,
@@ -267,10 +262,10 @@ begin
             begin
                pixels[pixel_buffer_index_in+0] <= data_in[7] ? 1 : 0;
                pixels[pixel_buffer_index_in+1] <= data_in[6] ? 1 : 0;
-               pixels[pixel_buffer_index_in+2] <= data_in[5] ? 1 : text_path[0];
-               pixels[pixel_buffer_index_in+3] <= data_in[4] ? 1 : text_path[1];
-               pixels[pixel_buffer_index_in+4] <= data_in[3] ? 1 : text_path[2];
-               pixels[pixel_buffer_index_in+5] <= data_in[2] ? 1 : ( render_line_flag ? 1 : 0);
+               pixels[pixel_buffer_index_in+2] <= data_in[5] ? 1 : 0;
+               pixels[pixel_buffer_index_in+3] <= data_in[4] ? 1 : 0;
+               pixels[pixel_buffer_index_in+4] <= data_in[3] ? 1 : 0;
+               pixels[pixel_buffer_index_in+5] <= data_in[2] ? 1 : 0;
                pixels[pixel_buffer_index_in+6] <= data_in[1] ? 1 : 0;
                pixels[pixel_buffer_index_in+7] <= data_in[0] ? 1 : 0;
                
