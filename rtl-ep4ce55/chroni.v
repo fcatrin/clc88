@@ -312,7 +312,7 @@ always @ (posedge vga_clk) begin
    if (~reset_n || y_cnt == v_total) begin
       scanline <= 0;
       dbl_scan <= 0;
-      tri_scan <= 0;
+      tri_scan <= 3;
       render_line <= 0;
    end else if (x_cnt == h_total && v_render) begin
       case(vga_mode)
@@ -326,8 +326,8 @@ always @ (posedge vga_clk) begin
          end
          VGA_MODE_1920x1080:
          begin
-            render_line = tri_scan == 3; 
-            if (render_line) begin
+            render_line <= tri_scan == 3; 
+            if (tri_scan == 3) begin
                tri_scan <= 0;
                scanline <= scanline + 1'b1;
             end else
