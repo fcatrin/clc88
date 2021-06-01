@@ -46,9 +46,6 @@ reg v_pf;
 reg h_sync_p;
 reg v_sync_p;
 
-reg[8:0] scanline;
-reg dbl_scan;
-reg[4:0] tri_scan;
 reg[1:0] vga_mode;
 
 reg render_line;
@@ -165,12 +162,6 @@ begin
    
 end    
 
-reg[10:0] text_rom_addr;
-reg[10:0] font_rom_addr;
-reg[7:0] font_reg;
-reg[2:0] font_scan;
-
-reg[2:0] font_decode_state;
 localparam FD_IDLE       = 0;
 localparam FD_TEXT_READ  = 1;
 localparam FD_TEXT_WAIT  = 2;
@@ -179,15 +170,16 @@ localparam FD_FONT_READ  = 4;
 localparam FD_FONT_WAIT  = 5;
 localparam FD_FONT_DONE  = 6;
 
-reg[7:0] text_buffer[79:0];
-reg[7:0] text_buffer_index;
-
-reg render_line_prev;
-
 // state machine to read char or font from rom
-always @(posedge sys_clk)
-begin
-
+always @(posedge sys_clk) begin
+   reg[2:0] font_decode_state;
+   reg[10:0] pixel_buffer_index_in;
+   reg[10:0] text_rom_addr;
+   reg render_line_prev;
+   reg[2:0] font_scan;
+   reg[7:0] text_buffer[79:0];
+   reg[7:0] text_buffer_index;
+   
    if (!reset_n || vga_mode_change || y_cnt == 1) begin
       font_decode_state <= FD_IDLE;
       rd_req <= 0;
@@ -274,13 +266,12 @@ end
 
 
 reg[7:0]  pixels [1279:0]; // two lines of 640 pixels
-reg[10:0] pixel_buffer_index_in;
-reg[10:0] pixel_buffer_index_out;
 reg       pixel_buffer_row;
 reg[7:0]  pixel;
 
 // pixel x counter
 always @ (posedge vga_clk) begin
+   reg[10:0] pixel_buffer_index_out;
    reg[7:0] pixel_x_tri;
 
    if (~reset_n || x_cnt == 1) begin
@@ -309,6 +300,10 @@ end
 
 // pixel y counter  
 always @ (posedge vga_clk) begin
+   reg[8:0] scanline;
+   reg dbl_scan;
+   reg[4:0] tri_scan;
+
    if (~reset_n || y_cnt == v_total) begin
       scanline <= 0;
       dbl_scan <= 0;
