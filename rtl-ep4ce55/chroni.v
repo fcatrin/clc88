@@ -184,13 +184,11 @@ reg[7:0] text_buffer_index;
 
 reg render_line_prev;
 
-reg text_engine_initialized;
-
 // state machine to read char or font from rom
 always @(posedge sys_clk)
 begin
 
-   if (!reset_n || vga_mode_change || !text_engine_initialized || y_cnt == 1) begin
+   if (!reset_n || vga_mode_change || y_cnt == 1) begin
       font_decode_state <= FD_IDLE;
       rd_req <= 0;
       pixel_buffer_row <= 0;
@@ -199,7 +197,6 @@ begin
       text_rom_addr <= 1025;
       pixel_buffer_index_in <= 0;
       text_buffer_index <= 0;
-      text_engine_initialized <= 1;
    end else begin
       render_line_prev <= render_line;
       if (~render_line_prev && render_line) begin
@@ -346,13 +343,6 @@ parameter text_foreground_color = 16'hF75B;
 
 assign vga_hs = h_sync_p ? ~hsync_r : hsync_r;
 assign vga_vs = v_sync_p ? ~vsync_r : vsync_r;
-
-// assign vga_r = (h_de & v_de) ? ((h_pf & v_pf) ? (pixels[pixel_index_out] ? 5'b10011  : 5'b00000)  : border_r) : 5'b00000;
-/*
-assign vga_r = (h_de & v_de) & (rd_req || pixels[pixel_index_out]) ? 5'b10011  : 5'b00000;
-assign vga_g = (h_de & v_de) ? ((h_pf & v_pf) ? (pixels[pixel_index_out] ? 6'b100111 : 6'b000000) : border_g) : 6'b000000;
-assign vga_b = (h_de & v_de) ? ((h_pf & v_pf) ? (pixels[pixel_index_out] ? 5'b10011  : 5'b00000)  : border_b) : 5'b00000;
-*/
 
 assign vga_r = (h_de & v_de) ? ((h_pf & v_pf) ? (pixel ? text_foreground_color[15:11] : text_background_color[15:11])  : border_color[15:11]) : 5'b00000;
 assign vga_g = (h_de & v_de) ? ((h_pf & v_pf) ? (pixel ? text_foreground_color[10:05] : text_background_color[10:05])  : border_color[10:05]) : 6'b000000;
