@@ -1,8 +1,4 @@
 /db/
 /incremental_db/
-/output_files/
-/simulation/
-*.bak
-*.qws
-*.rpt
 /greybox_tmp/
+/output_files/
