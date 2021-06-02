@@ -272,34 +272,33 @@ end
 
 reg[7:0]  pixels [1279:0]; // two lines of 640 pixels
 reg       pixel_buffer_row;
+reg       pixel_buffer_row_out;
 reg[7:0]  pixel;
 
 // pixel x counter
 always @ (posedge vga_clk) begin
    reg[10:0] pixel_buffer_index_out;
-   reg[7:0] pixel_x_tri;
+   reg[7:0] pixel_x_dbl;
 
-   if (~reset_n || x_cnt == 1) begin
-      pixel_buffer_index_out <= pixel_buffer_row ? 11'd0 : 11'd640;
-      pixel_x_tri <= 1;
-		pixel <= 0;
+   if (h_pf_pix && v_pf) begin
+      case(vga_mode)
+         VGA_MODE_640x480, VGA_MODE_800x600:
+         begin
+            pixel <= pixels[pixel_buffer_index_out];
+            pixel_buffer_index_out <= pixel_buffer_index_out + 1'b1;
+         end
+         VGA_MODE_1920x1080: 
+            if (pixel_x_dbl == 1) begin
+               pixel <= pixels[pixel_buffer_index_out];
+               pixel_buffer_index_out <= pixel_buffer_index_out + 1'b1;
+               pixel_x_dbl <= 0;
+            end else 
+               pixel_x_dbl <= pixel_x_dbl + 1'b1;
+      endcase
    end else begin
-      if (h_pf_pix && v_pf) begin
-         case(vga_mode)
-            VGA_MODE_640x480, VGA_MODE_800x600:
-               begin
-                  pixel <= pixels[pixel_buffer_index_out];
-                  pixel_buffer_index_out <= pixel_buffer_index_out + 1'b1;
-               end
-            VGA_MODE_1920x1080: 
-               if (pixel_x_tri == 1) begin
-                  pixel <= pixels[pixel_buffer_index_out];
-                  pixel_buffer_index_out <= pixel_buffer_index_out + 1'b1;
-                  pixel_x_tri <= 0;
-               end else 
-                  pixel_x_tri <= pixel_x_tri + 1'b1;
-         endcase
-      end
+      pixel_buffer_index_out <= pixel_buffer_row_out ? 11'd0 : 11'd640;
+      pixel_x_dbl <= 1;
+      pixel <= 0;
    end
 end
 
@@ -314,6 +313,7 @@ always @ (posedge vga_clk) begin
       dbl_scan <= 0;
       tri_scan <= 3;
       render_line <= 0;
+      pixel_buffer_row_out <= 0;
    end else if (x_cnt == h_total && v_render) begin
       case(vga_mode)
          VGA_MODE_640x480, VGA_MODE_800x600:
@@ -321,6 +321,7 @@ always @ (posedge vga_clk) begin
             render_line <= dbl_scan == 1;
             if (dbl_scan == 1) begin
                scanline <= scanline + 1'b1;
+               pixel_buffer_row_out <= ~pixel_buffer_row_out;
             end
             dbl_scan <= ~dbl_scan;
          end
@@ -330,6 +331,7 @@ always @ (posedge vga_clk) begin
             if (tri_scan == 3) begin
                tri_scan <= 0;
                scanline <= scanline + 1'b1;
+               pixel_buffer_row_out <= ~pixel_buffer_row_out;
             end else
                tri_scan <= tri_scan + 1'b1;
          end
@@ -344,7 +346,7 @@ parameter text_foreground_color = 16'hF75B;
 assign vga_hs = h_sync_p ? ~hsync_r : hsync_r;
 assign vga_vs = v_sync_p ? ~vsync_r : vsync_r;
 
-assign vga_r = (h_de & v_de) ? ((h_pf & v_pf) ? (pixel ? text_foreground_color[15:11] : text_background_color[15:11])  : border_color[15:11]) : 5'b00000;
+assign vga_r = (h_de & v_de) ? ((h_pf & v_pf) ? ((pixel || x_cnt[8]) ? text_foreground_color[15:11] : text_background_color[15:11])  : border_color[15:11]) : 5'b00000;
 assign vga_g = (h_de & v_de) ? ((h_pf & v_pf) ? (pixel ? text_foreground_color[10:05] : text_background_color[10:05])  : border_color[10:05]) : 6'b000000;
 assign vga_b = (h_de & v_de) ? ((h_pf & v_pf) ? (pixel ? text_foreground_color[04:00] : text_background_color[04:00])  : border_color[04:00]) : 5'b00000;
 
