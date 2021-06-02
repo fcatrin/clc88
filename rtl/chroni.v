@@ -43,6 +43,7 @@ reg h_de;
 reg v_de;
 reg h_pf;
 reg v_pf;
+reg h_pf_pix;
 reg h_sync_p;
 reg v_sync_p;
 
@@ -138,7 +139,11 @@ begin
    
    if(~reset_n) h_pf <= 1'b0;
    else if(x_cnt == h_pf_start) h_pf <= 1'b1;
-   else if(x_cnt == h_pf_end) h_pf <= 1'b0;   
+   else if(x_cnt == h_pf_end) h_pf <= 1'b0;
+   
+   if (~reset_n) h_pf_pix <= 1'b0;
+   else if(x_cnt == h_pf_start-1) h_pf_pix <= 1'b1;
+   else if(x_cnt == h_pf_end-1) h_pf_pix <= 1'b0;
 end
 
 // vsync / v display enable signals    
@@ -241,7 +246,7 @@ always @(posedge sys_clk) begin
             end
          FD_FONT_DONE:
             begin
-               pixels[pixel_buffer_index_in+0] <= data_in[7] ? 1'b1 : 1'b0;
+               pixels[pixel_buffer_index_in+0] <= 1'b1;
                pixels[pixel_buffer_index_in+1] <= data_in[6] ? 1'b1 : 1'b0;
                pixels[pixel_buffer_index_in+2] <= data_in[5] ? 1'b1 : 1'b0;
                pixels[pixel_buffer_index_in+3] <= data_in[4] ? 1'b1 : 1'b0;
@@ -279,7 +284,7 @@ always @ (posedge vga_clk) begin
       pixel_x_tri <= 1;
 		pixel <= 0;
    end else begin
-      if (h_pf && v_pf) begin
+      if (h_pf_pix && v_pf) begin
          case(vga_mode)
             VGA_MODE_640x480, VGA_MODE_800x600:
                begin
