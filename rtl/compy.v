@@ -13,6 +13,9 @@ module compy (
    
    wire pll_locked;
    wire sys_reset;
+   
+   wire key_mode_pressed;
+   wire key_reset_pressed;
 
    reg boot_reset = 1;
    reg user_reset = 0;
@@ -30,16 +33,11 @@ module compy (
       end
    end
 
-   // handle user requested reset with debounce
+   // handle user requested reset
    always @ (posedge clk50) begin
-      reg [4:0] counter = 5'd0;
-      if (!key_reset && pll_locked) begin
-         counter <= counter + 1'b1;
-         if (counter == 5'b11111) begin 
-            user_reset <= 1;
-         end
+      if (!key_reset_pressed && pll_locked) begin
+         user_reset <= 1;
       end else begin
-         counter <= 0;
          user_reset <= 0;
       end
    end
@@ -47,7 +45,7 @@ module compy (
    system system_inst (
       .clk(clk50),
       .reset_n(!sys_reset),
-      .key_mode(key_mode),
+      .key_mode(key_mode_pressed),
       .vga_hs(vga_hs),
       .vga_vs(vga_vs),
       .vga_r(vga_r),
@@ -56,6 +54,17 @@ module compy (
       .pll_locked(pll_locked)
    );
   
-   
+   debouncer debounce_key_mode (
+         .clk(clk50),
+         .in(key_mode),
+         .out(key_mode_pressed)
+   );
+
+   debouncer debounce_key_reset (
+         .clk(clk50),
+         .in(key_reset),
+         .out(key_reset_pressed)
+   );
+
 endmodule
 
