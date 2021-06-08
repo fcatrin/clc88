@@ -162,8 +162,8 @@ begin
    else if(y_cnt == v_pf_end) v_pf <= 1'b0;
    
    if(~reset_n) v_render <= 1'b0;
-   else if(y_cnt == v_pf_start - 2) v_render <= 1'b1;
-   else if(y_cnt == v_pf_end   - 2) v_render <= 1'b0;
+   else if(y_cnt == v_pf_start - 1) v_render <= 1'b1;
+   else if(y_cnt == v_pf_end   - 1) v_render <= 1'b0;
    
 end    
 
@@ -200,7 +200,7 @@ always @(posedge sys_clk) begin
       if (~render_line_prev && render_line) begin
          text_buffer_index <= 0;
          pixel_buffer_index_in <=  pixel_buffer_row_in ? 11'd640 : 11'd0;
-         pixel_buffer_row_in      <= ~pixel_buffer_row_in;
+         pixel_buffer_row_in   <= ~pixel_buffer_row_in;
          rd_req <= 0;
          font_decode_state <= font_scan == 0 ? FD_TEXT_READ : FD_FONT_READ; 
       end else begin
@@ -296,7 +296,7 @@ always @ (posedge vga_clk) begin
                pixel_x_dbl <= pixel_x_dbl + 1'b1;
       endcase
    end else begin
-      pixel_buffer_index_out <= pixel_buffer_row_out ? 11'd640 : 11'd0;
+      pixel_buffer_index_out <= pixel_buffer_row_out ? 11'd0 : 11'd640;
       pixel_x_dbl <= 1;
       pixel <= 0;
    end
@@ -308,13 +308,13 @@ always @ (posedge vga_clk) begin
    reg dbl_scan;
    reg[4:0] tri_scan;
 
-   if (~reset_n || y_cnt == v_total) begin
+   if (~reset_n || y_cnt == 1) begin
       scanline <= 0;
-      dbl_scan <= 0;
+      dbl_scan <= 1;
       tri_scan <= 3;
       render_line <= 0;
       pixel_buffer_row_out <= 0;
-   end else if (x_cnt == h_total && v_render) begin
+   end else if (x_cnt == 2 && v_render) begin
       case(vga_mode)
          VGA_MODE_640x480, VGA_MODE_800x600:
          begin

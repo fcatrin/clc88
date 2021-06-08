@@ -55,15 +55,15 @@ module compy (
    );
   
    debouncer debounce_key_mode (
-         .clk(clk50),
-         .in(key_mode),
-         .out(key_mode_pressed)
+      .clk(clk50),
+      .in(key_mode),
+      .out(key_mode_pressed)
    );
 
    debouncer debounce_key_reset (
-         .clk(clk50),
-         .in(key_reset),
-         .out(key_reset_pressed)
+      .clk(clk50),
+      .in(key_reset),
+      .out(key_reset_pressed)
    );
 
 endmodule
