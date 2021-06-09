@@ -173,12 +173,12 @@ localparam FD_TEXT_WAIT  = 2;
 localparam FD_TEXT_DONE  = 3;
 localparam FD_FONT_READ  = 4;
 localparam FD_FONT_WAIT  = 5;
-localparam FD_FONT_DONE  = 6;
+localparam FD_FONT_WRITE = 6;
+localparam FD_FONT_DONE  = 7;
 reg[2:0]  font_decode_state;
 
 // state machine to read char or font from rom
 always @(posedge sys_clk) begin
-   reg[10:0] pixel_buffer_index_in;
    reg[10:0] text_rom_addr;
    reg       render_line_prev;
    reg[2:0]  font_scan;
@@ -189,12 +189,14 @@ always @(posedge sys_clk) begin
    if (!reset_n || vga_mode_change || y_cnt == 1) begin
       font_decode_state <= FD_IDLE;
       rd_req <= 0;
+      wr_en <= 0;
       pixel_buffer_row_in <= 0;
       render_line_prev <= 0;
       font_scan <= 0;
       text_rom_addr <= 1025;
       pixel_buffer_index_in <= 0;
       text_buffer_index <= 0;
+      wr_bitmap_bits <= 0;
    end else begin
       render_line_prev <= render_line;
       if (~render_line_prev && render_line) begin
@@ -202,12 +204,14 @@ always @(posedge sys_clk) begin
          pixel_buffer_index_in <=  pixel_buffer_row_in ? 11'd640 : 11'd0;
          pixel_buffer_row_in   <= ~pixel_buffer_row_in;
          rd_req <= 0;
+         wr_en <= 0;
          font_decode_state <= font_scan == 0 ? FD_TEXT_READ : FD_FONT_READ; 
       end else begin
          case (font_decode_state)
          FD_IDLE: 
             begin
                rd_req <= 0;
+               wr_en <= 0;
             end
          FD_TEXT_READ:
             begin
@@ -243,19 +247,20 @@ always @(posedge sys_clk) begin
          FD_FONT_WAIT:
             if (rd_ack) begin
                rd_req <= 0;
+               font_decode_state <= FD_FONT_WRITE;
+            end
+         FD_FONT_WRITE:
+            if (!wr_busy) begin
+               wr_en <= 1;
+               pixel_out <= data_in;
+               wr_bitmap_on   <= 8'b1;
+               wr_bitmap_off  <= 8'b0;
+               wr_bitmap_bits <= 4'd8;
                font_decode_state <= FD_FONT_DONE;
             end
          FD_FONT_DONE:
             begin
-               pixels[pixel_buffer_index_in+0] <= data_in[7] ? 1'b1 : 1'b0;
-               pixels[pixel_buffer_index_in+1] <= data_in[6] ? 1'b1 : 1'b0;
-               pixels[pixel_buffer_index_in+2] <= data_in[5] ? 1'b1 : 1'b0;
-               pixels[pixel_buffer_index_in+3] <= data_in[4] ? 1'b1 : 1'b0;
-               pixels[pixel_buffer_index_in+4] <= data_in[3] ? 1'b1 : 1'b0;
-               pixels[pixel_buffer_index_in+5] <= data_in[2] ? 1'b1 : 1'b0;
-               pixels[pixel_buffer_index_in+6] <= data_in[1] ? 1'b1 : 1'b0;
-               pixels[pixel_buffer_index_in+7] <= data_in[0] ? 1'b1 : 1'b0;
-               
+               wr_en <= 0;
                if (text_buffer_index == 79) begin
                   font_decode_state <= FD_IDLE;
                   font_scan <= font_scan + 1'b1;
@@ -270,26 +275,18 @@ always @(posedge sys_clk) begin
    end      
 end         
 
-
-reg[7:0]  pixels [1279:0]; // two lines of 640 pixels
-reg       pixel_buffer_row_out;
-reg[7:0]  pixel;
-
 // pixel x counter
 always @ (posedge vga_clk) begin
-   reg[10:0] pixel_buffer_index_out;
    reg[7:0] pixel_x_dbl;
 
    if (h_pf_pix && v_pf) begin
       case(vga_mode)
          VGA_MODE_640x480, VGA_MODE_800x600:
          begin
-            pixel <= pixels[pixel_buffer_index_out];
             pixel_buffer_index_out <= pixel_buffer_index_out + 1'b1;
          end
          VGA_MODE_1920x1080: 
             if (pixel_x_dbl == 1) begin
-               pixel <= pixels[pixel_buffer_index_out];
                pixel_buffer_index_out <= pixel_buffer_index_out + 1'b1;
                pixel_x_dbl <= 0;
             end else 
@@ -298,7 +295,6 @@ always @ (posedge vga_clk) begin
    end else begin
       pixel_buffer_index_out <= pixel_buffer_row_out ? 11'd0 : 11'd640;
       pixel_x_dbl <= 1;
-      pixel <= 0;
    end
 end
 
@@ -350,6 +346,32 @@ assign vga_r = (h_de & v_de) ? ((h_pf & v_pf) ? ((pixel || (font_decode_state ==
 assign vga_g = (h_de & v_de) ? ((h_pf & v_pf) ? (pixel ? text_foreground_color[10:05] : text_background_color[10:05])  : border_color[10:05]) : 6'b000000;
 assign vga_b = (h_de & v_de) ? ((h_pf & v_pf) ? (pixel ? text_foreground_color[04:00] : text_background_color[04:00])  : border_color[04:00]) : 5'b00000;
 
+reg       pixel_buffer_row_out;
 
+wire[7:0] pixel;
+reg[10:0] pixel_buffer_index_out;
+reg[10:0] pixel_buffer_index_in;
+reg wr_en = 0;
+reg[3:0] wr_bitmap_bits;
+reg[7:0] wr_bitmap_on;
+reg[7:0] wr_bitmap_off;
+reg[7:0] pixel_out;
+wire wr_busy;
+
+chroni_line_buffer chroni_line_buffer_inst (
+      .reset_n(reset_n),
+      .rd_clk(vga_clk),
+      .wr_clk(sys_clk),
+      .rd_addr(pixel_buffer_index_out),
+      .wr_addr(pixel_buffer_index_in),
+      .rd_data(pixel),
+      .wr_data(pixel_out),
+      .wr_en(wr_en),
+      .wr_bitmap_on(wr_bitmap_on),
+      .wr_bitmap_off(wr_bitmap_off),
+      .wr_bitmap_bits(wr_bitmap_bits),
+      .wr_busy(wr_busy)
+);
+      
 endmodule
     
