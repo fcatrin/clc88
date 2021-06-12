@@ -49,8 +49,6 @@ reg v_sync_p;
 
 reg[1:0] vga_mode;
 reg vga_scale;
-reg render_line;
-reg v_render;
 
 wire vga_mode_change;
 assign vga_mode_change = vga_mode_in != vga_mode;
@@ -274,23 +272,50 @@ end
 // pixel x counter
 always @ (posedge vga_clk) begin
    reg[7:0] pixel_x_dbl;
-
    if (h_pf_pix && v_pf) begin
-      case(vga_mode)
-         VGA_MODE_640x480, VGA_MODE_800x600:
-         begin
+      if (vga_scale) begin
+         if (pixel_x_dbl == 1) begin
             pixel_buffer_index_out <= pixel_buffer_index_out + 1'b1;
-         end
-         VGA_MODE_1920x1080: 
-            if (pixel_x_dbl == 1) begin
-               pixel_buffer_index_out <= pixel_buffer_index_out + 1'b1;
-               pixel_x_dbl <= 0;
-            end else 
-               pixel_x_dbl <= pixel_x_dbl + 1'b1;
-      endcase
+            pixel_x_dbl <= 0;
+         end else 
+            pixel_x_dbl <= pixel_x_dbl + 1'b1;
+      end else begin
+         pixel_buffer_index_out <= pixel_buffer_index_out + 1'b1;
+      end
    end else begin
-      pixel_buffer_index_out <= pixel_buffer_row_out ? 11'd0 : 11'd640;
+      pixel_buffer_index_out <= output_buffer ?  11'd640 : 11'd0;
       pixel_x_dbl <= 1;
+   end
+end
+
+// output line 
+reg output_buffer;
+always @ (posedge vga_clk) begin : output_block
+   reg [3:0] output_state;
+   if (!reset_n || vga_mode_change) begin
+      output_state <= 15;
+   end else if (x_cnt == h_total) begin
+      if (y_cnt == v_pf_end) begin
+         output_state <= 15;
+      end else if (y_cnt == v_pf_start - 1) begin
+         output_state <= vga_scale ? 7 : 3;
+      end else if (output_state != 15) begin
+         if (vga_scale) begin
+            output_state <= output_state == 7 ? 0 : (output_state + 1);
+            if (output_state == 7) begin
+               output_buffer <= 0;
+            end else if (output_state == 3) begin
+               output_buffer <= 1;
+            end
+         end else begin
+            output_state <= output_state == 3 ? 0 : (output_state + 1);
+            if (output_state == 3) begin
+               output_buffer <= 0;
+            end else if (output_state == 1) begin
+               output_buffer <= 1;
+            end
+         end
+      end
    end
 end
 
@@ -298,7 +323,7 @@ end
 reg render_buffer;
 reg render_flag;
 
-always @ (posedge vga_clk) begin
+always @ (posedge vga_clk) begin : render_block
    reg[3:0] render_state;
    if (!reset_n || vga_mode_change) begin
       render_buffer <= 0;
@@ -310,12 +335,12 @@ always @ (posedge vga_clk) begin
             render_state <= 15;
             render_flag  <= 0;
          end else if (y_cnt == v_pf_start - 3) begin
-            render_state <= vga_scale ? 5 : 3;
+            render_state <= vga_scale ? 7 : 3;
          end else if (render_state != 15) begin
             if (vga_scale) begin
-               render_state  <= render_state == 5 ? 0 : (render_state + 1);
-               render_flag   <= render_state == 5 || render_state == 2;
-               render_buffer <= render_state == 5 ? 0 : 1;
+               render_state  <= render_state == 7 ? 0 : (render_state + 1);
+               render_flag   <= render_state == 7 || render_state == 3;
+               render_buffer <= render_state == 7 ? 0 : 1;
             end else begin
                render_state  <= render_state == 3 ? 0 : (render_state + 1);
                render_flag   <= render_state[0];
@@ -336,8 +361,6 @@ assign vga_vs = v_sync_p ? ~vsync_r : vsync_r;
 assign vga_r = (h_de & v_de) ? ((h_pf & v_pf) ? ((pixel || (font_decode_state == FD_FONT_DONE)) ? text_foreground_color[15:11] : text_background_color[15:11])  : border_color[15:11]) : 5'b00000;
 assign vga_g = (h_de & v_de) ? ((h_pf & v_pf) ? (pixel ? text_foreground_color[10:05] : text_background_color[10:05])  : border_color[10:05]) : 6'b000000;
 assign vga_b = (h_de & v_de) ? ((h_pf & v_pf) ? (pixel ? text_foreground_color[04:00] : text_background_color[04:00])  : border_color[04:00]) : 5'b00000;
-
-reg       pixel_buffer_row_out;
 
 wire[7:0] pixel;
 reg[10:0] pixel_buffer_index_out;
