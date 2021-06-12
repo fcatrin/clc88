@@ -48,7 +48,7 @@ reg h_sync_p;
 reg v_sync_p;
 
 reg[1:0] vga_mode;
-
+reg vga_scale;
 reg render_line;
 reg v_render;
 
@@ -72,6 +72,7 @@ always @ (posedge vga_clk) begin
          v_pf_end     <= Mode1_V_PfEnd;
          h_sync_p     <= Mode1_H_SyncP;
          v_sync_p     <= Mode1_V_SyncP;
+         vga_scale    <= 0;
       end else if (vga_mode_in == VGA_MODE_800x600) begin
          h_sync_pulse <= Mode2_H_SyncPulse;
          h_total      <= Mode2_H_Total;
@@ -87,6 +88,7 @@ always @ (posedge vga_clk) begin
          v_pf_end     <= Mode2_V_PfEnd;
          h_sync_p     <= Mode2_H_SyncP;
          v_sync_p     <= Mode2_V_SyncP;
+         vga_scale    <= 0;
       end else if (vga_mode_in == VGA_MODE_1920x1080) begin
          h_sync_pulse <= Mode3_H_SyncPulse;
          h_total      <= Mode3_H_Total;
@@ -102,6 +104,7 @@ always @ (posedge vga_clk) begin
          v_pf_end     <= Mode3_V_PfEnd;
          h_sync_p     <= Mode3_H_SyncP;
          v_sync_p     <= Mode3_V_SyncP;
+         vga_scale    <= 1;
       end
       vga_mode <= vga_mode_in;
    end
@@ -161,10 +164,6 @@ begin
    else if(y_cnt == v_pf_start) v_pf <= 1'b1;
    else if(y_cnt == v_pf_end) v_pf <= 1'b0;
    
-   if(~reset_n) v_render <= 1'b0;
-   else if(y_cnt == v_pf_start - 1) v_render <= 1'b1;
-   else if(y_cnt == v_pf_end   - 1) v_render <= 1'b0;
-   
 end    
 
 localparam FD_IDLE       = 0;
@@ -180,29 +179,26 @@ reg[2:0]  font_decode_state;
 // state machine to read char or font from rom
 always @(posedge sys_clk) begin
    reg[10:0] text_rom_addr;
-   reg       render_line_prev;
+   reg       render_flag_prev;
    reg[2:0]  font_scan;
    reg[7:0]  text_buffer[79:0];
    reg[7:0]  text_buffer_index;
-   reg       pixel_buffer_row_in;
    
    if (!reset_n || vga_mode_change || y_cnt == 1) begin
       font_decode_state <= FD_IDLE;
       rd_req <= 0;
       wr_en <= 0;
-      pixel_buffer_row_in <= 0;
-      render_line_prev <= 0;
+      render_flag_prev <= 0;
       font_scan <= 0;
       text_rom_addr <= 1025;
       pixel_buffer_index_in <= 0;
       text_buffer_index <= 0;
       wr_bitmap_bits <= 0;
    end else begin
-      render_line_prev <= render_line;
-      if (~render_line_prev && render_line) begin
+      render_flag_prev <= render_flag;
+      if (~render_flag_prev && render_flag) begin
          text_buffer_index <= 0;
-         pixel_buffer_index_in <=  pixel_buffer_row_in ? 11'd640 : 11'd0;
-         pixel_buffer_row_in   <= ~pixel_buffer_row_in;
+         pixel_buffer_index_in <=  render_buffer ? 11'd640 : 11'd0;
          rd_req <= 0;
          wr_en <= 0;
          font_decode_state <= font_scan == 0 ? FD_TEXT_READ : FD_FONT_READ; 
@@ -298,40 +294,35 @@ always @ (posedge vga_clk) begin
    end
 end
 
-// pixel y counter  
-always @ (posedge vga_clk) begin
-   reg[8:0] scanline;
-   reg dbl_scan;
-   reg[4:0] tri_scan;
+// line render trigger
+reg render_buffer;
+reg render_flag;
 
-   if (~reset_n || y_cnt == 1) begin
-      scanline <= 0;
-      dbl_scan <= 1;
-      tri_scan <= 3;
-      render_line <= 0;
-      pixel_buffer_row_out <= 0;
-   end else if (x_cnt == 2 && v_render) begin
-      case(vga_mode)
-         VGA_MODE_640x480, VGA_MODE_800x600:
-         begin
-            render_line <= dbl_scan == 1;
-            if (dbl_scan == 1) begin
-               scanline <= scanline + 1'b1;
-               pixel_buffer_row_out <= ~pixel_buffer_row_out;
+always @ (posedge vga_clk) begin
+   reg[3:0] render_state;
+   if (!reset_n || vga_mode_change) begin
+      render_buffer <= 0;
+      render_flag   <= 0;
+      render_state  <= 15;
+   end else begin
+      if (x_cnt == h_total) begin
+         if (y_cnt == 1 || y_cnt == v_pf_end - 2) begin
+            render_state <= 15;
+            render_flag  <= 0;
+         end else if (y_cnt == v_pf_start - 3) begin
+            render_state <= vga_scale ? 5 : 3;
+         end else if (render_state != 15) begin
+            if (vga_scale) begin
+               render_state  <= render_state == 5 ? 0 : (render_state + 1);
+               render_flag   <= render_state == 5 || render_state == 2;
+               render_buffer <= render_state == 5 ? 0 : 1;
+            end else begin
+               render_state  <= render_state == 3 ? 0 : (render_state + 1);
+               render_flag   <= render_state[0];
+               render_buffer <= render_state == 3 ? 0 : 1;
             end
-            dbl_scan <= ~dbl_scan;
          end
-         VGA_MODE_1920x1080:
-         begin
-            render_line <= tri_scan == 3; 
-            if (tri_scan == 3) begin
-               tri_scan <= 0;
-               scanline <= scanline + 1'b1;
-               pixel_buffer_row_out <= ~pixel_buffer_row_out;
-            end else
-               tri_scan <= tri_scan + 1'b1;
-         end
-      endcase
+      end
    end
 end
 
