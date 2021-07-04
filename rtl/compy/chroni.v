@@ -117,12 +117,16 @@ always @ (posedge vga_clk) begin
    end
 end
 
+reg first_scan_line = 0;
+
 // y position counter  
 always @ (posedge vga_clk) begin
    if(~reset_n || y_cnt == v_total || vga_mode_change) begin
       y_cnt <= 1;
+      first_scan_line <= 1;
    end else if(x_cnt == h_total) begin
       y_cnt <= y_cnt + 1'b1;
+      first_scan_line <= 0;
    end
 end
 
@@ -181,8 +185,11 @@ always @(posedge sys_clk) begin
    reg[2:0]  font_scan;
    reg[7:0]  text_buffer[79:0];
    reg[7:0]  text_buffer_index;
+   reg       first_scan_line_prev;
    
-   if (!reset_n || vga_mode_change || y_cnt == 1) begin
+   first_scan_line_prev <= first_scan_line;
+   
+   if (!reset_n || vga_mode_change || (!first_scan_line_prev && first_scan_line)) begin
       font_decode_state <= FD_IDLE;
       rd_req <= 0;
       wr_en <= 0;
