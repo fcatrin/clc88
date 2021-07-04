@@ -17,8 +17,7 @@ module system (
    wire sys_clk;
    
    // global bus
-   wire[7:0]  data;
-   assign data = rom_data;
+   wire[7:0]  data = rom_data;
    
    reg[15:0]  dram_data_wr;
    reg[15:0]  dram_data_rd;
@@ -37,9 +36,7 @@ module system (
    wire CLK_OUT3;
    wire CLK_OUT4;
 
-   wire vga_clock;
-   
-   assign vga_clock = 
+   wire vga_clock = 
        vga_mode == VGA_MODE_640x480 ? CLK_OUT1 : 
       (vga_mode == VGA_MODE_800x600 ? CLK_OUT2 : CLK_OUT3);
    

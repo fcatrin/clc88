@@ -50,8 +50,7 @@ module chroni (
    reg[1:0] vga_mode;
    reg vga_scale;
 
-   wire vga_mode_change;
-   assign vga_mode_change = vga_mode_in != vga_mode;
+   wire vga_mode_change = vga_mode_in != vga_mode;
 
    always @ (posedge vga_clk) begin
       if (x_cnt == 1 && y_cnt == 1 && vga_mode_change) begin
