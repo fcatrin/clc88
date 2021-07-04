@@ -126,9 +126,9 @@ set_global_assignment -name VERILOG_FILE compy.v
 set_global_assignment -name VERILOG_FILE compy/chroni.v
 set_global_assignment -name VERILOG_FILE compy/chroni_line_buffer.v
 set_global_assignment -name VERILOG_FILE compy/system.v
+set_global_assignment -name VERILOG_FILE common/bram.v
 set_global_assignment -name VERILOG_FILE common/debouncer.v
 set_global_assignment -name QIP_FILE compy/rom.qip
-set_global_assignment -name QIP_FILE compy/line_buffer.qip
 set_global_assignment -name QIP_FILE pll/pll.qip
 set_global_assignment -name CDF_FILE output_files/compy.cdf
 set_global_assignment -name SIGNALTAP_FILE signaltap.stp
