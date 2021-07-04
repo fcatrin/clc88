@@ -146,6 +146,10 @@ module chroni (
       if (~reset_n) h_pf_pix <= 1'b0;
       else if(x_cnt == h_pf_start-1) h_pf_pix <= 1'b1;
       else if(x_cnt == h_pf_end-1) h_pf_pix <= 1'b0;
+      
+      
+      render_reset <= y_cnt == 1 || y_cnt == v_pf_end - 2;
+      render_start <= y_cnt == v_pf_start - 3;
    end
 
    // vsync / v display enable signals    
@@ -345,20 +349,19 @@ module chroni (
 
    // line render trigger
    reg render_buffer;
-   reg render_flag;
+   reg render_flag  = 0;
+   reg render_reset = 0;
+   reg render_start = 0;
 
    always @ (posedge vga_clk) begin : render_block
       reg[3:0] render_state;
-      if (!reset_n || vga_mode_change) begin
+      if (!reset_n || vga_mode_change || render_reset) begin
          render_buffer <= 0;
          render_flag   <= 0;
          render_state  <= 15;
       end else begin
          if (x_cnt == h_total) begin
-            if (y_cnt == 1 || y_cnt == v_pf_end - 2) begin
-               render_state <= 15;
-               render_flag  <= 0;
-            end else if (y_cnt == v_pf_start - 3) begin
+            if (render_start) begin
                render_state <= vga_scale ? 7 : 3;
             end else if (render_state != 15) begin
                if (vga_scale) begin
