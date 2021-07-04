@@ -169,11 +169,14 @@ module chroni (
    localparam FD_TEXT_READ  = 1;
    localparam FD_TEXT_WAIT  = 2;
    localparam FD_TEXT_DONE  = 3;
-   localparam FD_FONT_READ  = 4;
-   localparam FD_FONT_WAIT  = 5;
-   localparam FD_FONT_WRITE = 6;
-   localparam FD_FONT_DONE  = 7;
-   reg[2:0]  font_decode_state;
+   localparam FD_FONT_READ_REQ = 4; 
+   localparam FD_FONT_READ_REQ_WAIT1 = 5;
+   localparam FD_FONT_READ_REQ_WAIT2 = 6;
+   localparam FD_FONT_READ  = 7;
+   localparam FD_FONT_WAIT  = 8;
+   localparam FD_FONT_WRITE = 9;
+   localparam FD_FONT_DONE  = 10;
+   reg[3:0]  font_decode_state;
    
    reg y_cnt_first_line = 0;
    // state machine to read char or font from rom
@@ -181,7 +184,6 @@ module chroni (
       reg[10:0] text_rom_addr;
       reg       render_flag_prev;
       reg[2:0]  font_scan;
-      reg[7:0]  text_buffer[79:0];
       reg[7:0]  text_buffer_index;
       reg       y_cnt_first_line_prev;
       
@@ -197,6 +199,7 @@ module chroni (
          pixel_buffer_index_in <= 0;
          text_buffer_index <= 0;
          wr_bitmap_bits <= 0;
+         text_buffer_we <= 0;
       end else begin
          render_flag_prev <= render_flag;
          if (~render_flag_prev && render_flag) begin
@@ -204,7 +207,7 @@ module chroni (
             pixel_buffer_index_in <=  render_buffer ? 11'd640 : 11'd0;
             rd_req <= 0;
             wr_en <= 0;
-            font_decode_state <= font_scan == 0 ? FD_TEXT_READ : FD_FONT_READ; 
+            font_decode_state <= font_scan == 0 ? FD_TEXT_READ : FD_FONT_READ_REQ; 
          end else begin
             case (font_decode_state)
                FD_IDLE: 
@@ -214,6 +217,7 @@ module chroni (
                end
                FD_TEXT_READ:
                begin
+                  text_buffer_we <= 0;
                   addr_out <= text_rom_addr;
                   text_rom_addr <= text_rom_addr == 11'd1092 ? 11'd1025 : (text_rom_addr + 1'b1);
 
@@ -227,19 +231,34 @@ module chroni (
                   end
                FD_TEXT_DONE:
                begin
-                  text_buffer[text_buffer_index] <= data_in;
+                  text_buffer_addr    <= text_buffer_index;
+                  text_buffer_data_wr <= data_in;
+                  text_buffer_we <= 1;
                   if (text_buffer_index == 79) begin
                      text_buffer_index <= 0;
-                     font_decode_state <= FD_FONT_READ;
+                     font_decode_state <= FD_FONT_READ_REQ;
                   end else begin
                      text_buffer_index <= text_buffer_index + 1'b1;
                      font_decode_state <= FD_TEXT_READ;
                   end
                end
-               
+               FD_FONT_READ_REQ:
+               begin
+                  text_buffer_we <= 0;
+                  text_buffer_addr  <= text_buffer_index;
+                  font_decode_state <= FD_FONT_READ_REQ_WAIT1;
+               end
+               FD_FONT_READ_REQ_WAIT1:
+               begin
+                  font_decode_state <= FD_FONT_READ_REQ_WAIT2;
+               end
+               FD_FONT_READ_REQ_WAIT2:
+               begin
+                  font_decode_state <= FD_FONT_READ;
+               end
                FD_FONT_READ:
                begin
-                  addr_out <= {text_buffer[text_buffer_index], font_scan};
+                  addr_out <= {text_buffer_data_rd, font_scan};
                   font_decode_state <= FD_FONT_WAIT;
                   rd_req <= 1;
                end
@@ -266,7 +285,7 @@ module chroni (
                   end else begin
                      text_buffer_index     <= text_buffer_index + 1'b1;
                      pixel_buffer_index_in <= pixel_buffer_index_in + 4'd8;
-                     font_decode_state     <= FD_FONT_READ;
+                     font_decode_state     <= FD_FONT_READ_REQ;
                   end
                end
             endcase
@@ -377,6 +396,19 @@ module chroni (
    reg[7:0] pixel_out;
    wire wr_busy;
 
+   reg[6:0] text_buffer_addr;
+   reg text_buffer_we;
+   reg[7:0] text_buffer_data_wr;
+   wire[7:0] text_buffer_data_rd;
+   
+   spram #(80, 7, 8) text_buffer (
+         .address(text_buffer_addr),
+         .clock(sys_clk),
+         .data(text_buffer_data_wr),
+         .wren(text_buffer_we),
+         .q(text_buffer_data_rd)
+      );
+   
    chroni_line_buffer chroni_line_buffer_inst (
          .reset_n(reset_n),
          .rd_clk(vga_clk),
