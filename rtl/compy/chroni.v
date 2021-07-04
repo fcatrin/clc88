@@ -120,8 +120,10 @@ module chroni (
    always @ (posedge vga_clk) begin
       if(~reset_n || y_cnt == v_total || vga_mode_change) begin
          y_cnt <= 1;
+         y_cnt_first_line <= 1;
       end else if(x_cnt == h_total) begin
          y_cnt <= y_cnt + 1'b1;
+         y_cnt_first_line <= 0;
       end
    end
 
@@ -172,7 +174,8 @@ module chroni (
    localparam FD_FONT_WRITE = 6;
    localparam FD_FONT_DONE  = 7;
    reg[2:0]  font_decode_state;
-
+   
+   reg y_cnt_first_line = 0;
    // state machine to read char or font from rom
    always @(posedge sys_clk) begin
       reg[10:0] text_rom_addr;
@@ -180,8 +183,11 @@ module chroni (
       reg[2:0]  font_scan;
       reg[7:0]  text_buffer[79:0];
       reg[7:0]  text_buffer_index;
+      reg       y_cnt_first_line_prev;
+      
+      y_cnt_first_line_prev <= y_cnt_first_line;
    
-      if (!reset_n || vga_mode_change || y_cnt == 1) begin
+      if (!reset_n || vga_mode_change || (!y_cnt_first_line_prev && y_cnt_first_line)) begin
          font_decode_state <= FD_IDLE;
          rd_req <= 0;
          wr_en <= 0;
