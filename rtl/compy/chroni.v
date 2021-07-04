@@ -50,6 +50,7 @@ reg v_sync_p;
 reg[1:0] vga_mode;
 reg vga_scale;
 
+reg vga_mode_changed;
 wire vga_mode_change;
 assign vga_mode_change = vga_mode_in != vga_mode;
 
@@ -106,11 +107,12 @@ always @ (posedge vga_clk) begin
       end
       vga_mode <= vga_mode_in;
    end
+   vga_mode_changed <= vga_mode_change;
 end
 
 // x position counter  
 always @ (posedge vga_clk) begin
-   if(~reset_n || x_cnt == h_total || vga_mode_change) begin
+   if(~reset_n || x_cnt == h_total || vga_mode_changed) begin
       x_cnt <= 1;
    end else begin
       x_cnt <= x_cnt + 1'b1;
@@ -121,7 +123,7 @@ reg first_scan_line = 0;
 
 // y position counter  
 always @ (posedge vga_clk) begin
-   if(~reset_n || y_cnt == v_total || vga_mode_change) begin
+   if(~reset_n || y_cnt == v_total || vga_mode_changed) begin
       y_cnt <= 1;
       first_scan_line <= 1;
    end else if(x_cnt == h_total) begin
@@ -166,6 +168,7 @@ begin
    else if(y_cnt == v_pf_start) v_pf <= 1'b1;
    else if(y_cnt == v_pf_end) v_pf <= 1'b0;
    
+   render_enable <= reset_n && (y_cnt != 1 && y_cnt != v_pf_end -2); 
 end    
 
 localparam FD_IDLE       = 0;
@@ -186,10 +189,14 @@ always @(posedge sys_clk) begin
    reg[7:0]  text_buffer[79:0];
    reg[7:0]  text_buffer_index;
    reg       first_scan_line_prev;
+   reg       vga_mode_changed_prev;
    
    first_scan_line_prev <= first_scan_line;
+   vga_mode_changed_prev <= vga_mode_changed;
    
-   if (!reset_n || vga_mode_change || (!first_scan_line_prev && first_scan_line)) begin
+   if ( !reset_n ||
+       (!vga_mode_changed_prev && vga_mode_changed) || 
+       (!first_scan_line_prev  && first_scan_line)) begin
       font_decode_state <= FD_IDLE;
       rd_req <= 0;
       wr_en <= 0;
@@ -299,7 +306,7 @@ end
 reg output_buffer;
 always @ (posedge vga_clk) begin : output_block
    reg [3:0] output_state;
-   if (!reset_n || vga_mode_change) begin
+   if (!reset_n || vga_mode_changed) begin
       output_state <= 15;
    end else if (x_cnt == h_total) begin
       if (y_cnt == v_pf_end) begin
@@ -329,16 +336,17 @@ end
 // line render trigger
 reg render_buffer;
 reg render_flag;
+reg render_enable;
 
 always @ (posedge vga_clk) begin : render_block
    reg[3:0] render_state;
-   if (!reset_n || vga_mode_change) begin
+   if (!reset_n || vga_mode_changed) begin
       render_buffer <= 0;
       render_flag   <= 0;
       render_state  <= 15;
    end else begin
       if (x_cnt == h_total) begin
-         if (y_cnt == 1 || y_cnt == v_pf_end - 2) begin
+         if (!render_enable) begin
             render_state <= 15;
             render_flag  <= 0;
          end else if (y_cnt == v_pf_start - 3) begin
