@@ -62,7 +62,7 @@ reg[7:0]  line_wr_data;
 reg[10:0] line_wr_addr;
 reg line_wr_en;
 
-dpram #(11, 8) line_buffer (
+dpram #(1280, 11, 8) line_buffer (
       .data (line_wr_data),
       .rdaddress (rd_addr),
       .rdclock (rd_clk),

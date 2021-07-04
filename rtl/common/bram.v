@@ -2,7 +2,8 @@
 `timescale 1 ps / 1 ps
 // synopsys translate_on
 module dpram 
-      #( parameter addr_width = 8,
+      #( parameter depth = 256,
+         parameter addr_width = 8,
          parameter data_width = 8)
        ( data,
          rdaddress,
@@ -63,8 +64,8 @@ module dpram
       altsyncram_component.clock_enable_output_b = "BYPASS",
       altsyncram_component.intended_device_family = "Cyclone IV E",
       altsyncram_component.lpm_type = "altsyncram",
-      altsyncram_component.numwords_a = 2**addr_width,
-      altsyncram_component.numwords_b = 2**addr_width,
+      altsyncram_component.numwords_a = depth,
+      altsyncram_component.numwords_b = depth,
       altsyncram_component.operation_mode = "DUAL_PORT",
       altsyncram_component.outdata_aclr_b = "NONE",
       altsyncram_component.outdata_reg_b = "CLOCK1",
