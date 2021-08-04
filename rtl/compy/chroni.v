@@ -51,24 +51,10 @@ module chroni (
    reg vga_scale;
 
    wire vga_mode_change = vga_mode_in != vga_mode;
-   // TODO: use ACK to notify sys_clk module
-   // https://zipcpu.com/blog/2017/10/20/cdc.html
 
-   assign char_gen_reset_busy = (char_gen_reset_req || char_gen_reset_ack);
-   
-   reg char_gen_reset     = 0;
-   reg char_gen_reset_req = 0;
-   reg char_gen_reset_ack = 0;
-   
-   always @ (posedge sys_clk) begin
-      reg pipe = 0;
-      { char_gen_reset, pipe } <= { pipe, char_gen_reset_req };
-   end
-   
-   always @ (posedge vga_clk) begin
-      reg pipe = 0;
-      { char_gen_reset_ack, pipe } <= { pipe, char_gen_reset };
-   end
+   wire char_gen_reset;
+   wire char_gen_reset_busy;
+   reg  char_gen_reset_req = 0;
    
    always @ (posedge vga_clk) begin
       if (x_cnt == 1 && y_cnt == 1 && vga_mode_change && !char_gen_reset_busy) begin
@@ -447,6 +433,14 @@ module chroni (
          .wr_bitmap_off(wr_bitmap_off),
          .wr_bitmap_bits(wr_bitmap_bits),
          .wr_busy(wr_busy)
+      );
+   
+   crossclock_handshake char_gen_crossclock (
+         .src_clk(vga_clk),
+         .dst_clk(sys_clk),
+         .src_req(char_gen_reset_req),
+         .signal(char_gen_reset),
+         .busy(char_gen_reset_busy)
       );
       
 endmodule
