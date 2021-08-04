@@ -52,10 +52,6 @@ module chroni (
 
    wire vga_mode_change = vga_mode_in != vga_mode;
 
-   wire char_gen_reset;
-   wire char_gen_reset_busy;
-   reg  char_gen_reset_req = 0;
-   
    always @ (posedge vga_clk) begin
       if (x_cnt == 1 && y_cnt == 1 && vga_mode_change && !char_gen_reset_busy) begin
          if (vga_mode_in == VGA_MODE_640x480) begin
@@ -128,10 +124,10 @@ module chroni (
    always @ (posedge vga_clk) begin
       if(~reset_n || y_cnt == v_total || vga_mode_change) begin
          y_cnt <= 1;
-         y_cnt_first_line <= 1;
+         first_scan_line_req <= 1;
       end else if(x_cnt == h_total) begin
          y_cnt <= y_cnt + 1'b1;
-         y_cnt_first_line <= 0;
+         first_scan_line_req <= 0;
       end
    end
 
@@ -190,18 +186,14 @@ module chroni (
    localparam FD_FONT_DONE  = 10;
    reg[3:0]  font_decode_state;
    
-   reg y_cnt_first_line = 0;
    // state machine to read char or font from rom
    always @(posedge sys_clk) begin : char_gen
       reg[10:0] text_rom_addr;
       reg       render_flag_prev;
       reg[2:0]  font_scan;
       reg[7:0]  text_buffer_index;
-      reg       y_cnt_first_line_prev;
-      
-      y_cnt_first_line_prev <= y_cnt_first_line;
    
-      if (!reset_n || char_gen_reset || (!y_cnt_first_line_prev && y_cnt_first_line)) begin
+      if (!reset_n || char_gen_reset || first_scan_line) begin
          font_decode_state <= FD_IDLE;
          rd_req <= 0;
          wr_en <= 0;
@@ -434,7 +426,11 @@ module chroni (
          .wr_bitmap_bits(wr_bitmap_bits),
          .wr_busy(wr_busy)
       );
-   
+
+   wire char_gen_reset;
+   wire char_gen_reset_busy;
+   reg  char_gen_reset_req = 0;
+
    crossclock_handshake char_gen_crossclock (
          .src_clk(vga_clk),
          .dst_clk(sys_clk),
@@ -442,5 +438,17 @@ module chroni (
          .signal(char_gen_reset),
          .busy(char_gen_reset_busy)
       );
-      
+
+   wire first_scan_line;
+   wire first_scan_line_busy;
+   reg  first_scan_line_req = 0;
+
+   crossclock_handshake first_scan_line_crossclock (
+         .src_clk(vga_clk),
+         .dst_clk(sys_clk),
+         .src_req(first_scan_line_req),
+         .signal(first_scan_line),
+         .busy(first_scan_line_busy)
+      );
+
 endmodule
