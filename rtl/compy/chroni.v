@@ -51,9 +51,27 @@ module chroni (
    reg vga_scale;
 
    wire vga_mode_change = vga_mode_in != vga_mode;
+   // TODO: use ACK to notify sys_clk module
+   // https://zipcpu.com/blog/2017/10/20/cdc.html
 
+   assign char_gen_reset_busy = (char_gen_reset_req || char_gen_reset_ack);
+   
+   reg char_gen_reset     = 0;
+   reg char_gen_reset_req = 0;
+   reg char_gen_reset_ack = 0;
+   
+   always @ (posedge sys_clk) begin
+      reg pipe = 0;
+      { char_gen_reset, pipe } <= { pipe, char_gen_reset_req };
+   end
+   
    always @ (posedge vga_clk) begin
-      if (x_cnt == 1 && y_cnt == 1 && vga_mode_change) begin
+      reg pipe = 0;
+      { char_gen_reset_ack, pipe } <= { pipe, char_gen_reset };
+   end
+   
+   always @ (posedge vga_clk) begin
+      if (x_cnt == 1 && y_cnt == 1 && vga_mode_change && !char_gen_reset_busy) begin
          if (vga_mode_in == VGA_MODE_640x480) begin
             h_sync_pulse <= Mode1_H_SyncPulse;
             h_total      <= Mode1_H_Total;
@@ -104,8 +122,12 @@ module chroni (
             vga_scale    <= 1;
          end
          vga_mode <= vga_mode_in;
+         char_gen_reset_req <= 1;
+      end else begin
+         char_gen_reset_req <= 0;
       end
    end
+   
 
    // x position counter  
    always @ (posedge vga_clk) begin
@@ -184,7 +206,7 @@ module chroni (
    
    reg y_cnt_first_line = 0;
    // state machine to read char or font from rom
-   always @(posedge sys_clk) begin
+   always @(posedge sys_clk) begin : char_gen
       reg[10:0] text_rom_addr;
       reg       render_flag_prev;
       reg[2:0]  font_scan;
@@ -193,7 +215,7 @@ module chroni (
       
       y_cnt_first_line_prev <= y_cnt_first_line;
    
-      if (!reset_n || vga_mode_change || (!y_cnt_first_line_prev && y_cnt_first_line)) begin
+      if (!reset_n || char_gen_reset || (!y_cnt_first_line_prev && y_cnt_first_line)) begin
          font_decode_state <= FD_IDLE;
          rd_req <= 0;
          wr_en <= 0;
