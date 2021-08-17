@@ -9,8 +9,7 @@ module vga_output (
       output [4:0] vga_r,
       output [5:0] vga_g,
       output [4:0] vga_b,
-      output reg char_gen_reset_req,
-      input  char_gen_reset_busy,
+      output mode_changed,
       output reg first_scan_line_req,
       input  first_scan_line_busy,
       output reg render_reset,
@@ -59,7 +58,7 @@ module vga_output (
    assign vga_mode_change = vga_mode_in != vga_mode;
    
    always @ (posedge vga_clk) begin
-      if (x_cnt == 1 && y_cnt == 1 && vga_mode_change && !char_gen_reset_busy) begin
+      if (x_cnt == 1 && y_cnt == 1 && vga_mode_change && !mode_changed_busy) begin
          if (vga_mode_in == VGA_MODE_640x480) begin
             h_sync_pulse <= Mode1_H_SyncPulse;
             h_total      <= Mode1_H_Total;
@@ -110,9 +109,9 @@ module vga_output (
             vga_scale    <= 1;
          end
          vga_mode <= vga_mode_in;
-         char_gen_reset_req <= 1;
+         mode_changed_req <= 1;
       end else begin
-         char_gen_reset_req <= 0;
+         mode_changed_req <= 0;
       end
    end
       
@@ -235,5 +234,18 @@ module vga_output (
    assign vga_r = (h_de & v_de) ? ((h_pf & v_pf) ? (pixel ? text_foreground_color[15:11] : text_background_color[15:11])  : border_color[15:11]) : 5'b00000;
    assign vga_g = (h_de & v_de) ? ((h_pf & v_pf) ? (pixel ? text_foreground_color[10:05] : text_background_color[10:05])  : border_color[10:05]) : 6'b000000;
    assign vga_b = (h_de & v_de) ? ((h_pf & v_pf) ? (pixel ? text_foreground_color[04:00] : text_background_color[04:00])  : border_color[04:00]) : 5'b00000;
+   
+   
+   wire mode_changed_busy;
+   reg  mode_changed_req;
+
+   crossclock_handshake mode_changed_crossclock (
+         .src_clk(vga_clk),
+         .dst_clk(sys_clk),
+         .src_req(mode_changed_req),
+         .signal(mode_changed),
+         .busy(mode_changed_busy)
+      );
+
    
 endmodule
