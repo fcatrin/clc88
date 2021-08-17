@@ -16,7 +16,6 @@ module vga_output (
       output reg render_start,
       output reg[10:0] pixel_buffer_index_out,
       input [7:0] pixel,
-      output vga_mode_change,
       output reg [11:0] x_cnt,
       output reg [11:0] h_total,
       output reg vga_scale
@@ -55,7 +54,7 @@ module vga_output (
    
    reg[1:0] vga_mode;
    
-   assign vga_mode_change = vga_mode_in != vga_mode;
+   wire vga_mode_change = vga_mode_in != vga_mode;
    
    always @ (posedge vga_clk) begin
       if (x_cnt == 1 && y_cnt == 1 && vga_mode_change && !mode_changed_busy) begin

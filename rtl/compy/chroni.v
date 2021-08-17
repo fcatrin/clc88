@@ -145,7 +145,7 @@ module chroni (
    // TODO: this block must be ran using sys_clk
    always @ (posedge vga_clk) begin : render_block
       reg[3:0] render_state;
-      if (!reset_n || vga_mode_change || render_reset) begin
+      if (!reset_n || vga_mode_changed || render_reset) begin
          render_buffer <= 0;
          render_flag   <= 0;
          render_state  <= 15;
@@ -222,7 +222,6 @@ module chroni (
    
    wire [10:0] pixel_buffer_index_out;
    wire [7:0]pixel;
-   wire vga_mode_change;
    wire [11:0] x_cnt;
    wire [11:0] h_total;
    wire render_reset;
@@ -248,7 +247,6 @@ module chroni (
          .render_start(render_start),
          .pixel_buffer_index_out(pixel_buffer_index_out),
          .pixel(pixel),
-         .vga_mode_change(vga_mode_change),
          .x_cnt(x_cnt),
          .h_total(h_total),
          .vga_scale(vga_scale)
