@@ -1,9 +1,7 @@
 // based on The Cross-clock Handshake
 // https://zipcpu.com/blog/2017/10/20/cdc.html
 
-module crossclock_handshake (input src_clk, input dst_clk, input src_req, output reg signal, output busy);
-   reg ack = 0;
-   
+module crossclock_handshake (input src_clk, input dst_clk, input src_req, output reg signal, output busy, output reg ack);
    assign busy = (src_req || ack);
    
    always @ (posedge dst_clk) begin
