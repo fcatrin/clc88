@@ -229,8 +229,6 @@ module chroni (
          .vga_b(vga_b),
          .mode_changed(vga_mode_changed),
          .frame_start(vga_frame_start),
-         
-         // TODO: all these signals must be simplified or removed
          .render_start(vga_render_start),
          .scanline_start(vga_scanline_start),
          .pixel_buffer_index_out(pixel_buffer_index_out),
