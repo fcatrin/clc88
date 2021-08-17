@@ -12,12 +12,10 @@ module vga_output (
       output [4:0] vga_b,
       output mode_changed,
       output frame_start,
-      output reg render_reset,
-      output reg render_start,
+      output render_start,
+      output scanline_start,
       output reg[10:0] pixel_buffer_index_out,
       input [7:0] pixel,
-      output reg [11:0] x_cnt,
-      output reg [11:0] h_total,
       output reg vga_scale
       );
 
@@ -25,7 +23,7 @@ module vga_output (
    `include "chroni_vga_modes.vh"
 
    reg[11:0] h_sync_pulse;
-   
+   reg[11:0] h_total;
    reg[11:0] h_de_start;
    reg[11:0] h_de_end;
    reg[11:0] h_pf_start;
@@ -38,8 +36,8 @@ module vga_output (
    reg[11:0] v_pf_start;
    reg[11:0] v_pf_end;
    
-   
    reg[11 : 0] y_cnt;
+   reg[11 : 0] x_cnt;
    reg[11 : 0] h_pf_cnt;
    reg[11 : 0] v_pf_cnt;
    reg hsync_r;
@@ -161,8 +159,18 @@ module vga_output (
          frame_start_req <= 0;
       end
             
-      render_reset <= y_cnt == 1 || y_cnt == v_pf_end - 2;
-      render_start <= y_cnt == v_pf_start - 3;
+      if (!render_start_busy && x_cnt == h_total && y_cnt == v_pf_start - 3) begin
+         render_start_req <= 1;
+      end else if (render_start_ack) begin
+         render_start_req <= 0;
+      end
+      
+      if (!scanline_start_busy && x_cnt == h_total) begin
+         scanline_start_req <= 1;
+      end else if (scanline_start_ack) begin
+         scanline_start_req <= 0;
+      end
+         
    end
    
    // vsync / v display enable signals    
@@ -266,6 +274,32 @@ module vga_output (
          .signal(frame_start),
          .busy(frame_start_busy),
          .ack(frame_start_ack)
+      );
+
+   wire render_start_busy;
+   reg  render_start_req;
+   wire render_start_ack;
+
+   crossclock_handshake render_start_crossclock (
+         .src_clk(vga_clk),
+         .dst_clk(sys_clk),
+         .src_req(render_start_req),
+         .signal(render_start),
+         .busy(render_start_busy),
+         .ack(render_start_ack)
+      );
+
+   wire scanline_start_busy;
+   reg  scanline_start_req;
+   wire scanline_start_ack;
+
+   crossclock_handshake scanline_start_crossclock (
+         .src_clk(vga_clk),
+         .dst_clk(sys_clk),
+         .src_req(scanline_start_req),
+         .signal(scanline_start),
+         .busy(scanline_start_busy),
+         .ack(scanline_start_ack)
       );
 
    

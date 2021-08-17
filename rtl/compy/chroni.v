@@ -142,16 +142,17 @@ module chroni (
       end      
    end         
 
-   // TODO: this block must be ran using sys_clk
-   always @ (posedge vga_clk) begin : render_block
+   always @ (posedge sys_clk) begin : render_block
       reg[3:0] render_state;
+      reg vga_scanline_start_prev;
       if (!reset_n || vga_mode_changed || vga_frame_start) begin
          render_buffer <= 0;
          render_flag   <= 0;
          render_state  <= 15;
       end else begin
-         if (x_cnt == h_total) begin
-            if (render_start) begin
+         vga_scanline_start_prev <= vga_scanline_start;
+         if (!vga_scanline_start_prev && vga_scanline_start) begin
+            if (vga_render_start) begin
                render_state <= vga_scale ? 7 : 3;
             end else if (render_state != 15) begin
                if (vga_scale) begin
@@ -210,12 +211,11 @@ module chroni (
    
    wire [10:0] pixel_buffer_index_out;
    wire [7:0]pixel;
-   wire [11:0] x_cnt;
-   wire [11:0] h_total;
-   wire render_start;
    wire vga_scale;
    wire vga_mode_changed;
    wire vga_frame_start;
+   wire vga_render_start;
+   wire vga_scanline_start;
    
    vga_output vga_output_inst (
          .sys_clk(sys_clk),
@@ -231,11 +231,10 @@ module chroni (
          .frame_start(vga_frame_start),
          
          // TODO: all these signals must be simplified or removed
-         .render_start(render_start),
+         .render_start(vga_render_start),
+         .scanline_start(vga_scanline_start),
          .pixel_buffer_index_out(pixel_buffer_index_out),
          .pixel(pixel),
-         .x_cnt(x_cnt),
-         .h_total(h_total),
          .vga_scale(vga_scale)
       );
 
