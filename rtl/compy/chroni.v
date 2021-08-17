@@ -38,7 +38,7 @@ module chroni (
       reg[2:0]  font_scan;
       reg[6:0]  text_buffer_index;
    
-      if (!reset_n || vga_mode_changed || first_scan_line) begin
+      if (!reset_n || vga_mode_changed || vga_frame_start) begin
          font_decode_state <= FD_IDLE;
          rd_req <= 0;
          wr_en <= 0;
@@ -193,18 +193,6 @@ module chroni (
          .q(text_buffer_data_rd)
       );
    
-   wire first_scan_line;
-   wire first_scan_line_busy;
-   wire first_scan_line_req;
-
-   crossclock_handshake first_scan_line_crossclock (
-         .src_clk(vga_clk),
-         .dst_clk(sys_clk),
-         .src_req(first_scan_line_req),
-         .signal(first_scan_line),
-         .busy(first_scan_line_busy)
-      );
-
    chroni_line_buffer chroni_line_buffer_inst (
          .reset_n(reset_n),
          .rd_clk(vga_clk),
@@ -228,8 +216,10 @@ module chroni (
    wire render_start;
    wire vga_scale;
    wire vga_mode_changed;
+   wire vga_frame_start;
    
    vga_output vga_output_inst (
+         .sys_clk(sys_clk),
          .vga_clk(vga_clk),
          .reset_n(reset_n),
          .vga_mode_in(vga_mode_in),
@@ -241,8 +231,7 @@ module chroni (
          .mode_changed(vga_mode_changed),
          
          // TODO: all these signals must be simplified or removed
-         .first_scan_line_req(first_scan_line_req),
-         .first_scan_line_busy(first_scan_line_busy),
+         .frame_start(vga_frame_start),
          .render_reset(render_reset),
          .render_start(render_start),
          .pixel_buffer_index_out(pixel_buffer_index_out),

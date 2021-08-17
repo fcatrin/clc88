@@ -1,6 +1,7 @@
 `timescale 1ns / 1ps
 
 module vga_output (
+      input sys_clk,
       input vga_clk,
       input reset_n,
       input [1:0] vga_mode_in,
@@ -10,8 +11,7 @@ module vga_output (
       output [5:0] vga_g,
       output [4:0] vga_b,
       output mode_changed,
-      output reg first_scan_line_req,
-      input  first_scan_line_busy,
+      output frame_start,
       output reg render_reset,
       output reg render_start,
       output reg[10:0] pixel_buffer_index_out,
@@ -126,15 +126,16 @@ module vga_output (
    
    // y position counter  
    always @ (posedge vga_clk) begin
-      if(~reset_n || y_cnt == v_total || vga_mode_change) begin
+      if(~reset_n || vga_mode_change) begin
          y_cnt <= 1;
-         first_scan_line_req <= 1;
-      end else if(x_cnt == h_total) begin
-         y_cnt <= y_cnt + 1'b1;
-         first_scan_line_req <= 0;
+      end else if (x_cnt == h_total) begin
+         if (y_cnt == v_total) begin
+            y_cnt <= 1;
+         end else begin
+            y_cnt <= y_cnt + 1'b1;
+         end
       end
    end
-   
    
    // hsync / h display enable signals    
    always @ (posedge vga_clk) begin
@@ -153,6 +154,12 @@ module vga_output (
       if (~reset_n) h_pf_pix <= 1'b0;
       else if(x_cnt == h_pf_start-1) h_pf_pix <= 1'b1;
       else if(x_cnt == h_pf_end-1) h_pf_pix <= 1'b0;
+      
+      if (!frame_start_busy && y_cnt == 1 && x_cnt == 1) begin
+         frame_start_req <= 1;
+      end else if (frame_start_ack) begin
+         frame_start_req <= 0;
+      end
             
       render_reset <= y_cnt == 1 || y_cnt == v_pf_end - 2;
       render_start <= y_cnt == v_pf_start - 3;
@@ -237,13 +244,28 @@ module vga_output (
    
    wire mode_changed_busy;
    reg  mode_changed_req;
+   wire mode_changed_ack;
 
    crossclock_handshake mode_changed_crossclock (
          .src_clk(vga_clk),
          .dst_clk(sys_clk),
          .src_req(mode_changed_req),
          .signal(mode_changed),
-         .busy(mode_changed_busy)
+         .busy(mode_changed_busy),
+         .ack(mode_changed_ack)
+      );
+
+   wire frame_start_busy;
+   reg  frame_start_req;
+   wire frame_start_ack;
+
+   crossclock_handshake frame_start_crossclock (
+         .src_clk(vga_clk),
+         .dst_clk(sys_clk),
+         .src_req(frame_start_req),
+         .signal(frame_start),
+         .busy(frame_start_busy),
+         .ack(frame_start_ack)
       );
 
    
