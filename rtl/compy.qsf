@@ -119,6 +119,7 @@ set_global_assignment -name VERILOG_FILE compy/vga_output.v
 set_global_assignment -name VERILOG_FILE common/bram.v
 set_global_assignment -name VERILOG_FILE common/debouncer.v
 set_global_assignment -name VERILOG_FILE common/crossclock_handshake.v
+set_global_assignment -name VERILOG_FILE common/crossclock_signal.v
 set_global_assignment -name QIP_FILE compy/rom.qip
 set_global_assignment -name QIP_FILE pll/pll.qip
 set_global_assignment -name CDF_FILE output_files/compy.cdf

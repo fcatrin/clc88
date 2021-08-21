@@ -233,7 +233,7 @@ module chroni (
          .scanline_start(vga_scanline_start),
          .pixel_buffer_index_out(pixel_buffer_index_out),
          .pixel(pixel),
-         .vga_scale(vga_scale)
+         .pixel_scale(vga_scale)
       );
 
 endmodule

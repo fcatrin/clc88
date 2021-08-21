@@ -16,7 +16,7 @@ module vga_output (
       output scanline_start,
       output reg[10:0] pixel_buffer_index_out,
       input [7:0] pixel,
-      output reg vga_scale
+      output pixel_scale
       );
 
    `include "chroni.vh"
@@ -51,6 +51,7 @@ module vga_output (
    reg v_sync_p;
    
    reg[1:0] vga_mode;
+   reg vga_scale;
    
    wire vga_mode_change = vga_mode_in != vga_mode;
    
@@ -110,6 +111,7 @@ module vga_output (
       end else begin
          mode_changed_req <= 0;
       end
+      pixel_scale_pipe <= vga_scale;
    end
       
    
@@ -302,5 +304,11 @@ module vga_output (
          .ack(scanline_start_ack)
       );
 
+   reg  pixel_scale_pipe;
+   crossclock_signal pixel_scale_crossclock (
+         .dst_clk(sys_clk),
+         .src_req(pixel_scale_pipe),
+         .signal(pixel_scale)
+      );
    
 endmodule
