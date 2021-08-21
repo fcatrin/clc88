@@ -52,11 +52,12 @@ module vga_output (
    
    reg[1:0] vga_mode;
    reg vga_scale;
+   reg vga_frame_start;
    
    wire vga_mode_change = vga_mode_in != vga_mode;
    
    always @ (posedge vga_clk) begin
-      if (x_cnt == 1 && y_cnt == 1 && vga_mode_change && !mode_changed_busy) begin
+      if (vga_frame_start && vga_mode_change && !mode_changed_busy) begin
          if (vga_mode_in == VGA_MODE_640x480) begin
             h_sync_pulse <= Mode1_H_SyncPulse;
             h_total      <= Mode1_H_Total;
@@ -113,7 +114,18 @@ module vga_output (
       end
       pixel_scale_pipe <= vga_scale;
    end
+   
+   always @ (posedge vga_clk) begin
+      vga_frame_start <= y_cnt == 1 && x_cnt == 1;
       
+      // send signal to sys_clk
+      if (!frame_start_busy && vga_frame_start) begin
+         frame_start_req <= 1;
+      end else if (frame_start_ack) begin
+         frame_start_req <= 0;
+      end
+
+   end
    
    // x position counter  
    always @ (posedge vga_clk) begin
@@ -155,12 +167,6 @@ module vga_output (
       else if(x_cnt == h_pf_start-1) h_pf_pix <= 1'b1;
       else if(x_cnt == h_pf_end-1) h_pf_pix <= 1'b0;
       
-      if (!frame_start_busy && y_cnt == 1 && x_cnt == 1) begin
-         frame_start_req <= 1;
-      end else if (frame_start_ack) begin
-         frame_start_req <= 0;
-      end
-            
       if (x_cnt == h_total) begin
          if (!render_start_busy && y_cnt == v_pf_start - 3) begin
             render_start_req <= 1;
