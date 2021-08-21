@@ -92,7 +92,16 @@ set_clock_groups -logically_exclusive \
 #**************************************************************
 # Set Multicycle Path
 #**************************************************************
-
+set_multicycle_path -setup -from *|frame_start_req    -to *_crossclock|pipe* 2
+set_multicycle_path -hold  -from *|frame_start_req    -to *_crossclock|pipe* 1
+set_multicycle_path -setup -from *|scanline_start_req -to *_crossclock|pipe* 2
+set_multicycle_path -hold  -from *|scanline_start_req -to *_crossclock|pipe* 1
+set_multicycle_path -setup -from *|mode_changed_req   -to *_crossclock|pipe* 2
+set_multicycle_path -hold  -from *|mode_changed_req   -to *_crossclock|pipe* 1
+set_multicycle_path -setup -from *|render_start_req   -to *_crossclock|pipe* 2
+set_multicycle_path -hold  -from *|render_start_req   -to *_crossclock|pipe* 1
+set_multicycle_path -setup -from *|pixel_scale_pipe   -to *_crossclock|pipe* 2
+set_multicycle_path -hold  -from *|pixel_scale_pipe   -to *_crossclock|pipe* 1
 
 
 #**************************************************************
