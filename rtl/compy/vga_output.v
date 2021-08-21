@@ -4,7 +4,7 @@ module vga_output (
       input sys_clk,
       input vga_clk,
       input reset_n,
-      input [1:0] vga_mode_in,
+      input [1:0] sys_vga_mode,
       output vga_hs,
       output vga_vs,
       output [4:0] vga_r,
@@ -322,5 +322,13 @@ module vga_output (
          .src_req(pixel_scale_pipe),
          .signal(pixel_scale)
       );
+
+   wire[1:0] vga_mode_in;
+   crossclock_signal #(2) vga_mode_crossclock (
+         .dst_clk(vga_clk),
+         .src_req(sys_vga_mode),
+         .signal(vga_mode_in)
+      );
+
    
 endmodule

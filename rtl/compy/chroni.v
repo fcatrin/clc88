@@ -221,7 +221,7 @@ module chroni (
          .sys_clk(sys_clk),
          .vga_clk(vga_clk),
          .reset_n(reset_n),
-         .vga_mode_in(vga_mode_in),
+         .sys_vga_mode(vga_mode_in),
          .vga_hs(vga_hs),
          .vga_vs(vga_vs),
          .vga_r(vga_r),
