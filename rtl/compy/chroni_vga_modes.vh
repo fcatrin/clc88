@@ -61,8 +61,8 @@ parameter Mode3_V_BackPorch  = 12'd36;
 parameter Mode3_V_DeStart = Mode3_V_SyncPulse + Mode3_V_BackPorch;
 parameter Mode3_V_DeEnd   = Mode3_V_DeStart   + Mode3_V_Display;
 parameter Mode3_V_Total   = Mode3_V_DeEnd     + Mode3_V_FrontPorch;
-parameter Mode3_V_PfStart = Mode3_V_DeStart;
-parameter Mode3_V_PfEnd   = Mode3_V_DeEnd;
+parameter Mode3_V_PfStart = Mode3_V_DeStart   + 12'd64;
+parameter Mode3_V_PfEnd   = Mode3_V_PfStart   + 12'd960;
 parameter Mode3_H_SyncP   = 1'b0;
 parameter Mode3_V_SyncP   = 1'b1;
 
