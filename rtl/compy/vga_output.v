@@ -53,6 +53,7 @@ module vga_output (
    reg[1:0] vga_mode;
    reg vga_scale;
    reg vga_frame_start;
+   reg vga_scanline_end;
    
    wire vga_mode_change = vga_mode_in != vga_mode;
    
@@ -117,6 +118,7 @@ module vga_output (
    
    always @ (posedge vga_clk) begin
       vga_frame_start <= y_cnt == 1 && x_cnt == 1;
+      vga_scanline_end <= x_cnt == (h_total - 1); // it'll be read on the next cycle
       
       // send signal to sys_clk
       if (!frame_start_busy && vga_frame_start) begin
@@ -129,7 +131,7 @@ module vga_output (
    
    // x position counter  
    always @ (posedge vga_clk) begin
-      if(~reset_n || x_cnt == h_total || vga_mode_change) begin
+      if(~reset_n || vga_scanline_end || vga_mode_change) begin
          x_cnt <= 1;
       end else begin
          x_cnt <= x_cnt + 1'b1;
@@ -140,7 +142,7 @@ module vga_output (
    always @ (posedge vga_clk) begin
       if(~reset_n || vga_mode_change) begin
          y_cnt <= 1;
-      end else if (x_cnt == h_total) begin
+      end else if (vga_scanline_end) begin
          if (y_cnt == v_total) begin
             y_cnt <= 1;
          end else begin
@@ -167,7 +169,7 @@ module vga_output (
       else if(x_cnt == h_pf_start-1) h_pf_pix <= 1'b1;
       else if(x_cnt == h_pf_end-1) h_pf_pix <= 1'b0;
       
-      if (x_cnt == h_total) begin
+      if (vga_scanline_end) begin
          if (!render_start_busy && y_cnt == v_pf_start - 3) begin
             render_start_req <= 1;
          end
@@ -225,7 +227,7 @@ module vga_output (
       reg [3:0] output_state;
       if (!reset_n || vga_mode_change) begin
          output_state <= 15;
-      end else if (x_cnt == h_total) begin
+      end else if (vga_scanline_end) begin
          if (y_cnt == v_pf_end) begin
             output_state <= 15;
          end else if (y_cnt == v_pf_start - 1) begin
