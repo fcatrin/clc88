@@ -161,16 +161,20 @@ module vga_output (
          frame_start_req <= 0;
       end
             
-      if (!render_start_busy && x_cnt == h_total && y_cnt == v_pf_start - 3) begin
-         render_start_req <= 1;
-      end else if (render_start_ack) begin
-         render_start_req <= 0;
-      end
-      
-      if (!scanline_start_busy && x_cnt == h_total) begin
-         scanline_start_req <= 1;
-      end else if (scanline_start_ack) begin
-         scanline_start_req <= 0;
+      if (x_cnt == h_total) begin
+         if (!render_start_busy && y_cnt == v_pf_start - 3) begin
+            render_start_req <= 1;
+         end
+         if (!scanline_start_busy) begin
+            scanline_start_req <= 1;
+         end
+      end else begin
+         if (render_start_ack) begin
+            render_start_req <= 0;
+         end
+         if (scanline_start_ack) begin
+            scanline_start_req <= 0;
+         end
       end
          
    end
