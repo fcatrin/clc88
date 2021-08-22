@@ -65,13 +65,9 @@ derive_clock_uncertainty
 # Set Input Delay
 #**************************************************************
 
-
-
 #**************************************************************
 # Set Output Delay
 #**************************************************************
-
-
 
 #**************************************************************
 # Set Clock Groups
@@ -86,8 +82,10 @@ set_clock_groups -logically_exclusive \
 #**************************************************************
 # Set False Path
 #**************************************************************
-
-
+set_false_path -from [get_ports altera_reserved_*]
+set_false_path -to   [get_ports altera_reserved_*]
+set_false_path -from [get_ports key_*]
+set_false_path -to   [get_ports vga_*]
 
 #**************************************************************
 # Set Multicycle Path
