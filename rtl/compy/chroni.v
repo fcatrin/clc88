@@ -124,17 +124,19 @@ module chroni (
                      wr_bitmap_off  <= 8'b0;
                      wr_bitmap_bits <= 4'd8;
                      font_decode_state <= FD_FONT_DONE;
+                     
+                     text_buffer_index <= text_buffer_index + 1'b1;
                   end
                FD_FONT_DONE:
                begin
                   wr_en <= 0;
-                  if (text_buffer_index == 79) begin
+                  if (text_buffer_index == 80) begin
                      font_decode_state <= FD_IDLE;
                      font_scan <= font_scan + 1'b1;
                   end else begin
-                     text_buffer_index     <= text_buffer_index + 1'b1;
+                     font_decode_state <= FD_FONT_READ_REQ_WAIT1;
+                     text_buffer_addr  <= text_buffer_index;
                      pixel_buffer_index_in <= pixel_buffer_index_in + 4'd8;
-                     font_decode_state     <= FD_FONT_READ_REQ;
                   end
                end
             endcase
@@ -217,6 +219,9 @@ module chroni (
    wire vga_render_start;
    wire vga_scanline_start;
    
+   wire read_text = font_decode_state == FD_TEXT_READ || font_decode_state == FD_TEXT_WAIT;
+   wire read_font = font_decode_state == FD_FONT_READ_REQ || font_decode_state == FD_FONT_READ_REQ_WAIT1 || font_decode_state == FD_FONT_READ_REQ_WAIT2;
+   
    vga_output vga_output_inst (
          .sys_clk(sys_clk),
          .vga_clk(vga_clk),
@@ -233,7 +238,9 @@ module chroni (
          .scanline_start(vga_scanline_start),
          .pixel_buffer_index_out(pixel_buffer_index_out),
          .pixel(pixel),
-         .pixel_scale(vga_scale)
+         .pixel_scale(vga_scale),
+         .read_text(read_text),
+         .read_font(read_font)
       );
 
 endmodule

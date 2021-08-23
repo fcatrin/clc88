@@ -16,7 +16,9 @@ module vga_output (
       output scanline_start,
       output reg[10:0] pixel_buffer_index_out,
       input [7:0] pixel,
-      output pixel_scale
+      output pixel_scale,
+      input read_text,
+      input read_font
       );
 
    `include "chroni.vh"
@@ -259,8 +261,8 @@ module vga_output (
    assign vga_hs = h_sync_p ? ~hsync_r : hsync_r;
    assign vga_vs = v_sync_p ? ~vsync_r : vsync_r;
 
-   assign vga_r = (h_de & v_de) ? ((h_pf & v_pf) ? (pixel ? text_foreground_color[15:11] : text_background_color[15:11])  : border_color[15:11]) : 5'b00000;
-   assign vga_g = (h_de & v_de) ? ((h_pf & v_pf) ? (pixel ? text_foreground_color[10:05] : text_background_color[10:05])  : border_color[10:05]) : 6'b000000;
+   assign vga_r = (h_de & v_de) ? (read_text ? 5'b11111  : ((h_pf & v_pf) ? (pixel ? text_foreground_color[15:11] : text_background_color[15:11])  : border_color[15:11])) : 5'b00000;
+   assign vga_g = (h_de & v_de) ? (read_font ? 6'b111111 : ((h_pf & v_pf) ? (pixel ? text_foreground_color[10:05] : text_background_color[10:05])  : border_color[10:05])) : 6'b000000;
    assign vga_b = (h_de & v_de) ? ((h_pf & v_pf) ? (pixel ? text_foreground_color[04:00] : text_background_color[04:00])  : border_color[04:00]) : 5'b00000;
    
    
