@@ -38,6 +38,7 @@ module chroni (
       reg[2:0]  font_scan;
       reg[6:0]  text_buffer_index;
    
+      text_buffer_we <= 0;
       if (!reset_n || vga_mode_changed || vga_frame_start) begin
          font_decode_state <= FD_IDLE;
          rd_req <= 0;
@@ -48,7 +49,6 @@ module chroni (
          pixel_buffer_index_in <= 0;
          text_buffer_index <= 0;
          wr_bitmap_bits <= 0;
-         text_buffer_we <= 0;
       end else begin
          render_flag_prev <= render_flag;
          if (~render_flag_prev && render_flag) begin
@@ -66,7 +66,6 @@ module chroni (
                end
                FD_TEXT_READ:
                begin
-                  text_buffer_we <= 0;
                   addr_out <= text_rom_addr;
                   text_rom_addr <= text_rom_addr == 11'd1092 ? 11'd1025 : (text_rom_addr + 1'b1);
 
@@ -93,7 +92,6 @@ module chroni (
                end
                FD_FONT_READ_REQ:
                begin
-                  text_buffer_we <= 0;
                   text_buffer_addr  <= text_buffer_index;
                   font_decode_state <= FD_FONT_READ_REQ_WAIT1;
                end
