@@ -45,8 +45,7 @@ module system (
    localparam BUS_STATE_INIT = 4'd0;
    localparam BUS_STATE_READY = 4'd1;
    localparam BUS_STATE_CHRONI_READ_REQ  = 4'd2;
-   localparam BUS_STATE_CHRONI_READ_REQ2 = 4'd3;
-   localparam BUS_STATE_WAIT = 4'd4;
+   localparam BUS_STATE_WAIT = 4'd3;
    
    always @ (posedge sys_clk) begin
       reg key_mode_prev;
@@ -77,33 +76,30 @@ module system (
          chroni_rd_ack <= 0;
          rom_addr <= 0;
       end else   begin
+         chroni_rd_ack <= 0;
          case (bus_state)
             BUS_STATE_INIT : 
                bus_state <= BUS_STATE_READY;
             BUS_STATE_READY :
                begin
                   if (chroni_rd_req) begin
-                     rom_addr <= chroni_addr[10:0];
+                     chroni_rd_ack <= 1;
                      bus_state <= BUS_STATE_CHRONI_READ_REQ;
                   end
                end
             BUS_STATE_CHRONI_READ_REQ :
                begin
-                  chroni_rd_ack <= 1;
-                  bus_state <= BUS_STATE_CHRONI_READ_REQ2;
-               end
-            BUS_STATE_CHRONI_READ_REQ2 :
-               begin
                   bus_state <= BUS_STATE_READY;
-                  chroni_rd_ack <= 0;
                end
          endcase
       end
    end
    
+   wire[10:0] bus_addr = chroni_addr;
+   
    rom rom_inst (
       .clock(sys_clk),
-      .address(rom_addr),
+      .address(bus_addr),
       .q(rom_data)
    );
 
