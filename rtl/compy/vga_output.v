@@ -168,8 +168,8 @@ module vga_output (
       else if(x_cnt == h_pf_end) h_pf <= 1'b0;
          
       if (~reset_n) h_pf_pix <= 1'b0;
-      else if(x_cnt == h_pf_start-1) h_pf_pix <= 1'b1;
-      else if(x_cnt == h_pf_end-1) h_pf_pix <= 1'b0;
+      else if(x_cnt == h_pf_start-2) h_pf_pix <= 1'b1;
+      else if(x_cnt == h_pf_end-2) h_pf_pix <= 1'b0;
       
       if (vga_scanline_end) begin
          if (!render_start_busy && y_cnt == v_pf_start - 3) begin
@@ -219,7 +219,7 @@ module vga_output (
          end
       end else begin
          pixel_buffer_index_out <= output_buffer ?  11'd640 : 11'd0;
-         pixel_x_dbl <= 1;
+         pixel_x_dbl <= 0;
       end
    end
 

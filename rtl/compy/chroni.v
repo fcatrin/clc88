@@ -217,8 +217,8 @@ module chroni (
    wire vga_render_start;
    wire vga_scanline_start;
    
-   wire read_text = font_decode_state == FD_TEXT_READ || font_decode_state == FD_TEXT_WAIT;
-   wire read_font = font_decode_state == FD_FONT_READ_REQ || font_decode_state == FD_FONT_READ_REQ_WAIT1 || font_decode_state == FD_FONT_READ_REQ_WAIT2;
+   wire read_text = 0; // font_decode_state == FD_TEXT_READ || font_decode_state == FD_TEXT_WAIT;
+   wire read_font = 0; // font_decode_state == FD_FONT_READ_REQ || font_decode_state == FD_FONT_READ_REQ_WAIT1 || font_decode_state == FD_FONT_READ_REQ_WAIT2;
    
    vga_output vga_output_inst (
          .sys_clk(sys_clk),
