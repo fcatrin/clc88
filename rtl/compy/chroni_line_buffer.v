@@ -26,9 +26,9 @@ reg[7:0]  bitmap_on;
 reg[7:0]  bitmap_off;
    
 always @ (posedge wr_clk) begin
+   wr_busy <= 0;
    if (~reset_n) begin
       bitmap_bits <= 0;
-      wr_busy <= 0;
       line_wr_en <= 0;
    end else if (wr_en && wr_bitmap_bits != 0) begin
       bitmap_data <= wr_data;
@@ -46,6 +46,8 @@ always @ (posedge wr_clk) begin
       
       bitmap_addr <= bitmap_addr + 1'b1;
       bitmap_bits <= bitmap_bits - 1'b1;
+      
+      wr_busy <= bitmap_bits != 1;
    end else begin
       if (wr_en) begin
          line_wr_data <= wr_data;
@@ -54,7 +56,6 @@ always @ (posedge wr_clk) begin
       end else begin
          line_wr_en <= 0;
       end
-      wr_busy <= 0;
    end
 end
 
