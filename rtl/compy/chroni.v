@@ -13,10 +13,42 @@ module chroni (
       output reg [12:0] addr_out,
       input [7:0] data_in,
       output reg rd_req,
-      input  rd_ack
+      input  rd_ack,
+      input [7:0] cpu_wr_data,
+      input [3:0] cpu_wr_addr,
+      input cpu_wr_en
       );
 
    `include "chroni.vh"
+   
+   localparam PAL_WRITE_IDLE = 0;
+   localparam PAL_WRITE_LO   = 1;
+   localparam PAL_WRITE_HI   = 2;
+   localparam PAL_WRITE      = 3;
+   
+   always @(posedge sys_clk) begin : register_write
+      reg[1:0] palette_write_state = PAL_WRITE_IDLE;
+      
+      palette_wr_en <= 0;
+      if (cpu_wr_en) begin
+         case (cpu_wr_addr)
+            4'd2:
+               palette_wr_addr  <= cpu_wr_data;
+            4'd3:
+               if (palette_write_state == PAL_WRITE_LO) begin
+                  palette_wr_data[7:0]  <= cpu_wr_data;
+                  palette_write_state   <= PAL_WRITE_HI;
+               end else begin
+                  palette_wr_data[15:8] <= cpu_wr_data;
+                  palette_write_state   <= PAL_WRITE;
+               end
+         endcase
+      end else if (palette_write_state == PAL_WRITE) begin
+         palette_wr_en <= 1;
+         palette_wr_addr <= palette_wr_addr + 1'b1;  // autoincrement palette index
+         palette_write_state <= PAL_WRITE_IDLE;
+      end
+   end
 
    localparam FD_IDLE       = 0;
    localparam FD_TEXT_READ  = 1;
@@ -194,6 +226,23 @@ module chroni (
          .q(text_buffer_data_rd)
       );
    
+   
+   reg[15:0]  palette_wr_data;
+   reg[7:0]   palette_wr_addr;
+   reg        palette_wr_en;
+   wire[15:0] palette_rd_addr;
+   wire[7:0]  palette_rd_data;
+   
+   dpram #(256, 8, 18) palette (
+         .data (palette_wr_data),
+         .rdaddress (palette_rd_addr),
+         .rdclock (vga_clk),
+         .wraddress (palette_wr_addr),
+         .wrclock (sys_clk),
+         .wren (palette_wr_en),
+         .q (palette_rd_data)
+      );
+   
    chroni_line_buffer chroni_line_buffer_inst (
          .reset_n(reset_n),
          .rd_clk(vga_clk),
@@ -238,7 +287,9 @@ module chroni (
          .pixel(pixel),
          .pixel_scale(vga_scale),
          .read_text(read_text),
-         .read_font(read_font)
+         .read_font(read_font),
+         .palette_rd_addr(palette_rd_addr),
+         .palette_rd_data(palette_rd_data)
       );
 
 endmodule

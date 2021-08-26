@@ -113,6 +113,10 @@ module system (
       .locked(pll_locked)
    );        // OUT
 
+   reg[7:0] chroni_wr_data = 0;
+   reg[3:0] chroni_wr_addr = 0;
+   reg      chroni_wr_en = 0;
+   
    chroni chroni_inst (
       .vga_clk(vga_clock),
       .sys_clk(sys_clk),
@@ -126,7 +130,10 @@ module system (
       .addr_out(chroni_addr),
       .data_in(data),
       .rd_req(chroni_rd_req),
-      .rd_ack(chroni_rd_ack)
+      .rd_ack(chroni_rd_ack),
+      .cpu_wr_data(chroni_wr_data),
+      .cpu_wr_addr(chroni_wr_addr),
+      .cpu_wr_en(chroni_wr_en)
    );
    
 endmodule

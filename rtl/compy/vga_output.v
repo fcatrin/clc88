@@ -18,7 +18,9 @@ module vga_output (
       input [7:0] pixel,
       output pixel_scale,
       input read_text,
-      input read_font
+      input read_font,
+      output reg[7:0] palette_rd_addr,
+      input  [15:0] palette_rd_data
       );
 
    `include "chroni.vh"
