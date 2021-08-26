@@ -172,7 +172,7 @@ module vga_output (
       else if(x_cnt == h_pf_end-2) h_pf_pix <= 1'b0;
       
       if (vga_scanline_end) begin
-         if (!render_start_busy && y_cnt == v_pf_start - 3) begin
+         if (!render_start_busy && y_cnt == v_pf_start - 2) begin
             render_start_req <= 1;
          end
          if (!scanline_start_busy) begin
@@ -233,7 +233,8 @@ module vga_output (
          if (y_cnt == v_pf_end) begin
             output_state <= 15;
          end else if (y_cnt == v_pf_start - 1) begin
-            output_state <= vga_scale ? 7 : 3;
+            output_state  <= 0;
+            output_buffer <= 0;
          end else if (output_state != 15) begin
             if (vga_scale) begin
                output_state <= output_state == 7 ? 0 : (output_state + 1);
