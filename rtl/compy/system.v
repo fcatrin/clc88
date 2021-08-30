@@ -45,10 +45,10 @@ module system (
    
    reg[3:0] bus_state;
    
-   localparam BUS_STATE_INIT      = 4'd0;
-   localparam BUS_STATE_READY     = 4'd1;
+   localparam BUS_STATE_IDLE             = 4'd0;
+   localparam BUS_STATE_READ             = 4'd1;
    localparam BUS_STATE_READ_DONE_CHRONI = 4'd3;
-   localparam BUS_STATE_READ_DONE_CPU = 4'd4;
+   localparam BUS_STATE_READ_DONE_CPU    = 4'd4;
    
    always @ (posedge sys_clk) begin
       reg key_mode_prev;
@@ -74,7 +74,7 @@ module system (
    
    always @ (posedge sys_clk) begin
       if (~reset_n) begin
-         bus_state  <= BUS_STATE_INIT;
+         bus_state  <= BUS_STATE_IDLE;
          
          chroni_rd_ack <= 0;
          cpu_rd_ack    <= 0;
@@ -82,13 +82,16 @@ module system (
          chroni_rd_ack <= 0;
          cpu_rd_ack    <= 0;
          case (bus_state)
-            BUS_STATE_INIT : 
+            BUS_STATE_IDLE: 
             begin
-               bus_state <= BUS_STATE_READY;
                chroni_dma <= chroni_dma_req;
+               if (chroni_rd_req | cpu_rd_req) begin
+                  bus_state <= BUS_STATE_READ;
+               end
             end
-            BUS_STATE_READY :
+            BUS_STATE_READ:
                begin
+                  bus_state <= BUS_STATE_IDLE;
                   if (chroni_rd_req) begin
                      bus_state <= BUS_STATE_READ_DONE_CHRONI;
                   end else if (!chroni_dma && cpu_rd_req) begin
@@ -98,12 +101,12 @@ module system (
             BUS_STATE_READ_DONE_CHRONI:
             begin
                chroni_rd_ack <= 1;
-               bus_state <= BUS_STATE_INIT;
+               bus_state <= BUS_STATE_IDLE;
             end
             BUS_STATE_READ_DONE_CPU:
             begin
                cpu_rd_ack <= 1;
-               bus_state <= BUS_STATE_INIT;
+               bus_state <= BUS_STATE_IDLE;
             end
          endcase
       end
