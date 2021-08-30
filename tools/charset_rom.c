@@ -54,7 +54,7 @@ static char *to_printable_pixels(int c) {
 int main(int argc, char *argv[]) {
 	FILE *f = fopen("../rtl/compy/rom.mif", "wb");
 	fprintf(f, "WIDTH=8;\n");
-	fprintf(f, "DEPTH=1092;\n");
+	fprintf(f, "DEPTH=1098;\n");
 	fprintf(f, "\n");
 	fprintf(f, "ADDRESS_RADIX=UNS;\n");
 	fprintf(f, "DATA_RADIX=HEX;\n");
@@ -67,6 +67,7 @@ int main(int argc, char *argv[]) {
 	// dump(f, "../res/fonts/charset_topaz_plus_a1200.bin", 1);
 	// dump("../res/charset_atari.bin", 0);
 	dump(f, "../res/chroni_test_text.txt", 0, 0);
+	dump(f, "../res/boot_code.bin", 0, 0);
 
 	fprintf(f, "END\n");
 	fclose(f);
