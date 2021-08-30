@@ -1,89 +1,19 @@
 <session jtag_chain="USB-Blaster [1-2.4.1]" jtag_device="@1: 10CL055(Y|Z)/EP3C55/EP4CE55 (0x020F50DD)" sof_file="output_files/compy.sof">
   <display_tree gui_logging_enabled="0">
-    <display_branch instance="auto_signaltap_0" log="USE_GLOBAL_TEMP" signal_set="USE_GLOBAL_TEMP" trigger="USE_GLOBAL_TEMP"/>
   </display_tree>
-  <instance enabled="true" entity_name="sld_signaltap" is_auto_node="yes" is_expanded="true" name="auto_signaltap_0" source_file="sld_signaltap.vhd">
+  <instance enabled="true" entity_name="sld_signaltap" is_auto_node="yes" is_expanded="false" name="auto_signaltap_0" source_file="sld_signaltap.vhd">
     <node_ip_info instance_id="0" mfg_id="110" node_id="0" version="6"/>
     <position_info>
-      <single attribute="active tab" value="0"/>
-      <single attribute="data horizontal scroll position" value="63"/>
+      <single attribute="active tab" value="1"/>
+      <single attribute="data horizontal scroll position" value="1018"/>
       <single attribute="data vertical scroll position" value="0"/>
       <single attribute="setup horizontal scroll position" value="0"/>
       <single attribute="setup vertical scroll position" value="0"/>
       <single attribute="zoom level denominator" value="1"/>
-      <single attribute="zoom level numerator" value="2"/>
+      <single attribute="zoom level numerator" value="1024"/>
       <single attribute="zoom offset denominator" value="1"/>
-      <single attribute="zoom offset numerator" value="65504"/>
+      <single attribute="zoom offset numerator" value="0"/>
     </position_info>
-    <signal_set global_temp="1" name="signal_set: 2021/08/17 00:03:00  #0">
-      <clock name="system:system_inst|chroni:chroni_inst|sys_clk" polarity="posedge" tap_mode="classic"/>
-      <config pipeline_level="0" ram_type="AUTO" reserved_data_nodes="0" reserved_storage_qualifier_nodes="0" reserved_trigger_nodes="0" sample_depth="512" trigger_in_enable="no" trigger_out_enable="no"/>
-      <top_entity/>
-      <signal_vec>
-        <trigger_input_vec>
-          <wire name="system:system_inst|chroni:chroni_inst|vga_output:vga_output_inst|render_start" tap_mode="classic"/>
-          <wire name="system:system_inst|chroni:chroni_inst|vga_output:vga_output_inst|scanline_start" tap_mode="classic"/>
-        </trigger_input_vec>
-        <data_input_vec>
-          <wire name="system:system_inst|chroni:chroni_inst|vga_output:vga_output_inst|render_start" tap_mode="classic"/>
-          <wire name="system:system_inst|chroni:chroni_inst|vga_output:vga_output_inst|scanline_start" tap_mode="classic"/>
-        </data_input_vec>
-        <storage_qualifier_input_vec>
-          <wire name="system:system_inst|chroni:chroni_inst|vga_output:vga_output_inst|render_start" tap_mode="classic"/>
-          <wire name="system:system_inst|chroni:chroni_inst|vga_output:vga_output_inst|scanline_start" tap_mode="classic"/>
-        </storage_qualifier_input_vec>
-      </signal_vec>
-      <presentation>
-        <unified_setup_data_view>
-          <node data_index="0" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" level-0="high" name="system:system_inst|chroni:chroni_inst|vga_output:vga_output_inst|render_start" storage_index="0" tap_mode="classic" trigger_index="0" type="unknown"/>
-          <node data_index="1" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="system:system_inst|chroni:chroni_inst|vga_output:vga_output_inst|scanline_start" storage_index="1" tap_mode="classic" trigger_index="1" type="unknown"/>
-        </unified_setup_data_view>
-        <data_view>
-          <net data_index="0" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" level-0="high" name="system:system_inst|chroni:chroni_inst|vga_output:vga_output_inst|render_start" storage_index="0" tap_mode="classic" trigger_index="0" type="unknown"/>
-          <net data_index="1" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="system:system_inst|chroni:chroni_inst|vga_output:vga_output_inst|scanline_start" storage_index="1" tap_mode="classic" trigger_index="1" type="unknown"/>
-        </data_view>
-        <setup_view>
-          <net data_index="0" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" level-0="high" name="system:system_inst|chroni:chroni_inst|vga_output:vga_output_inst|render_start" storage_index="0" tap_mode="classic" trigger_index="0" type="unknown"/>
-          <net data_index="1" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="system:system_inst|chroni:chroni_inst|vga_output:vga_output_inst|scanline_start" storage_index="1" tap_mode="classic" trigger_index="1" type="unknown"/>
-        </setup_view>
-        <trigger_in_editor/>
-        <trigger_out_editor/>
-      </presentation>
-      <trigger CRC="EDF91807" attribute_mem_mode="false" gap_record="true" global_temp="1" name="trigger: 2021/08/17 00:04:07  #0" position="pre" power_up_trigger_mode="false" record_data_gap="true" segment_size="64" storage_mode="off" storage_qualifier_disabled="no" storage_qualifier_port_is_pin="true" storage_qualifier_port_name="auto_stp_external_storage_qualifier" storage_qualifier_port_tap_mode="classic" trigger_type="circular">
-        <power_up_trigger position="pre" storage_qualifier_disabled="no"/>
-        <events use_custom_flow_control="no">
-          <level enabled="yes" name="condition1" type="basic">'system:system_inst|chroni:chroni_inst|vga_output:vga_output_inst|render_start' == high
-            <power_up enabled="yes">
-            </power_up>
-            <op_node/>
-          </level>
-        </events>
-        <storage_qualifier_events>
-          <transitional>11
-            <pwr_up_transitional>11</pwr_up_transitional>
-          </transitional>
-          <storage_qualifier_level type="basic">
-            <power_up>
-            </power_up>
-            <op_node/>
-          </storage_qualifier_level>
-          <storage_qualifier_level type="basic">
-            <power_up>
-            </power_up>
-            <op_node/>
-          </storage_qualifier_level>
-          <storage_qualifier_level type="basic">
-            <power_up>
-            </power_up>
-            <op_node/>
-          </storage_qualifier_level>
-        </storage_qualifier_events>
-        <log>
-          <data global_temp="1" name="log: Trig @ 2021/08/17 00:05:05 (0:0:0.1 elapsed)" power_up_mode="false" sample_depth="512" trigger_position="64">0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000011111111111111111111111100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000</data>
-          <extradata>1111111111111111111111111111111111111111111111111111111111111111T111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111</extradata>
-        </log>
-      </trigger>
-    </signal_set>
   </instance>
   <mnemonics>
     <table name="font_decode_state_table" width="7">
@@ -115,6 +45,170 @@
       <symbol name="FD_TEXT_DONE" value="0010000000"/>
       <symbol name="FD_TEXT_READ" value="0100000000"/>
       <symbol name="FD_TEXT_WAIT" value="1000000000"/>
+    </table>
+    <table name="bus_state_table" width="3">
+      <symbol name="BUS_STATE_INIT" value="001"/>
+      <symbol name="BUS_STATE_READY" value="010"/>
+      <symbol name="BUS_STATE_READ_REQ" value="100"/>
+    </table>
+    <table name="cpu_fetch_state_table" width="5">
+      <symbol name="CPU_DECODE_WAIT" value="00001"/>
+      <symbol name="CPU_EXECUTE" value="00010"/>
+      <symbol name="CPU_EXECUTE_WAIT" value="00100"/>
+      <symbol name="CPU_FETCH" value="01000"/>
+      <symbol name="CPU_WAIT" value="10000"/>
+    </table>
+    <table name="cpu_inst_state_table" width="3">
+      <symbol name="IMM_A" value="001"/>
+      <symbol name="JMP" value="010"/>
+      <symbol name="NOP" value="100"/>
+    </table>
+    <table name="data_rd_state_table" width="4">
+      <symbol name="DATA_READ" value="0001"/>
+      <symbol name="DATA_READ_H" value="0010"/>
+      <symbol name="DATA_READ_IDLE" value="0100"/>
+      <symbol name="DATA_READ_L" value="1000"/>
+    </table>
+    <table name="bus_state_table (1)" width="4">
+      <symbol name="BUS_STATE_INIT" value="0001"/>
+      <symbol name="BUS_STATE_READY" value="0010"/>
+      <symbol name="BUS_STATE_READ_DONE" value="0100"/>
+      <symbol name="BUS_STATE_READ_WAIT" value="1000"/>
+    </table>
+    <table name="font_decode_state_table (3)" width="11">
+      <symbol name="FD_FONT_DONE" value="00000000001"/>
+      <symbol name="FD_FONT_READ" value="00000000010"/>
+      <symbol name="FD_FONT_READ_REQ" value="00000000100"/>
+      <symbol name="FD_FONT_READ_REQ_WAIT1" value="00000001000"/>
+      <symbol name="FD_FONT_READ_REQ_WAIT2" value="00000010000"/>
+      <symbol name="FD_FONT_WAIT" value="00000100000"/>
+      <symbol name="FD_FONT_WRITE" value="00001000000"/>
+      <symbol name="FD_IDLE" value="00010000000"/>
+      <symbol name="FD_TEXT_DONE" value="00100000000"/>
+      <symbol name="FD_TEXT_READ" value="01000000000"/>
+      <symbol name="FD_TEXT_WAIT" value="10000000000"/>
+    </table>
+    <table name="cpu_fetch_state_table (1)" width="5">
+      <symbol name="CPU_DECODE_WAIT" value="00001"/>
+      <symbol name="CPU_EXECUTE" value="00010"/>
+      <symbol name="CPU_EXECUTE_WAIT" value="00100"/>
+      <symbol name="CPU_FETCH" value="01000"/>
+      <symbol name="CPU_WAIT" value="10000"/>
+    </table>
+    <table name="data_rd_state_table (1)" width="4">
+      <symbol name="DATA_READ" value="0001"/>
+      <symbol name="DATA_READ_H" value="0010"/>
+      <symbol name="DATA_READ_IDLE" value="0100"/>
+      <symbol name="DATA_READ_L" value="1000"/>
+    </table>
+    <table name="cpu_inst_state_table (1)" width="3">
+      <symbol name="IMM_A" value="001"/>
+      <symbol name="JMP" value="010"/>
+      <symbol name="NOP" value="100"/>
+    </table>
+    <table name="bus_state_table (2)" width="5">
+      <symbol name="BUS_STATE_INIT" value="00001"/>
+      <symbol name="BUS_STATE_READY" value="00010"/>
+      <symbol name="BUS_STATE_READ_DONE" value="00100"/>
+      <symbol name="BUS_STATE_READ_WAIT_CHRONI" value="01000"/>
+      <symbol name="BUS_STATE_READ_WAIT_CPU" value="10000"/>
+    </table>
+    <table name="bus_state_table (3)" width="3">
+      <symbol name="BUS_STATE_INIT" value="001"/>
+      <symbol name="BUS_STATE_READY" value="010"/>
+      <symbol name="BUS_STATE_READ_WAIT" value="100"/>
+    </table>
+    <table name="cpu_fetch_state_table (2)" width="5">
+      <symbol name="CPU_DECODE_WAIT" value="00001"/>
+      <symbol name="CPU_EXECUTE" value="00010"/>
+      <symbol name="CPU_FETCH" value="00100"/>
+      <symbol name="CPU_LOAD_INST" value="01000"/>
+      <symbol name="CPU_WAIT" value="10000"/>
+    </table>
+    <table name="bus_state_table (4)" width="4">
+      <symbol name="BUS_STATE_INIT" value="0001"/>
+      <symbol name="BUS_STATE_READY" value="0010"/>
+      <symbol name="BUS_STATE_READ_DONE_CHRONI" value="0100"/>
+      <symbol name="BUS_STATE_READ_DONE_CPU" value="1000"/>
+    </table>
+    <table name="font_decode_state_table (4)" width="10">
+      <symbol name="FD_FONT_DONE" value="0000000001"/>
+      <symbol name="FD_FONT_READ" value="0000000010"/>
+      <symbol name="FD_FONT_READ_REQ" value="0000000100"/>
+      <symbol name="FD_FONT_READ_REQ_WAIT1" value="0000001000"/>
+      <symbol name="FD_FONT_READ_REQ_WAIT2" value="0000010000"/>
+      <symbol name="FD_FONT_WAIT" value="0000100000"/>
+      <symbol name="FD_FONT_WRITE" value="0001000000"/>
+      <symbol name="FD_IDLE" value="0010000000"/>
+      <symbol name="FD_TEXT_READ" value="0100000000"/>
+      <symbol name="FD_TEXT_WAIT" value="1000000000"/>
+    </table>
+    <table name="cpu_fetch_state_table (3)" width="5">
+      <symbol name="CPU_DECODE_WAIT" value="00001"/>
+      <symbol name="CPU_EXECUTE" value="00010"/>
+      <symbol name="CPU_FETCH" value="00100"/>
+      <symbol name="CPU_LOAD_INST" value="01000"/>
+      <symbol name="CPU_WAIT" value="10000"/>
+    </table>
+    <table name="cpu_inst_state_table (2)" width="3">
+      <symbol name="IMM_A" value="001"/>
+      <symbol name="JMP" value="010"/>
+      <symbol name="NOP" value="100"/>
+    </table>
+    <table name="data_rd_state_table (2)" width="4">
+      <symbol name="DATA_READ" value="0001"/>
+      <symbol name="DATA_READ_H" value="0010"/>
+      <symbol name="DATA_READ_IDLE" value="0100"/>
+      <symbol name="DATA_READ_L" value="1000"/>
+    </table>
+    <table name="bus_rd_state_table" width="4">
+      <symbol name="DATA_READ" value="0001"/>
+      <symbol name="DATA_READ_H" value="0010"/>
+      <symbol name="DATA_READ_IDLE" value="0100"/>
+      <symbol name="DATA_READ_L" value="1000"/>
+    </table>
+    <table name="bus_rd_state_table (1)" width="4">
+      <symbol name="DATA_READ" value="0001"/>
+      <symbol name="DATA_READ_H" value="0010"/>
+      <symbol name="DATA_READ_IDLE" value="0100"/>
+      <symbol name="DATA_READ_L" value="1000"/>
+    </table>
+    <table name="cpu_fetch_state_table (4)" width="5">
+      <symbol name="CPU_DECODE_WAIT" value="00001"/>
+      <symbol name="CPU_EXECUTE" value="00010"/>
+      <symbol name="CPU_FETCH" value="00100"/>
+      <symbol name="CPU_LOAD_INST" value="01000"/>
+      <symbol name="CPU_WAIT" value="10000"/>
+    </table>
+    <table name="cpu_inst_state_table (3)" width="3">
+      <symbol name="IMM_A" value="001"/>
+      <symbol name="JMP" value="010"/>
+      <symbol name="NOP" value="100"/>
+    </table>
+    <table name="bus_rd_state_table (2)" width="4">
+      <symbol name="BUS_RD_BYTE" value="0001"/>
+      <symbol name="BUS_RD_IDLE" value="0010"/>
+      <symbol name="BUS_RD_WORD_H" value="0100"/>
+      <symbol name="BUS_RD_WORD_L" value="1000"/>
+    </table>
+    <table name="cpu_fetch_state_table (5)" width="6">
+      <symbol name="CPU_DECODE_WAIT" value="000001"/>
+      <symbol name="CPU_EXECUTE" value="000010"/>
+      <symbol name="CPU_EXECUTE_WAIT" value="000100"/>
+      <symbol name="CPU_FETCH" value="001000"/>
+      <symbol name="CPU_LOAD_INST" value="010000"/>
+      <symbol name="CPU_WAIT" value="100000"/>
+    </table>
+    <table name="cpu_inst_state_table (4)" width="3">
+      <symbol name="IMM_A" value="001"/>
+      <symbol name="JMP" value="010"/>
+      <symbol name="NOP" value="100"/>
+    </table>
+    <table name="bus_state_table (5)" width="4">
+      <symbol name="BUS_STATE_IDLE" value="0001"/>
+      <symbol name="BUS_STATE_READ" value="0010"/>
+      <symbol name="BUS_STATE_READ_DONE_CHRONI" value="0100"/>
+      <symbol name="BUS_STATE_READ_DONE_CPU" value="1000"/>
     </table>
   </mnemonics>
   <static_plugin_mnemonics/>
@@ -2201,6 +2295,9 @@ z/z/h8ZhJQ==
     
     
     
+    
+    
+    
     </embedded_sof_file>
     <embedded_sof_file id_crc_pairs="|30006E00,8B72EADA" name="compy.sof" size="1848612">eJzsnQdc08wbx9MCFREVFRUVNW7cuHFHceBCBHHgqgooioqAe8W9t75uxb0V
 91bcey9cr7j1/7r3Qv+NQKXQXI5e0pT2+b4f+0KSu+d3SWnud8/l6tO0HsVh
@@ -3869,19 +3966,22 @@ ZQ==
 
     
     
+    
+    
+    
     </embedded_sof_file>
   </embedded_sof_files>
   <global_info>
     <single attribute="active instance" value="0"/>
     <single attribute="config widget visible" value="1"/>
     <single attribute="data log widget visible" value="1"/>
-    <single attribute="hierarchy widget height" value="136"/>
+    <single attribute="hierarchy widget height" value="124"/>
     <single attribute="hierarchy widget visible" value="1"/>
     <single attribute="instance widget visible" value="1"/>
     <single attribute="jtag widget visible" value="1"/>
     <single attribute="lock mode" value="0"/>
     <multi attribute="column width" size="23" value="34,34,541,74,23,78,95,96,98,98,88,88,110,101,101,101,101,101,101,101,101,107,10"/>
-    <multi attribute="frame size" size="2" value="1460,957"/>
+    <multi attribute="frame size" size="2" value="1920,1023"/>
     <multi attribute="jtag widget size" size="2" value="366,157"/>
   </global_info>
 </session>
