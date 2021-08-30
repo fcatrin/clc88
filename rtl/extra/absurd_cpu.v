@@ -46,24 +46,20 @@ module absurd_cpu(
          cpu_fetch_state <= CPU_WAIT;
          pc <= 1092;
          fetch_rd_req    <= 0;
-         fetch_rd_byte_req <= 0;
       end else if (cpu_fetch_state == CPU_WAIT && reset_n) begin
          cpu_fetch_state <= CPU_FETCH;
          fetch_rd_req    <= 0;
-         fetch_rd_byte_req <= 0;
       end else begin 
          case(cpu_fetch_state)
             CPU_FETCH: 
                begin
                   fetch_rd_addr <= pc;
                   fetch_rd_req  <= 1;
-                  fetch_rd_byte_req <= 1;
                   cpu_fetch_state <= CPU_DECODE_WAIT;
                end
             CPU_DECODE_WAIT:
-               if (bus_rd_ack) begin
-                  fetch_rd_byte_req <= 0;
-                  fetch_rd_req  <= 0;
+               if (rd_ack) begin
+                  fetch_rd_req <= 0;
                   cpu_fetch_state <= CPU_LOAD_INST;
                end
             CPU_LOAD_INST:
@@ -139,67 +135,60 @@ module absurd_cpu(
    assign rd_req   = bus_rd_req;
    
    wire bus_rd_word_req = data_rd_word_req;
-   wire bus_rd_byte_req = data_rd_byte_req | fetch_rd_byte_req;
+   wire bus_rd_byte_req = data_rd_byte_req | fetch_rd_req;
+   wire bus_rd_data = bus_rd_word_req | bus_rd_byte_req;
    
    reg[15:0] data_rd_addr;
    reg[15:0] fetch_rd_addr;
    
    reg fetch_rd_req;
-   reg fetch_rd_byte_req;
    
    reg data_rd_word_req;
    reg data_rd_byte_req;
    
-   wire[15:0] bus_rd_addr = fetch_rd_byte_req ? fetch_rd_addr : data_rd_addr;
+   wire[15:0] bus_rd_addr = fetch_rd_req ? fetch_rd_addr : data_rd_addr;
 
-   localparam DATA_READ_IDLE = 0;
-   localparam DATA_READ = 1;
-   localparam DATA_READ_L = 2;
-   localparam DATA_READ_H = 3;
-   reg[3:0] bus_rd_state = DATA_READ_IDLE;
+   localparam BUS_RD_IDLE = 0;
+   localparam BUS_RD_BYTE = 1;
+   localparam BUS_RD_WORD_L = 2;
+   localparam BUS_RD_WORD_H = 3;
+   reg[3:0] bus_rd_state = BUS_RD_IDLE;
 
    always @ (posedge clk) begin : bus_read
-      reg bus_rd_word_req_prev;
-      reg bus_rd_byte_req_prev;
+      reg bus_rd_data_prev;
       
       bus_rd_ack <= 0;
       if (~reset_n) begin
          bus_rd_req <= 0;
-         bus_rd_word_req_prev <= 0;
-         bus_rd_byte_req_prev <= 0;
+         bus_rd_data_prev <= 0;
       end else begin
-         bus_rd_word_req_prev <= bus_rd_word_req;
-         bus_rd_byte_req_prev <= bus_rd_byte_req;
-         if (!bus_rd_word_req_prev && bus_rd_word_req) begin
-            bus_addr <= bus_rd_addr;
+         bus_rd_data_prev <= bus_rd_data;
+         if (!bus_rd_data_prev && bus_rd_data) begin
+            bus_addr   <= bus_rd_addr;
             bus_rd_req <= 1;
-            bus_rd_state <= DATA_READ_L;
-         end else if (!bus_rd_byte_req_prev && bus_rd_byte_req) begin
-            bus_addr <= bus_rd_addr;
-            bus_rd_req <= 1;
-            bus_rd_state <= DATA_READ;
+            bus_rd_state <= data_rd_byte_req ? BUS_RD_BYTE : BUS_RD_WORD_L;
          end else begin
             case(bus_rd_state)
-               DATA_READ_L:
-                  if (rd_ack) begin
-                     reg_word[7:0] <= rd_data;
-                     bus_addr   <= bus_rd_addr+1;
-                     bus_rd_req <= 1;
-                     bus_rd_state <= DATA_READ_H;
-                  end
-               DATA_READ_H:
-                  if (rd_ack) begin
-                     reg_word[15:8] <= rd_data;
-                     bus_rd_req <= 0;
-                     bus_rd_ack <= 1;
-                     bus_rd_state <= DATA_READ_IDLE;
-                  end
-               DATA_READ:
+               BUS_RD_BYTE:
                   if (rd_ack) begin
                      reg_byte <= rd_data;
                      bus_rd_req <= 0;
                      bus_rd_ack <= 1;
-                     bus_rd_state <= DATA_READ_IDLE;
+                     bus_rd_state <= BUS_RD_IDLE;
+                  end
+               BUS_RD_WORD_L:
+                  if (rd_ack) begin
+                     reg_word[7:0] <= rd_data;
+                     bus_addr   <= bus_rd_addr+1;
+                     bus_rd_req <= 1;
+                     bus_rd_state <= BUS_RD_WORD_H;
+                  end
+               BUS_RD_WORD_H:
+                  if (rd_ack) begin
+                     reg_word[15:8] <= rd_data;
+                     bus_rd_req <= 0;
+                     bus_rd_ack <= 1;
+                     bus_rd_state <= BUS_RD_IDLE;
                   end
             endcase
          end
