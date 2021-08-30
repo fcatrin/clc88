@@ -16,7 +16,8 @@ module chroni (
       input  rd_ack,
       input [7:0] cpu_wr_data,
       input [3:0] cpu_wr_addr,
-      input cpu_wr_en
+      input cpu_wr_en,
+      output reg dma_req
       );
 
    `include "chroni.vh"
@@ -81,6 +82,7 @@ module chroni (
          pixel_buffer_index_in <= 0;
          text_buffer_index <= 0;
          wr_bitmap_bits <= 0;
+         dma_req <= 0;
       end else begin
          render_flag_prev <= render_flag;
          if (~render_flag_prev && render_flag) begin
@@ -88,7 +90,8 @@ module chroni (
             pixel_buffer_index_in <=  render_buffer ? 11'd640 : 11'd0;
             rd_req <= 0;
             wr_en <= 0;
-            font_decode_state <= font_scan == 0 ? FD_TEXT_READ : FD_FONT_READ_REQ; 
+            font_decode_state <= font_scan == 0 ? FD_TEXT_READ : FD_FONT_READ_REQ;
+            dma_req <= 1;
          end else begin
             case (font_decode_state)
                FD_IDLE: 
@@ -105,12 +108,8 @@ module chroni (
                   font_decode_state <= FD_TEXT_WAIT;
                end
                FD_TEXT_WAIT:
-                  if (rd_ack) begin
-                     rd_req <= 0;
-                     font_decode_state <= FD_TEXT_DONE;
-                  end
-               FD_TEXT_DONE:
-               begin
+               if (rd_ack) begin
+                  rd_req <= 0;
                   text_buffer_addr    <= text_buffer_index;
                   text_buffer_data_wr <= data_in;
                   text_buffer_we <= 1;
@@ -144,12 +143,13 @@ module chroni (
                FD_FONT_WAIT:
                   if (rd_ack) begin
                      rd_req <= 0;
+                     pixel_out_next <= data_in;
                      font_decode_state <= FD_FONT_WRITE;
                   end
                FD_FONT_WRITE:
                   if (!wr_busy) begin
+                     pixel_out <= pixel_out_next;
                      wr_en <= 1;
-                     pixel_out <= data_in;
                      wr_bitmap_on   <= 8'b1;
                      wr_bitmap_off  <= 8'b0;
                      wr_bitmap_bits <= 4'd8;
@@ -163,6 +163,7 @@ module chroni (
                   if (text_buffer_index == 80) begin
                      font_decode_state <= FD_IDLE;
                      font_scan <= font_scan + 1'b1;
+                     dma_req <= 0;
                   end else begin
                      font_decode_state <= FD_FONT_READ_REQ_WAIT1;
                      text_buffer_addr  <= text_buffer_index;
@@ -211,6 +212,7 @@ module chroni (
    reg[7:0] wr_bitmap_on;
    reg[7:0] wr_bitmap_off;
    reg[7:0] pixel_out;
+   reg[7:0] pixel_out_next;
    wire wr_busy;
 
    reg[6:0] text_buffer_addr;
@@ -266,8 +268,8 @@ module chroni (
    wire vga_render_start;
    wire vga_scanline_start;
    
-   wire read_text = 0; // font_decode_state == FD_TEXT_READ || font_decode_state == FD_TEXT_WAIT;
-   wire read_font = 0; // font_decode_state == FD_FONT_READ_REQ || font_decode_state == FD_FONT_READ_REQ_WAIT1 || font_decode_state == FD_FONT_READ_REQ_WAIT2;
+   wire read_text = font_decode_state == FD_TEXT_READ || font_decode_state == FD_TEXT_WAIT;
+   wire read_font = font_decode_state == FD_FONT_READ_REQ || font_decode_state == FD_FONT_READ_REQ_WAIT1 || font_decode_state == FD_FONT_READ_REQ_WAIT2;
    
    vga_output vga_output_inst (
          .sys_clk(sys_clk),
