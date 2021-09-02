@@ -80,12 +80,19 @@ module cornet_cpu(
       end
    end
    
-   localparam NOP   = 0;
-   localparam JMP   = 1;
-   localparam LDA   = 2;
-   localparam LDX   = 3;
+   localparam NOP       = 0;
+   localparam JMP       = 1;
+   localparam LDA       = 2;
+   localparam LDX       = 3;
+   localparam LDA_ABS_X = 4;
+   localparam INX       = 5;
+   localparam BRANCH    = 6;
+   localparam NO_BRANCH = 7;
+   localparam LDA_ADDR  = 8;
    
    reg[4:0] cpu_inst_state = NOP;
+   reg[4:0] cpu_next_op    = NOP;
+   
    reg      cpu_inst_done;
    
    reg[15:0] op_addr;
@@ -123,7 +130,6 @@ module cornet_cpu(
                end
                8'hE8: /* INX */
                begin
-                  reg_x <= reg_x + 1;
                   cpu_inst_state <= INX;
                   pc_delta <= 1;
                end
@@ -134,7 +140,7 @@ module cornet_cpu(
                   cpu_inst_state <= JMP;
                   pc_delta <= 0;
                end
-               8'D0: /* BNE */
+               8'hD0: /* BNE */
                if (flag_z) begin
                   data_rd_byte_req <= 1;
                   data_rd_addr <= pc + 1'b1;
@@ -160,10 +166,12 @@ module cornet_cpu(
    
    always @ (posedge clk) begin : cpu_execute
       cpu_inst_done  <= 0;
+      cpu_next_op    <= NOP;
       case (cpu_inst_state)
          INX:
          begin
-            flag_z <= reg_x == 0;
+            reg_x  <= reg_x + 1;
+            flag_z <= reg_x == 8'hff;
             pc_next <= pc + pc_delta;
             cpu_inst_done <= 1;
          end
@@ -182,7 +190,7 @@ module cornet_cpu(
          LDA_ABS_X:
          if (bus_rd_ack) begin
             op_addr <= reg_word + reg_x;
-            cpu_next_op = LDA_ADDR;
+            cpu_next_op <= LDA_ADDR;
          end
          JMP:
             if (bus_rd_ack) begin
