@@ -24,6 +24,7 @@ module absurd_cpu(
 
    reg[15:0] pc = 1092;
    reg[15:0] pc_next;
+   reg[1:0]  pc_delta;
    reg[7:0]  reg_i;
    reg[7:0]  reg_a;
    reg[7:0]  reg_x;
@@ -87,7 +88,7 @@ module absurd_cpu(
    reg[4:0] cpu_inst_state = NOP;
    reg      cpu_inst_done;
    
-   reg[15:0] mem_rd_addr;
+   reg[15:0] op_addr;
    
    always @ (posedge clk) begin : cpu_decode
       data_rd_word_req <= 0;
@@ -102,23 +103,43 @@ module absurd_cpu(
                   data_rd_byte_req <= 1;
                   data_rd_addr <= pc + 1'b1;
                   cpu_inst_state <= LDX;
+                  pc_delta <= 2;
                end
                8'hA9: /* LDA # */
                begin
                   data_rd_byte_req <= 1;
                   data_rd_addr <= pc + 1'b1;
                   cpu_inst_state <= LDA;
+                  pc_delta <= 2;
+               end
+               8'hBD: /* LDA $,X */
+               begin
+                  data_rd_word_req <= 1;
+                  data_rd_addr <= pc + 1'b1; 
+                  cpu_inst_state <= LDA_ABS_X;
+                  pc_delta <= 2;
                end
                8'hE8: /* INX */
                begin
                   reg_x <= reg_x + 1;
                   cpu_inst_state <= DONE;
+                  pc_delta <= 1;
                end
                8'h4C: /* JMP $ */
                begin
                   data_rd_word_req <= 1;
                   data_rd_addr <= pc + 1'b1; 
                   cpu_inst_state <= JMP;
+                  pc_delta <= 0;
+               end
+            endcase
+         end else begin
+            case (cpu_next_op)
+               LDA_ADDR:
+               begin
+                  data_rd_byte_req <= 1;
+                  data_rd_addr <= op_addr;
+                  cpu_inst_state <= LDA;
                end
             endcase
          end
@@ -130,25 +151,30 @@ module absurd_cpu(
       case (cpu_inst_state)
          DONE:
          begin
-            pc_next <= pc + 1'd1;
+            pc_next <= pc + pc_delta;
             cpu_inst_done <= 1;
          end
          LDA:
          if (bus_rd_ack) begin
             reg_a <= reg_byte;
-            pc_next <= pc + 2'd2;
+            pc_next <= pc + pc_delta;
             cpu_inst_done <= 1;
          end
          LDX:
          if (bus_rd_ack) begin
             reg_x <= reg_byte;
-            pc_next <= pc + 2'd2;
+            pc_next <= pc + pc_delta;
             cpu_inst_done <= 1;
          end
          JMP:
          if (bus_rd_ack) begin
             pc_next <= reg_word;
             cpu_inst_done <= 1;
+         end
+         LDA_ABS_X:
+         if (bus_rd_ack) begin
+            op_addr <= reg_word + reg_x;
+            cpu_next_op = LDA_ADDR;
          end
       endcase
    end
