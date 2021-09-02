@@ -11,7 +11,7 @@
 
 `timescale 1ns / 1ps
 
-module absurd_cpu(
+module cornet_cpu(
       input clk,
       input reset_n,
       output reg[15:0] bus_addr,

@@ -159,7 +159,7 @@ module system (
    wire[7:0] cpu_wr_data;
    wire      cpu_wr_en;
    
-   absurd_cpu absurd_cpu_inst (
+   cornet_cpu cornet_cpu_inst (
          .clk(sys_clk),
          .reset_n(reset_n),
          .bus_addr(cpu_addr),
