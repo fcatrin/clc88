@@ -1,11 +1,12 @@
 /*
-   Absurd CPU
+   Cornet CPU
 
-   This is a 6502 based CPU just for doing testing before adding a real CPU
+   This an absurdly simple 6502 based CPU just for doing testing before adding a real CPU
    
    This CPU implements a "just enough" instruction set to test the 
    integration of components as they are being created/connected
    
+   Don't look unless you need a good laugh
 */
 
 `timescale 1ns / 1ps
