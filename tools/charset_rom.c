@@ -1,36 +1,75 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <errno.h>
 
-static int addr = 0;
+#define MEM_SIZE 0x10000
+char rom[MEM_SIZE];
 
 static int to_printable_char(char c);
 static char *to_printable_pixels(int c);
 
-static void dump(FILE *fout, const char *filename, int dups, int is_font) {
-	FILE *f = fopen(filename, "rb");
-	if (!f) return;
-
-	int c = 0;
-	int line = 0;
+static void load(FILE *f, int dups, int addr, int size) {
 	int skip = 1;
-	while (fread(&c, 1, 1, f)){
+	char c = 0;
+	while (fread(&c, 1, 1, f) && size > 0 && addr < MEM_SIZE){
 		skip = 1 - skip;
 		if (skip && dups) continue;
 
-		char comment[200];
-		if (is_font) {
-			sprintf(comment, "%s", to_printable_pixels(c));
-		} else {
-			sprintf(comment, "%c", to_printable_char(c));
+		rom[addr++] = (char)c;
+		size--;
+	}
+}
+
+static void load_bin(char *filename, int addr) {
+	FILE *f = fopen(filename, "rb");
+	if (!f) {
+		fprintf(stderr, "Error opening %s: %s\n", filename, strerror(errno));
+		return;
+	}
+
+	load(f, 0, addr, MEM_SIZE);
+	fclose(f);
+}
+
+static void load_xex(char *filename) {
+	char buffer[2];
+
+	FILE *f = fopen(filename, "rb");
+	if (!f) {
+		fprintf(stderr, "Error opening %s: %s\n", filename, strerror(errno));
+		return;
+	}
+
+	int n=0;
+	while((n = fread(buffer, 2, 1, f))) {
+		if ((buffer[0] & buffer[1]) == 0xFF) {
+			continue;
 		}
+		int offset = buffer[0] + (buffer[1] << 8);
+		fread(buffer, 2, 1, f);
+		int size = buffer[0] + (buffer[1] << 8) - offset + 1;
+		printf("reading offset %04X size: %04X", offset, size);
+
+		load(f, 0, offset, size);
+	}
+
+	fclose(f);
+
+}
+
+static void dump(FILE *fout, int addr) {
+	int line = 0;
+	for(int i=addr; i<0x10000; i++) {
+		char c = rom[addr];
+
+		char comment[200];
+		sprintf(comment, "%c %s", to_printable_char(c), to_printable_pixels(c));
 
 		fprintf(fout, "%d : %02X; -- %s\n", addr, c, comment);
 
 		addr++;
-		if (line++ == 1023) break;
-	};
-	fclose(f);
+	}
 }
 
 static int to_printable_char(char c) {
@@ -51,24 +90,32 @@ static char *to_printable_pixels(int c) {
 	return buffer;
 }
 
-int main(int argc, char *argv[]) {
+static void create_mif(char *filename, int base_addr) {
+	int size = MEM_SIZE - base_addr;
+
 	FILE *f = fopen("../rtl/compy/rom.mif", "wb");
 	fprintf(f, "WIDTH=8;\n");
-	fprintf(f, "DEPTH=1098;\n");
+	fprintf(f, "DEPTH=%d;\n", size);
 	fprintf(f, "\n");
 	fprintf(f, "ADDRESS_RADIX=UNS;\n");
 	fprintf(f, "DATA_RADIX=HEX;\n");
 	fprintf(f, "\n");
 	fprintf(f, "CONTENT BEGIN\n");
 
-	// dump(f, "../res/fonts/charset_topaz_a500.bin", 1);
-	// dump(f, "../res/fonts/charset_topaz_a1200.bin", 1);
-	dump(f, "../res/fonts/charset_topaz_plus_a500.bin", 1, 1);
-	// dump(f, "../res/fonts/charset_topaz_plus_a1200.bin", 1);
-	// dump("../res/charset_atari.bin", 0);
-	dump(f, "../res/chroni_test_text.txt", 0, 0);
-	dump(f, "../res/boot_code.bin", 0, 0);
+	dump(f, base_addr);
 
 	fprintf(f, "END\n");
 	fclose(f);
+
+}
+
+int main(int argc, char *argv[]) {
+	load_bin("../res/fonts/charset_atari.bin",            0xC000);
+	load_bin("../res/fonts/charset_topaz_a500.bin",       0xC400);
+	load_bin("../res/fonts/charset_topaz_a1200.bin",      0xC800);
+	load_bin("../res/fonts/charset_topaz_plus_a500.bin",  0xCC00);
+	load_bin("../res/fonts/charset_topaz_plus_a1200.bin", 0xCC00);
+	load_xex("../res/rom.xex");
+
+	create_mif("../rtl/compy/rom.mif", 0xC000);
 }
