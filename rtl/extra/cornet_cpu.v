@@ -90,6 +90,8 @@ module absurd_cpu(
    
    reg[15:0] op_addr;
    
+   reg flag_z;
+   
    always @ (posedge clk) begin : cpu_decode
       data_rd_word_req <= 0;
       data_rd_byte_req <= 0;
@@ -122,7 +124,7 @@ module absurd_cpu(
                8'hE8: /* INX */
                begin
                   reg_x <= reg_x + 1;
-                  cpu_inst_state <= DONE;
+                  cpu_inst_state <= INX;
                   pc_delta <= 1;
                end
                8'h4C: /* JMP $ */
@@ -131,6 +133,16 @@ module absurd_cpu(
                   data_rd_addr <= pc + 1'b1; 
                   cpu_inst_state <= JMP;
                   pc_delta <= 0;
+               end
+               8'D0: /* BNE */
+               if (flag_z) begin
+                  data_rd_byte_req <= 1;
+                  data_rd_addr <= pc + 1'b1;
+                  cpu_inst_state <= BRANCH;
+                  pc_delta <= 0;
+               end else begin
+                  cpu_inst_state <= NO_BRANCH;
+                  pc_delta <= 2;
                end
             endcase
          end else begin
@@ -149,8 +161,9 @@ module absurd_cpu(
    always @ (posedge clk) begin : cpu_execute
       cpu_inst_done  <= 0;
       case (cpu_inst_state)
-         DONE:
+         INX:
          begin
+            flag_z <= reg_x == 0;
             pc_next <= pc + pc_delta;
             cpu_inst_done <= 1;
          end
@@ -166,15 +179,25 @@ module absurd_cpu(
             pc_next <= pc + pc_delta;
             cpu_inst_done <= 1;
          end
-         JMP:
-         if (bus_rd_ack) begin
-            pc_next <= reg_word;
-            cpu_inst_done <= 1;
-         end
          LDA_ABS_X:
          if (bus_rd_ack) begin
             op_addr <= reg_word + reg_x;
             cpu_next_op = LDA_ADDR;
+         end
+         JMP:
+            if (bus_rd_ack) begin
+               pc_next <= reg_word;
+               cpu_inst_done <= 1;
+            end
+         NO_BRANCH:
+         begin
+            pc_next <= pc + pc_delta;
+            cpu_inst_done <= 1;
+         end
+         BRANCH:
+         if (bus_rd_ack) begin
+            pc_next <= pc + 2 + (reg_byte[7] ? -(~reg_byte) : reg_byte);
+            cpu_inst_done <= 1;
          end
       endcase
    end
