@@ -80,8 +80,9 @@ module absurd_cpu(
    end
    
    localparam NOP   = 0;
-   localparam IMM_A = 1;
-   localparam JMP   = 2;
+   localparam JMP   = 1;
+   localparam LDA   = 2;
+   localparam LDX   = 3;
    
    reg[4:0] cpu_inst_state = NOP;
    reg      cpu_inst_done;
@@ -96,11 +97,17 @@ module absurd_cpu(
       end else begin
          if (cpu_fetch_state == CPU_EXECUTE) begin
             case (reg_i)
+               8'hA2: /* LDX # */
+               begin
+                  data_rd_byte_req <= 1;
+                  data_rd_addr <= pc + 1'b1;
+                  cpu_inst_state <= LDX;
+               end
                8'hA9: /* LDA # */
                begin
                   data_rd_byte_req <= 1;
                   data_rd_addr <= pc + 1'b1;
-                  cpu_inst_state <= IMM_A;
+                  cpu_inst_state <= LDA;
                end
                8'h4C: /* JMP $ */
                begin
@@ -116,9 +123,15 @@ module absurd_cpu(
    always @ (posedge clk) begin : cpu_execute
       cpu_inst_done  <= 0;
       case (cpu_inst_state)
-         IMM_A:
+         LDA:
          if (bus_rd_ack) begin
             reg_a <= reg_byte;
+            pc_next <= pc + 2'd2;
+            cpu_inst_done <= 1;
+         end
+         LDX:
+         if (bus_rd_ack) begin
+            reg_x <= reg_byte;
             pc_next <= pc + 2'd2;
             cpu_inst_done <= 1;
          end
