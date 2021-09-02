@@ -109,6 +109,11 @@ module absurd_cpu(
                   data_rd_addr <= pc + 1'b1;
                   cpu_inst_state <= LDA;
                end
+               8'hE8: /* INX */
+               begin
+                  reg_x <= reg_x + 1;
+                  cpu_inst_state <= DONE;
+               end
                8'h4C: /* JMP $ */
                begin
                   data_rd_word_req <= 1;
@@ -123,6 +128,11 @@ module absurd_cpu(
    always @ (posedge clk) begin : cpu_execute
       cpu_inst_done  <= 0;
       case (cpu_inst_state)
+         DONE:
+         begin
+            pc_next <= pc + 1'd1;
+            cpu_inst_done <= 1;
+         end
          LDA:
          if (bus_rd_ack) begin
             reg_a <= reg_byte;
