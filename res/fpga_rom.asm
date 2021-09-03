@@ -1,4 +1,4 @@
-   org $fffe
+   org $fffc
    .word START
    
    org $ff00
