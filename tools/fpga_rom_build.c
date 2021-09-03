@@ -67,7 +67,7 @@ static void dump(FILE *fout, int addr) {
 		char comment[200];
 		sprintf(comment, "%c %s", to_printable_char(c), to_printable_pixels(c));
 
-		fprintf(fout, "%d : %02X; -- %s\n", addr, c, comment);
+		fprintf(fout, "%04X : %02X; -- %s\n", addr, c, comment);
 
 		addr++;
 	}
@@ -98,7 +98,7 @@ static void create_mif(char *filename, int base_addr) {
 	fprintf(f, "WIDTH=8;\n");
 	fprintf(f, "DEPTH=%d;\n", size);
 	fprintf(f, "\n");
-	fprintf(f, "ADDRESS_RADIX=UNS;\n");
+	fprintf(f, "ADDRESS_RADIX=HEX;\n");
 	fprintf(f, "DATA_RADIX=HEX;\n");
 	fprintf(f, "\n");
 	fprintf(f, "CONTENT BEGIN\n");
