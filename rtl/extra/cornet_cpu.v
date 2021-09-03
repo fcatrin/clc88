@@ -140,7 +140,7 @@ module cornet_cpu(
                   data_rd_word_req <= 1;
                   data_rd_addr <= pc + 1'b1; 
                   cpu_inst_state <= LDA_ABS_X;
-                  pc_delta <= 2;
+                  pc_delta <= 3;
                end
                8'hE8: /* INX */
                begin
@@ -155,7 +155,7 @@ module cornet_cpu(
                   pc_delta <= 0;
                end
                8'hD0: /* BNE */
-               if (flag_z) begin
+               if (!flag_z) begin
                   data_rd_byte_req <= 1;
                   data_rd_addr <= pc + 1'b1;
                   cpu_inst_state <= BRANCH;
@@ -165,6 +165,8 @@ module cornet_cpu(
                   pc_delta <= 2;
                end
             endcase
+         end else if (cpu_fetch_state == CPU_FETCH) begin
+            cpu_inst_state <= NOP;
          end else begin
             case (cpu_next_op)
                LDA_ADDR:
@@ -181,54 +183,56 @@ module cornet_cpu(
    always @ (posedge clk) begin : cpu_execute
       cpu_inst_done  <= 0;
       cpu_next_op    <= NOP;
-      case (cpu_inst_state)
-         RESET:
-         if (bus_rd_ack) begin
-            reg_a <= 0;
-            reg_x <= 0;
-            pc_next <= reg_word;
-            cpu_inst_done <= 1;
-         end
-         INX:
-         begin
-            reg_x  <= reg_x + 1;
-            flag_z <= reg_x == 8'hff;
-            pc_next <= pc + pc_delta;
-            cpu_inst_done <= 1;
-         end
-         LDA:
-         if (bus_rd_ack) begin
-            reg_a <= reg_byte;
-            pc_next <= pc + pc_delta;
-            cpu_inst_done <= 1;
-         end
-         LDX:
-         if (bus_rd_ack) begin
-            reg_x <= reg_byte;
-            pc_next <= pc + pc_delta;
-            cpu_inst_done <= 1;
-         end
-         LDA_ABS_X:
-         if (bus_rd_ack) begin
-            op_addr <= reg_word + reg_x;
-            cpu_next_op <= LDA_ADDR;
-         end
-         JMP:
+      if (cpu_inst_done == 0 && cpu_fetch_state == CPU_EXECUTE_WAIT) begin
+         case (cpu_inst_state)
+            RESET:
             if (bus_rd_ack) begin
+               reg_a <= 0;
+               reg_x <= 0;
                pc_next <= reg_word;
                cpu_inst_done <= 1;
             end
-         NO_BRANCH:
-         begin
-            pc_next <= pc + pc_delta;
-            cpu_inst_done <= 1;
-         end
-         BRANCH:
-         if (bus_rd_ack) begin
-            pc_next <= pc + 2 + (reg_byte[7] ? -(~reg_byte) : reg_byte);
-            cpu_inst_done <= 1;
-         end
-      endcase
+            INX:
+            begin
+               reg_x  <= reg_x + 1;
+               flag_z <= reg_x == 8'hff;
+               pc_next <= pc + pc_delta;
+               cpu_inst_done <= 1;
+            end
+            LDA:
+            if (bus_rd_ack) begin
+               reg_a <= reg_byte;
+               pc_next <= pc + pc_delta;
+               cpu_inst_done <= 1;
+            end
+            LDX:
+            if (bus_rd_ack) begin
+               reg_x <= reg_byte;
+               pc_next <= pc + pc_delta;
+               cpu_inst_done <= 1;
+            end
+            LDA_ABS_X:
+            if (bus_rd_ack) begin
+               op_addr <= reg_word + reg_x;
+               cpu_next_op <= LDA_ADDR;
+            end
+            JMP:
+               if (bus_rd_ack) begin
+                  pc_next <= reg_word;
+                  cpu_inst_done <= 1;
+               end
+            NO_BRANCH:
+            begin
+               pc_next <= pc + pc_delta;
+               cpu_inst_done <= 1;
+            end
+            BRANCH:
+            if (bus_rd_ack) begin
+               pc_next <= (pc + $signed(reg_byte)) + 2;
+               cpu_inst_done <= 1;
+            end
+         endcase
+      end
    end
    
    reg bus_rd_req;

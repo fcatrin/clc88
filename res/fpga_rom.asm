@@ -6,6 +6,10 @@
    
    org $ff00
 START:
-   LDA #$92
+   LDX #10
+load:
+   LDA $e030, x
+   inx
+   bne load
    JMP START
    
