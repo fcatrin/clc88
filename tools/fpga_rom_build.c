@@ -67,7 +67,7 @@ static void dump(FILE *fout, int addr) {
 		char comment[200];
 		sprintf(comment, "%c %s", to_printable_char(c), to_printable_pixels(c));
 
-		fprintf(fout, "%04X : %02X; -- %s\n", addr, c, comment);
+		fprintf(fout, "%04X : %02X; -- %s\n", (i-addr), c, comment);
 
 		addr++;
 	}
