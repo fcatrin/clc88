@@ -113,7 +113,7 @@ module system (
    end
    
    reg chroni_dma;
-   wire[10:0] rom_addr = chroni_dma ? chroni_addr[10:0] : cpu_addr[10:0]; 
+   wire[12:0] rom_addr = chroni_dma ? chroni_addr[12:0] : cpu_addr[12:0]; 
    
    rom rom_inst (
       .clock(sys_clk),

@@ -41,7 +41,7 @@ module rom (
 	clock,
 	q);
 
-	input	[14:0]  address;
+	input	[12:0]  address;
 	input	  clock;
 	output	[7:0]  q;
 `ifndef ALTERA_RESERVED_QIS
@@ -91,7 +91,7 @@ module rom (
 		altsyncram_component.operation_mode = "ROM",
 		altsyncram_component.outdata_aclr_a = "NONE",
 		altsyncram_component.outdata_reg_a = "CLOCK0",
-		altsyncram_component.widthad_a = 15,
+		altsyncram_component.widthad_a = 13,
 		altsyncram_component.width_a = 8,
 		altsyncram_component.width_byteena_a = 1;
 

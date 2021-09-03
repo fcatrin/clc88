@@ -66,7 +66,7 @@ module chroni (
    
    // state machine to read char or font from rom
    always @(posedge sys_clk) begin : char_gen
-      reg[10:0] text_rom_addr;
+      reg[12:0] text_rom_addr;
       reg       render_flag_prev;
       reg[2:0]  font_scan;
       reg[6:0]  text_buffer_index;
@@ -78,7 +78,7 @@ module chroni (
          wr_en <= 0;
          render_flag_prev <= 0;
          font_scan <= 0;
-         text_rom_addr <= 1025;
+         text_rom_addr <= 13'h1e00;
          pixel_buffer_index_in <= 0;
          text_buffer_index <= 0;
          wr_bitmap_bits <= 0;
@@ -102,7 +102,7 @@ module chroni (
                FD_TEXT_READ:
                begin
                   addr_out <= text_rom_addr;
-                  text_rom_addr <= text_rom_addr == 11'd1092 ? 11'd1025 : (text_rom_addr + 1'b1);
+                  text_rom_addr <= text_rom_addr == 13'h1e14 ? 13'h1e00 : (text_rom_addr + 1'b1);
 
                   rd_req <= 1;
                   font_decode_state <= FD_TEXT_WAIT;

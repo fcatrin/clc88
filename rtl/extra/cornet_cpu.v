@@ -40,19 +40,25 @@ module cornet_cpu(
    localparam CPU_LOAD_INST    = 3;
    localparam CPU_EXECUTE      = 4;
    localparam CPU_EXECUTE_WAIT = 5;
+   localparam CPU_RESET        = 6;
    
    reg[2:0] cpu_fetch_state = CPU_WAIT;
+   reg cpu_reset;
    
    always @ (posedge clk) begin : cpu_fetch
+      cpu_reset <= 0;
       if (~reset_n) begin
          cpu_fetch_state <= CPU_WAIT;
-         pc <= 1092;
          fetch_rd_req    <= 0;
       end else if (cpu_fetch_state == CPU_WAIT && reset_n) begin
-         cpu_fetch_state <= CPU_FETCH;
-         fetch_rd_req    <= 0;
+         cpu_fetch_state <= CPU_RESET;
       end else begin 
          case(cpu_fetch_state)
+            CPU_RESET:
+            begin
+               cpu_reset <= 1;
+               cpu_fetch_state <= CPU_EXECUTE;
+            end
             CPU_FETCH: 
                begin
                   fetch_rd_addr <= pc;
@@ -70,7 +76,10 @@ module cornet_cpu(
                   cpu_fetch_state <= CPU_EXECUTE;
                end
             CPU_EXECUTE:
+            begin
                cpu_fetch_state <= CPU_EXECUTE_WAIT;
+               cpu_reset <= 0;
+            end
             CPU_EXECUTE_WAIT:
                if (cpu_inst_done) begin
                   pc <= pc_next;
@@ -81,14 +90,15 @@ module cornet_cpu(
    end
    
    localparam NOP       = 0;
-   localparam JMP       = 1;
-   localparam LDA       = 2;
-   localparam LDX       = 3;
-   localparam LDA_ABS_X = 4;
-   localparam INX       = 5;
-   localparam BRANCH    = 6;
-   localparam NO_BRANCH = 7;
-   localparam LDA_ADDR  = 8;
+   localparam RESET     = 1;
+   localparam JMP       = 2;
+   localparam LDA       = 3;
+   localparam LDX       = 4;
+   localparam LDA_ABS_X = 5;
+   localparam INX       = 6;
+   localparam BRANCH    = 7;
+   localparam NO_BRANCH = 8;
+   localparam LDA_ADDR  = 9;
    
    reg[4:0] cpu_inst_state = NOP;
    reg[4:0] cpu_next_op    = NOP;
@@ -105,7 +115,11 @@ module cornet_cpu(
       if (~reset_n) begin
          cpu_inst_state <= NOP;
       end else begin
-         if (cpu_fetch_state == CPU_EXECUTE) begin
+         if (cpu_reset) begin
+            data_rd_word_req <= 1;
+            data_rd_addr <= 16'hFFFC; 
+            cpu_inst_state <= RESET;
+         end else if (cpu_fetch_state == CPU_EXECUTE) begin
             case (reg_i)
                8'hA2: /* LDX # */
                begin
@@ -168,6 +182,13 @@ module cornet_cpu(
       cpu_inst_done  <= 0;
       cpu_next_op    <= NOP;
       case (cpu_inst_state)
+         RESET:
+         if (bus_rd_ack) begin
+            reg_a <= 0;
+            reg_x <= 0;
+            pc_next <= reg_word;
+            cpu_inst_done <= 1;
+         end
          INX:
          begin
             reg_x  <= reg_x + 1;
@@ -247,7 +268,7 @@ module cornet_cpu(
          if (!bus_rd_data_prev && bus_rd_data) begin
             bus_addr   <= bus_rd_addr;
             bus_rd_req <= 1;
-            bus_rd_state <= data_rd_byte_req ? BUS_RD_BYTE : BUS_RD_WORD_L;
+            bus_rd_state <= bus_rd_byte_req ? BUS_RD_BYTE : BUS_RD_WORD_L;
          end else begin
             case(bus_rd_state)
                BUS_RD_BYTE:

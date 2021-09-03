@@ -62,14 +62,12 @@ static void load_xex(char *filename) {
 static void dump(FILE *fout, int addr) {
 	int line = 0;
 	for(int i=addr; i<0x10000; i++) {
-		uint8_t c = rom[addr];
+		uint8_t c = rom[i];
 
 		char comment[200];
 		sprintf(comment, "%c %s", to_printable_char(c), to_printable_pixels(c));
 
 		fprintf(fout, "%04X : %02X; -- %s\n", (i-addr), c, comment);
-
-		addr++;
 	}
 }
 
@@ -115,7 +113,7 @@ int main(int argc, char *argv[]) {
 	load_bin("../res/fonts/charset_topaz_a500.bin",       0xE400);
 	load_bin("../res/fonts/charset_topaz_a1200.bin",      0xE800);
 	load_bin("../res/fonts/charset_topaz_plus_a500.bin",  0xEC00);
-	load_bin("../res/fonts/charset_topaz_plus_a1200.bin", 0xEC00);
+	// load_bin("../res/fonts/charset_topaz_plus_a1200.bin", 0xEC00);
 	load_xex("../res/fpga_rom.xex");
 
 	create_mif("../rtl/compy/rom.mif", 0xE000);
