@@ -165,7 +165,7 @@ module system (
          .bus_addr(cpu_addr),
          .rd_data(data),
          .wr_data(cpu_wr_data),
-         .wr_enable(cpu_wr_en),
+         .wr_en(cpu_wr_en),
          .rd_req(cpu_rd_req),
          .rd_ack(cpu_rd_ack)
       );

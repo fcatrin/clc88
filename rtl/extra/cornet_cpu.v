@@ -17,7 +17,7 @@ module cornet_cpu(
       output reg[15:0] bus_addr,
       input [7:0]  rd_data,
       output[7:0]  wr_data,
-      output wr_enable,
+      output wr_en,
       output rd_req,
       input  rd_ack
 );
@@ -99,6 +99,9 @@ module cornet_cpu(
    localparam BRANCH    = 7;
    localparam NO_BRANCH = 8;
    localparam LDA_ADDR  = 9;
+   localparam STA       = 10;
+   localparam STA_ABS   = 11;
+   localparam STA_ADDR  = 12; 
    
    reg[4:0] cpu_inst_state = NOP;
    reg[4:0] cpu_next_op    = NOP;
@@ -112,6 +115,7 @@ module cornet_cpu(
    always @ (posedge clk) begin : cpu_decode
       data_rd_word_req <= 0;
       data_rd_byte_req <= 0;
+      data_wr_en <= 0;
       if (~reset_n) begin
          cpu_inst_state <= NOP;
       end else begin
@@ -135,6 +139,13 @@ module cornet_cpu(
                   cpu_inst_state <= LDA;
                   pc_delta <= 2;
                end
+               8'h8D: /* STA $ */
+               begin
+                  data_rd_word_req <= 1;
+                  data_rd_addr <= pc + 1'b1; 
+                  cpu_inst_state <= STA_ABS;
+                  pc_delta <= 3;
+               end                  
                8'hBD: /* LDA $,X */
                begin
                   data_rd_word_req <= 1;
@@ -174,6 +185,13 @@ module cornet_cpu(
                   data_rd_byte_req <= 1;
                   data_rd_addr <= op_addr;
                   cpu_inst_state <= LDA;
+               end
+               STA_ADDR:
+               begin
+                  data_wr_addr <= op_addr; 
+                  data_wr_data <= reg_a;
+                  data_wr_en   <= 1;
+                  cpu_inst_state <= STA;
                end
             endcase
          end
@@ -216,6 +234,16 @@ module cornet_cpu(
                op_addr <= reg_word + reg_x;
                cpu_next_op <= LDA_ADDR;
             end
+            STA_ABS:
+            if (bus_rd_ack) begin
+               op_addr <= reg_word;
+               cpu_next_op <= STA_ADDR;
+            end
+            STA:
+            begin
+               pc_next <= pc + pc_delta;
+               cpu_inst_done <= 1;
+            end
             JMP:
                if (bus_rd_ack) begin
                   pc_next <= reg_word;
@@ -237,15 +265,24 @@ module cornet_cpu(
    
    reg bus_rd_req;
    reg bus_rd_ack;
+   reg bus_wr_en;
    
+   assign wr_en    = bus_wr_en;
    assign rd_req   = bus_rd_req;
    
+   reg[7:0] bus_wr_data;
+   assign wr_data = bus_wr_data;
+      
    wire bus_rd_word_req = data_rd_word_req;
    wire bus_rd_byte_req = data_rd_byte_req | fetch_rd_req;
    wire bus_rd_data = bus_rd_word_req | bus_rd_byte_req;
    
    reg[15:0] data_rd_addr;
    reg[15:0] fetch_rd_addr;
+   
+   reg[15:0] data_wr_addr; 
+   reg[7:0]  data_wr_data;
+   reg       data_wr_en;
    
    reg fetch_rd_req;
    
@@ -254,16 +291,18 @@ module cornet_cpu(
    
    wire[15:0] bus_rd_addr = fetch_rd_req ? fetch_rd_addr : data_rd_addr;
 
-   localparam BUS_RD_IDLE = 0;
-   localparam BUS_RD_BYTE = 1;
+   localparam BUS_RD_IDLE   = 0;
+   localparam BUS_RD_BYTE   = 1;
    localparam BUS_RD_WORD_L = 2;
    localparam BUS_RD_WORD_H = 3;
+   localparam BUS_WR_BYTE   = 4;
    reg[3:0] bus_rd_state = BUS_RD_IDLE;
 
-   always @ (posedge clk) begin : bus_read
+   always @ (posedge clk) begin : bus_access
       reg bus_rd_data_prev;
       
       bus_rd_ack <= 0;
+      bus_wr_en  <= 0;
       if (~reset_n) begin
          bus_rd_req <= 0;
          bus_rd_data_prev <= 0;
@@ -296,6 +335,13 @@ module cornet_cpu(
                      bus_rd_ack <= 1;
                      bus_rd_state <= BUS_RD_IDLE;
                   end
+               BUS_WR_BYTE:
+               begin
+                  bus_wr_en    <= 1;
+                  bus_addr     <= data_wr_addr;
+                  bus_wr_data  <= data_wr_data;
+                  bus_rd_state <= BUS_RD_IDLE;
+               end
             endcase
          end
       end
