@@ -4,6 +4,7 @@ module chroni (
       input vga_clk,
       input sys_clk,
       input reset_n,
+      input cs,
       input [1:0] vga_mode_in,
       output vga_hs,
       output vga_vs,
@@ -31,10 +32,13 @@ module chroni (
       reg[1:0] palette_write_state = PAL_WRITE_IDLE;
       
       palette_wr_en <= 0;
-      if (cpu_wr_en) begin
+      if (cs && cpu_wr_en) begin
          case (cpu_wr_addr)
             4'd2:
+            begin
                palette_wr_addr  <= cpu_wr_data;
+               palette_write_state <= PAL_WRITE_LO;
+            end
             4'd3:
                if (palette_write_state == PAL_WRITE_LO) begin
                   palette_wr_data[7:0]  <= cpu_wr_data;
