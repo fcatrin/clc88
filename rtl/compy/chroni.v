@@ -144,7 +144,7 @@ module chroni (
                end
                FD_FONT_READ:
                begin
-                  addr_out <= {font_base, text_buffer_data_rd, font_scan};
+                  addr_out <= {font_base, text_buffer_data_rd[6:0], font_scan};
                   font_decode_state <= FD_FONT_WAIT;
                   rd_req <= 1;
                end
