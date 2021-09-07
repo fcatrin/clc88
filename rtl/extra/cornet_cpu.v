@@ -312,6 +312,11 @@ module cornet_cpu(
             bus_addr   <= bus_rd_addr;
             bus_rd_req <= 1;
             bus_rd_state <= bus_rd_byte_req ? BUS_RD_BYTE : BUS_RD_WORD_L;
+         end else if (data_wr_en) begin
+            bus_addr     <= data_wr_addr;
+            bus_wr_data  <= data_wr_data;
+            bus_wr_en    <= data_wr_en;
+            bus_rd_state <= BUS_RD_IDLE;
          end else begin
             case(bus_rd_state)
                BUS_RD_BYTE:
@@ -335,13 +340,6 @@ module cornet_cpu(
                      bus_rd_ack <= 1;
                      bus_rd_state <= BUS_RD_IDLE;
                   end
-               BUS_WR_BYTE:
-               begin
-                  bus_wr_en    <= data_wr_en;
-                  bus_addr     <= data_wr_addr;
-                  bus_wr_data  <= data_wr_data;
-                  bus_rd_state <= BUS_RD_IDLE;
-               end
             endcase
          end
       end
