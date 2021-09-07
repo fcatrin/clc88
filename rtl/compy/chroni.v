@@ -34,12 +34,12 @@ module chroni (
       palette_wr_en <= 0;
       if (cs && cpu_wr_en) begin
          case (cpu_wr_addr)
-            4'd2:
+            4'd4:
             begin
                palette_wr_addr  <= cpu_wr_data;
                palette_write_state <= PAL_WRITE_LO;
             end
-            4'd3:
+            4'd5:
                if (palette_write_state == PAL_WRITE_LO) begin
                   palette_wr_data[7:0]  <= cpu_wr_data;
                   palette_write_state   <= PAL_WRITE_HI;
@@ -52,6 +52,8 @@ module chroni (
          palette_wr_en <= 1;
          palette_wr_addr <= palette_wr_addr + 1'b1;  // autoincrement palette index
          palette_write_state <= PAL_WRITE_IDLE;
+         
+         font_base = palette_wr_data[1:0];
       end
    end
 
@@ -67,7 +69,9 @@ module chroni (
    localparam FD_FONT_WRITE = 9;
    localparam FD_FONT_DONE  = 10;
    reg[3:0]  font_decode_state;
-   
+
+   reg[1:0]  font_base;
+
    // state machine to read char or font from rom
    always @(posedge sys_clk) begin : char_gen
       reg[12:0] text_rom_addr;
@@ -140,7 +144,7 @@ module chroni (
                end
                FD_FONT_READ:
                begin
-                  addr_out <= {text_buffer_data_rd, font_scan};
+                  addr_out <= {font_base, text_buffer_data_rd, font_scan};
                   font_decode_state <= FD_FONT_WAIT;
                   rd_req <= 1;
                end
