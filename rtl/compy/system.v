@@ -115,6 +115,8 @@ module system (
    reg chroni_dma;
    wire[12:0] rom_addr = chroni_dma ? chroni_addr[12:0] : cpu_addr[12:0]; 
    
+   wire chroni_cs = cpu_addr[15:7] == 9'b100100000;
+   
    rom rom_inst (
       .clock(sys_clk),
       .address(rom_addr),
@@ -131,15 +133,13 @@ module system (
       .locked(pll_locked)
    );        // OUT
 
-   reg[7:0] chroni_wr_data = 0;
-   reg[3:0] chroni_wr_addr = 0;
-   reg      chroni_wr_en = 0;
    wire     chroni_dma_req;
    
    chroni chroni_inst (
       .vga_clk(vga_clock),
       .sys_clk(sys_clk),
       .reset_n(reset_n),
+      .cs(chroni_cs),
       .vga_mode_in(vga_mode),
       .vga_hs(vga_hs),
       .vga_vs(vga_vs),
@@ -150,9 +150,9 @@ module system (
       .data_in(data),
       .rd_req(chroni_rd_req),
       .rd_ack(chroni_rd_ack),
-      .cpu_wr_data(chroni_wr_data),
-      .cpu_wr_addr(chroni_wr_addr),
-      .cpu_wr_en(chroni_wr_en),
+      .cpu_wr_data(cpu_wr_data),
+      .cpu_wr_addr(cpu_addr[3:0]),
+      .cpu_wr_en(cpu_wr_en),
       .dma_req(chroni_dma_req)
    );
    
