@@ -10,7 +10,7 @@ uint8_t rom[MEM_SIZE];
 static int to_printable_char(char c);
 static char *to_printable_pixels(int c);
 
-static void load(FILE *f, int dups, int addr, int size) {
+static void load(FILE *f, int addr, int size, int dups) {
 	int skip = 1;
 	uint8_t c = 0;
 	while (size > 0 && addr < MEM_SIZE && fread(&c, 1, 1, f)){
@@ -22,14 +22,14 @@ static void load(FILE *f, int dups, int addr, int size) {
 	}
 }
 
-static void load_bin(char *filename, int addr) {
+static void load_bin(char *filename, int addr, int dups) {
 	FILE *f = fopen(filename, "rb");
 	if (!f) {
 		fprintf(stderr, "Error opening %s: %s\n", filename, strerror(errno));
 		return;
 	}
 
-	load(f, 0, addr, MEM_SIZE);
+	load(f, addr, MEM_SIZE, dups);
 	fclose(f);
 }
 
@@ -52,7 +52,7 @@ static void load_xex(char *filename) {
 		unsigned int size = buffer[0] + (buffer[1] << 8) - offset + 1;
 		printf("reading offset %04X size: %04X\n", offset, size);
 
-		load(f, 0, offset, size);
+		load(f, offset, size, 0);
 	}
 
 	fclose(f);
@@ -60,7 +60,6 @@ static void load_xex(char *filename) {
 }
 
 static void dump(FILE *fout, int addr) {
-	int line = 0;
 	for(int i=addr; i<0x10000; i++) {
 		uint8_t c = rom[i];
 
@@ -109,11 +108,11 @@ static void create_mif(char *filename, int base_addr) {
 }
 
 int main(int argc, char *argv[]) {
-	load_bin("../res/fonts/charset_atari.bin",            0xE000);
-	load_bin("../res/fonts/charset_topaz_a500.bin",       0xE400);
-	load_bin("../res/fonts/charset_topaz_a1200.bin",      0xE800);
-	load_bin("../res/fonts/charset_topaz_plus_a500.bin",  0xEC00);
-	// load_bin("../res/fonts/charset_topaz_plus_a1200.bin", 0xEC00);
+	load_bin("../res/fonts/charset_atari.bin",            0xE000, 1);
+	load_bin("../res/fonts/charset_topaz_a500.bin",       0xE400, 1);
+	load_bin("../res/fonts/charset_topaz_a1200.bin",      0xE800, 1);
+	load_bin("../res/fonts/charset_topaz_plus_a500.bin",  0xEC00, 1);
+	// load_bin("../res/fonts/charset_topaz_plus_a1200.bin", 0xEC00, 1);
 	load_xex("../res/fpga_rom.xex");
 
 	create_mif("../rtl/compy/rom.mif", 0xE000);
