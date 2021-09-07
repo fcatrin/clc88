@@ -39,7 +39,7 @@
 set_global_assignment -name FAMILY "Cyclone IV E"
 set_global_assignment -name DEVICE EP4CE55F23C8
 set_global_assignment -name TOP_LEVEL_ENTITY compy
-set_global_assignment -name NUM_PARALLEL_PROCESSORS 4
+set_global_assignment -name NUM_PARALLEL_PROCESSORS ALL
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 12.1
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "20:42:36  AUGUST 19, 2015"
 set_global_assignment -name LAST_QUARTUS_VERSION "18.1.0 Lite Edition"

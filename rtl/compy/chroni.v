@@ -190,16 +190,16 @@ module chroni (
          vga_scanline_start_prev <= vga_scanline_start;
          if (!vga_scanline_start_prev && vga_scanline_start) begin
             if (vga_render_start) begin
-               render_state <= vga_scale ? 7 : 3;
+               render_state <= vga_scale ? 4'd7 : 4'd3;
             end else if (render_state != 15) begin
                if (vga_scale) begin
-                  render_state  <= render_state == 7 ? 0 : (render_state + 1);
+                  render_state  <= render_state == 7 ? 4'd0 : (render_state + 1'b1);
                   render_flag   <= render_state == 7 || render_state == 3;
-                  render_buffer <= render_state == 7 ? 0 : 1;
+                  render_buffer <= render_state == 7 ? 1'b0 : 1'b1;
                end else begin
-                  render_state  <= render_state == 3 ? 0 : (render_state + 1);
+                  render_state  <= render_state == 3 ? 4'd0 : (render_state + 1'b1);
                   render_flag   <= render_state[0];
-                  render_buffer <= render_state == 3 ? 0 : 1;
+                  render_buffer <= render_state == 3 ? 1'b0 : 1'b1;
                end
             end
          end

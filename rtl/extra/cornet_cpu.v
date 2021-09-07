@@ -212,7 +212,7 @@ module cornet_cpu(
             end
             INX:
             begin
-               reg_x  <= reg_x + 1;
+               reg_x  <= reg_x + 1'b1;
                flag_z <= reg_x == 8'hff;
                pc_next <= pc + pc_delta;
                cpu_inst_done <= 1;
@@ -256,7 +256,7 @@ module cornet_cpu(
             end
             BRANCH:
             if (bus_rd_ack) begin
-               pc_next <= (pc + $signed(reg_byte)) + 2;
+               pc_next <= (pc + $signed(reg_byte)) + 2'd2;
                cpu_inst_done <= 1;
             end
          endcase
@@ -324,7 +324,7 @@ module cornet_cpu(
                BUS_RD_WORD_L:
                   if (rd_ack) begin
                      reg_word[7:0] <= rd_data;
-                     bus_addr   <= bus_rd_addr+1;
+                     bus_addr   <= bus_rd_addr + 1'b1;
                      bus_rd_req <= 1;
                      bus_rd_state <= BUS_RD_WORD_H;
                   end
@@ -337,7 +337,7 @@ module cornet_cpu(
                   end
                BUS_WR_BYTE:
                begin
-                  bus_wr_en    <= 1;
+                  bus_wr_en    <= data_wr_en;
                   bus_addr     <= data_wr_addr;
                   bus_wr_data  <= data_wr_data;
                   bus_rd_state <= BUS_RD_IDLE;

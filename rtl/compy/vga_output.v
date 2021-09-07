@@ -239,14 +239,14 @@ module vga_output (
             output_buffer <= 0;
          end else if (output_state != 15) begin
             if (vga_scale) begin
-               output_state <= output_state == 7 ? 0 : (output_state + 1);
+               output_state <= output_state == 4'd7 ? 4'd0 : (output_state + 1'b1);
                if (output_state == 7) begin
                   output_buffer <= 0;
                end else if (output_state == 3) begin
                   output_buffer <= 1;
                end
             end else begin
-               output_state <= output_state == 3 ? 0 : (output_state + 1);
+               output_state <= output_state == 4'd3 ? 4'd0 : (output_state + 1'b1);
                if (output_state == 3) begin
                   output_buffer <= 0;
                end else if (output_state == 1) begin
