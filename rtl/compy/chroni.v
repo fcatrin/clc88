@@ -29,31 +29,34 @@ module chroni (
    localparam PAL_WRITE      = 3;
    
    always @(posedge sys_clk) begin : register_write
-      reg[1:0] palette_write_state = PAL_WRITE_IDLE;
+      reg[1:0]  palette_write_state = PAL_WRITE_IDLE;
+      reg[7:0]  palette_write_index;
+      reg[15:0] palette_write_value;
       
       palette_wr_en <= 0;
       if (cs && cpu_wr_en) begin
          case (cpu_wr_addr)
             4'd4:
             begin
-               palette_wr_addr  <= cpu_wr_data;
+               palette_write_index <= cpu_wr_data;
                palette_write_state <= PAL_WRITE_LO;
             end
             4'd5:
                if (palette_write_state == PAL_WRITE_LO) begin
-                  palette_wr_data[7:0]  <= cpu_wr_data;
+                  palette_write_value[7:0]  <= cpu_wr_data;
                   palette_write_state   <= PAL_WRITE_HI;
                end else begin
-                  palette_wr_data[15:8] <= cpu_wr_data;
+                  palette_write_value[15:8] <= cpu_wr_data;
                   palette_write_state   <= PAL_WRITE;
                end
          endcase
       end else if (palette_write_state == PAL_WRITE) begin
-         palette_wr_en <= 1;
-         palette_wr_addr <= palette_wr_addr + 1'b1;  // autoincrement palette index
-         palette_write_state <= PAL_WRITE_IDLE;
+         palette_wr_en   <= 1;
+         palette_wr_addr <= palette_write_index;
+         palette_wr_data <= palette_write_value;
          
-         font_base = palette_wr_data[1:0];
+         palette_write_state <= PAL_WRITE_LO;
+         palette_write_index <= palette_write_index + 1'b1; // autoincrement palette index
       end
    end
 
@@ -69,8 +72,6 @@ module chroni (
    localparam FD_FONT_WRITE = 9;
    localparam FD_FONT_DONE  = 10;
    reg[3:0]  font_decode_state;
-
-   reg[1:0]  font_base;
 
    // state machine to read char or font from rom
    always @(posedge sys_clk) begin : char_gen
@@ -144,7 +145,7 @@ module chroni (
                end
                FD_FONT_READ:
                begin
-                  addr_out <= {font_base, text_buffer_data_rd[6:0], font_scan};
+                  addr_out <= {text_buffer_data_rd, font_scan};
                   font_decode_state <= FD_FONT_WAIT;
                   rd_req <= 1;
                end
@@ -241,10 +242,11 @@ module chroni (
    reg[15:0]  palette_wr_data;
    reg[7:0]   palette_wr_addr;
    reg        palette_wr_en;
-   wire[15:0] palette_rd_addr;
-   wire[7:0]  palette_rd_data;
    
-   dpram #(256, 8, 18) palette (
+   wire[7:0]  palette_rd_addr = pixel;
+   wire[15:0] palette_rd_data;
+   
+   dpram #(256, 8, 16) palette (
          .data (palette_wr_data),
          .rdaddress (palette_rd_addr),
          .rdclock (vga_clk),
@@ -270,7 +272,8 @@ module chroni (
       );
    
    wire [10:0] pixel_buffer_index_out;
-   wire [7:0]pixel;
+   wire [7:0]  pixel;
+   
    wire vga_scale;
    wire vga_mode_changed;
    wire vga_frame_start;
@@ -295,12 +298,10 @@ module chroni (
          .render_start(vga_render_start),
          .scanline_start(vga_scanline_start),
          .pixel_buffer_index_out(pixel_buffer_index_out),
-         .pixel(pixel),
+         .pixel(palette_rd_data),
          .pixel_scale(vga_scale),
          .read_text(read_text),
-         .read_font(read_font),
-         .palette_rd_addr(palette_rd_addr),
-         .palette_rd_data(palette_rd_data)
+         .read_font(read_font)
       );
 
 endmodule
