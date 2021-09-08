@@ -108,7 +108,7 @@ static void create_mif(char *filename, int base_addr) {
 }
 
 int main(int argc, char *argv[]) {
-	load_bin("../res/fonts/charset_atari.bin",            0xE000, 1);
+	load_bin("../res/fonts/charset_atari.bin",            0xE000, 0);
 	load_bin("../res/fonts/charset_topaz_a500.bin",       0xE400, 1);
 	load_bin("../res/fonts/charset_topaz_a1200.bin",      0xE800, 1);
 	load_bin("../res/fonts/charset_topaz_plus_a500.bin",  0xEC00, 1);
