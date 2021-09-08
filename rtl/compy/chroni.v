@@ -194,7 +194,8 @@ module chroni (
          vga_scanline_start_prev <= vga_scanline_start;
          if (!vga_scanline_start_prev && vga_scanline_start) begin
             if (vga_render_start) begin
-               render_state <= vga_scale ? 4'd7 : 4'd3;
+               render_state  <= 0;
+               render_flag   <= 1;
             end else if (render_state != 15) begin
                if (vga_scale) begin
                   render_state  <= render_state == 7 ? 4'd0 : (render_state + 1'b1);
