@@ -152,6 +152,8 @@ module dpram_ab
       parameter data_width = 8)
      (address_a,
       address_b,
+      address_en_a,
+      address_en_b,
       clock,
       data_a,
       data_b,
@@ -162,6 +164,8 @@ module dpram_ab
 
    input [addr_width-1:0]  address_a;
    input [addr_width-1:0]  address_b;
+   input   address_en_a;
+   input   address_en_b;
    input   clock;
    input [data_width-1:0]  data_a;
    input [data_width-1:0]  data_b;
@@ -196,8 +200,8 @@ module dpram_ab
          .q_b (sub_wire1),
          .aclr0 (1'b0),
          .aclr1 (1'b0),
-         .addressstall_a (1'b0),
-         .addressstall_b (1'b0),
+         .addressstall_a (!address_en_a),
+         .addressstall_b (!address_en_b),
          .byteena_a (1'b1),
          .byteena_b (1'b1),
          .clock1 (1'b1),
