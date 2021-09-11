@@ -265,6 +265,8 @@ module chroni (
    
    dpram_ab #(131072, 17, 8) vram (
          .clock(sys_clk),
+         .address_en_a(vram_cs),
+         .address_en_b(1'b1),
          .address_a(vram_cpu_addr),
          .address_b(vram_chroni_addr),
          .data_a(vram_cpu_wr_data),
