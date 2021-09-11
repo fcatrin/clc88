@@ -2,7 +2,8 @@
    .word START
 
    org $fe00
-   .byte 'This is Compy CLC-88'
+test_string:
+   .byte 'This is Compy CLC-88', 0
    
 BG_COLOR = $29AC   
 FG_COLOR = $F75B
@@ -24,11 +25,33 @@ START:
    LDA #>FG_COLOR
    STA $9005
    
-   LDX #10
-load:
-   LDA $e030, x
+   LDX #0
+load1:
+   LDA $e000, x
+   sta $a000, x
    inx
-   bne load
+   bne load1
+load2:
+   LDA $e100, x
+   sta $a100, x
+   inx
+   bne load2
+load3:
+   LDA $e200, x
+   sta $a200, x
+   inx
+   bne load3
+load4:
+   LDA $e300, x
+   sta $a300, x
+   inx
+   bne load4
+load5:
+   LDA test_string, x
+   beq halt
+   sta $be00, x
+   inx
+   bne load5
 halt:
    JMP halt
    

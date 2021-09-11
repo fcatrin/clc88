@@ -24,10 +24,6 @@ module system (
    
    wire[7:0]  rom_data;
    
-   wire[13:0] chroni_addr;
-   wire       chroni_rd_req;
-   reg        chroni_rd_ack;
-   
    wire[15:0] cpu_addr;
    wire       cpu_rd_req;
    reg        cpu_rd_ack;
@@ -47,8 +43,7 @@ module system (
    
    localparam BUS_STATE_IDLE             = 4'd0;
    localparam BUS_STATE_READ             = 4'd1;
-   localparam BUS_STATE_READ_DONE_CHRONI = 4'd3;
-   localparam BUS_STATE_READ_DONE_CPU    = 4'd4;
+   localparam BUS_STATE_READ_DONE_CPU    = 4'd2;
    
    always @ (posedge sys_clk) begin
       reg key_mode_prev;
@@ -75,34 +70,23 @@ module system (
    always @ (posedge sys_clk) begin
       if (~reset_n) begin
          bus_state  <= BUS_STATE_IDLE;
-         
-         chroni_rd_ack <= 0;
          cpu_rd_ack    <= 0;
       end else   begin
-         chroni_rd_ack <= 0;
          cpu_rd_ack    <= 0;
          case (bus_state)
             BUS_STATE_IDLE: 
             begin
-               chroni_dma <= chroni_dma_req;
-               if (chroni_rd_req | cpu_rd_req) begin
+               if (cpu_rd_req) begin
                   bus_state <= BUS_STATE_READ;
                end
             end
             BUS_STATE_READ:
                begin
                   bus_state <= BUS_STATE_IDLE;
-                  if (chroni_rd_req) begin
-                     bus_state <= BUS_STATE_READ_DONE_CHRONI;
-                  end else if (!chroni_dma && cpu_rd_req) begin
+                  if (cpu_rd_req) begin
                      bus_state <= BUS_STATE_READ_DONE_CPU;
                   end
                end
-            BUS_STATE_READ_DONE_CHRONI:
-            begin
-               chroni_rd_ack <= 1;
-               bus_state <= BUS_STATE_IDLE;
-            end
             BUS_STATE_READ_DONE_CPU:
             begin
                cpu_rd_ack <= 1;
@@ -112,10 +96,7 @@ module system (
       end
    end
    
-   reg chroni_dma;
-   wire[12:0] rom_addr = chroni_dma ? chroni_addr[12:0] : cpu_addr[12:0]; 
-   
-   wire chroni_cs = cpu_addr[15:7] == 9'b100100000;
+   wire[12:0] rom_addr = cpu_addr[12:0]; 
    
    rom rom_inst (
       .clock(sys_clk),
@@ -133,27 +114,19 @@ module system (
       .locked(pll_locked)
    );        // OUT
 
-   wire     chroni_dma_req;
-   
    chroni chroni_inst (
       .vga_clk(vga_clock),
       .sys_clk(sys_clk),
       .reset_n(reset_n),
-      .cs(chroni_cs),
       .vga_mode_in(vga_mode),
       .vga_hs(vga_hs),
       .vga_vs(vga_vs),
       .vga_r(vga_r),
       .vga_g(vga_g),
       .vga_b(vga_b),
-      .addr_out(chroni_addr),
-      .data_in(data),
-      .rd_req(chroni_rd_req),
-      .rd_ack(chroni_rd_ack),
       .cpu_wr_data(cpu_wr_data),
-      .cpu_wr_addr(cpu_addr[3:0]),
       .cpu_wr_en(cpu_wr_en),
-      .dma_req(chroni_dma_req)
+      .cpu_addr(cpu_addr)
    );
    
    wire[7:0] cpu_wr_data;

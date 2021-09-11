@@ -4,21 +4,15 @@ module chroni (
       input vga_clk,
       input sys_clk,
       input reset_n,
-      input cs,
       input [1:0] vga_mode_in,
       output vga_hs,
       output vga_vs,
       output [4:0] vga_r,
       output [5:0] vga_g,
       output [4:0] vga_b,
-      output reg [12:0] addr_out,
-      input [7:0] data_in,
-      output reg rd_req,
-      input  rd_ack,
-      input [7:0] cpu_wr_data,
-      input [3:0] cpu_wr_addr,
-      input cpu_wr_en,
-      output reg dma_req
+      input [7:0]  cpu_wr_data,
+      input [15:0] cpu_addr,
+      input cpu_wr_en
       );
 
    `include "chroni.vh"
@@ -28,14 +22,16 @@ module chroni (
    localparam PAL_WRITE_HI   = 2;
    localparam PAL_WRITE      = 3;
    
+   wire register_cs = cpu_addr[15:4] == 12'b100100000000;
+   
    always @(posedge sys_clk) begin : register_write
       reg[1:0]  palette_write_state = PAL_WRITE_IDLE;
       reg[7:0]  palette_write_index;
       reg[15:0] palette_write_value;
       
       palette_wr_en <= 0;
-      if (cs && cpu_wr_en) begin
-         case (cpu_wr_addr)
+      if (register_cs && cpu_wr_en) begin
+         case (cpu_addr[3:0])
             4'd4:
             begin
                palette_write_index <= cpu_wr_data;
@@ -62,20 +58,24 @@ module chroni (
 
    localparam FD_IDLE       = 0;
    localparam FD_TEXT_READ  = 1;
-   localparam FD_TEXT_WAIT  = 2;
-   localparam FD_TEXT_DONE  = 3;
-   localparam FD_FONT_READ_REQ = 4; 
-   localparam FD_FONT_READ_REQ_WAIT1 = 5;
-   localparam FD_FONT_READ_REQ_WAIT2 = 6;
-   localparam FD_FONT_READ  = 7;
-   localparam FD_FONT_WAIT  = 8;
-   localparam FD_FONT_WRITE = 9;
-   localparam FD_FONT_DONE  = 10;
+   localparam FD_TEXT_WAIT1 = 2;
+   localparam FD_TEXT_WAIT2 = 3;
+   localparam FD_TEXT_WAIT3 = 4;
+   localparam FD_TEXT_DONE  = 5;
+   localparam FD_FONT_READ_REQ = 6; 
+   localparam FD_FONT_READ_REQ_WAIT1 = 7;
+   localparam FD_FONT_READ_REQ_WAIT2 = 8;
+   localparam FD_FONT_READ  = 9;
+   localparam FD_FONT_WAIT1 = 10;
+   localparam FD_FONT_WAIT2 = 11;
+   localparam FD_FONT_WAIT3 = 12;
+   localparam FD_FONT_WRITE = 13;
+   localparam FD_FONT_DONE  = 14;
    reg[3:0]  font_decode_state;
 
    // state machine to read char or font from rom
    always @(posedge sys_clk) begin : char_gen
-      reg[12:0] text_rom_addr;
+      reg[16:0] text_rom_addr;
       reg       render_flag_prev;
       reg[2:0]  font_scan;
       reg[6:0]  text_buffer_index;
@@ -83,44 +83,40 @@ module chroni (
       text_buffer_we <= 0;
       if (!reset_n || vga_mode_changed || vga_frame_start) begin
          font_decode_state <= FD_IDLE;
-         rd_req <= 0;
          wr_en <= 0;
          render_flag_prev <= 0;
          font_scan <= 0;
-         text_rom_addr <= 13'h1e00;
+         text_rom_addr <= 17'h1e00;
          pixel_buffer_index_in <= 0;
          text_buffer_index <= 0;
          wr_bitmap_bits <= 0;
-         dma_req <= 0;
       end else begin
          render_flag_prev <= render_flag;
          if (~render_flag_prev && render_flag) begin
             text_buffer_index <= 0;
             pixel_buffer_index_in <=  render_buffer ? 11'd640 : 11'd0;
-            rd_req <= 0;
             wr_en <= 0;
             font_decode_state <= font_scan == 0 ? FD_TEXT_READ : FD_FONT_READ_REQ;
-            dma_req <= 1;
          end else begin
             case (font_decode_state)
                FD_IDLE: 
                begin
-                  rd_req <= 0;
                   wr_en <= 0;
                end
                FD_TEXT_READ:
                begin
-                  addr_out <= text_rom_addr;
+                  vram_chroni_addr <= text_rom_addr;
                   text_rom_addr <= text_rom_addr == 13'h1e14 ? 13'h1e00 : (text_rom_addr + 1'b1);
-
-                  rd_req <= 1;
-                  font_decode_state <= FD_TEXT_WAIT;
+                  font_decode_state <= FD_TEXT_WAIT1;
                end
-               FD_TEXT_WAIT:
-               if (rd_ack) begin
-                  rd_req <= 0;
+               FD_TEXT_WAIT1:
+                  font_decode_state <= FD_TEXT_WAIT2;
+               FD_TEXT_WAIT2:
+                  font_decode_state <= FD_TEXT_WAIT3;
+               FD_TEXT_WAIT3:
+               begin
                   text_buffer_addr    <= text_buffer_index;
-                  text_buffer_data_wr <= data_in;
+                  text_buffer_data_wr <= vram_chroni_rd_data;
                   text_buffer_we <= 1;
                   if (text_buffer_index == 79) begin
                      text_buffer_index <= 0;
@@ -145,14 +141,16 @@ module chroni (
                end
                FD_FONT_READ:
                begin
-                  addr_out <= {text_buffer_data_rd, font_scan};
-                  font_decode_state <= FD_FONT_WAIT;
-                  rd_req <= 1;
+                  vram_chroni_addr <= {text_buffer_data_rd, font_scan};
+                  font_decode_state <= FD_FONT_WAIT1;
                end
-               FD_FONT_WAIT:
-                  if (rd_ack) begin
-                     rd_req <= 0;
-                     pixel_out_next <= data_in;
+               FD_FONT_WAIT1:
+                  font_decode_state <= FD_FONT_WAIT2;
+               FD_FONT_WAIT2:
+                  font_decode_state <= FD_FONT_WAIT3;
+               FD_FONT_WAIT3:
+                  begin
+                     pixel_out_next <= vram_chroni_rd_data;
                      font_decode_state <= FD_FONT_WRITE;
                   end
                FD_FONT_WRITE:
@@ -172,7 +170,6 @@ module chroni (
                   if (text_buffer_index == 80) begin
                      font_decode_state <= FD_IDLE;
                      font_scan <= font_scan + 1'b1;
-                     dma_req <= 0;
                   end else begin
                      font_decode_state <= FD_FONT_READ_REQ_WAIT1;
                      text_buffer_addr  <= text_buffer_index;
@@ -254,6 +251,28 @@ module chroni (
          .wrclock (sys_clk),
          .wren (palette_wr_en),
          .q (palette_rd_data)
+      );
+
+   reg[2:0] vram_page = 0;
+   
+   wire[7:0]  vram_cpu_wr_data = cpu_wr_data;
+   wire       vram_cpu_wr_en   = cpu_wr_en;
+   wire[16:0] vram_cpu_addr    = {vram_page, !cpu_addr[13], cpu_addr[12:0]};
+   wire       vram_cs = cpu_addr[15:13] == 3'b101 || cpu_addr[15:13] == 3'b110;
+   wire[7:0]  vram_chroni_rd_data;
+   wire[7:0]  vram_cpu_rd_data;
+   reg[16:0]  vram_chroni_addr;
+   
+   dpram_ab #(131072, 17, 8) vram (
+         .clock(sys_clk),
+         .address_a(vram_cpu_addr),
+         .address_b(vram_chroni_addr),
+         .data_a(vram_cpu_wr_data),
+         .data_b(0),
+         .wren_a(vram_cpu_wr_en && vram_cs),
+         .wren_b(0),
+         .q_a(vram_cpu_rd_data),
+         .q_b(vram_chroni_rd_data)
       );
    
    chroni_line_buffer chroni_line_buffer_inst (

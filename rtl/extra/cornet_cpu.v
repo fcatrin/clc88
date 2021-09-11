@@ -95,13 +95,14 @@ module cornet_cpu(
    localparam LDA       = 3;
    localparam LDX       = 4;
    localparam LDA_ABS_X = 5;
-   localparam INX       = 6;
-   localparam BRANCH    = 7;
-   localparam NO_BRANCH = 8;
-   localparam LDA_ADDR  = 9;
+   localparam LDA_ADDR  = 6;
+   localparam INX       = 7;
+   localparam BRANCH    = 8;
+   localparam NO_BRANCH = 9;
    localparam STA       = 10;
    localparam STA_ABS   = 11;
-   localparam STA_ADDR  = 12; 
+   localparam STA_ABS_X = 12;
+   localparam STA_ADDR  = 13; 
    
    reg[4:0] cpu_inst_state = NOP;
    reg[4:0] cpu_next_op    = NOP;
@@ -153,6 +154,13 @@ module cornet_cpu(
                   cpu_inst_state <= LDA_ABS_X;
                   pc_delta <= 3;
                end
+               8'h9D: /* STA $,X */
+               begin
+                  data_rd_word_req <= 1;
+                  data_rd_addr <= pc + 1'b1; 
+                  cpu_inst_state <= STA_ABS_X;
+                  pc_delta <= 3;
+               end
                8'hE8: /* INX */
                begin
                   cpu_inst_state <= INX;
@@ -167,6 +175,16 @@ module cornet_cpu(
                end
                8'hD0: /* BNE */
                if (!flag_z) begin
+                  data_rd_byte_req <= 1;
+                  data_rd_addr <= pc + 1'b1;
+                  cpu_inst_state <= BRANCH;
+                  pc_delta <= 0;
+               end else begin
+                  cpu_inst_state <= NO_BRANCH;
+                  pc_delta <= 2;
+               end
+               8'hF0: /* BEQ */
+               if (flag_z) begin
                   data_rd_byte_req <= 1;
                   data_rd_addr <= pc + 1'b1;
                   cpu_inst_state <= BRANCH;
@@ -220,6 +238,7 @@ module cornet_cpu(
             LDA:
             if (bus_rd_ack) begin
                reg_a <= reg_byte;
+               flag_z <= reg_byte == 0;
                pc_next <= pc + pc_delta;
                cpu_inst_done <= 1;
             end
@@ -239,6 +258,11 @@ module cornet_cpu(
                op_addr <= reg_word;
                cpu_next_op <= STA_ADDR;
             end
+            STA_ABS_X:
+               if (bus_rd_ack) begin
+                  op_addr <= reg_word + reg_x;
+                  cpu_next_op <= STA_ADDR;
+               end
             STA:
             begin
                pc_next <= pc + pc_delta;
