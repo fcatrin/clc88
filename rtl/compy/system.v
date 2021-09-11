@@ -123,7 +123,7 @@ module system (
    cornet_cpu cornet_cpu_inst (
          .clk(sys_clk),
          .reset_n(reset_n),
-         .bus_addr(cpu_addr),
+         .addr(cpu_addr),
          .rd_data(data),
          .wr_data(cpu_wr_data),
          .wr_en(cpu_wr_en),

@@ -14,7 +14,7 @@
 module cornet_cpu(
       input clk,
       input reset_n,
-      output [15:0] bus_addr,
+      output [15:0] addr,
       input  [7:0]  rd_data,
       output [7:0]  wr_data,
       output wr_en,
@@ -287,15 +287,15 @@ module cornet_cpu(
       end
    end
    
-   reg[15:0] bus_rd_addr;
+   reg[15:0] bus_addr;
    reg bus_rd_req;
    reg bus_rd_ack;
    reg bus_wr_en;
 
 
-   assign wr_en    = bus_wr_en;
-   assign rd_req   = fetch_rd_req | bus_rd_req;
-   assign bus_addr = fetch_rd_req ? fetch_rd_addr : bus_rd_addr;
+   assign wr_en  = bus_wr_en;
+   assign rd_req = fetch_rd_req | bus_rd_req;
+   assign addr   = fetch_rd_req ? fetch_rd_addr : bus_addr;
 
    reg[15:0] data_rd_addr;
    reg[15:0] fetch_rd_addr;
@@ -328,11 +328,11 @@ module cornet_cpu(
          bus_rd_state <= BUS_RD_IDLE;
       end else begin
          if (bus_rd_data) begin
-            bus_rd_addr  <= data_rd_addr;
+            bus_addr     <= data_rd_addr;
             bus_rd_req   <= 1;
             bus_rd_state <= data_rd_byte_req ? BUS_RD_BYTE : BUS_RD_WORD_L;
          end else if (data_wr_en) begin
-            bus_rd_addr  <= data_wr_addr;
+            bus_addr     <= data_wr_addr;
             bus_wr_data  <= data_wr_data;
             bus_wr_en    <= data_wr_en;
             bus_rd_state <= BUS_RD_IDLE;
@@ -347,7 +347,7 @@ module cornet_cpu(
                BUS_RD_WORD_L:
                   begin
                      reg_word[7:0] <= rd_data;
-                     bus_rd_addr   <= data_rd_addr + 1'b1;
+                     bus_addr      <= data_rd_addr + 1'b1;
                      bus_rd_req    <= 1;
                      bus_rd_state  <= BUS_RD_WORD_H;
                   end
