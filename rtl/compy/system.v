@@ -39,12 +39,6 @@ module system (
        vga_mode == VGA_MODE_640x480 ? CLK_OUT1 : 
       (vga_mode == VGA_MODE_800x600 ? CLK_OUT2 : CLK_OUT3);
    
-   reg[3:0] bus_state;
-   
-   localparam BUS_STATE_IDLE             = 4'd0;
-   localparam BUS_STATE_READ             = 4'd1;
-   localparam BUS_STATE_READ_DONE_CPU    = 4'd2;
-   
    always @ (posedge sys_clk) begin
       reg key_mode_prev;
       reg key_mode_current;
@@ -66,31 +60,33 @@ module system (
          end
       end
    end
-   
+
+   localparam BUS_IDLE = 4'd0;
+   localparam BUS_READ = 4'd1;
+   localparam BUS_DONE = 4'd2;
+
    always @ (posedge sys_clk) begin
+      reg[3:0] bus_state;
+
+      cpu_rd_ack    <= 0;
       if (~reset_n) begin
-         bus_state  <= BUS_STATE_IDLE;
-         cpu_rd_ack    <= 0;
+         bus_state  <= BUS_IDLE;
       end else   begin
-         cpu_rd_ack    <= 0;
          case (bus_state)
-            BUS_STATE_IDLE: 
+            BUS_IDLE: 
             begin
-               if (cpu_rd_req) begin
-                  bus_state <= BUS_STATE_READ;
-               end
+               bus_state <= BUS_READ;
             end
-            BUS_STATE_READ:
+            BUS_READ:
                begin
-                  bus_state <= BUS_STATE_IDLE;
                   if (cpu_rd_req) begin
-                     bus_state <= BUS_STATE_READ_DONE_CPU;
+                     bus_state <= BUS_DONE;
                   end
                end
-            BUS_STATE_READ_DONE_CPU:
+            BUS_DONE:
             begin
                cpu_rd_ack <= 1;
-               bus_state <= BUS_STATE_IDLE;
+               bus_state <= BUS_IDLE;
             end
          endcase
       end
