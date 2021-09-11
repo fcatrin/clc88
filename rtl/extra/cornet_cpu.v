@@ -14,12 +14,12 @@
 module cornet_cpu(
       input clk,
       input reset_n,
-      output reg[15:0] bus_addr,
-      input [7:0]  rd_data,
-      output[7:0]  wr_data,
+      output [15:0] bus_addr,
+      input  [7:0]  rd_data,
+      output [7:0]  wr_data,
       output wr_en,
       output rd_req,
-      input  rd_ack
+      input  ready
 );
 
    reg[15:0] pc = 1092;
@@ -47,9 +47,9 @@ module cornet_cpu(
    
    always @ (posedge clk) begin : cpu_fetch
       cpu_reset <= 0;
+      fetch_rd_req <= 0;
       if (~reset_n) begin
          cpu_fetch_state <= CPU_WAIT;
-         fetch_rd_req    <= 0;
       end else if (cpu_fetch_state == CPU_WAIT && reset_n) begin
          cpu_fetch_state <= CPU_RESET;
       end else begin 
@@ -63,15 +63,10 @@ module cornet_cpu(
                begin
                   fetch_rd_addr <= pc;
                   fetch_rd_req  <= 1;
-                  cpu_fetch_state <= CPU_DECODE_WAIT;
-               end
-            CPU_DECODE_WAIT:
-               if (rd_ack) begin
-                  fetch_rd_req <= 0;
                   cpu_fetch_state <= CPU_LOAD_INST;
                end
             CPU_LOAD_INST:
-               begin
+               if (ready && !fetch_rd_req) begin
                   reg_i <= rd_data;
                   cpu_fetch_state <= CPU_EXECUTE;
                end
@@ -292,34 +287,32 @@ module cornet_cpu(
       end
    end
    
+   reg[15:0] bus_rd_addr;
    reg bus_rd_req;
    reg bus_rd_ack;
    reg bus_wr_en;
-   
+
+
    assign wr_en    = bus_wr_en;
-   assign rd_req   = bus_rd_req;
-   
+   assign rd_req   = fetch_rd_req | bus_rd_req;
+   assign bus_addr = fetch_rd_req ? fetch_rd_addr : bus_rd_addr;
+
+   reg[15:0] data_rd_addr;
+   reg[15:0] fetch_rd_addr;
+   reg       fetch_rd_req;
+
    reg[7:0] bus_wr_data;
    assign wr_data = bus_wr_data;
       
-   wire bus_rd_word_req = data_rd_word_req;
-   wire bus_rd_byte_req = data_rd_byte_req | fetch_rd_req;
-   wire bus_rd_data = bus_rd_word_req | bus_rd_byte_req;
-   
-   reg[15:0] data_rd_addr;
-   reg[15:0] fetch_rd_addr;
+   wire bus_rd_data = data_rd_word_req | data_rd_byte_req;
    
    reg[15:0] data_wr_addr; 
    reg[7:0]  data_wr_data;
    reg       data_wr_en;
    
-   reg fetch_rd_req;
-   
    reg data_rd_word_req;
    reg data_rd_byte_req;
    
-   wire[15:0] bus_rd_addr = fetch_rd_req ? fetch_rd_addr : data_rd_addr;
-
    localparam BUS_RD_IDLE   = 0;
    localparam BUS_RD_BYTE   = 1;
    localparam BUS_RD_WORD_L = 2;
@@ -328,44 +321,39 @@ module cornet_cpu(
    reg[3:0] bus_rd_state = BUS_RD_IDLE;
 
    always @ (posedge clk) begin : bus_access
-      reg bus_rd_data_prev;
-      
       bus_rd_ack <= 0;
       bus_wr_en  <= 0;
+      bus_rd_req <= 0;
       if (~reset_n) begin
-         bus_rd_req <= 0;
-         bus_rd_data_prev <= 0;
+         bus_rd_state <= BUS_RD_IDLE;
       end else begin
-         bus_rd_data_prev <= bus_rd_data;
-         if (!bus_rd_data_prev && bus_rd_data) begin
-            bus_addr   <= bus_rd_addr;
-            bus_rd_req <= 1;
-            bus_rd_state <= bus_rd_byte_req ? BUS_RD_BYTE : BUS_RD_WORD_L;
+         if (bus_rd_data) begin
+            bus_rd_addr  <= data_rd_addr;
+            bus_rd_req   <= 1;
+            bus_rd_state <= data_rd_byte_req ? BUS_RD_BYTE : BUS_RD_WORD_L;
          end else if (data_wr_en) begin
-            bus_addr     <= data_wr_addr;
+            bus_rd_addr  <= data_wr_addr;
             bus_wr_data  <= data_wr_data;
             bus_wr_en    <= data_wr_en;
             bus_rd_state <= BUS_RD_IDLE;
-         end else if (rd_ack) begin
+         end else if (ready && !bus_rd_req) begin
             case(bus_rd_state)
                BUS_RD_BYTE:
                   begin
                      reg_byte <= rd_data;
-                     bus_rd_req <= 0;
                      bus_rd_ack <= 1;
                      bus_rd_state <= BUS_RD_IDLE;
                   end
                BUS_RD_WORD_L:
                   begin
                      reg_word[7:0] <= rd_data;
-                     bus_addr   <= bus_rd_addr + 1'b1;
-                     bus_rd_req <= 1;
-                     bus_rd_state <= BUS_RD_WORD_H;
+                     bus_rd_addr   <= data_rd_addr + 1'b1;
+                     bus_rd_req    <= 1;
+                     bus_rd_state  <= BUS_RD_WORD_H;
                   end
                BUS_RD_WORD_H:
                   begin
                      reg_word[15:8] <= rd_data;
-                     bus_rd_req <= 0;
                      bus_rd_ack <= 1;
                      bus_rd_state <= BUS_RD_IDLE;
                   end

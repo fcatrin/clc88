@@ -26,7 +26,7 @@ module system (
    
    wire[15:0] cpu_addr;
    wire       cpu_rd_req;
-   reg        cpu_rd_ack;
+   reg        cpu_ready;
    
    reg[1:0] vga_mode;
 
@@ -68,26 +68,18 @@ module system (
    always @ (posedge sys_clk) begin
       reg[3:0] bus_state;
 
-      cpu_rd_ack    <= 0;
+      cpu_ready <= 1;
       if (~reset_n) begin
          bus_state  <= BUS_IDLE;
-      end else   begin
-         case (bus_state)
+      end else begin
+         if (cpu_rd_req) begin
+            bus_state  <= BUS_READ;
+            cpu_ready  <= 0;
+         end else case (bus_state)
             BUS_IDLE: 
-            begin
-               bus_state <= BUS_READ;
-            end
+               bus_state <= bus_state;
             BUS_READ:
-               begin
-                  if (cpu_rd_req) begin
-                     bus_state <= BUS_DONE;
-                  end
-               end
-            BUS_DONE:
-            begin
-               cpu_rd_ack <= 1;
                bus_state <= BUS_IDLE;
-            end
          endcase
       end
    end
@@ -136,7 +128,7 @@ module system (
          .wr_data(cpu_wr_data),
          .wr_en(cpu_wr_en),
          .rd_req(cpu_rd_req),
-         .rd_ack(cpu_rd_ack)
+         .ready(cpu_ready)
       );
    
 endmodule
