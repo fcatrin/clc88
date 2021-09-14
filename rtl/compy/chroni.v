@@ -82,6 +82,7 @@ module chroni (
       reg       render_flag_prev;
       reg[2:0]  font_scan;
       reg[6:0]  text_buffer_index;
+      reg[1:0]  text_skip;
    
       text_buffer_we <= 0;
       if (!reset_n || vga_mode_changed || vga_frame_start) begin
@@ -102,7 +103,9 @@ module chroni (
             pixel_buffer_index_in <=  render_buffer ? 11'd640 : 11'd0;
             wr_en <= 0;
             font_decode_state <= font_scan == 0 ? FD_TEXT_READ : FD_FONT_READ_REQ;
-            data_memory_addr <= load_memory_addr;
+            data_memory_addr <= load_memory_addr + 1'b1;
+            vram_chroni_addr <= load_memory_addr;
+            text_skip <= 2;
          end else begin
             case (font_decode_state)
                FD_IDLE: 
@@ -113,23 +116,18 @@ module chroni (
                begin
                   vram_chroni_addr <= data_memory_addr;
                   data_memory_addr <= data_memory_addr + 1'b1;
-                  font_decode_state <= FD_TEXT_WAIT1;
-               end
-               FD_TEXT_WAIT1:
-                  font_decode_state <= FD_TEXT_WAIT2;
-               FD_TEXT_WAIT2:
-                  font_decode_state <= FD_TEXT_WAIT3;
-               FD_TEXT_WAIT3:
-               begin
-                  text_buffer_addr    <= text_buffer_index;
-                  text_buffer_data_wr <= vram_chroni_rd_data;
-                  text_buffer_we <= 1;
-                  if (text_buffer_index == last_char) begin
-                     text_buffer_index <= 0;
-                     font_decode_state <= FD_FONT_READ_REQ;
+                  if (text_skip == 0) begin
+                     text_buffer_addr    <= text_buffer_index;
+                     text_buffer_data_wr <= vram_chroni_rd_data;
+                     text_buffer_we <= 1;
+                     if (text_buffer_index == last_char) begin
+                        text_buffer_index <= 0;
+                        font_decode_state <= FD_FONT_READ_REQ;
+                     end else begin
+                        text_buffer_index <= text_buffer_index + 1'b1;
+                     end
                   end else begin
-                     text_buffer_index <= text_buffer_index + 1'b1;
-                     font_decode_state <= FD_TEXT_READ;
+                     text_skip <= text_skip - 1;
                   end
                end
                FD_FONT_READ_REQ:
@@ -310,8 +308,8 @@ module chroni (
    wire vga_render_start;
    wire vga_scanline_start;
    
-   wire read_text = 0; // font_decode_state == FD_TEXT_READ || font_decode_state == FD_TEXT_WAIT;
-   wire read_font = 0; // font_decode_state == FD_FONT_READ_REQ || font_decode_state == FD_FONT_READ_REQ_WAIT1 || font_decode_state == FD_FONT_READ_REQ_WAIT2;
+   wire read_text = font_decode_state == FD_TEXT_READ || font_decode_state == FD_TEXT_WAIT3;
+   wire read_font = font_decode_state == FD_FONT_READ_REQ || font_decode_state == FD_FONT_WAIT3 || font_decode_state == FD_FONT_WRITE;
    
    vga_output vga_output_inst (
          .sys_clk(sys_clk),
