@@ -133,6 +133,7 @@ module chroni (
                FD_FONT_READ_REQ:
                begin
                   text_buffer_addr  <= text_buffer_index;
+                  text_buffer_index <= text_buffer_index + 1;
                   font_decode_state <= FD_FONT_READ_REQ_WAIT1;
                end
                FD_FONT_READ_REQ_WAIT1:
@@ -145,6 +146,9 @@ module chroni (
                end
                FD_FONT_READ:
                begin
+                  text_buffer_addr  <= text_buffer_index;
+                  text_buffer_index <= text_buffer_index + 1;
+
                   vram_chroni_addr <= {text_buffer_data_rd, font_scan};
                   font_decode_state <= FD_FONT_WAIT1;
                end
@@ -165,21 +169,18 @@ module chroni (
                      wr_bitmap_off  <= 8'b0;
                      wr_bitmap_bits <= 4'd8;
                      font_decode_state <= FD_FONT_DONE;
-                     
-                     text_buffer_index <= text_buffer_index + 1'b1;
                   end
                FD_FONT_DONE:
                begin
                   wr_en <= 0;
-                  if (text_buffer_index == last_char+1) begin
+                  if (text_buffer_index == last_char+2) begin
                      font_decode_state <= FD_IDLE;
                      font_scan <= font_scan + 1'b1;
                      if (font_scan == 7) begin
                         load_memory_addr <= load_memory_addr + scan_size;
                      end
                   end else begin
-                     font_decode_state <= FD_FONT_READ_REQ_WAIT1;
-                     text_buffer_addr  <= text_buffer_index;
+                     font_decode_state <= FD_FONT_READ;
                      pixel_buffer_index_in <= pixel_buffer_index_in + 4'd8;
                   end
                end
