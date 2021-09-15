@@ -95,7 +95,7 @@ module chroni (
             text_buffer_index <= 0;
             pixel_buffer_index_in <= render_buffer ? 11'd640 : 11'd0;
             font_decode_state <= font_scan == 0 ? FD_TEXT_START : FD_FONT_READ;
-            if (dl_lms_changed) load_memory_addr <= dl_lms; 
+            if (lms_changed) load_memory_addr <= dl_lms; 
          end else begin
             case (font_decode_state)
                FD_TEXT_START:
@@ -191,9 +191,10 @@ module chroni (
    reg[16:0] dl_lms;
    reg[3:0]  dl_inst;
    reg vram_render;
-   reg dl_lms_changed;
+   reg lms_changed;
    
    always @ (posedge sys_clk) begin : dlproc
+      reg report_lms_changed;
       reg[16:0] display_list_ptr;
       reg      render_flag_prev;
       reg[1:0] mem_wait;
@@ -202,15 +203,16 @@ module chroni (
       
       render_flag_prev <= render_flag;
       vram_render <= 0;
+      lms_changed <= 0;
       if (!reset_n || vga_mode_changed || vga_frame_start) begin
          display_list_ptr <= 17'h1d00;
          render_flag_prev <= 0;
          vram_read_dl <= 0;
          dlproc_state <= DL_IDLE;
          dl_inst <= 0;
-         dl_lms_changed <= 0;
          scanlines <= 0;
       end else if (~render_flag_prev & render_flag) begin
+         report_lms_changed <= 0;
          if (scanlines == 0) begin
             dlproc_state <= dl_inst == 1 ? DL_IDLE : DL_READ;
          end else begin
@@ -234,7 +236,6 @@ module chroni (
                mem_wait <= mem_wait - 1;
                if (mem_wait == 0) begin
                   dl_inst <= vram_chroni_rd_data[3:0];
-                  dl_lms_changed <= vram_chroni_rd_data[6];
                   dlproc_state   <= vram_chroni_rd_data[6] ? DL_LMS : DL_EXEC;
                end
             end
@@ -261,7 +262,7 @@ module chroni (
                   display_list_ptr <= display_list_ptr + 1;
                   mem_wait <= 2;
                   if (addr_part == 0) begin
-                     dl_lms_changed <= 1;
+                     report_lms_changed <= 1;
                      dlproc_state <= DL_EXEC;
                   end
                   addr_part <= addr_part -1 ;
@@ -273,6 +274,7 @@ module chroni (
                scanlines <= 8;
                vram_render <= 1;
                vram_read_dl <= 0;
+               lms_changed <= report_lms_changed;
             end
          endcase
       end
