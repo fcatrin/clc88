@@ -154,16 +154,13 @@ module chroni (
                      font_decode_state <= FD_FONT_WRITE;
                   end
                FD_FONT_WRITE:
-                  if (!wr_busy) begin
-                     pixel_out <= pixel_out_next;
-                     wr_en <= 1;
-                     wr_bitmap_on   <= 8'b1;
-                     wr_bitmap_off  <= 8'b0;
-                     wr_bitmap_bits <= 4'd8;
-                     font_decode_state <= FD_FONT_DONE;
-                  end
-               FD_FONT_DONE:
-               begin
+               if (!wr_busy) begin
+                  pixel_out <= pixel_out_next;
+                  wr_en <= 1;
+                  wr_bitmap_on   <= 8'b1;
+                  wr_bitmap_off  <= 8'b0;
+                  wr_bitmap_bits <= 4'd8;
+                  
                   if (text_buffer_index == last_char+2) begin
                      font_decode_state <= FD_IDLE;
                      font_scan <= font_scan + 1'b1;
