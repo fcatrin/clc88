@@ -57,7 +57,8 @@ module chroni (
    end
 
    localparam FD_IDLE       = 0;
-   localparam FD_TEXT_READ  = 1;
+   localparam FD_TEXT_START = 1;
+   localparam FD_TEXT_READ  = 2;
    localparam FD_FONT_READ  = 6; 
    localparam FD_FONT_FETCH = 9;
    localparam FD_FONT_WAIT  = 10;
@@ -71,7 +72,7 @@ module chroni (
       reg[16:0] load_memory_addr;
       reg[6:0]  scan_size;
       reg[6:0]  last_char;
-      reg       render_flag_prev;
+      reg       vram_render_prev;
       reg[2:0]  font_scan;
       reg[6:0]  text_buffer_index;
       reg[1:0]  mem_wait;
@@ -80,28 +81,33 @@ module chroni (
       wr_en <= 0;
       if (!reset_n || vga_mode_changed || vga_frame_start) begin
          font_decode_state <= FD_IDLE;
-         render_flag_prev <= 0;
+         vram_render_prev <= 0;
          font_scan <= 0;
-         load_memory_addr <= 17'h0000;
+         load_memory_addr <= dl_lms;
          scan_size <= 80;
          last_char <= 79;
          pixel_buffer_index_in <= 0;
          text_buffer_index <= 0;
          wr_bitmap_bits <= 0;
       end else begin
-         render_flag_prev <= render_flag;
-         if (~render_flag_prev && render_flag) begin
+         vram_render_prev <= vram_render;
+         if (~vram_render_prev && vram_render) begin
             text_buffer_index <= 0;
             pixel_buffer_index_in <= render_buffer ? 11'd640 : 11'd0;
-            font_decode_state <= font_scan == 0 ? FD_TEXT_READ : FD_FONT_READ;
-            data_memory_addr <= load_memory_addr + 1'b1;
-            vram_chroni_addr <= load_memory_addr;
-            mem_wait <= 2;
+            font_decode_state <= font_scan == 0 ? FD_TEXT_START : FD_FONT_READ;
+            if (dl_lms_changed) load_memory_addr <= dl_lms; 
          end else begin
             case (font_decode_state)
+               FD_TEXT_START:
+               begin
+                  vram_char_addr   <= load_memory_addr;
+                  data_memory_addr <= load_memory_addr + 1'b1;
+                  mem_wait <= 2;
+                  font_decode_state <= FD_TEXT_READ;
+               end
                FD_TEXT_READ: // transfer line of text from vram to text_buffer
                begin
-                  vram_chroni_addr <= data_memory_addr;
+                  vram_char_addr <= data_memory_addr;
                   data_memory_addr <= data_memory_addr + 1'b1;
                   if (mem_wait == 0) begin
                      text_buffer_addr    <= text_buffer_index;
@@ -135,7 +141,7 @@ module chroni (
                   text_buffer_index <= text_buffer_index + 1;
 
                   // fetch font data
-                  vram_chroni_addr <= {text_buffer_data_rd, font_scan};
+                  vram_char_addr <= {text_buffer_data_rd, font_scan};
                   font_decode_state <= FD_FONT_WAIT;
                   mem_wait <= 2;
                end
@@ -172,6 +178,106 @@ module chroni (
       end      
    end         
 
+   localparam DL_IDLE = 0;
+   localparam DL_READ = 1;
+   localparam DL_READ_WAIT = 2;
+   localparam DL_LMS  = 3;
+   localparam DL_LMS_READ = 4;
+   localparam DL_EXEC = 5;
+   localparam DL_WAIT = 6;
+   reg[3:0] dlproc_state;
+   
+   reg[16:0] display_list_addr = 17'h1d00;
+   reg[16:0] dl_lms;
+   reg[3:0]  dl_inst;
+   reg vram_render;
+   reg dl_lms_changed;
+   
+   always @ (posedge sys_clk) begin : dlproc
+      reg[16:0] display_list_ptr;
+      reg      render_flag_prev;
+      reg[1:0] mem_wait;
+      reg[1:0] addr_part;
+      reg[3:0] scanlines;
+      
+      render_flag_prev <= render_flag;
+      vram_render <= 0;
+      if (!reset_n || vga_mode_changed || vga_frame_start) begin
+         display_list_ptr <= 17'h1d00;
+         render_flag_prev <= 0;
+         vram_read_dl <= 0;
+         dlproc_state <= DL_IDLE;
+         dl_inst <= 0;
+         dl_lms_changed <= 0;
+         scanlines <= 0;
+      end else if (~render_flag_prev & render_flag) begin
+         if (scanlines == 0) begin
+            dlproc_state <= dl_inst == 1 ? DL_IDLE : DL_READ;
+         end else begin
+            scanlines <= scanlines - 1;
+            vram_render <= 1;
+         end
+      end else begin
+            case(dlproc_state)
+            DL_READ:
+            begin
+               vram_read_dl <= 1;
+               vram_dl_addr     <= display_list_ptr;
+               display_list_ptr <= display_list_ptr + 1;
+               
+               mem_wait <= 2;
+               dlproc_state <= DL_READ_WAIT;
+            end
+            DL_READ_WAIT:
+            begin
+               vram_read_dl <= 0;
+               mem_wait <= mem_wait - 1;
+               if (mem_wait == 0) begin
+                  dl_inst <= vram_chroni_rd_data[3:0];
+                  dl_lms_changed <= vram_chroni_rd_data[6];
+                  dlproc_state   <= vram_chroni_rd_data[6] ? DL_LMS : DL_EXEC;
+               end
+            end
+            DL_LMS:
+            begin
+               vram_read_dl <= 1;
+               vram_dl_addr     <= display_list_ptr;
+               display_list_ptr <= display_list_ptr + 1;
+               mem_wait <= 2;
+               addr_part <= 2;
+               dlproc_state <= DL_LMS_READ;
+            end
+            DL_LMS_READ:
+            begin
+               vram_read_dl <= 1;
+               mem_wait <= mem_wait - 1;
+               if (mem_wait == 0) begin
+                  
+                  dl_lms <= addr_part == 0 ? 
+                     {vram_chroni_rd_data[0], dl_lms[15:0]} : 
+                     {vram_chroni_rd_data, dl_lms[15:8]};
+                  
+                  vram_dl_addr     <= display_list_ptr;
+                  display_list_ptr <= display_list_ptr + 1;
+                  mem_wait <= 2;
+                  if (addr_part == 0) begin
+                     dl_lms_changed <= 1;
+                     dlproc_state <= DL_EXEC;
+                  end
+                  addr_part <= addr_part -1 ;
+               end
+            end
+            DL_EXEC:
+            begin
+               dlproc_state = DL_WAIT;
+               scanlines <= 8;
+               vram_render <= 1;
+               vram_read_dl <= 0;
+            end
+         endcase
+      end
+   end
+   
    always @ (posedge sys_clk) begin : render_block
       reg[3:0] render_state;
       reg vga_scanline_start_prev;
@@ -252,7 +358,12 @@ module chroni (
    wire       vram_cs = cpu_addr[15:13] == 3'b101 || cpu_addr[15:13] == 3'b110;
    wire[7:0]  vram_chroni_rd_data;
    wire[7:0]  vram_cpu_rd_data;
-   reg[16:0]  vram_chroni_addr;
+   reg[16:0]  vram_char_addr;
+   reg[16:0]  vram_dl_addr;
+   
+   reg vram_read_dl;
+   
+   wire[16:0] vram_chroni_addr = vram_read_dl ? vram_dl_addr : vram_char_addr;
    
    dpram_ab #(131072, 17, 8) vram (
          .clock(sys_clk),

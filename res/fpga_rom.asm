@@ -1,6 +1,10 @@
    org $fffc
    .word START
 
+   org $fd00
+display_list:
+   .byte $42, $00, $1e, $00, $02, $02, $02, $41
+    
    org $fe00
 test_string:
    .byte 'This is Compy CLC-88', 0
@@ -47,11 +51,18 @@ load4:
    inx
    bne load4
 load5:
+   lda display_list, x
+   sta $bd00, x
+   inx
+   bne load5
+      
+load6:
    LDA test_string, x
    beq halt
    sta $be00, x
    inx
-   bne load5
+   bne load6
+   
 halt:
    JMP halt
    
