@@ -58,17 +58,9 @@ module chroni (
 
    localparam FD_IDLE       = 0;
    localparam FD_TEXT_READ  = 1;
-   localparam FD_TEXT_WAIT1 = 2;
-   localparam FD_TEXT_WAIT2 = 3;
-   localparam FD_TEXT_WAIT3 = 4;
-   localparam FD_TEXT_DONE  = 5;
-   localparam FD_FONT_READ_REQ = 6; 
-   localparam FD_FONT_READ_REQ_WAIT1 = 7;
-   localparam FD_FONT_READ_REQ_WAIT2 = 8;
-   localparam FD_FONT_READ  = 9;
-   localparam FD_FONT_WAIT1 = 10;
-   localparam FD_FONT_WAIT2 = 11;
-   localparam FD_FONT_WAIT3 = 12;
+   localparam FD_FONT_READ  = 6; 
+   localparam FD_FONT_FETCH = 9;
+   localparam FD_FONT_WAIT  = 10;
    localparam FD_FONT_WRITE = 13;
    localparam FD_FONT_DONE  = 14;
    reg[3:0]  font_decode_state;
@@ -82,7 +74,7 @@ module chroni (
       reg       render_flag_prev;
       reg[2:0]  font_scan;
       reg[6:0]  text_buffer_index;
-      reg[1:0]  text_skip;
+      reg[1:0]  mem_wait;
    
       text_buffer_we <= 0;
       wr_en <= 0;
@@ -100,59 +92,61 @@ module chroni (
          render_flag_prev <= render_flag;
          if (~render_flag_prev && render_flag) begin
             text_buffer_index <= 0;
-            pixel_buffer_index_in <=  render_buffer ? 11'd640 : 11'd0;
-            font_decode_state <= font_scan == 0 ? FD_TEXT_READ : FD_FONT_READ_REQ;
+            pixel_buffer_index_in <= render_buffer ? 11'd640 : 11'd0;
+            font_decode_state <= font_scan == 0 ? FD_TEXT_READ : FD_FONT_READ;
             data_memory_addr <= load_memory_addr + 1'b1;
             vram_chroni_addr <= load_memory_addr;
-            text_skip <= 2;
+            mem_wait <= 2;
          end else begin
             case (font_decode_state)
-               FD_TEXT_READ:
+               FD_TEXT_READ: // transfer line of text from vram to text_buffer
                begin
                   vram_chroni_addr <= data_memory_addr;
                   data_memory_addr <= data_memory_addr + 1'b1;
-                  if (text_skip == 0) begin
+                  if (mem_wait == 0) begin
                      text_buffer_addr    <= text_buffer_index;
                      text_buffer_data_wr <= vram_chroni_rd_data;
                      text_buffer_we <= 1;
                      if (text_buffer_index == last_char) begin
                         text_buffer_index <= 0;
-                        text_skip <= 2;
-                        font_decode_state <= FD_FONT_READ_REQ;
+                        mem_wait <= 2;
+                        font_decode_state <= FD_FONT_READ;
                      end else begin
                         text_buffer_index <= text_buffer_index + 1'b1;
                      end
                   end else begin
-                     text_skip <= text_skip - 1;
+                     mem_wait <= mem_wait - 1;
                   end
                end
-               FD_FONT_READ_REQ:
+               FD_FONT_READ: // read font data from each char on text_buffer
                begin
-                  if (text_skip == 2) begin
+                  if (mem_wait == 2) begin
                      text_buffer_addr  <= text_buffer_index;
                      text_buffer_index <= text_buffer_index + 1;
-                  end else if (text_skip == 0) begin
-                     font_decode_state <= FD_FONT_READ;
+                  end else if (mem_wait == 0) begin
+                     font_decode_state <= FD_FONT_FETCH;
                   end
-                  text_skip <= text_skip - 1;
+                  mem_wait <= mem_wait - 1;
                end
-               FD_FONT_READ:
+               FD_FONT_FETCH:
                begin
+                  // read next char in advance
                   text_buffer_addr  <= text_buffer_index;
                   text_buffer_index <= text_buffer_index + 1;
 
+                  // fetch font data
                   vram_chroni_addr <= {text_buffer_data_rd, font_scan};
-                  font_decode_state <= FD_FONT_WAIT1;
+                  font_decode_state <= FD_FONT_WAIT;
+                  mem_wait <= 2;
                end
-               FD_FONT_WAIT1:
-                  font_decode_state <= FD_FONT_WAIT2;
-               FD_FONT_WAIT2:
-                  font_decode_state <= FD_FONT_WAIT3;
-               FD_FONT_WAIT3:
-                  begin
+               FD_FONT_WAIT:
+               begin
+                  if (mem_wait == 0) begin
                      pixel_out_next <= vram_chroni_rd_data;
                      font_decode_state <= FD_FONT_WRITE;
                   end
+                  mem_wait <= mem_wait - 1;
+               end
                FD_FONT_WRITE:
                if (!wr_busy) begin
                   pixel_out <= pixel_out_next;
@@ -160,17 +154,18 @@ module chroni (
                   wr_bitmap_on   <= 8'b1;
                   wr_bitmap_off  <= 8'b0;
                   wr_bitmap_bits <= 4'd8;
-                  
-                  if (text_buffer_index == last_char+2) begin
-                     font_decode_state <= FD_IDLE;
-                     font_scan <= font_scan + 1'b1;
-                     if (font_scan == 7) begin
-                        load_memory_addr <= load_memory_addr + scan_size;
-                     end
-                  end else begin
-                     font_decode_state <= FD_FONT_READ;
-                     pixel_buffer_index_in <= pixel_buffer_index_in + 4'd8;
+                  font_decode_state <= FD_FONT_DONE;
+               end
+               FD_FONT_DONE:
+               if (text_buffer_index == last_char+2) begin
+                  font_decode_state <= FD_IDLE;
+                  font_scan <= font_scan + 1'b1;
+                  if (font_scan == 7) begin
+                     load_memory_addr <= load_memory_addr + scan_size;
                   end
+               end else begin
+                  font_decode_state <= FD_FONT_FETCH;
+                  pixel_buffer_index_in <= pixel_buffer_index_in + 4'd8;
                end
             endcase
          end
@@ -297,8 +292,8 @@ module chroni (
    wire vga_render_start;
    wire vga_scanline_start;
    
-   wire read_text = font_decode_state == FD_TEXT_READ || font_decode_state == FD_TEXT_WAIT3;
-   wire read_font = font_decode_state == FD_FONT_READ_REQ || font_decode_state == FD_FONT_WAIT3 || font_decode_state == FD_FONT_WRITE;
+   wire read_text = font_decode_state == FD_TEXT_READ || font_decode_state == FD_FONT_READ || font_decode_state == FD_FONT_FETCH;
+   wire read_font = font_decode_state == FD_FONT_WRITE;
    
    vga_output vga_output_inst (
          .sys_clk(sys_clk),
