@@ -1,17 +1,6 @@
    org $fffc
    .word START
 
-
-text_location = $1e00
-
-   org $fd00
-display_list:
-   .byte $42, $00, $1e, $00, $02, $02, $02, $41
-    
-   org $fe00
-test_string:
-   .byte 'This is Compy CLC-88 testing VRAM port access with autoincrement', 0
-   
 BG_COLOR = $29AC   
 FG_COLOR = $F75B
    
@@ -55,9 +44,18 @@ load4:
    bne load4
 load5:
    lda display_list, x
-   sta $bd00, x
+   sta dlist_in_ram, x
    inx
    bne load5
+   
+dlist_addr    = $1d00
+dlist_in_vram = dlist_addr / 2
+dlist_in_ram  = dlist_addr + $a000
+
+   lda #<dlist_in_vram
+   sta $9000
+   lda #>dlist_in_vram
+   sta $9001
    
    lda #<text_location
    sta $9006
@@ -73,4 +71,14 @@ load6:
    
 halt:
    JMP halt
+
+text_location = $1e00
+
+display_list:
+   .byte $42
+   .word text_location
+   .byte $02, $02, $02, $41
+
+test_string:
+   .byte 'This is Compy CLC-88 testing VRAM port access with autoincrement. Now display list is set via registers!', 0
    

@@ -35,6 +35,10 @@ module chroni (
       cpu_port_wr_en <= 0;
       if (register_cs && cpu_wr_en) begin
          case (cpu_addr[3:0])
+            4'd0:
+               display_list_addr[8:1]  <= cpu_wr_data;
+            4'd1:
+               display_list_addr[16:9] <= cpu_wr_data;
             4'd4:
             begin
                palette_write_index <= cpu_wr_data;
@@ -204,7 +208,7 @@ module chroni (
    localparam DL_WAIT = 6;
    reg[3:0] dlproc_state;
    
-   reg[16:0] display_list_addr = 17'h1d00;
+   reg[16:0] display_list_addr;
    reg[16:0] dl_lms;
    reg[3:0]  dl_inst;
    reg vram_render;
@@ -222,7 +226,7 @@ module chroni (
       vram_render <= 0;
       lms_changed <= 0;
       if (!reset_n || vga_mode_changed || vga_frame_start) begin
-         display_list_ptr <= 17'h1d00;
+         display_list_ptr <= display_list_addr;
          render_flag_prev <= 0;
          vram_read_dl <= 0;
          dlproc_state <= DL_IDLE;
