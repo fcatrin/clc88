@@ -3,6 +3,7 @@
 
 BG_COLOR = $29AC   
 FG_COLOR = $F75B
+BORDER_COLOR = $FC6A
    
    org $ff00
 START:
@@ -20,6 +21,12 @@ START:
    
    LDA #>FG_COLOR
    STA $9005
+   
+   lda #<BORDER_COLOR
+   sta $900c
+
+   lda #>BORDER_COLOR
+   sta $900d
    
    LDX #0
 load1:

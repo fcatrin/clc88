@@ -18,7 +18,8 @@ module vga_output (
       output pixel_scale,
       input read_text,
       input read_font,
-      input  [15:0] pixel
+      input [15:0] pixel,
+      input [16:0] border_color
       );
 
    `include "chroni.vh"
@@ -254,10 +255,6 @@ module vga_output (
          end
       end
    end
-
-   parameter border_color = 16'h10A3;
-   parameter text_background_color = 16'h29AC;
-   parameter text_foreground_color = 16'hF75B;
 
    assign vga_hs = h_sync_p ? ~hsync_r : hsync_r;
    assign vga_vs = v_sync_p ? ~vsync_r : vsync_r;

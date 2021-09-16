@@ -35,16 +35,16 @@ module chroni (
       cpu_port_wr_en <= 0;
       if (register_cs && cpu_wr_en) begin
          case (cpu_addr[3:0])
-            4'd0:
+            4'h0:
                display_list_addr[8:1]  <= cpu_wr_data;
-            4'd1:
+            4'h1:
                display_list_addr[16:9] <= cpu_wr_data;
-            4'd4:
+            4'h4:
             begin
                palette_write_index <= cpu_wr_data;
                palette_write_state <= PAL_WRITE_LO;
             end
-            4'd5:
+            4'h5:
                if (palette_write_state == PAL_WRITE_LO) begin
                   palette_write_value[7:0]  <= cpu_wr_data;
                   palette_write_state   <= PAL_WRITE_HI;
@@ -52,13 +52,13 @@ module chroni (
                   palette_write_value[15:8] <= cpu_wr_data;
                   palette_write_state   <= PAL_WRITE;
                end
-            4'd6:
+            4'h6:
                vram_write_address[7:0]  <= cpu_wr_data;
-            4'd7:
+            4'h7:
                vram_write_address[15:8] <= cpu_wr_data;
-            4'd8:
+            4'h8:
                vram_write_address[16] <= cpu_wr_data[0];
-            4'd9:
+            4'h9:
             begin
                cpu_port_cs      <= 1;
                cpu_port_wr_en   <= 1;
@@ -66,6 +66,10 @@ module chroni (
                cpu_port_addr    <= vram_write_address;
                vram_write_address <= vram_write_address + 1'b1;
             end
+            4'hc:
+               border_color[7:0]  <= cpu_wr_data;
+            4'hd:
+               border_color[15:8] <= cpu_wr_data;
          endcase
       end else if (palette_write_state == PAL_WRITE) begin
          palette_wr_en   <= 1;
@@ -422,6 +426,8 @@ module chroni (
          .wr_busy(wr_busy)
       );
    
+   reg[15:0]   border_color;
+   
    wire [10:0] pixel_buffer_index_out;
    wire [7:0]  pixel;
    
@@ -452,7 +458,8 @@ module chroni (
          .pixel(palette_rd_data),
          .pixel_scale(vga_scale),
          .read_text(read_text),
-         .read_font(read_font)
+         .read_font(read_font),
+         .border_color(border_color)
       );
 
 endmodule
