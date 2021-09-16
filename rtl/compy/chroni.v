@@ -236,7 +236,7 @@ module chroni (
                mem_wait <= mem_wait - 1;
                if (mem_wait == 0) begin
                   dl_inst <= vram_chroni_rd_data[3:0];
-                  dlproc_state   <= vram_chroni_rd_data[6] ? DL_LMS : DL_EXEC;
+                  dlproc_state <= vram_chroni_rd_data[6] ? (vram_chroni_rd_data[3:0] == 1 ? DL_IDLE : DL_LMS) : DL_EXEC;
                end
             end
             DL_LMS:
