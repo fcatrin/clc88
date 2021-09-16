@@ -28,8 +28,11 @@ module chroni (
       reg[1:0]  palette_write_state = PAL_WRITE_IDLE;
       reg[7:0]  palette_write_index;
       reg[15:0] palette_write_value;
+      reg[16:0] vram_write_address;
       
       palette_wr_en <= 0;
+      cpu_port_cs <= 0;
+      cpu_port_wr_en <= 0;
       if (register_cs && cpu_wr_en) begin
          case (cpu_addr[3:0])
             4'd4:
@@ -45,6 +48,20 @@ module chroni (
                   palette_write_value[15:8] <= cpu_wr_data;
                   palette_write_state   <= PAL_WRITE;
                end
+            4'd6:
+               vram_write_address[7:0]  <= cpu_wr_data;
+            4'd7:
+               vram_write_address[15:8] <= cpu_wr_data;
+            4'd8:
+               vram_write_address[16] <= cpu_wr_data[0];
+            4'd9:
+            begin
+               cpu_port_cs      <= 1;
+               cpu_port_wr_en   <= 1;
+               cpu_port_wr_data <= cpu_wr_data;
+               cpu_port_addr    <= vram_write_address;
+               vram_write_address <= vram_write_address + 1'b1;
+            end
          endcase
       end else if (palette_write_state == PAL_WRITE) begin
          palette_wr_en   <= 1;
@@ -354,10 +371,15 @@ module chroni (
 
    reg[2:0] vram_page = 0;
    
-   wire[7:0]  vram_cpu_wr_data = cpu_wr_data;
-   wire       vram_cpu_wr_en   = cpu_wr_en;
-   wire[16:0] vram_cpu_addr    = {vram_page, !cpu_addr[13], cpu_addr[12:0]};
-   wire       vram_cs = cpu_addr[15:13] == 3'b101 || cpu_addr[15:13] == 3'b110;
+   reg        cpu_port_cs;
+   reg        cpu_port_wr_en;
+   reg[7:0]   cpu_port_wr_data;
+   reg[16:0]  cpu_port_addr;
+      
+   wire[7:0]  vram_cpu_wr_data = cpu_port_cs ? cpu_port_wr_data : cpu_wr_data;
+   wire       vram_cpu_wr_en   = cpu_port_wr_en || cpu_wr_en;
+   wire[16:0] vram_cpu_addr    = cpu_port_cs ? cpu_port_addr : {vram_page, !cpu_addr[13], cpu_addr[12:0]};
+   wire       vram_cs = cpu_addr[15:13] == 3'b101 || cpu_addr[15:13] == 3'b110 || cpu_port_cs;
    wire[7:0]  vram_chroni_rd_data;
    wire[7:0]  vram_cpu_rd_data;
    reg[16:0]  vram_char_addr;

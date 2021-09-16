@@ -1,13 +1,16 @@
    org $fffc
    .word START
 
+
+text_location = $1e00
+
    org $fd00
 display_list:
    .byte $42, $00, $1e, $00, $02, $02, $02, $41
     
    org $fe00
 test_string:
-   .byte 'This is Compy CLC-88', 0
+   .byte 'This is Compy CLC-88 testing VRAM port access with autoincrement', 0
    
 BG_COLOR = $29AC   
 FG_COLOR = $F75B
@@ -55,11 +58,16 @@ load5:
    sta $bd00, x
    inx
    bne load5
+   
+   lda #<text_location
+   sta $9006
+   lda #>text_location
+   sta $9007
       
 load6:
    LDA test_string, x
    beq halt
-   sta $be00, x
+   sta $9009
    inx
    bne load6
    
