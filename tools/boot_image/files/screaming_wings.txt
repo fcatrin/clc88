@@ -1,0 +1,275 @@
+biplane highlight and color
+1529: A9 F2     LDA #$F2
+152B: 8D C3 02  STA $02C3   ;PCOLR3
+152E: A9 FD     LDA #$FD
+1530: 8D C2 02  STA $02C2   ;PCOLR2
+c 152A 82 ; biplane highlight 
+c 152F DD ; biplane color
+
+horizontal right to left enemy highlight and color
+171D: A9 EF     LDA #$EF
+171F: 8D C1 02  STA $02C1   ;PCOLR1
+1722: A9 26     LDA #$26
+1724: 8D C0 02  STA $02C0   ;PCOLR0
+c 171E 94
+c 1723 0F
+
+ship border
+beach border
+4025: A9 EF     LDA #$EF
+c 4026 FC
+
+sea
+4027: A2 82     LDX #$82  // 96
+c 4028 96
+
+ship shadow (self modifying code)
+trees
+4029: A0 05     LDY #$05
+c 4245 D4
+
+// modified here
+4244: A9 D9     LDA #$D9
+4246: 8D 2A 40  STA $402A
+4267: A9 05     LDA #$05
+4269: 8D 2A 40  STA $402A
+4B52: A9 05     LDA #$05
+4B54: 8D 2A 40  STA $402A
+
+
+
+waves + terrain + sheep surface
+402C: A9 0F     LDA #$09
+c 402d 08
+
+aircraft explosion
+407D: A2 26     LDX #$26
+407F: A0 00     LDY #$00
+
+
+Color for score at bottom
+40E1: A9 2F     LDA #$2F
+40E3: 8D 0A D4  STA $D40A   ;WSYNC
+40E6: 8D 16 D0  STA $D016   ;COLPF0
+
+
+Presentation background and foreground
+440A: A9 35     LDA #$35    ; "Red Rat"
+440C: 8D C4 02  STA $02C4   ;COLOR0
+440F: 8D C7 02  STA $02C7   ;COLOR3
+4412: A9 0E     LDA #$0E    ; WHITE
+4414: 8D C6 02  STA $02C6   ;COLOR2
+4417: 8D C8 02  STA $02C8   ;COLOR4
+4434: A9 3F     LDA #$38    ; "software"
+4436: 8D C5 02  STA $02C5   ;COLOR1
+
+c 440a 46
+c 4413 0e
+
+NOT FOUND
+4A1A: A9 0E     LDA #$0E
+4A1C: 8D C1 02  STA $02C1   ;PCOLR1
+
+rotating vertical planes (red)
+4821: A9 26     LDA #$26
+4823: 8D C0 02  STA $02C0   ;PCOLR0
+c 4822 44
+
+rotating vertical planes highlight
+4826: A9 C4     LDA #$FD
+4828: 8D C1 02  STA $02C1   ;PCOLR1
+482B: 8D C3 02  STA $02C3   ;PCOLR3
+c 4827 1E
+
+rotating vertical planes blue
+4831: A9 96     LDA #$96
+4833: 8D C2 02  STA $02C2   ;PCOLR2
+c 4832 80
+
+Main game graphics
+49A3: A9 68     LDA #$38
+49A5: 8D F4 02  STA $02F4   ;CHBAS
+water
+
+c 39d0 00 80 00 08 00 00 02 00
+c 39c8 02 00 00 00 00 20 00 00
+
+
+Plane color
+4ADF: A9 00     LDA #$00 
+4AE1: 8D 7E 40  STA $407E
++
+6857: A9 26     LDA #$26
+6859: 8D 7E 40  STA $407E
++
+68EF: A9 75     LDA #$75
+68F1: 8D 7E 40  STA $407E
++
+68F7: A9 75     LDA #$75
+68F9: 8D 7E 40  STA $407E
+c 4ae0 72
+
+
+NOT FOUND
+5185: A9 00     LDA #$28
+5187: 8D C2 02  STA $02C2   ;PCOLR2
+
+CHECK THESE VALUES
+5323: AD C2 02  LDA $02C2   ;PCOLR2
+5326: C9 26     CMP #$26
+5328: D0 04     BNE $532E
+532A: 8D 50 06  STA $0650
+532D: 60        RTS
+532E: C9 F2     CMP #$F2
+5330: D0 04     BNE $5336
+
+
+vertical planes highlight
+5779: A9 EF     LDA #$EF
+577B: 8D C1 02  STA $02C1   ;PCOLR1
+577E: 8D C3 02  STA $02C3   ;PCOLR3
+c 577A 0F
+
+vertical planes color
+5781: A9 96     LDA #$96
+5783: 8D C0 02  STA $02C0   ;PCOLR0
+5786: 8D C2 02  STA $02C2   ;PCOLR2
+c 5782 82
+
+CHECK THIS VALUE
+5C5E: AD C2 02  LDA $02C2   ;PCOLR2
+5C61: C9 96     CMP #$96
+
+lone vertical enemy
+5C6A: A9 26     LDA #$26
+5C6C: 8D C2 02  STA $02C2   ;PCOLR2
+5C6F: A9 EF     LDA #$EF
+5C71: 8D C3 02  STA $02C3   ;PCOLR3
+c 5C6B 26 ; lone vertical enemy hl
+c 5C70 00 ; lone vertical enemy color
+
+CHECK THIS VALUE
+6119: AD C2 02  LDA $02C2   ;PCOLR2
+611C: C9 F2     CMP #$F2
+
+
+CHECK THIS VALUE
+617C: AD C2 02  LDA $02C2   ;PCOLR2
+617F: C9 F2     CMP #$F2
+
+red horizontal left to right enemy higlight and color
+61E0: A9 EF     LDA #$EF
+61E2: 8D C3 02  STA $02C3   ;PCOLR3
+61E5: A9 26     LDA #$26
+61E7: 8D C2 02  STA $02C2   ;PCOLR2
+c 61e1 92
+c 61e6 48
+
+blue horizontal left to right enemy highlight
+637D: A9 EF     LDA #$EF
+637F: 8D C1 02  STA $02C1   ;PCOLR1
+6382: A9 96     LDA #$96
+6384: 8D C0 02  STA $02C0   ;PCOLR0
+c 637E 1E
+c 6383 82
+
+Big enemy highlight and color
+6526: A9 EF     LDA #$EF
+6528: 8D C3 02  STA $02C3   ;PCOLR3
+652B: A9 F2     LDA #$F2
+652D: 8D C2 02  STA $02C2   ;PCOLR2
+c 6527 04
+c 652C AA
+
+
+Kamikaze
+6B19: A9 F2     LDA #$F2
+6B1B: 8D C3 02  STA $02C3   ;PCOLR3
+6B1E: A9 FD     LDA #$FD
+6B20: 8D C2 02  STA $02C2   ;PCOLR2
+c 6B1A F2
+c 6B1F FD
+
+
+
+Enemy plane graphics
+3cf8, 3d05
+3C 24 18 18 18 7E A5 66 18 18
+
+00111100
+00100100
+00011000
+00011000
+00011000
+01111110
+10100101  1011 1101 BD
+00110011
+00011000
+00011000
+
+Better planes going down
+c 3cfe bd
+c 3d0b bd
+
+
+Better planes going up
+c 3d35 bd
+c 3d42 bd
+
+
+----------------------
+patch
+
+c 4026 FC ; beach border
+
+c 402d 08 ; waves + terrain + ship surface
+
+c 4245 D4 ; trees
+
+c 4028 96 ; sea
+
+c 39d0 00 80 00 08 00 00 02 00 ; wave 1
+c 39c8 02 00 00 00 00 20 00 00 ; wave 2
+
+c 3cfe bd ; better plane going down
+c 3d0b bd ; better plane going down
+c 3d35 bd ; better plane going up
+c 3d42 bd ; better plane going up
+
+A = blue planes (orig 96) (2x color + 1 validation)
+c 4832 82
+c 5782 82
+c 5C62 82
+c 577A 0F ; blue plane highlight
+
+A = some red planes (orig 26) (1 color + 1 validation)
+c 5C6B 44
+c 61E6 44
+c 61e1 0F ; red plane highlight
+
+A = big enemy (orig F2) (2x validation + 1 color)
+c 611d 38
+c 6180 38
+c 652C 38
+c 6527 2f ; big enemy highlight
+
+
+c 637E 0E ; blue left to right enemy highlight
+c 6383 64 ; blue left to right enemy color
+
+c 4827 0E ; rotating vertical planes highlight
+c 4822 34 ; rotating vertical planes red
+
+c 4ae0 A0 ; plane color
+
+c 6B1A 34 ; kamikaze highlight
+c 6B1F 0F ; kamikaze color
+
+c 171E 94 ; quick right to left  enemy highlight
+c 1723 0f ; quick right to left  enemy color
+
+c 152A 82 ; biplane highlight 
+c 152F 2F ; biplane color
+
+c 5C70 FF ; lone vertical enemy color
+

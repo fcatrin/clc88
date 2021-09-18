@@ -4,17 +4,21 @@
 SIZE=300000
 START=1MiB
 LIMIT=152043520
+MOUNTDIR=img.mount
 
 IMG=compy_boot.img
 
 if [ -f $IMG ]; then
-	echo "file $IMG already exists\n"
+	echo "file $IMG already exists"
 	exit
 fi
+
+sudo umount $MOUNTDIR
 
 DEVICE=$(losetup -l | grep $IMG | cut -d " " -f1)
 
 if [ "x$DEVICE" != "x" ]; then
+  echo "sudo losetup -d $DEVICE"
   sudo losetup -d $DEVICE
 fi
 
@@ -31,5 +35,16 @@ sudo losetup -o $START --sizelimit $LIMIT -f $IMG
 
 DEVICE=$(losetup -l | grep $IMG | cut -d " " -f1)
 echo "mounted as $DEVICE"
+
+sudo mkfs -t vfat $DEVICE
+
+sudo umount $MOUNTDIR 2>/dev/null
+sudo mkdir $MOUNTDIR 2>/dev/null
+
+sudo mount $DEVICE $MOUNTDIR -o uid=$UID
+cp -aR files/* $MOUNTDIR
+sudo umount $MOUNTDIR
+
+sudo losetup -d $DEVICE
 
 
