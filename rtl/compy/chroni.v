@@ -128,20 +128,17 @@ module chroni (
             text_buffer_index <= 0;
             attr_buffer_index <= 0;
             pixel_buffer_index_in <= render_buffer ? 11'd640 : 11'd0;
-            font_decode_state <= font_scan == 0 ? FD_TEXT_START : FD_FONT_READ;
+            font_decode_state <= font_scan == 0 ? FD_TEXT_READ : FD_FONT_READ;
+            mem_wait <= font_scan == 0 ? 3 : 2;
             if (lms_changed) begin
                load_memory_addr <= dl_lms;
                load_attr_addr   <= dl_attr;
             end
+            
+            data_memory_addr <= lms_changed ? dl_lms  : load_memory_addr;
+            attr_memory_addr <= lms_changed ? dl_attr : load_attr_addr;
          end else begin
             case (font_decode_state)
-               FD_TEXT_START:
-               begin
-                  vram_char_addr   <= load_memory_addr;
-                  data_memory_addr <= load_memory_addr + 1'b1;
-                  mem_wait <= 2;
-                  font_decode_state <= FD_TEXT_READ;
-               end
                FD_TEXT_READ: // transfer line of text from vram to text_buffer
                begin
                   vram_char_addr <= data_memory_addr;
@@ -152,11 +149,7 @@ module chroni (
                      text_buffer_we <= 1;
                      if (text_buffer_index == last_char) begin
                         text_buffer_index <= 0;
-                        mem_wait <= 2;
-                        
-                        attr_memory_addr <= load_attr_addr + 1'b1;
-                        vram_char_addr   <= load_attr_addr;
-                        
+                        mem_wait <= 3;
                         font_decode_state <= FD_ATTR_READ;
                      end else begin
                         text_buffer_index <= text_buffer_index + 1'b1;
