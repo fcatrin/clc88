@@ -36,7 +36,7 @@ sudo losetup -o $START --sizelimit $LIMIT -f $IMG
 DEVICE=$(losetup -l | grep $IMG | cut -d " " -f1)
 echo "mounted as $DEVICE"
 
-sudo mkfs -t vfat $DEVICE
+sudo mkfs -t vfat -n COMPY $DEVICE 
 
 sudo umount $MOUNTDIR 2>/dev/null
 sudo mkdir $MOUNTDIR 2>/dev/null
@@ -46,5 +46,5 @@ cp -aR files/* $MOUNTDIR
 sudo umount $MOUNTDIR
 
 sudo losetup -d $DEVICE
-
+rmdir $MOUNTDIR
 
