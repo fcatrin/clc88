@@ -108,5 +108,5 @@ test_string:
    .byte 'This is Compy CLC-88 testing VRAM port access with autoincrement. Now display list is set via registers!', 0
    
 test_attrs:
-   .byte $01, $01, $10, $10, $01, $01, $01, $01, $10, $10, $10, $00
+   .byte $10, $01, $10, $10, $01, $01, $01, $01, $10, $10, $10, $00
    
