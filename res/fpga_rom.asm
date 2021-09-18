@@ -5,7 +5,7 @@ BG_COLOR = $29AC
 FG_COLOR = $F75B
 BORDER_COLOR = $FC6A
    
-   org $ff00
+   org $fe00
 START:
    LDA #0
    STA $9004
@@ -71,21 +71,42 @@ dlist_in_ram  = dlist_addr + $a000
       
 load6:
    LDA test_string, x
-   beq halt
+   beq load_attr
    sta $9009
    inx
    bne load6
+   
+load_attr:
+   lda #<attr_location
+   sta $9006
+   lda #>attr_location
+   sta $9007
+   ldx #0
+
+load7:
+   LDA test_attrs, x
+   beq halt
+   sta $9009
+   inx
+   bne load7
    
 halt:
    JMP halt
 
 text_location = $1e00
+attr_location = $1e80
 
 display_list:
    .byte $42
-   .word text_location
+   .word text_location 
+   .byte 0
+   .word attr_location
+   .byte 0
    .byte $02, $02, $02, $41
 
 test_string:
    .byte 'This is Compy CLC-88 testing VRAM port access with autoincrement. Now display list is set via registers!', 0
+   
+test_attrs:
+   .byte $01, $01, $10, $10, $01, $01, $01, $01, $10, $10, $10, $00
    

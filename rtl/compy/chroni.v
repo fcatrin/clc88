@@ -214,6 +214,7 @@ module chroni (
    
    reg[16:0] display_list_addr;
    reg[16:0] dl_lms;
+   reg[16:0] dl_attr;
    reg[3:0]  dl_inst;
    reg vram_render;
    reg lms_changed;
@@ -223,7 +224,7 @@ module chroni (
       reg[16:0] display_list_ptr;
       reg      render_flag_prev;
       reg[1:0] mem_wait;
-      reg[1:0] addr_part;
+      reg[2:0] addr_part;
       reg[3:0] scanlines;
       
       render_flag_prev <= render_flag;
@@ -270,7 +271,7 @@ module chroni (
                vram_dl_addr     <= display_list_ptr;
                display_list_ptr <= display_list_ptr + 1;
                mem_wait <= 2;
-               addr_part <= 2;
+               addr_part <= 5;
                dlproc_state <= DL_LMS_READ;
             end
             DL_LMS_READ:
@@ -278,19 +279,24 @@ module chroni (
                vram_read_dl <= 1;
                mem_wait <= mem_wait - 1;
                if (mem_wait == 0) begin
+                  case(addr_part)
+                     5: dl_lms[7:0]  <= vram_chroni_rd_data;
+                     4: dl_lms[15:8] <= vram_chroni_rd_data;
+                     3: dl_lms[16]   <= vram_chroni_rd_data[0];
+                     2: dl_attr[7:0]  <= vram_chroni_rd_data;
+                     1: dl_attr[15:8] <= vram_chroni_rd_data;
+                     0: dl_attr[16]   <= vram_chroni_rd_data[0];
+                  endcase
                   
-                  dl_lms <= addr_part == 0 ? 
-                     {vram_chroni_rd_data[0], dl_lms[15:0]} : 
-                     {vram_chroni_rd_data, dl_lms[15:8]};
-                  
-                  vram_dl_addr     <= display_list_ptr;
-                  display_list_ptr <= display_list_ptr + 1;
-                  mem_wait <= 2;
                   if (addr_part == 0) begin
                      report_lms_changed <= 1;
                      dlproc_state <= DL_EXEC;
+                  end else begin
+                     vram_dl_addr     <= display_list_ptr;
+                     display_list_ptr <= display_list_ptr + 1;
+                     mem_wait <= 2;
+                     addr_part <= addr_part - 1;
                   end
-                  addr_part <= addr_part -1 ;
                end
             end
             DL_EXEC:
