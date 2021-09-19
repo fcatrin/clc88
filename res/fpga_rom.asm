@@ -7,6 +7,9 @@ BORDER_COLOR = $2167
    
    org $fe00
 START:
+   lda #1
+   sta $9002
+
    LDA #0
    STA $9004
    
@@ -25,23 +28,23 @@ set_palette:
    
    LDX #0
 load1:
-   LDA $e000, x
-   sta $a000, x
+   LDA $e400, x
+   sta $a400, x
    inx
    bne load1
 load2:
-   LDA $e100, x
-   sta $a100, x
+   LDA $e500, x
+   sta $a500, x
    inx
    bne load2
 load3:
-   LDA $e200, x
-   sta $a200, x
+   LDA $e600, x
+   sta $a600, x
    inx
    bne load3
 load4:
-   LDA $e300, x
-   sta $a300, x
+   LDA $e700, x
+   sta $a700, x
    inx
    bne load4
 load5:

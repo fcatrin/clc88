@@ -39,6 +39,8 @@ module chroni (
                display_list_addr[8:1]  <= cpu_wr_data;
             4'h1:
                display_list_addr[16:9] <= cpu_wr_data;
+            4'h2:
+               charset_base <= cpu_wr_data;
             4'h4:
             begin
                palette_write_index <= cpu_wr_data;
@@ -91,6 +93,7 @@ module chroni (
    localparam FD_FONT_WRITE = 13;
    localparam FD_FONT_DONE  = 14;
    reg[3:0]  font_decode_state;
+   reg[7:0]  charset_base;
 
    // state machine to read char or font from rom
    always @(posedge sys_clk) begin : char_gen
@@ -197,7 +200,7 @@ module chroni (
                   attr_buffer_index <= attr_buffer_index + 1;
 
                   // fetch font data
-                  vram_char_addr <= {text_buffer_data_rd, font_scan};
+                  vram_char_addr <= {charset_base[6:0] + text_buffer_data_rd[7], text_buffer_data_rd[6:0], font_scan};
                   text_attr <= attr_buffer_data_rd;
                   font_decode_state <= FD_FONT_WAIT;
                   mem_wait <= 2;
