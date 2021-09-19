@@ -44,10 +44,12 @@ module cornet_cpu(
    
    reg[2:0] cpu_fetch_state = CPU_WAIT;
    reg cpu_reset;
+   reg hold_fetch_addr;
    
    always @ (posedge clk) begin : cpu_fetch
       cpu_reset <= 0;
       fetch_rd_req <= 0;
+      hold_fetch_addr <= 0;
       if (~reset_n) begin
          cpu_fetch_state <= CPU_WAIT;
       end else if (cpu_fetch_state == CPU_WAIT && reset_n) begin
@@ -64,12 +66,16 @@ module cornet_cpu(
                   fetch_rd_addr <= pc;
                   fetch_rd_req  <= 1;
                   cpu_fetch_state <= CPU_LOAD_INST;
+                  hold_fetch_addr <= 1;
                end
             CPU_LOAD_INST:
+            begin
+               hold_fetch_addr <= 1;
                if (ready && !fetch_rd_req) begin
                   reg_i <= rd_data;
                   cpu_fetch_state <= CPU_EXECUTE;
                end
+            end
             CPU_EXECUTE:
             begin
                cpu_fetch_state <= CPU_EXECUTE_WAIT;
@@ -93,19 +99,20 @@ module cornet_cpu(
    localparam LDX       = 6;
    localparam LDY       = 7;
    localparam LDA_Z_Y   = 8;
-   localparam LDA_ABS_X = 9;
-   localparam LDA_ABS_Y = 10;
-   localparam LDA_ADDR  = 11;
-   localparam INX       = 12;
-   localparam INY       = 13;
-   localparam CMP       = 14;
-   localparam CPX       = 15;
-   localparam CPY       = 16;
-   localparam STA       = 17;
-   localparam STA_Z     = 18;
-   localparam STA_ABS   = 19;
-   localparam STA_ABS_X = 20;
-   localparam STA_ADDR  = 21;
+   localparam LDA_ABS   = 9;
+   localparam LDA_ABS_X = 10;
+   localparam LDA_ABS_Y = 11;
+   localparam LDA_ADDR  = 12;
+   localparam INX       = 13;
+   localparam INY       = 14;
+   localparam CMP       = 15;
+   localparam CPX       = 16;
+   localparam CPY       = 17;
+   localparam STA       = 18;
+   localparam STA_Z     = 19;
+   localparam STA_ABS   = 20;
+   localparam STA_ABS_X = 21;
+   localparam STA_ADDR  = 22;
    
    reg[5:0] cpu_inst_state = NOP;
    reg[5:0] cpu_next_op    = NOP;
@@ -169,6 +176,13 @@ module cornet_cpu(
                   data_rd_word_req <= 1;
                   data_rd_addr <= pc + 1'b1; 
                   cpu_inst_state <= STA_ABS_X;
+                  pc_delta <= 3;
+               end
+               8'hAD: /* LDA $ */
+               begin
+                  data_rd_word_req <= 1;
+                  data_rd_addr <= pc + 1'b1; 
+                  cpu_inst_state <= LDA_ABS;
                   pc_delta <= 3;
                end
                8'hB1: /* LDA (Z),Y */
@@ -361,6 +375,11 @@ module cornet_cpu(
                   op_addr <= {8'd0, reg_byte};
                   cpu_next_op <= LDA_Z_Y;
                end
+               LDA_ABS:
+               begin
+                  op_addr <= reg_word;
+                  cpu_next_op <= LDA_ADDR;
+               end
                LDA_ABS_Y:
                begin
                   op_addr <= reg_word + reg_y;
@@ -409,7 +428,7 @@ module cornet_cpu(
 
    assign wr_en  = bus_wr_en;
    assign rd_req = fetch_rd_req | bus_rd_req;
-   assign addr   = fetch_rd_req ? fetch_rd_addr : bus_addr;
+   assign addr   = hold_fetch_addr ? fetch_rd_addr : bus_addr;
 
    reg[15:0] data_rd_addr;
    reg[15:0] fetch_rd_addr;

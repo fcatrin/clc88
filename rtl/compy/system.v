@@ -17,50 +17,17 @@ module system (
    wire sys_clk;
    
    // global bus
-   wire[7:0]  data = rom_data;
+   wire[7:0]  data = ram_cs ? ram_rd_data : rom_rd_data;
+   wire rom_cs = cpu_addr[15:14] == 2'b11;  // c000 and above
+   wire ram_cs = cpu_addr[15:12] == 4'b1000 || !cpu_addr[15]; // 0000 -> 8fff
    
    reg[15:0]  dram_data_wr;
    reg[15:0]  dram_data_rd;
-   
-   wire[7:0]  rom_data;
    
    wire[15:0] cpu_addr;
    wire       cpu_rd_req;
    reg        cpu_ready;
    
-   reg[1:0] vga_mode;
-
-   wire CLK_OUT1;
-   wire CLK_OUT2;
-   wire CLK_OUT3;
-   wire CLK_OUT4;
-
-   wire vga_clock = 
-       vga_mode == VGA_MODE_640x480 ? CLK_OUT1 : 
-      (vga_mode == VGA_MODE_800x600 ? CLK_OUT2 : CLK_OUT3);
-   
-   always @ (posedge sys_clk) begin
-      reg key_mode_prev;
-      reg key_mode_current;
-
-      if (!vga_mode)
-         vga_mode <= VGA_MODE_800x600;
-      else begin
-         key_mode_current <= key_mode;
-         key_mode_prev    <= key_mode_current;
-         if (key_mode_prev & ~key_mode_current) begin
-            case (vga_mode)
-               VGA_MODE_640x480:
-                  vga_mode <= VGA_MODE_800x600;
-               VGA_MODE_800x600:
-                  vga_mode <= VGA_MODE_1920x1080;
-               VGA_MODE_1920x1080:
-                  vga_mode <= VGA_MODE_640x480;
-            endcase
-         end
-      end
-   end
-
    localparam BUS_IDLE = 4'd0;
    localparam BUS_READ = 4'd1;
    localparam BUS_DONE = 4'd2;
@@ -85,12 +52,30 @@ module system (
    end
    
    wire[12:0] rom_addr = cpu_addr[12:0]; 
+   wire[7:0]  rom_rd_data;
    
    rom rom_inst (
       .clock(sys_clk),
       .address(rom_addr),
-      .q(rom_data)
+      .q(rom_rd_data)
    );
+   
+   // use block ram for testing only
+   // it will be replaced by sram in the future
+   
+   wire[15:0] ram_addr = cpu_addr[15:0];
+   wire[7:0]  ram_rd_data;
+   wire[7:0]  ram_wr_data = cpu_wr_data;
+   wire       ram_wr_en = cpu_wr_en;
+   
+   spram #(65536, 16, 8) ram (
+         .address(ram_addr),
+         .clock(sys_clk),
+         .data(ram_wr_data),
+         .wren(ram_wr_en && ram_cs),
+         .q(ram_rd_data)
+      );
+         
 
    pll pll_inst (// Clock in ports
       .inclk0(clk),      // IN
@@ -101,6 +86,40 @@ module system (
       .areset(1'b0),     // reset input 
       .locked(pll_locked)
    );        // OUT
+   
+   reg[1:0] vga_mode;
+
+   wire CLK_OUT1;
+   wire CLK_OUT2;
+   wire CLK_OUT3;
+   wire CLK_OUT4;
+
+   wire vga_clock = 
+      vga_mode == VGA_MODE_640x480 ? CLK_OUT1 : 
+      (vga_mode == VGA_MODE_800x600 ? CLK_OUT2 : CLK_OUT3);
+   
+   always @ (posedge sys_clk) begin
+      reg key_mode_prev;
+      reg key_mode_current;
+
+      if (!vga_mode)
+         vga_mode <= VGA_MODE_800x600;
+      else begin
+         key_mode_current <= key_mode;
+         key_mode_prev    <= key_mode_current;
+         if (key_mode_prev & ~key_mode_current) begin
+            case (vga_mode)
+               VGA_MODE_640x480:
+                  vga_mode <= VGA_MODE_800x600;
+               VGA_MODE_800x600:
+                  vga_mode <= VGA_MODE_1920x1080;
+               VGA_MODE_1920x1080:
+                  vga_mode <= VGA_MODE_640x480;
+            endcase
+         end
+      end
+   end
+   
 
    chroni chroni_inst (
       .vga_clk(vga_clock),

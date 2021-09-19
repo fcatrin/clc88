@@ -10,21 +10,10 @@ START:
 
 // just test new instructions
 
-   ldx #2
-   ldy #5
-   inx
-   inx
-   cpx #4
-   cpx #5
-   iny
-   iny
-   cpy #7
-   cpy #8
-   
-   lda #8
-   cmp #4
-   cmp #8
-   cmp #2
+   lda #$92
+   sta $2148
+   lda #0
+   lda $2148
    
 // now some real code
 
