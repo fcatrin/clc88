@@ -3,25 +3,20 @@
 
 BG_COLOR = $29AC   
 FG_COLOR = $F75B
-BORDER_COLOR = $FC6A
+BORDER_COLOR = $2167
    
    org $fe00
 START:
    LDA #0
    STA $9004
    
-   LDA #<BG_COLOR
+   ldx #0
+set_palette:   
+   lda palette_dark, x
    STA $9005
-   
-   LDA #>BG_COLOR
-   STA $9005
+   inx
+   bne set_palette
 
-   LDA #<FG_COLOR
-   STA $9005
-   
-   LDA #>FG_COLOR
-   STA $9005
-   
    lda #<BORDER_COLOR
    sta $900c
 
@@ -104,9 +99,18 @@ display_list:
    .byte 0
    .byte $02, $02, $02, $41
 
+palette_dark:
+   .word $2104
+   .word $9C0A
+   .word $AC0E
+   .word $43B5
+
 test_string:
-   .byte 'This is Compy CLC-88 testing VRAM port access with autoincrement. Now display list is set via registers!', 0
+   .byte 'This is Compy CLC-88 testing VRAM port access and attributes!', 0
    
 test_attrs:
-   .byte $10, $01, $10, $10, $01, $01, $01, $01, $10, $10, $10, $00
+   .byte $01, $01, $01, $01, $01, $01, $01, $01, $03, $03, $03, $03, $03, $02, $02, $02, $02, $02, $02, $02
+   .byte $01, $01, $01, $01, $01, $01, $01, $01, $01, $01, $01, $01, $01, $01, $01, $01, $01, $01, $01, $01
+   .byte $01, $01, $01, $01, $01, $01, $01, $01, $01, $01, $01, $01, $01, $01, $01, $01, $01, $01, $01, $01
+   .byte $01, $01, $01, $01, $01, $01, $01, $01, $01, $01, $01, $01, $01, $01, $01, $01, $01, $01, $01, $01
    
