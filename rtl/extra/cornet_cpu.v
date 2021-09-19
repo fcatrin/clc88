@@ -87,20 +87,28 @@ module cornet_cpu(
    localparam NOP       = 0;
    localparam RESET     = 1;
    localparam JMP       = 2;
-   localparam LDA       = 3;
-   localparam LDX       = 4;
-   localparam LDA_ABS_X = 5;
-   localparam LDA_ADDR  = 6;
-   localparam INX       = 7;
-   localparam BRANCH    = 8;
-   localparam NO_BRANCH = 9;
-   localparam STA       = 10;
-   localparam STA_ABS   = 11;
-   localparam STA_ABS_X = 12;
-   localparam STA_ADDR  = 13; 
+   localparam BRANCH    = 3;
+   localparam NO_BRANCH = 4;
+   localparam LDA       = 5;
+   localparam LDX       = 6;
+   localparam LDY       = 7;
+   localparam LDA_Z_Y   = 8;
+   localparam LDA_ABS_X = 9;
+   localparam LDA_ABS_Y = 10;
+   localparam LDA_ADDR  = 11;
+   localparam INX       = 12;
+   localparam INY       = 13;
+   localparam CMP       = 14;
+   localparam CPX       = 15;
+   localparam CPY       = 16;
+   localparam STA       = 17;
+   localparam STA_Z     = 18;
+   localparam STA_ABS   = 19;
+   localparam STA_ABS_X = 20;
+   localparam STA_ADDR  = 21;
    
-   reg[4:0] cpu_inst_state = NOP;
-   reg[4:0] cpu_next_op    = NOP;
+   reg[5:0] cpu_inst_state = NOP;
+   reg[5:0] cpu_next_op    = NOP;
    
    reg      cpu_inst_done;
    
@@ -121,6 +129,13 @@ module cornet_cpu(
             cpu_inst_state <= RESET;
          end else if (cpu_fetch_state == CPU_EXECUTE) begin
             case (reg_i)
+               8'hA0: /* LDY # */
+               begin
+                  data_rd_byte_req <= 1;
+                  data_rd_addr <= pc + 1'b1;
+                  cpu_inst_state <= LDY;
+                  pc_delta <= 2;
+               end
                8'hA2: /* LDX # */
                begin
                   data_rd_byte_req <= 1;
@@ -135,6 +150,13 @@ module cornet_cpu(
                   cpu_inst_state <= LDA;
                   pc_delta <= 2;
                end
+               8'h85: /* STA Z */
+               begin
+                  data_rd_byte_req <= 1;
+                  data_rd_addr <= pc + 1'b1; 
+                  cpu_inst_state <= STA_Z;
+                  pc_delta <= 2;
+               end                  
                8'h8D: /* STA $ */
                begin
                   data_rd_word_req <= 1;
@@ -142,6 +164,20 @@ module cornet_cpu(
                   cpu_inst_state <= STA_ABS;
                   pc_delta <= 3;
                end                  
+               8'h9D: /* STA $,X */
+               begin
+                  data_rd_word_req <= 1;
+                  data_rd_addr <= pc + 1'b1; 
+                  cpu_inst_state <= STA_ABS_X;
+                  pc_delta <= 3;
+               end
+               8'hB1: /* LDA (Z),Y */
+               begin
+                  data_rd_byte_req <= 1;
+                  data_rd_addr <= pc + 1'b1; 
+                  cpu_inst_state <= LDA_Z_Y;
+                  pc_delta <= 2;
+               end
                8'hBD: /* LDA $,X */
                begin
                   data_rd_word_req <= 1;
@@ -149,12 +185,38 @@ module cornet_cpu(
                   cpu_inst_state <= LDA_ABS_X;
                   pc_delta <= 3;
                end
-               8'h9D: /* STA $,X */
+               8'hBE: /* LDA $,Y */
                begin
                   data_rd_word_req <= 1;
                   data_rd_addr <= pc + 1'b1; 
-                  cpu_inst_state <= STA_ABS_X;
+                  cpu_inst_state <= LDA_ABS_Y;
                   pc_delta <= 3;
+               end
+               8'hC0: /* CPY # */
+               begin
+                  data_rd_byte_req <= 1;
+                  data_rd_addr <= pc + 1'b1;
+                  cpu_inst_state <= CPY;
+                  pc_delta <= 2;
+               end
+               8'hC8: /* INY */
+               begin
+                  cpu_inst_state <= INY;
+                  pc_delta <= 1;
+               end
+               8'hC9: /* CMP # */
+               begin
+                  data_rd_byte_req <= 1;
+                  data_rd_addr <= pc + 1'b1;
+                  cpu_inst_state <= CMP;
+                  pc_delta <= 2;
+               end
+               8'hE0: /* CPX # */
+               begin
+                  data_rd_byte_req <= 1;
+                  data_rd_addr <= pc + 1'b1;
+                  cpu_inst_state <= CPX;
+                  pc_delta <= 2;
                end
                8'hE8: /* INX */
                begin
@@ -193,6 +255,12 @@ module cornet_cpu(
             cpu_inst_state <= NOP;
          end else begin
             case (cpu_next_op)
+               LDA_Z_Y:
+               begin
+                  data_rd_word_req <= 1;
+                  data_rd_addr <= op_addr;
+                  cpu_inst_state <= LDA_ABS_Y;
+               end
                LDA_ADDR:
                begin
                   data_rd_byte_req <= 1;
@@ -220,6 +288,13 @@ module cornet_cpu(
             begin
                reg_x  <= reg_x + 1'b1;
                flag_z <= reg_x == 8'hff;
+               pc_next <= pc + pc_delta;
+               cpu_inst_done <= 1;
+            end
+            INY:
+            begin
+               reg_y  <= reg_y + 1'b1;
+               flag_z <= reg_y == 8'hff;
                pc_next <= pc + pc_delta;
                cpu_inst_done <= 1;
             end
@@ -257,10 +332,49 @@ module cornet_cpu(
                   pc_next <= pc + pc_delta;
                   cpu_inst_done <= 1;
                end
+               CMP:
+               begin
+                  flag_z <= reg_a == reg_byte;
+                  pc_next <= pc + pc_delta;
+                  cpu_inst_done <= 1;
+               end
+               CPX:
+               begin
+                  flag_z <= reg_x == reg_byte;
+                  pc_next <= pc + pc_delta;
+                  cpu_inst_done <= 1;
+               end
+               CPY:
+               begin
+                  flag_z <= reg_y == reg_byte;
+                  pc_next <= pc + pc_delta;
+                  cpu_inst_done <= 1;
+               end
+               LDY:
+               begin
+                  reg_y <= reg_byte;
+                  pc_next <= pc + pc_delta;
+                  cpu_inst_done <= 1;
+               end
+               LDA_Z_Y:
+               begin
+                  op_addr <= {8'd0, reg_byte};
+                  cpu_next_op <= LDA_Z_Y;
+               end
+               LDA_ABS_Y:
+               begin
+                  op_addr <= reg_word + reg_y;
+                  cpu_next_op <= LDA_ADDR;
+               end
                LDA_ABS_X:
                begin
                   op_addr <= reg_word + reg_x;
                   cpu_next_op <= LDA_ADDR;
+               end
+               STA_Z:
+               begin
+                  op_addr <= {8'd0, reg_byte};
+                  cpu_next_op <= STA_ADDR;
                end
                STA_ABS:
                begin

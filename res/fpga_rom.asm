@@ -7,6 +7,27 @@ BORDER_COLOR = $2167
    
    org $fe00
 START:
+
+// just test new instructions
+
+   ldx #2
+   ldy #5
+   inx
+   inx
+   cpx #4
+   cpx #5
+   iny
+   iny
+   cpy #7
+   cpy #8
+   
+   lda #8
+   cmp #4
+   cmp #8
+   cmp #2
+   
+// now some real code
+
    lda #1
    sta $9002
 
