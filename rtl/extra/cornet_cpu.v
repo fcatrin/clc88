@@ -141,140 +141,88 @@ module cornet_cpu(
             data_rd_addr <= 16'hFFFC; 
             cpu_inst_state <= RESET;
          end else if (cpu_fetch_state == CPU_EXECUTE) begin
+            pc_delta <= 0;
             case (reg_i)
+               8'h4C: /* JMP $ */
+               begin
+                  cpu_inst_state <= JMP;
+                  data_rd_word_req <= 1;
+               end
                8'hA0: /* LDY # */
                begin
-                  data_rd_byte_req <= 1;
-                  data_rd_addr <= pc + 1'b1;
                   cpu_inst_state <= LDY;
-                  pc_delta <= 2;
                end
                8'hA2: /* LDX # */
                begin
-                  data_rd_byte_req <= 1;
-                  data_rd_addr <= pc + 1'b1;
                   cpu_inst_state <= LDX;
-                  pc_delta <= 2;
                end
                8'hA5: /* LDA # */
                begin
-                  data_rd_byte_req <= 1;
-                  data_rd_addr <= pc + 1'b1;
                   cpu_inst_state <= LDA_Z;
-                  pc_delta <= 2;
                end
                8'hA9: /* LDA # */
                begin
-                  data_rd_byte_req <= 1;
-                  data_rd_addr <= pc + 1'b1;
                   cpu_inst_state <= LDA;
-                  pc_delta <= 2;
                end
                8'h85: /* STA Z */
                begin
-                  data_rd_byte_req <= 1;
-                  data_rd_addr <= pc + 1'b1; 
                   cpu_inst_state <= STA_Z;
-                  pc_delta <= 2;
                end                  
                8'h8D: /* STA $ */
                begin
-                  data_rd_word_req <= 1;
-                  data_rd_addr <= pc + 1'b1; 
                   cpu_inst_state <= STA_ABS;
-                  pc_delta <= 3;
                end                  
                8'h9D: /* STA $,X */
                begin
-                  data_rd_word_req <= 1;
-                  data_rd_addr <= pc + 1'b1; 
                   cpu_inst_state <= STA_ABS_X;
-                  pc_delta <= 3;
                end
                8'hAD: /* LDA $ */
                begin
-                  data_rd_word_req <= 1;
-                  data_rd_addr <= pc + 1'b1; 
                   cpu_inst_state <= LDA_ABS;
-                  pc_delta <= 3;
                end
                8'hB1: /* LDA (Z),Y */
                begin
-                  data_rd_byte_req <= 1;
-                  data_rd_addr <= pc + 1'b1; 
                   cpu_inst_state <= LDA_Z_Y;
-                  pc_delta <= 2;
                end
                8'hBD: /* LDA $,X */
                begin
-                  data_rd_word_req <= 1;
-                  data_rd_addr <= pc + 1'b1; 
                   cpu_inst_state <= LDA_ABS_X;
-                  pc_delta <= 3;
                end
                8'hBE: /* LDA $,Y */
                begin
-                  data_rd_word_req <= 1;
-                  data_rd_addr <= pc + 1'b1; 
                   cpu_inst_state <= LDA_ABS_Y;
-                  pc_delta <= 3;
                end
                8'hC0: /* CPY # */
                begin
-                  data_rd_byte_req <= 1;
-                  data_rd_addr <= pc + 1'b1;
                   cpu_inst_state <= CPY;
-                  pc_delta <= 2;
                end
                8'hC8: /* INY */
                begin
                   cpu_inst_state <= INY;
-                  pc_delta <= 1;
                end
                8'hC9: /* CMP # */
                begin
-                  data_rd_byte_req <= 1;
-                  data_rd_addr <= pc + 1'b1;
                   cpu_inst_state <= CMP;
-                  pc_delta <= 2;
                end
                8'hE0: /* CPX # */
                begin
-                  data_rd_byte_req <= 1;
-                  data_rd_addr <= pc + 1'b1;
                   cpu_inst_state <= CPX;
-                  pc_delta <= 2;
                end
                8'hE6: /* INC Z */
                begin
-                  data_rd_byte_req <= 1;
-                  data_rd_addr <= pc + 1'b1;
                   cpu_inst_state <= INC_Z;
-                  pc_delta <= 2;
                end
                8'hE8: /* INX */
                begin
                   cpu_inst_state <= INX;
-                  pc_delta <= 1;
                end
                8'hEE: /* INC_ABS */
                begin
-                  data_rd_word_req <= 1;
-                  data_rd_addr <= pc + 1'b1;
                   cpu_inst_state <= INC_ABS;
-                  pc_delta <= 3;
-               end
-               8'h4C: /* JMP $ */
-               begin
-                  data_rd_word_req <= 1;
-                  data_rd_addr <= pc + 1'b1; 
-                  cpu_inst_state <= JMP;
-                  pc_delta <= 0;
                end
                8'hD0: /* BNE */
                if (!flag_z) begin
                   data_rd_byte_req <= 1;
-                  data_rd_addr <= pc + 1'b1;
                   cpu_inst_state <= BRANCH;
                   pc_delta <= 0;
                end else begin
@@ -284,7 +232,6 @@ module cornet_cpu(
                8'hF0: /* BEQ */
                if (flag_z) begin
                   data_rd_byte_req <= 1;
-                  data_rd_addr <= pc + 1'b1;
                   cpu_inst_state <= BRANCH;
                   pc_delta <= 0;
                end else begin
@@ -292,6 +239,34 @@ module cornet_cpu(
                   pc_delta <= 2;
                end
             endcase
+            
+            // apply bit level logic for tese cases when instruction set is complete
+            case(reg_i)
+               8'hA0, 8'hA2, 8'hA5,
+               8'hA9, 8'h85, 8'hB1,
+               8'hC0, 8'hC9, 8'hE0,
+               8'hE6:
+               begin
+                  data_rd_byte_req <= 1;
+                  pc_delta <= 2;
+               end
+                  
+               8'h8D, 8'h9D, 8'hAD,
+               8'hBD, 8'hBE, 8'hEE:
+               begin
+                  data_rd_word_req <= 1;
+                  pc_delta <= 3;
+               end
+            endcase
+            
+            case(reg_i)
+               8'h4C:
+                  pc_delta <= 0;
+               8'hC8, 8'hE8:
+                  pc_delta <= 1;
+            endcase
+            
+            data_rd_addr <= pc + 1'b1;
          end else if (cpu_fetch_state == CPU_FETCH) begin
             cpu_inst_state <= NOP;
          end else begin
