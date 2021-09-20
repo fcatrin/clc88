@@ -77,6 +77,8 @@ set_clock_groups -logically_exclusive \
 #**************************************************************
 # Set False Path
 #**************************************************************
+set_false_path -from [get_ports altera_reserved_*]
+set_false_path -to   [get_ports altera_reserved_*]
 set_false_path -from [get_ports key_*]
 set_false_path -to   [get_ports vga_*]
 set_false_path -from [get_ports buttons*]
@@ -94,6 +96,11 @@ set_multicycle_path -setup -from *|render_start_req   -to *_crossclock|pipe* 2
 set_multicycle_path -hold  -from *|render_start_req   -to *_crossclock|pipe* 1
 set_multicycle_path -setup -from *|pixel_scale_pipe   -to *_crossclock|pipe* 2
 set_multicycle_path -hold  -from *|pixel_scale_pipe   -to *_crossclock|pipe* 1
+
+set_multicycle_path -setup -from user_reset   -to *system_inst* 2
+set_multicycle_path -hold  -from user_reset   -to *system_inst* 1
+set_multicycle_path -setup -from boot_reset   -to *system_inst* 2
+set_multicycle_path -hold  -from boot_reset   -to *system_inst* 1
 
 
 #**************************************************************
