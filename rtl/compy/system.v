@@ -9,7 +9,8 @@ module system (
    output [4:0] vga_r,
    output [5:0] vga_g,
    output [4:0] vga_b,
-   output pll_locked
+   output pll_locked,
+   input [4:0] buttons
 );
 
 `include "chroni.vh"
@@ -17,12 +18,10 @@ module system (
    wire sys_clk;
    
    // global bus
-   wire[7:0]  data = ram_cs ? ram_rd_data : rom_rd_data;
-   wire rom_cs = cpu_addr[15:14] == 2'b11;  // c000 and above
-   wire ram_cs = cpu_addr[15:12] == 4'b1000 || !cpu_addr[15]; // 0000 -> 8fff
-   
-   reg[15:0]  dram_data_wr;
-   reg[15:0]  dram_data_rd;
+   wire[7:0]  data = ram_cs ? ram_rd_data : (io_cs ? io_rd_data : rom_rd_data);
+   wire rom_cs = cpu_addr[15:14] == 2'b11;  // 0xc000 and above
+   wire ram_cs = cpu_addr[15:12] == 4'b1000 || !cpu_addr[15]; // 0x0000 -> 0x8fff
+   wire io_cs  = cpu_addr[15:8]  == 8'b10010010; // 0x92XX
    
    wire[15:0] cpu_addr;
    wire       cpu_rd_req;
@@ -149,6 +148,20 @@ module system (
          .rd_req(cpu_rd_req),
          .ready(cpu_ready)
       );
-   
+
+   wire[3:0] io_addr = cpu_addr[3:0];
+   wire[7:0] io_rd_data;
+   wire[7:0] io_wr_data = cpu_wr_data;
+   wire      io_wr_en = cpu_wr_en;
+
+   qmtech_board io (
+         .clk(sys_clk),
+         .reset_n(reset_n),
+         .addr(io_addr),
+         .rd_data(io_rd_data),
+         .wr_data(io_wr_data),
+         .wr_en(io_wr_en && io_cs),
+         .buttons(buttons)
+   );
 endmodule
 

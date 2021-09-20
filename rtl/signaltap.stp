@@ -5,12 +5,12 @@
     <node_ip_info instance_id="0" mfg_id="110" node_id="0" version="6"/>
     <position_info>
       <single attribute="active tab" value="1"/>
-      <single attribute="data horizontal scroll position" value="1018"/>
+      <single attribute="data horizontal scroll position" value="137"/>
       <single attribute="data vertical scroll position" value="0"/>
       <single attribute="setup horizontal scroll position" value="0"/>
       <single attribute="setup vertical scroll position" value="0"/>
       <single attribute="zoom level denominator" value="1"/>
-      <single attribute="zoom level numerator" value="1024"/>
+      <single attribute="zoom level numerator" value="4096"/>
       <single attribute="zoom offset denominator" value="1"/>
       <single attribute="zoom offset numerator" value="0"/>
     </position_info>
@@ -209,6 +209,132 @@
       <symbol name="BUS_STATE_READ" value="0010"/>
       <symbol name="BUS_STATE_READ_DONE_CHRONI" value="0100"/>
       <symbol name="BUS_STATE_READ_DONE_CPU" value="1000"/>
+    </table>
+    <table name="dlproc_state_table" width="7">
+      <symbol name="DL_EXEC" value="0000001"/>
+      <symbol name="DL_IDLE" value="0000010"/>
+      <symbol name="DL_LMS" value="0000100"/>
+      <symbol name="DL_LMS_READ" value="0001000"/>
+      <symbol name="DL_READ" value="0010000"/>
+      <symbol name="DL_READ_WAIT" value="0100000"/>
+      <symbol name="DL_WAIT" value="1000000"/>
+    </table>
+    <table name="cpu_inst_state_table (5)" width="20">
+      <symbol name="BRANCH" value="00000000000000000001"/>
+      <symbol name="CMP" value="00000000000000000010"/>
+      <symbol name="CPX" value="00000000000000000100"/>
+      <symbol name="CPY" value="00000000000000001000"/>
+      <symbol name="INX" value="00000000000000010000"/>
+      <symbol name="INY" value="00000000000000100000"/>
+      <symbol name="JMP" value="00000000000001000000"/>
+      <symbol name="LDA" value="00000000000010000000"/>
+      <symbol name="LDA_ABS_X" value="00000000000100000000"/>
+      <symbol name="LDA_ABS_Y" value="00000000001000000000"/>
+      <symbol name="LDA_Z_Y" value="00000000010000000000"/>
+      <symbol name="LDX" value="00000000100000000000"/>
+      <symbol name="LDY" value="00000001000000000000"/>
+      <symbol name="NOP" value="00000010000000000000"/>
+      <symbol name="NO_BRANCH" value="00000100000000000000"/>
+      <symbol name="RESET" value="00001000000000000000"/>
+      <symbol name="STA" value="00010000000000000000"/>
+      <symbol name="STA_ABS" value="00100000000000000000"/>
+      <symbol name="STA_ABS_X" value="01000000000000000000"/>
+      <symbol name="STA_Z" value="10000000000000000000"/>
+    </table>
+    <table name="cpu_next_op_table" width="4">
+      <symbol name="LDA_ADDR" value="0001"/>
+      <symbol name="LDA_Z_Y" value="0010"/>
+      <symbol name="NOP" value="0100"/>
+      <symbol name="STA_ADDR" value="1000"/>
+    </table>
+    <table name="bus_state_table (6)" width="2">
+      <symbol name="BUS_IDLE" value="01"/>
+      <symbol name="BUS_READ" value="10"/>
+    </table>
+    <table name="bus_rd_state_table (3)" width="4">
+      <symbol name="BUS_RD_BYTE" value="0001"/>
+      <symbol name="BUS_RD_IDLE" value="0010"/>
+      <symbol name="BUS_RD_WORD_H" value="0100"/>
+      <symbol name="BUS_RD_WORD_L" value="1000"/>
+    </table>
+    <table name="cpu_fetch_state_table (6)" width="6">
+      <symbol name="CPU_EXECUTE" value="000001"/>
+      <symbol name="CPU_EXECUTE_WAIT" value="000010"/>
+      <symbol name="CPU_FETCH" value="000100"/>
+      <symbol name="CPU_LOAD_INST" value="001000"/>
+      <symbol name="CPU_RESET" value="010000"/>
+      <symbol name="CPU_WAIT" value="100000"/>
+    </table>
+    <table name="bus_state_table (7)" width="2">
+      <symbol name="BUS_IDLE" value="01"/>
+      <symbol name="BUS_READ" value="10"/>
+    </table>
+    <table name="bus_rd_state_table (4)" width="4">
+      <symbol name="BUS_RD_BYTE" value="0001"/>
+      <symbol name="BUS_RD_IDLE" value="0010"/>
+      <symbol name="BUS_RD_WORD_H" value="0100"/>
+      <symbol name="BUS_RD_WORD_L" value="1000"/>
+    </table>
+    <table name="cpu_fetch_state_table (7)" width="6">
+      <symbol name="CPU_EXECUTE" value="000001"/>
+      <symbol name="CPU_EXECUTE_WAIT" value="000010"/>
+      <symbol name="CPU_FETCH" value="000100"/>
+      <symbol name="CPU_LOAD_INST" value="001000"/>
+      <symbol name="CPU_RESET" value="010000"/>
+      <symbol name="CPU_WAIT" value="100000"/>
+    </table>
+    <table name="cpu_inst_state_table (6)" width="24">
+      <symbol name="BRANCH" value="000000000000000000000001"/>
+      <symbol name="CMP" value="000000000000000000000010"/>
+      <symbol name="CPX" value="000000000000000000000100"/>
+      <symbol name="CPY" value="000000000000000000001000"/>
+      <symbol name="INC_ADDR" value="000000000000000000010000"/>
+      <symbol name="INC_Z" value="000000000000000000100000"/>
+      <symbol name="INX" value="000000000000000001000000"/>
+      <symbol name="INY" value="000000000000000010000000"/>
+      <symbol name="JMP" value="000000000000000100000000"/>
+      <symbol name="LDA" value="000000000000001000000000"/>
+      <symbol name="LDA_ABS" value="000000000000010000000000"/>
+      <symbol name="LDA_ABS_X" value="000000000000100000000000"/>
+      <symbol name="LDA_ABS_Y" value="000000000001000000000000"/>
+      <symbol name="LDA_Z_Y" value="000000000010000000000000"/>
+      <symbol name="LDX" value="000000000100000000000000"/>
+      <symbol name="LDY" value="000000001000000000000000"/>
+      <symbol name="NOP" value="000000010000000000000000"/>
+      <symbol name="NO_BRANCH" value="000000100000000000000000"/>
+      <symbol name="RESET" value="000001000000000000000000"/>
+      <symbol name="STA" value="000010000000000000000000"/>
+      <symbol name="STA_ABS" value="000100000000000000000000"/>
+      <symbol name="STA_ABS_X" value="001000000000000000000000"/>
+      <symbol name="STA_Z" value="010000000000000000000000"/>
+      <symbol name="STM" value="100000000000000000000000"/>
+    </table>
+    <table name="cpu_inst_state_table (7)" width="25">
+      <symbol name="BRANCH" value="0000000000000000000000001"/>
+      <symbol name="CMP" value="0000000000000000000000010"/>
+      <symbol name="CPX" value="0000000000000000000000100"/>
+      <symbol name="CPY" value="0000000000000000000001000"/>
+      <symbol name="INC_ABS" value="0000000000000000000010000"/>
+      <symbol name="INC_ADDR" value="0000000000000000000100000"/>
+      <symbol name="INC_Z" value="0000000000000000001000000"/>
+      <symbol name="INX" value="0000000000000000010000000"/>
+      <symbol name="INY" value="0000000000000000100000000"/>
+      <symbol name="JMP" value="0000000000000001000000000"/>
+      <symbol name="LDA" value="0000000000000010000000000"/>
+      <symbol name="LDA_ABS" value="0000000000000100000000000"/>
+      <symbol name="LDA_ABS_X" value="0000000000001000000000000"/>
+      <symbol name="LDA_ABS_Y" value="0000000000010000000000000"/>
+      <symbol name="LDA_Z_Y" value="0000000000100000000000000"/>
+      <symbol name="LDX" value="0000000001000000000000000"/>
+      <symbol name="LDY" value="0000000010000000000000000"/>
+      <symbol name="NOP" value="0000000100000000000000000"/>
+      <symbol name="NO_BRANCH" value="0000001000000000000000000"/>
+      <symbol name="RESET" value="0000010000000000000000000"/>
+      <symbol name="STA" value="0000100000000000000000000"/>
+      <symbol name="STA_ABS" value="0001000000000000000000000"/>
+      <symbol name="STA_ABS_X" value="0010000000000000000000000"/>
+      <symbol name="STA_Z" value="0100000000000000000000000"/>
+      <symbol name="STM" value="1000000000000000000000000"/>
     </table>
   </mnemonics>
   <static_plugin_mnemonics/>
@@ -2298,6 +2424,9 @@ z/z/h8ZhJQ==
     
     
     
+    
+    
+    
     </embedded_sof_file>
     <embedded_sof_file id_crc_pairs="|30006E00,8B72EADA" name="compy.sof" size="1848612">eJzsnQdc08wbx9MCFREVFRUVNW7cuHFHceBCBHHgqgooioqAe8W9t75uxb0V
 91bcey9cr7j1/7r3Qv+NQKXQXI5e0pT2+b4f+0KSu+d3SWnud8/l6tO0HsVh
@@ -3964,6 +4093,9 @@ m8lV5XWJq4+BT12Lz7XpOkzNi1PhYFZQWz54V6t+79XXbegyzD9ly48n+bWx
 vsp5cmwF/4S4kb/63i87PT398vecnr7t1tN/+p3veer2U/Pe3Bve9P8DlVmS
 ZQ==
 
+    
+    
+    
     
     
     

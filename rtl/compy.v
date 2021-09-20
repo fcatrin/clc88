@@ -4,6 +4,7 @@ module compy (
    input clk50,
    input key_reset,
    input key_mode,
+   input [4:0] buttons,
    output vga_hs,
    output vga_vs,
    output [4:0] vga_r,
@@ -17,6 +18,8 @@ module compy (
    wire key_mode_pressed;
    wire key_reset_pressed;
 
+   wire[4:0] buttons_pressed;
+   
    reg boot_reset = 1;
    reg user_reset = 0;
    
@@ -46,6 +49,7 @@ module compy (
       .clk(clk50),
       .reset_n(!sys_reset),
       .key_mode(key_mode_pressed),
+      .buttons(buttons_pressed),
       .vga_hs(vga_hs),
       .vga_vs(vga_vs),
       .vga_r(vga_r),
@@ -64,6 +68,32 @@ module compy (
       .clk(clk50),
       .in(key_reset),
       .out(key_reset_pressed)
+   );
+
+   debouncer debounce_buttons_0 (
+         .clk(clk50),
+         .in(buttons[0]),
+         .out(buttons_pressed[0])
+   );
+   debouncer debounce_buttons_1 (
+         .clk(clk50),
+         .in(buttons[1]),
+         .out(buttons_pressed[1])
+   );
+   debouncer debounce_buttons_2 (
+         .clk(clk50),
+         .in(buttons[2]),
+         .out(buttons_pressed[2])
+   );
+   debouncer debounce_buttons_3 (
+         .clk(clk50),
+         .in(buttons[3]),
+         .out(buttons_pressed[3])
+   );
+   debouncer debounce_buttons_4 (
+         .clk(clk50),
+         .in(buttons[4]),
+         .out(buttons_pressed[4])
    );
 
 endmodule

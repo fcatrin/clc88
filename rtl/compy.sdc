@@ -86,6 +86,7 @@ set_false_path -from [get_ports altera_reserved_*]
 set_false_path -to   [get_ports altera_reserved_*]
 set_false_path -from [get_ports key_*]
 set_false_path -to   [get_ports vga_*]
+set_false_path -from [get_ports buttons]
 
 #**************************************************************
 # Set Multicycle Path
