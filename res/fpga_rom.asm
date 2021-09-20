@@ -10,10 +10,14 @@ START:
 
 // just test new instructions
 
-   lda #$92
-   sta $2148
-   lda #0
-   lda $2148
+   lda #<test_string
+   sta $32
+   lda #>test_string
+   sta $33
+   ldy #0
+   lda ($32), y
+   iny
+   lda ($32), y
    
 // now some real code
 
