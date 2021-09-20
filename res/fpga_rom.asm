@@ -1,3 +1,6 @@
+   
+SRC = $40
+   
    org $fffc
    .word START
 
@@ -8,20 +11,7 @@ BORDER_COLOR = $2167
    org $fe00
 START:
 
-// just test new instructions
-
-   lda #<test_string
-   sta $32
-   lda #>test_string
-   sta $33
-   ldy #0
-   lda ($32), y
-   iny
-   lda ($32), y
-   
-// now some real code
-
-   lda #1
+   lda #0
    sta $9002
 
    LDA #0
@@ -40,27 +30,29 @@ set_palette:
    lda #>BORDER_COLOR
    sta $900d
    
-   LDX #0
-load1:
-   LDA $e400, x
-   sta $a400, x
+// copy 16*256 bytes from $e000 to VRAM $00000
+
+   lda #0
+   sta $9006
+   sta $9007
+   sta $9008
+   sta SRC
+   lda #$e0
+   sta SRC+1
+   
+   ldx #0
+   ldy #0
+copy:   
+   lda (SRC), y
+   sta $9009
+   iny
+   bne copy
+   inc SRC+1
    inx
-   bne load1
-load2:
-   LDA $e500, x
-   sta $a500, x
-   inx
-   bne load2
-load3:
-   LDA $e600, x
-   sta $a600, x
-   inx
-   bne load3
-load4:
-   LDA $e700, x
-   sta $a700, x
-   inx
-   bne load4
+   cpx #16
+   bne copy
+
+   ldx #0
 load5:
    lda display_list, x
    sta dlist_in_ram, x
