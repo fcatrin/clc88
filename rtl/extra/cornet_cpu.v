@@ -149,77 +149,41 @@ module cornet_cpu(
                   data_rd_word_req <= 1;
                end
                8'hA0: /* LDY # */
-               begin
                   cpu_inst_state <= LDY;
-               end
                8'hA2: /* LDX # */
-               begin
                   cpu_inst_state <= LDX;
-               end
                8'hA5: /* LDA # */
-               begin
                   cpu_inst_state <= LDA_Z;
-               end
                8'hA9: /* LDA # */
-               begin
                   cpu_inst_state <= LDA;
-               end
                8'h85: /* STA Z */
-               begin
                   cpu_inst_state <= STA_Z;
-               end                  
                8'h8D: /* STA $ */
-               begin
                   cpu_inst_state <= STA_ABS;
-               end                  
                8'h9D: /* STA $,X */
-               begin
                   cpu_inst_state <= STA_ABS_X;
-               end
                8'hAD: /* LDA $ */
-               begin
                   cpu_inst_state <= LDA_ABS;
-               end
                8'hB1: /* LDA (Z),Y */
-               begin
                   cpu_inst_state <= LDA_Z_Y;
-               end
                8'hBD: /* LDA $,X */
-               begin
                   cpu_inst_state <= LDA_ABS_X;
-               end
                8'hBE: /* LDA $,Y */
-               begin
                   cpu_inst_state <= LDA_ABS_Y;
-               end
                8'hC0: /* CPY # */
-               begin
                   cpu_inst_state <= CPY;
-               end
                8'hC8: /* INY */
-               begin
                   cpu_inst_state <= INY;
-               end
                8'hC9: /* CMP # */
-               begin
                   cpu_inst_state <= CMP;
-               end
                8'hE0: /* CPX # */
-               begin
                   cpu_inst_state <= CPX;
-               end
                8'hE6: /* INC Z */
-               begin
                   cpu_inst_state <= INC_Z;
-               end
                8'hE8: /* INX */
-               begin
                   cpu_inst_state <= INX;
-               end
                8'hEE: /* INC_ABS */
-               begin
                   cpu_inst_state <= INC_ABS;
-               end
                8'hD0: /* BNE */
                if (!flag_z) begin
                   data_rd_byte_req <= 1;
