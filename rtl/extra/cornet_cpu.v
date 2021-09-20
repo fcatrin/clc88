@@ -98,6 +98,7 @@ module cornet_cpu(
    localparam LDA       = 5;
    localparam LDX       = 6;
    localparam LDY       = 7;
+   localparam LDA_Z     = 28;
    localparam LDA_Z_Y   = 8;
    localparam LDA_ABS   = 9;
    localparam LDA_ABS_X = 10;
@@ -116,7 +117,8 @@ module cornet_cpu(
    localparam STM       = 23;
    localparam STM_ADDR  = 24;
    localparam INC_Z     = 25;
-   localparam INC_ADDR  = 26;
+   localparam INC_ABS   = 26;
+   localparam INC_ADDR  = 27;
    
    reg[5:0] cpu_inst_state = NOP;
    reg[5:0] cpu_next_op    = NOP;
@@ -152,6 +154,13 @@ module cornet_cpu(
                   data_rd_byte_req <= 1;
                   data_rd_addr <= pc + 1'b1;
                   cpu_inst_state <= LDX;
+                  pc_delta <= 2;
+               end
+               8'hA5: /* LDA # */
+               begin
+                  data_rd_byte_req <= 1;
+                  data_rd_addr <= pc + 1'b1;
+                  cpu_inst_state <= LDA_Z;
                   pc_delta <= 2;
                end
                8'hA9: /* LDA # */
@@ -247,6 +256,13 @@ module cornet_cpu(
                begin
                   cpu_inst_state <= INX;
                   pc_delta <= 1;
+               end
+               8'hEE: /* INC_ABS */
+               begin
+                  data_rd_word_req <= 1;
+                  data_rd_addr <= pc + 1'b1;
+                  cpu_inst_state <= INC_ABS;
+                  pc_delta <= 3;
                end
                8'h4C: /* JMP $ */
                begin
@@ -399,6 +415,11 @@ module cornet_cpu(
                   op_addr <= {8'd0, reg_byte};
                   cpu_next_op <= INC_ADDR;
                end
+               INC_ABS:
+               begin
+                  op_addr <= reg_word;
+                  cpu_next_op <= INC_ADDR;
+               end
                INC_ADDR:
                begin
                   reg_m <= reg_byte + 1;
@@ -409,6 +430,11 @@ module cornet_cpu(
                begin
                   op_addr <= {8'd0, reg_byte};
                   cpu_next_op <= LDA_Z_Y;
+               end
+               LDA_Z:
+               begin
+                  op_addr <= {8'd0, reg_byte};
+                  cpu_next_op <= LDA_ADDR;
                end
                LDA_ABS:
                begin
