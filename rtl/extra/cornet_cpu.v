@@ -29,7 +29,7 @@ module cornet_cpu(
    reg[7:0]  reg_a;
    reg[7:0]  reg_x;
    reg[7:0]  reg_y;
-   reg[15:0] reg_w;
+   reg[7:0]  reg_m;
 
    reg[7:0]  reg_byte;
    reg[15:0] reg_word;
@@ -113,6 +113,10 @@ module cornet_cpu(
    localparam STA_ABS   = 20;
    localparam STA_ABS_X = 21;
    localparam STA_ADDR  = 22;
+   localparam STM       = 23;
+   localparam STM_ADDR  = 24;
+   localparam INC_Z     = 25;
+   localparam INC_ADDR  = 26;
    
    reg[5:0] cpu_inst_state = NOP;
    reg[5:0] cpu_next_op    = NOP;
@@ -232,6 +236,13 @@ module cornet_cpu(
                   cpu_inst_state <= CPX;
                   pc_delta <= 2;
                end
+               8'hE6: /* INC Z */
+               begin
+                  data_rd_byte_req <= 1;
+                  data_rd_addr <= pc + 1'b1;
+                  cpu_inst_state <= INC_Z;
+                  pc_delta <= 2;
+               end
                8'hE8: /* INX */
                begin
                   cpu_inst_state <= INX;
@@ -288,6 +299,19 @@ module cornet_cpu(
                   data_wr_en   <= 1;
                   cpu_inst_state <= STA;
                end
+               INC_ADDR:
+               begin
+                  data_rd_byte_req <= 1;
+                  data_rd_addr <= op_addr;
+                  cpu_inst_state <= INC_ADDR;
+               end
+               STM_ADDR:
+               begin
+                  data_wr_addr <= op_addr; 
+                  data_wr_data <= reg_m;
+                  data_wr_en   <= 1;
+                  cpu_inst_state <= STM;
+               end
             endcase
          end
       end
@@ -312,7 +336,7 @@ module cornet_cpu(
                pc_next <= pc + pc_delta;
                cpu_inst_done <= 1;
             end
-            STA:
+            STA, STM:
             begin
                pc_next <= pc + pc_delta;
                cpu_inst_done <= 1;
@@ -369,6 +393,17 @@ module cornet_cpu(
                   reg_y <= reg_byte;
                   pc_next <= pc + pc_delta;
                   cpu_inst_done <= 1;
+               end
+               INC_Z:
+               begin
+                  op_addr <= {8'd0, reg_byte};
+                  cpu_next_op <= INC_ADDR;
+               end
+               INC_ADDR:
+               begin
+                  reg_m <= reg_byte + 1;
+                  flag_z <= reg_byte == 8'hff;
+                  cpu_next_op <= STM_ADDR;
                end
                LDA_Z_Y:
                begin
