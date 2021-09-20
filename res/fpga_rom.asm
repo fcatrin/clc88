@@ -89,13 +89,30 @@ load_attr:
 
 load7:
    LDA test_attrs, x
-   beq halt
+   beq main_loop
    sta $9009
    inx
    bne load7
    
-halt:
-   JMP halt
+main_loop:   
+   lda #0
+   sta $20
+wait_press:
+   lda $9200
+   beq wait_press
+   
+   inc $20
+   lda $20
+   cmp #4
+   bne not_wrap
+   lda #0
+   sta $20
+not_wrap:
+   sta $9002
+wait_release:   
+   lda $9200
+   bne wait_release   
+   jmp wait_press
 
 text_location = $1e00
 attr_location = $1e80
