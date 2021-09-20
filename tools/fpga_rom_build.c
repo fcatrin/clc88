@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
 	load_bin("../res/fonts/charset_topaz_a1200.bin",      0xE800, 1);
 	load_bin("../res/fonts/charset_topaz_plus_a500.bin",  0xEC00, 1);
 	// load_bin("../res/fonts/charset_topaz_plus_a1200.bin", 0xEC00, 1);
-	load_xex("../res/fpga_rom.xex");
+	load_xex("../asm/fpga/rom.xex");
 
 	create_mif("../rtl/compy/rom.mif", 0xE000);
 }

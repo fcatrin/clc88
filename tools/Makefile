@@ -1,6 +1,6 @@
 MIF=../rtl/compy/rom.mif
-BIOS_SRC=../res/fpga_rom.asm
-BIOS_XEX=../res/fpga_rom.xex
+BIOS_SRC=../asm/fpga/rom.asm
+BIOS_XEX=../asm/fpga/rom.xex
 
 ALL:  ${MIF}
 

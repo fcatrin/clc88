@@ -1,1 +1,0 @@
- This is Chroni: The Video Processor for CatrinLabs Computer CLC-88!
