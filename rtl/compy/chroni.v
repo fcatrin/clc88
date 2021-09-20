@@ -128,7 +128,7 @@ module chroni (
             attr_buffer_index <= 0;
             pixel_buffer_index_in <= render_buffer ? 11'd640 : 11'd0;
             font_decode_state <= font_scan == 0 ? FD_TEXT_READ : FD_FONT_READ;
-            mem_wait <= font_scan == 0 ? 3 : 2;
+            mem_wait <= font_scan == 0 ? 2'd3 : 2'd2;
             if (lms_changed) begin
                load_memory_addr <= dl_lms;
                data_memory_addr <= dl_lms;
@@ -157,7 +157,7 @@ module chroni (
                         text_buffer_index <= text_buffer_index + 1'b1;
                      end
                   end else begin
-                     mem_wait <= mem_wait - 1;
+                     mem_wait <= mem_wait - 1'b1;
                   end
                end
                FD_ATTR_READ: // transfer line of attrs from vram to attr_buffer
@@ -176,28 +176,28 @@ module chroni (
                         attr_buffer_index <= attr_buffer_index + 1'b1;
                      end
                   end else begin
-                     mem_wait <= mem_wait - 1;
+                     mem_wait <= mem_wait - 1'b1;
                   end
                end
                FD_FONT_READ: // read font data from each char on text_buffer
                begin
                   if (mem_wait == 2) begin
                      text_buffer_addr  <= text_buffer_index;
-                     text_buffer_index <= text_buffer_index + 1;
+                     text_buffer_index <= text_buffer_index + 1'b1;
                      attr_buffer_addr  <= attr_buffer_index;
-                     attr_buffer_index <= attr_buffer_index + 1;
+                     attr_buffer_index <= attr_buffer_index + 1'b1;
                   end else if (mem_wait == 0) begin
                      font_decode_state <= FD_FONT_FETCH;
                   end
-                  mem_wait <= mem_wait - 1;
+                  mem_wait <= mem_wait - 1'b1;
                end
                FD_FONT_FETCH:
                begin
                   // read next char in advance
                   text_buffer_addr  <= text_buffer_index;
-                  text_buffer_index <= text_buffer_index + 1;
+                  text_buffer_index <= text_buffer_index + 1'b1;
                   attr_buffer_addr  <= attr_buffer_index;
-                  attr_buffer_index <= attr_buffer_index + 1;
+                  attr_buffer_index <= attr_buffer_index + 1'b1;
 
                   // fetch font data
                   vram_char_addr <= {charset_base[6:0] + text_buffer_data_rd[7], text_buffer_data_rd[6:0], font_scan};
@@ -211,7 +211,7 @@ module chroni (
                      pixel_out_next <= vram_chroni_rd_data;
                      font_decode_state <= FD_FONT_WRITE;
                   end
-                  mem_wait <= mem_wait - 1;
+                  mem_wait <= mem_wait - 1'b1;
                end
                FD_FONT_WRITE:
                if (!wr_busy) begin
@@ -278,7 +278,7 @@ module chroni (
          if (scanlines == 0) begin
             dlproc_state <= dl_inst == 1 ? DL_IDLE : DL_READ;
          end else begin
-            scanlines <= scanlines - 1;
+            scanlines <= scanlines - 1'b1;
             vram_render <= 1;
          end
       end else begin
@@ -287,7 +287,7 @@ module chroni (
             begin
                vram_read_dl <= 1;
                vram_dl_addr     <= display_list_ptr;
-               display_list_ptr <= display_list_ptr + 1;
+               display_list_ptr <= display_list_ptr + 1'b1;
                
                mem_wait <= 2;
                dlproc_state <= DL_READ_WAIT;
@@ -295,7 +295,7 @@ module chroni (
             DL_READ_WAIT:
             begin
                vram_read_dl <= 0;
-               mem_wait <= mem_wait - 1;
+               mem_wait <= mem_wait - 1'b1;
                if (mem_wait == 0) begin
                   dl_inst <= vram_chroni_rd_data[3:0];
                   dlproc_state <= vram_chroni_rd_data[6] ? (vram_chroni_rd_data[3:0] == 1 ? DL_IDLE : DL_LMS) : DL_EXEC;
@@ -305,7 +305,7 @@ module chroni (
             begin
                vram_read_dl <= 1;
                vram_dl_addr     <= display_list_ptr;
-               display_list_ptr <= display_list_ptr + 1;
+               display_list_ptr <= display_list_ptr + 1'b1;
                mem_wait <= 2;
                addr_part <= 5;
                dlproc_state <= DL_LMS_READ;
@@ -313,7 +313,7 @@ module chroni (
             DL_LMS_READ:
             begin
                vram_read_dl <= 1;
-               mem_wait <= mem_wait - 1;
+               mem_wait <= mem_wait - 1'b1;
                if (mem_wait == 0) begin
                   case(addr_part)
                      5: dl_lms[7:0]  <= vram_chroni_rd_data;
@@ -329,9 +329,9 @@ module chroni (
                      dlproc_state <= DL_EXEC;
                   end else begin
                      vram_dl_addr     <= display_list_ptr;
-                     display_list_ptr <= display_list_ptr + 1;
+                     display_list_ptr <= display_list_ptr + 1'b1;
                      mem_wait <= 2;
-                     addr_part <= addr_part - 1;
+                     addr_part <= addr_part - 1'b1;
                   end
                end
             end

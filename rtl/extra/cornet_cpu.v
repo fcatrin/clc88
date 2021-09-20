@@ -422,7 +422,7 @@ module cornet_cpu(
                end
                INC_ADDR:
                begin
-                  reg_m <= reg_byte + 1;
+                  reg_m <= reg_byte + 1'b1;
                   flag_z <= reg_byte == 8'hff;
                   cpu_next_op <= STM_ADDR;
                end

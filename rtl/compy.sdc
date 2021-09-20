@@ -29,15 +29,12 @@
 #**************************************************************
 # Time Information
 #**************************************************************
-
 set_time_format -unit ns -decimal_places 3
-
 
 
 #**************************************************************
 # Create Clock
 #**************************************************************
-
 # create_clock -name {altera_reserved_tck} -period 100.000 -waveform { 0.000 50.000 } [get_ports {altera_reserved_tck}]
 create_clock -name {clk50} -period 20.000 -waveform { 0.000 10.000 } [get_ports {clk50}]
 
@@ -54,11 +51,9 @@ derive_clock_uncertainty
 #**************************************************************
 
 
-
 #**************************************************************
 # Set Clock Uncertainty
 #**************************************************************
-
 
 
 #**************************************************************
@@ -82,11 +77,9 @@ set_clock_groups -logically_exclusive \
 #**************************************************************
 # Set False Path
 #**************************************************************
-set_false_path -from [get_ports altera_reserved_*]
-set_false_path -to   [get_ports altera_reserved_*]
 set_false_path -from [get_ports key_*]
 set_false_path -to   [get_ports vga_*]
-set_false_path -from [get_ports buttons]
+set_false_path -from [get_ports buttons*]
 
 #**************************************************************
 # Set Multicycle Path
