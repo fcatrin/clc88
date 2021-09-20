@@ -30,6 +30,8 @@ module cornet_cpu(
    reg[7:0]  reg_x;
    reg[7:0]  reg_y;
    reg[7:0]  reg_m;
+   reg[7:0]  reg_sp;
+   reg[15:0] reg_tmp;
 
    reg[7:0]  reg_byte;
    reg[15:0] reg_word;
@@ -92,6 +94,7 @@ module cornet_cpu(
    
    localparam NOP       = 0;
    localparam RESET     = 1;
+   localparam DONE      = 29;
    localparam JMP       = 2;
    localparam BRANCH    = 3;
    localparam NO_BRANCH = 4;
@@ -119,9 +122,17 @@ module cornet_cpu(
    localparam INC_Z     = 25;
    localparam INC_ABS   = 26;
    localparam INC_ADDR  = 27;
+   localparam PUSH      = 30;
+   localparam POP       = 31;
+   localparam JSR0      = 32;
+   localparam JSR1      = 33;
+   localparam RTS0      = 34;
+   localparam RTS1      = 35;
+   localparam RTS2      = 36;
    
    reg[5:0] cpu_inst_state = NOP;
    reg[5:0] cpu_next_op    = NOP;
+   reg[5:0] cpu_back_state = NOP;
    
    reg      cpu_inst_done;
    
@@ -135,6 +146,7 @@ module cornet_cpu(
       data_wr_en <= 0;
       if (~reset_n) begin
          cpu_inst_state <= NOP;
+         reg_sp <= 8'hff;
       end else begin
          if (cpu_reset) begin
             data_rd_word_req <= 1;
@@ -143,11 +155,18 @@ module cornet_cpu(
          end else if (cpu_fetch_state == CPU_EXECUTE) begin
             pc_delta <= 0;
             case (reg_i)
+               8'h20: /* JSR $ */
+               begin
+                  cpu_inst_state <= JSR0;
+                  data_rd_word_req <= 1;
+               end
                8'h4C: /* JMP $ */
                begin
                   cpu_inst_state <= JMP;
                   data_rd_word_req <= 1;
                end
+               8'h60: /* RTS */
+                  cpu_inst_state <= RTS0;
                8'hA0: /* LDY # */
                   cpu_inst_state <= LDY;
                8'hA2: /* LDX # */
@@ -224,9 +243,7 @@ module cornet_cpu(
             endcase
             
             case(reg_i)
-               8'h4C:
-                  pc_delta <= 0;
-               8'hC8, 8'hE8:
+               8'hC8, 8'hE8, 8'h60:
                   pc_delta <= 1;
             endcase
             
@@ -267,6 +284,21 @@ module cornet_cpu(
                   data_wr_en   <= 1;
                   cpu_inst_state <= STM;
                end
+               PUSH:
+               begin
+                  data_wr_addr <= {8'h01, reg_sp};
+                  data_wr_data <= reg_tmp[7:0];
+                  data_wr_en   <= 1;
+                  cpu_inst_state <= cpu_back_state;
+                  reg_sp <= reg_sp - 1'b1;
+               end
+               POP:
+               begin
+                  data_rd_byte_req <= 1;
+                  data_rd_addr <= {8'h01, reg_sp + 1'b1};
+                  cpu_inst_state <= cpu_back_state;
+                  reg_sp <= reg_sp + 1'b1;
+               end
             endcase
          end
       end
@@ -296,11 +328,24 @@ module cornet_cpu(
                pc_next <= pc + pc_delta;
                cpu_inst_done <= 1;
             end
+            JSR1:
+            begin
+               reg_tmp <= {8'd0, reg_tmp[15:8]};
+               cpu_next_op <= PUSH;
+               cpu_back_state <= DONE;
+            end
+            RTS0:
+            begin
+               cpu_next_op <= POP;
+               cpu_back_state <= RTS1;
+            end
             NO_BRANCH:
             begin
                pc_next <= pc + pc_delta;
                cpu_inst_done <= 1;
             end
+            DONE:
+               cpu_inst_done <= 1;
          endcase
 
          if (bus_rd_ack) begin
@@ -408,6 +453,24 @@ module cornet_cpu(
                JMP:
                begin
                   pc_next <= reg_word;
+                  cpu_inst_done <= 1;
+               end
+               JSR0:
+               begin
+                  pc_next <= reg_word;
+                  reg_tmp <= pc + 3;
+                  cpu_next_op <= PUSH;
+                  cpu_back_state <= JSR1;
+               end
+               RTS1:
+               begin
+                  pc_next[15:8] <= reg_byte;
+                  cpu_next_op <= POP;
+                  cpu_back_state <= RTS2;
+               end
+               RTS2:
+               begin
+                  pc_next[7:0] <= reg_byte;
                   cpu_inst_done <= 1;
                end
                BRANCH:
