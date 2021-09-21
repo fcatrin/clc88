@@ -81,7 +81,7 @@ module chroni (
                cpu_port_wr_en   <= 1;
                cpu_port_wr_data <= cpu_wr_data;
                cpu_port_addr    <= vram_write_address_aux;
-               vram_write_address <= vram_write_address + 1'b1;
+               vram_write_address_aux <= vram_write_address_aux + 1'b1;
             end
             4'he:
                border_color[7:0]  <= cpu_wr_data;
