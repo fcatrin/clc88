@@ -109,6 +109,8 @@ module cornet_cpu(
    localparam LDA_ADDR  = 12;
    localparam INX       = 13;
    localparam INY       = 14;
+   localparam DEX       = 37;
+   localparam DEY       = 38;
    localparam CMP       = 15;
    localparam CPX       = 16;
    localparam CPY       = 17;
@@ -129,6 +131,7 @@ module cornet_cpu(
    localparam RTS0      = 34;
    localparam RTS1      = 35;
    localparam RTS2      = 36;
+   localparam AND       = 39;
    
    reg[5:0] cpu_inst_state = NOP;
    reg[5:0] cpu_next_op    = NOP;
@@ -160,6 +163,8 @@ module cornet_cpu(
                   cpu_inst_state <= JSR0;
                   data_rd_word_req <= 1;
                end
+               8'h29: /* AND # */
+                  cpu_inst_state <= AND;
                8'h4C: /* JMP $ */
                begin
                   cpu_inst_state <= JMP;
@@ -167,6 +172,8 @@ module cornet_cpu(
                end
                8'h60: /* RTS */
                   cpu_inst_state <= RTS0;
+               8'h88: /* RTS */
+                  cpu_inst_state <= DEY;
                8'hA0: /* LDY # */
                   cpu_inst_state <= LDY;
                8'hA2: /* LDX # */
@@ -195,6 +202,8 @@ module cornet_cpu(
                   cpu_inst_state <= INY;
                8'hC9: /* CMP # */
                   cpu_inst_state <= CMP;
+               8'hCA: /* DEX */
+                  cpu_inst_state <= DEX;
                8'hE0: /* CPX # */
                   cpu_inst_state <= CPX;
                8'hE6: /* INC Z */
@@ -225,6 +234,7 @@ module cornet_cpu(
             
             // apply bit level logic for tese cases when instruction set is complete
             case(reg_i)
+               8'h29,
                8'hA0, 8'hA2, 8'hA5,
                8'hA9, 8'h85, 8'hB1,
                8'hC0, 8'hC9, 8'hE0,
@@ -243,7 +253,7 @@ module cornet_cpu(
             endcase
             
             case(reg_i)
-               8'hC8, 8'hE8, 8'h60:
+               8'h88, 8'hC8, 8'hCA, 8'hE8, 8'h60:
                   pc_delta <= 1;
             endcase
             
@@ -323,6 +333,20 @@ module cornet_cpu(
                pc_next <= pc + pc_delta;
                cpu_inst_done <= 1;
             end
+            DEX:
+            begin
+               reg_x  <= reg_x - 1'b1;
+               flag_z <= reg_x == 1;
+               pc_next <= pc + pc_delta;
+               cpu_inst_done <= 1;
+            end
+            DEY:
+            begin
+               reg_y  <= reg_y - 1'b1;
+               flag_z <= reg_y == 1;
+               pc_next <= pc + pc_delta;
+               cpu_inst_done <= 1;
+            end
             STA, STM:
             begin
                pc_next <= pc + pc_delta;
@@ -367,6 +391,12 @@ module cornet_cpu(
                LDX:
                begin
                   reg_x <= reg_byte;
+                  pc_next <= pc + pc_delta;
+                  cpu_inst_done <= 1;
+               end
+               AND:
+               begin
+                  reg_a <= reg_a & reg_byte;
                   pc_next <= pc + pc_delta;
                   cpu_inst_done <= 1;
                end
