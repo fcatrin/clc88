@@ -275,11 +275,13 @@ module chroni (
          scanlines <= 0;
       end else if (~render_flag_prev & render_flag) begin
          report_lms_changed <= 0;
+         blank_scanline <= 1;
          if (scanlines == 0) begin
             dlproc_state <= dl_inst == 1 ? DL_IDLE : DL_READ;
          end else begin
             scanlines <= scanlines - 1'b1;
             vram_render <= 1;
+            blank_scanline <= 0;
          end
       end else begin
             case(dlproc_state)
@@ -338,6 +340,7 @@ module chroni (
             DL_EXEC:
             begin
                dlproc_state = DL_WAIT;
+               blank_scanline <= 0;
                scanlines <= 8;
                vram_render <= 1;
                vram_read_dl <= 0;
@@ -492,6 +495,8 @@ module chroni (
    wire vga_render_start;
    wire vga_scanline_start;
    
+   reg blank_scanline;
+   
    wire read_text = 0; // font_decode_state == FD_TEXT_READ || font_decode_state == FD_FONT_READ || font_decode_state == FD_FONT_FETCH;
    wire read_font = 0; // font_decode_state == FD_FONT_WRITE;
    
@@ -514,6 +519,7 @@ module chroni (
          .pixel_scale(vga_scale),
          .read_text(read_text),
          .read_font(read_font),
+         .blank_scanline(blank_scanline),
          .border_color(border_color)
       );
 

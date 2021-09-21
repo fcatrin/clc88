@@ -19,7 +19,8 @@ module vga_output (
       input read_text,
       input read_font,
       input [15:0] pixel,
-      input [16:0] border_color
+      input [16:0] border_color,
+      input blank_scanline
       );
 
    `include "chroni.vh"
@@ -226,11 +227,13 @@ module vga_output (
 
    // output line 
    reg output_buffer;
+   reg display_scanline;
    always @ (posedge vga_clk) begin : output_block
       reg [3:0] output_state;
       if (!reset_n || vga_mode_change) begin
          output_state <= 15;
       end else if (vga_scanline_end) begin
+         display_scanline <= !blank_scanline;
          if (y_cnt == v_pf_end) begin
             output_state <= 15;
          end else if (y_cnt == v_pf_start - 1) begin
@@ -259,9 +262,9 @@ module vga_output (
    assign vga_hs = h_sync_p ? ~hsync_r : hsync_r;
    assign vga_vs = v_sync_p ? ~vsync_r : vsync_r;
 
-   assign vga_r = (h_de & v_de) ? (read_text ? 5'b11111  : ((h_pf & v_pf) ? pixel[15:11] : border_color[15:11])) : 5'b00000;
-   assign vga_g = (h_de & v_de) ? (read_font ? 6'b111111 : ((h_pf & v_pf) ? pixel[10:05] : border_color[10:05])) : 6'b000000;
-   assign vga_b = (h_de & v_de) ? (                         (h_pf & v_pf) ? pixel[04:0]  : border_color[04:00])  : 5'b00000;
+   assign vga_r = (h_de & v_de) ? (read_text ? 5'b11111  : ((h_pf & v_pf & display_scanline) ? pixel[15:11] : border_color[15:11])) : 5'b00000;
+   assign vga_g = (h_de & v_de) ? (read_font ? 6'b111111 : ((h_pf & v_pf & display_scanline) ? pixel[10:05] : border_color[10:05])) : 6'b000000;
+   assign vga_b = (h_de & v_de) ? (                         (h_pf & v_pf & display_scanline) ? pixel[04:0]  : border_color[04:00])  : 5'b00000;
    
    
    wire mode_changed_busy;
