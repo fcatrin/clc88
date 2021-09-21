@@ -89,6 +89,9 @@ main_loop:
    lda #0
    sta R0
 wait_press:
+   inc R1
+   lda R1
+   // sta vborder
    lda BUTTONS
    beq wait_press
    
