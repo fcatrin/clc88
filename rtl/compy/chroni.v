@@ -252,6 +252,7 @@ module chroni (
    reg[16:0] dl_lms;
    reg[16:0] dl_attr;
    reg[3:0]  dl_inst;
+   reg[7:0]  dl_value;
    reg vram_render;
    reg lms_changed;
    
@@ -280,8 +281,8 @@ module chroni (
             dlproc_state <= dl_inst == 1 ? DL_IDLE : DL_READ;
          end else begin
             scanlines <= scanlines - 1'b1;
-            vram_render <= 1;
-            blank_scanline <= 0;
+            vram_render    <= dl_inst == 2;
+            blank_scanline <= dl_inst == 0;
          end
       end else begin
             case(dlproc_state)
@@ -299,8 +300,11 @@ module chroni (
                vram_read_dl <= 0;
                mem_wait <= mem_wait - 1'b1;
                if (mem_wait == 0) begin
-                  dl_inst <= vram_chroni_rd_data[3:0];
-                  dlproc_state <= vram_chroni_rd_data[6] ? (vram_chroni_rd_data[3:0] == 1 ? DL_IDLE : DL_LMS) : DL_EXEC;
+                  dl_inst  <= vram_chroni_rd_data[3:0];
+                  dl_value <= vram_chroni_rd_data;
+                  dlproc_state <= 
+                     vram_chroni_rd_data[3:0] == 0 ? DL_EXEC :
+                     (vram_chroni_rd_data[6] ? (vram_chroni_rd_data[3:0] == 1 ? DL_IDLE : DL_LMS) : DL_EXEC);
                end
             end
             DL_LMS:
@@ -340,11 +344,16 @@ module chroni (
             DL_EXEC:
             begin
                dlproc_state = DL_WAIT;
-               blank_scanline <= 0;
-               scanlines <= 8;
-               vram_render <= 1;
                vram_read_dl <= 0;
-               lms_changed <= report_lms_changed;
+               if (dl_inst == 2) begin
+                  blank_scanline <= 0;
+                  scanlines <= 7;
+                  vram_render <= 1;
+                  lms_changed <= report_lms_changed;
+               end else if (dl_inst == 0) begin
+                  blank_scanline <= 1;
+                  scanlines <= dl_value[6:4];
+               end
             end
          endcase
       end

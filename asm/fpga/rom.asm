@@ -8,7 +8,7 @@ BG_COLOR = $29AC
 FG_COLOR = $F75B
 BORDER_COLOR = $2167
    
-   org $fe00
+   org $f800
 START:
 
    lda #0
@@ -55,22 +55,34 @@ dlist_in_ram  = dlist_addr + $a000
    mwa #dlist_in_vram VDLIST
    mwa #text_location VADDR
       
+   mwa #test_string SRC_ADDR
+   ldy #0
+   ldx #0
 load6:
-   lda test_string, x
+   lda (SRC_ADDR), y
    beq load_attr
    sta VDATA
+   iny
+   bne load6
+   inc SRC_ADDR+1
    inx
+   cpx #10
    bne load6
    
 load_attr:
    mwa #attr_location VADDR
 
+   ldy #0
    ldx #0
+
 load7:
-   LDA test_attrs, x
-   beq main_loop
+   // LDA test_attrs, x
+   lda #$01
    sta VDATA
+   iny
+   bne load7
    inx
+   cpx #10
    bne load7
    
 main_loop:   
@@ -94,7 +106,7 @@ wait_release:
    jmp wait_press
 
 text_location = $1e00
-attr_location = $1e80
+attr_location = text_location + 80*24 
 
 display_list:
    .byte $42
@@ -102,7 +114,7 @@ display_list:
    .byte 0
    .word attr_location
    .byte 0
-   .byte $02, $02, $02, $41
+   .byte $02, $02, $02, $70, $02, $60, $02, $50, $02, $40, $02, $30, $02, $20, $02, $10, $02, $00, $02, $41
 
 palette_dark:
    .word $2104
@@ -111,7 +123,17 @@ palette_dark:
    .word $43B5
 
 test_string:
+   .byte 'This is Compy CLC-88 testing VRAM port access and attributes!'
+   .byte 'This is Compy CLC-88 testing VRAM port access and attributes!'
+   .byte 'This is Compy CLC-88 testing VRAM port access and attributes!'
+   .byte 'This is Compy CLC-88 testing VRAM port access and attributes!'
+   .byte 'This is Compy CLC-88 testing VRAM port access and attributes!'
+   .byte 'This is Compy CLC-88 testing VRAM port access and attributes!'
+   .byte 'This is Compy CLC-88 testing VRAM port access and attributes!'
+   .byte 'This is Compy CLC-88 testing VRAM port access and attributes!'
+   .byte 'This is Compy CLC-88 testing VRAM port access and attributes!'
    .byte 'This is Compy CLC-88 testing VRAM port access and attributes!', 0
+   
    
 test_attrs:
    .byte $01, $01, $01, $01, $01, $01, $01, $01, $03, $03, $03, $03, $03, $02, $02, $02, $02, $02, $02, $02
