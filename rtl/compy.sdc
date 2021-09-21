@@ -97,6 +97,9 @@ set_multicycle_path -hold  -from *|render_start_req   -to *_crossclock|pipe* 1
 set_multicycle_path -setup -from *|pixel_scale_pipe   -to *_crossclock|pipe* 2
 set_multicycle_path -hold  -from *|pixel_scale_pipe   -to *_crossclock|pipe* 1
 
+set_multicycle_path -setup -from *_crossclock|signal  -to *chroni_inst* 2
+set_multicycle_path -hold  -from *_crossclock|signal  -to *chroni_inst* 1
+
 set_multicycle_path -setup -from user_reset   -to *system_inst* 2
 set_multicycle_path -hold  -from user_reset   -to *system_inst* 1
 set_multicycle_path -setup -from boot_reset   -to *system_inst* 2
