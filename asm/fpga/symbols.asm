@@ -5,6 +5,10 @@ SRC_ADDR      = $00
 DST_ADDR      = $02
 SIZE          = $04
 
+DISPLAY_START = $08
+ATTRIB_START  = $0B
+
+
 VDLIST     = $9000
 VCHARSET   = $9002
 VPAL_INDEX = $9004
