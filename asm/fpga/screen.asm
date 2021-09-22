@@ -39,10 +39,10 @@ set_attr:
    sta screen_attr
    jsr init_screen_addr
   
-   ldx #7
-   ldy #208
+   ldx #10
+   ldy #96
 next_write:   
-   lda #'B'
+   lda #$0
    sta VDATA
    lda screen_attr
    sta VDATA_AUX

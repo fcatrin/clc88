@@ -93,7 +93,7 @@ wait_release:
    jmp wait_press
 
 text_location = $1e00
-attr_location = text_location + 80*24 
+attr_location = text_location + 80*30 
 
 display_list:
    .byte $42
@@ -109,11 +109,17 @@ display_list:
 palette_dark:
    .word $2104
    .word $9C0A
-   .word $AC0E
+   .word $BC0E
    .word $43B5
 
 test_string:
-   .byte 'This is Compy CLC-88 testing VRAM port access and attributes!', 0
+   .byte 'This is Compy CLC-88 testing VRAM port access and attributes! '
+   .byte $F0, $02
+   .byte 'Now in color '
+   .byte $F0, $01
+   .byte 'and '
+   .byte $F0, $03
+   .byte 'another color', 0
    
    icl 'screen.asm'
    
