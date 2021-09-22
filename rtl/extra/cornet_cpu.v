@@ -396,7 +396,8 @@ module cornet_cpu(
                end
                AND:
                begin
-                  reg_a <= reg_a & reg_byte;
+                  reg_a  <=  reg_a & reg_byte;
+                  flag_z <= (reg_a & reg_byte) == 0;
                   pc_next <= pc + pc_delta;
                   cpu_inst_done <= 1;
                end
