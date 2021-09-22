@@ -102,7 +102,7 @@ module system (
       reg key_mode_current;
 
       if (!vga_mode)
-         vga_mode <= VGA_MODE_800x600;
+         vga_mode <= VGA_MODE_1920x1080;
       else begin
          key_mode_current <= key_mode;
          key_mode_prev    <= key_mode_current;
