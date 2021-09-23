@@ -1,7 +1,7 @@
 #ifndef _SCREEN_H
 #define _SCREEN_H
 
-#define SCREEN_XRES 320
+#define SCREEN_XRES 640
 #define SCREEN_YRES 240
 
 #define SCREEN_XBORDER 8
