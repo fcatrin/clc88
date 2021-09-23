@@ -1,13 +1,9 @@
 	icl 'symbols.asm'
 
 CHARSET_SIZE  = $0400
-PALETTE_SIZE  = $0200
 
 VRAM_CHARSET   = VRAM
-VRAM_PAL_ATARI = VRAM + CHARSET_SIZE
-VRAM_PAL_ZX    = VRAM_PAL_ATARI + PALETTE_SIZE
-
-VRAM_SCREEN    = VRAM_PAL_ZX + PALETTE_SIZE
+VRAM_SCREEN    = VRAM + CHARSET_SIZE
 
 TEXT_SCREEN_SIZE       = 40*24
 TEXT_SCREEN_SIZE_WIDE  = 20*24
@@ -51,13 +47,7 @@ copy_vector:
    
    mwa #copy_params_charset COPY_PARAMS
    jsr copy_block_with_params
-	
-   mwa #copy_params_pal_atari COPY_PARAMS
-	jsr copy_block_with_params
-	
-	mwa #copy_params_pal_spectrum COPY_PARAMS
-	jsr copy_block_with_params
-	
+
 	lda #$ff
 	jsr set_video_mode
 	
@@ -167,10 +157,6 @@ os_vector_table
 
 copy_params_charset:
 	.word charset, VRAM_CHARSET, CHARSET_SIZE
-copy_params_pal_atari:
-	.word atari_palette_ntsc, VRAM_PAL_ATARI, PALETTE_SIZE
-copy_params_pal_spectrum:
-	.word spectrum_palette,   VRAM_PAL_ZX, PALETTE_SIZE
 
 copy_block_with_params:
 	ldy #5
@@ -239,6 +225,8 @@ irq:
    
 charset:
 	ins '../../../res/fonts/charset_atari.bin'
+palette_atari:	
 	icl 'palette_atari_ntsc.asm'
+palette_spectrum:
 	icl 'palette_spectrum.asm'
 	

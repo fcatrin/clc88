@@ -22,8 +22,10 @@
 #define VRAM_DATA(addr) (vram[(addr) & 0x1FFFF])
 
 #define VRAM_MAX 128*1024
+#define PALETTE_SIZE 256
 
-UINT8 vram[VRAM_MAX];
+UINT8  vram[VRAM_MAX];
+UINT16 palette[PALETTE_SIZE];
 
 #define PAGE_SIZE       0x4000
 #define PAGE_SHIFT      14
@@ -41,7 +43,6 @@ static UINT16 attribs = 0;
 static UINT16 ypos, xpos;
 
 static UINT8  border_color = 0;
-static UINT32 palette;
 static UINT32 subpals;
 
 static UINT32 charset;
@@ -77,7 +78,6 @@ void chroni_reset() {
 	dl = 0;
 	charset = 0;
 	sprites = 0;
-	palette = 0;
 	tileset_small = 0;
 	vscroll = 0;
 	hscroll = 0;
@@ -114,6 +114,10 @@ static void reg_high(UINT16 *reg, UINT8 value) {
 
 
 void chroni_register_write(UINT8 index, UINT8 value) {
+	static int    palette_value_state;
+	static UINT8  palette_index;
+	static UINT16 palette_value;
+
 	LOGV(LOGTAG, "chroni reg write: 0x%04X = 0x%02X", index, value);
 	switch (index) {
 	case 0:
@@ -129,10 +133,18 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 		reg_addr_high(&charset, value);
 		break;
 	case 4:
-		reg_addr_low(&palette, value);
+		palette_index = value;
+		palette_value_state = 0;
 		break;
 	case 5:
-		reg_addr_high(&palette, value);
+		if (palette_value_state == 0) {
+			palette_value = (palette_value & 0xFF00) | value;
+			palette_value_state = 1;
+		} else {
+			palette_value = (palette_value & 0x00FF) | (value << 8);
+			palette[palette_index++] = palette_value;
+			palette_value_state = 0;
+		}
 		break;
 	case 6:
 		page = value & 0x07;
@@ -196,7 +208,7 @@ UINT8 chroni_register_read(UINT8 index) {
 }
 
 static inline void set_pixel_color(UINT8 color) {
-	UINT16 pixel_color_rgb565 = VRAM_WORD(palette + color*2 + 0);
+	UINT16 pixel_color_rgb565 = palette[color];
 
 	pixel_color_r = rgb565[pixel_color_rgb565*3 + 0];
 	pixel_color_g = rgb565[pixel_color_rgb565*3 + 1];
@@ -402,13 +414,13 @@ static void do_scan_text_attribs_double(UINT8 line) {
 static void do_scan_tile_wide_2bpp(UINT8 line) {
 	LOGV(LOGTAG, "do_scan_tile_wide_2bpp line %d", line);
 
-	UINT8  palette = 0;
+	UINT8  subpal = 0;
 	UINT8  pixel = 0;
 	UINT8  pixel_data = 0;
 	int tile_offset = 0;
 	for(int i=0; i<SCREEN_XRES/2; i++) {
 		if ((i & 7) == 0) {
-			palette = VRAM_DATA(attribs + tile_offset);
+			subpal = VRAM_DATA(attribs + tile_offset);
 
 			UINT8 tile = VRAM_DATA(lms + tile_offset);
 			pixel_data = VRAM_DATA(tileset_small + tile*8 + line);
@@ -420,7 +432,7 @@ static void do_scan_tile_wide_2bpp(UINT8 line) {
 			pixel_data <<= 2;
 		}
 
-		UINT8 color = VRAM_DATA(subpals + palette*4 + pixel);
+		UINT8 color = VRAM_DATA(subpals + subpal*4 + pixel);
 
 		put_pixel(offset, color);
 		put_pixel(offset, color);
@@ -430,7 +442,7 @@ static void do_scan_tile_wide_2bpp(UINT8 line) {
 static void do_scan_tile_wide_4bpp(UINT8 line) {
 	LOGV(LOGTAG, "do_scan_tile_wide_4bpp line %d", line);
 
-	UINT8  palette = 0;
+	UINT8  subpal = 0;
 	UINT8  pixel = 0;
 	UINT8  pixel_data = 0;
 	UINT8  tile = 0;
@@ -438,7 +450,7 @@ static void do_scan_tile_wide_4bpp(UINT8 line) {
 	int tile_offset = 0;
 	for(int i=0; i<SCREEN_XRES/2; i++) {
 		if ((i & 31) == 0) {
-			palette = VRAM_DATA(attribs + tile_offset);
+			subpal = VRAM_DATA(attribs + tile_offset);
 			tile    = VRAM_DATA(lms + tile_offset);
 			tile_data = 0;
 
@@ -455,7 +467,7 @@ static void do_scan_tile_wide_4bpp(UINT8 line) {
 			pixel_data <<= 4;
 		}
 
-		UINT8 color = VRAM_DATA(subpals + palette*16 + pixel);
+		UINT8 color = VRAM_DATA(subpals + subpal*16 + pixel);
 
 		put_pixel(offset, color);
 		put_pixel(offset, color);
@@ -465,7 +477,7 @@ static void do_scan_tile_wide_4bpp(UINT8 line) {
 static void do_scan_tile_4bpp(UINT8 line) {
 	LOGV(LOGTAG, "do_scan_tile_wide_4bpp line %d", line);
 
-	UINT8  palette = 0;
+	UINT8  subpal = 0;
 	UINT8  pixel = 0;
 	UINT8  pixel_data = 0;
 	UINT8  tile = 0;
@@ -473,7 +485,7 @@ static void do_scan_tile_4bpp(UINT8 line) {
 	int tile_offset = 0;
 	for(int i=0; i<SCREEN_XRES/2; i++) {
 		if ((i & 15) == 0) {
-			palette = VRAM_DATA(attribs + tile_offset);
+			subpal = VRAM_DATA(attribs + tile_offset);
 			tile    = VRAM_DATA(lms + tile_offset);
 			tile_data = 0;
 
@@ -488,7 +500,7 @@ static void do_scan_tile_4bpp(UINT8 line) {
 		pixel   = (pixel_data & 0xF0) >> 4;
 		pixel_data <<= 4;
 
-		UINT8 color = VRAM_DATA(subpals + palette*16 + pixel);
+		UINT8 color = VRAM_DATA(subpals + subpal*16 + pixel);
 
 		put_pixel(offset, color);
 		put_pixel(offset, color);
@@ -499,7 +511,7 @@ static void do_scan_tile_4bpp(UINT8 line) {
 static void do_scan_pixels_2bpp() {
 	LOGV(LOGTAG, "do_scan_pixels_2bpp line");
 
-	UINT8  palette = 0;
+	UINT8  subpal = 0;
 	UINT8  palette_data = 0;
 	UINT8  pixel = 0;
 	UINT8  pixel_data = 0;
@@ -513,15 +525,15 @@ static void do_scan_pixels_2bpp() {
 			pixel_data_offset++;
 		}
 
-		pixel   = (pixel_data   & 0xC0) >> 6;
-		palette = (palette_data & 0xC0) >> 4;
+		pixel  = (pixel_data   & 0xC0) >> 6;
+		subpal = (palette_data & 0xC0) >> 4;
 
 		pixel_data <<= 2;
 		palette_data <<= 2;
 
-		UINT8 color = VRAM_DATA(subpals + palette + pixel);
-		LOGV(LOGTAG, "vram data subpals:%05X palette:%04X pixel:%02X color:%02X",
-			subpals, palette, pixel, color);
+		UINT8 color = VRAM_DATA(subpals + subpal + pixel);
+		LOGV(LOGTAG, "vram data subpals:%05X subpal:%04X pixel:%02X color:%02X",
+			subpals, subpal, pixel, color);
 
 		put_pixel(offset, color);
 		put_pixel(offset, color);
@@ -533,7 +545,7 @@ static void do_scan_pixels_2bpp() {
 static void do_scan_pixels_4bpp() {
 	LOGV(LOGTAG, "do_scan_pixels_4bpp line");
 
-	UINT8  palette = 0;
+	UINT8  subpal = 0;
 	UINT8  palette_data = 0;
 	UINT8  pixel = 0;
 	UINT8  pixel_data = 0;
@@ -547,15 +559,15 @@ static void do_scan_pixels_4bpp() {
 			pixel_data_offset++;
 		}
 
-		pixel   = (pixel_data   & 0xF0) >> 4;
-		palette = (palette_data & 0xF0);
+		pixel  = (pixel_data   & 0xF0) >> 4;
+		subpal = (palette_data & 0xF0);
 
 		pixel_data   <<= 4;
 		palette_data <<= 4;
 
-		UINT8 color = VRAM_DATA(subpals + palette + pixel);
-		LOGV(LOGTAG, "vram data subpals:%05X palette:%04X pixel:%02X color:%02X",
-			subpals, palette, pixel, color);
+		UINT8 color = VRAM_DATA(subpals + subpal + pixel);
+		LOGV(LOGTAG, "vram data subpals:%05X subpal:%04X pixel:%02X color:%02X",
+			subpals, subpal, pixel, color);
 
 		put_pixel(offset, color);
 		put_pixel(offset, color);
@@ -565,7 +577,7 @@ static void do_scan_pixels_4bpp() {
 static void do_scan_pixels_wide_2bpp() {
 	LOGV(LOGTAG, "do_scan_pixels_wide_2bpp line");
 
-	UINT8  palette = 0;
+	UINT8  subpal = 0;
 	UINT8  palette_data = 0;
 	UINT8  pixel = 0;
 	UINT8  pixel_data = 0;
@@ -580,16 +592,16 @@ static void do_scan_pixels_wide_2bpp() {
 		}
 
 		if ((i & 1) == 0) {
-			pixel   = (pixel_data   & 0xC0) >> 6;
-			palette = (palette_data & 0xC0) >> 2;
+			pixel  = (pixel_data   & 0xC0) >> 6;
+			subpal = (palette_data & 0xC0) >> 2;
 
 			pixel_data <<= 2;
 			palette_data <<= 2;
 		}
 
-		UINT8 color = VRAM_DATA(subpals + palette + pixel);
-		LOGV(LOGTAG, "vram data subpals:%05X palette:%04X pixel:%02X color:%02X",
-			subpals, palette, pixel, color);
+		UINT8 color = VRAM_DATA(subpals + subpal + pixel);
+		LOGV(LOGTAG, "vram data subpals:%05X subpal:%04X pixel:%02X color:%02X",
+			subpals, subpal, pixel, color);
 
 		put_pixel(offset, color);
 		put_pixel(offset, color);
@@ -600,7 +612,7 @@ static void do_scan_pixels_wide_2bpp() {
 static void do_scan_pixels_wide_4bpp() {
 	LOGV(LOGTAG, "do_scan_pixels_wide_4bpp line");
 
-	UINT8  palette = 0;
+	UINT8  subpal = 0;
 	UINT8  palette_data = 0;
 	UINT8  pixel = 0;
 	UINT8  pixel_data = 0;
@@ -615,16 +627,16 @@ static void do_scan_pixels_wide_4bpp() {
 		}
 
 		if ((i & 1) == 0) {
-			pixel   = (pixel_data   & 0xF0) >> 4;
-			palette = (palette_data & 0xF0);
+			pixel  = (pixel_data   & 0xF0) >> 4;
+			subpal = (palette_data & 0xF0);
 
 			pixel_data   <<= 4;
 			palette_data <<= 4;
 		}
 
-		UINT8 color = VRAM_DATA(subpals + palette + pixel);
-		LOGV(LOGTAG, "vram data subpals:%05X palette:%04X pixel:%02X color:%02X",
-			subpals, palette, pixel, color);
+		UINT8 color = VRAM_DATA(subpals + subpal + pixel);
+		LOGV(LOGTAG, "vram data subpals:%05X subpal:%04X pixel:%02X color:%02X",
+			subpals, subpal, pixel, color);
 
 		put_pixel(offset, color);
 		put_pixel(offset, color);
@@ -634,7 +646,7 @@ static void do_scan_pixels_wide_4bpp() {
 static void do_scan_pixels_1bpp() {
 	LOGV(LOGTAG, "do_scan_pixels_1bpp line");
 
-	UINT8  palette = 0;
+	UINT8  subpal = 0;
 	UINT8  palette_data = 0;
 	UINT8  pixel = 0;
 	UINT8  pixel_data = 0;
@@ -648,15 +660,15 @@ static void do_scan_pixels_1bpp() {
 			pixel_data_offset++;
 		}
 
-		pixel   = (pixel_data   & 0x80) >> 7;
-		palette = (palette_data & 0x80) >> 6;
+		pixel  = (pixel_data   & 0x80) >> 7;
+		subpal = (palette_data & 0x80) >> 6;
 
 		pixel_data   <<= 1;
 		palette_data <<= 1;
 
-		UINT8 color = VRAM_DATA(subpals + palette + pixel);
-		LOGV(LOGTAG, "vram data subpals:%05X palette:%04X pixel:%02X color:%02X",
-			subpals, palette, pixel, color);
+		UINT8 color = VRAM_DATA(subpals + subpal + pixel);
+		LOGV(LOGTAG, "vram data subpals:%05X subpal:%04X pixel:%02X color:%02X",
+			subpals, subpal, pixel, color);
 
 		put_pixel(offset, color);
 		put_pixel(offset, color);

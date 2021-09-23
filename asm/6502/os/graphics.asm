@@ -83,11 +83,11 @@ set_video_mode_std:
    lda ROS7 ; palette type
    bne use_spectrum_palette
    
-   mwa #VRAM_PAL_ATARI RAM_TO_VRAM
+   mwa #palette_atari SRC_ADDR
    jmp set_video_mode_finish
    
 use_spectrum_palette:
-   mwa #VRAM_PAL_ZX RAM_TO_VRAM
+   mwa #palette_spectrum SRC_ADDR
    
 set_video_mode_finish:
    jsr set_video_palette
@@ -96,10 +96,18 @@ set_video_mode_finish:
  
  set_video_palette:
    lda #0
-   sta VRAM_PAGE
-   jsr ram2vram
-   mwa VRAM_TO_RAM VPALETTE
-   mwa VRAM_TO_RAM PALETTE_START
+   sta VPAL_INDEX
+   ldx #2
+   ldy #0
+   
+upload_palette   
+   lda (SRC_ADDR), y
+   sta VPAL_VALUE
+   iny
+   bne upload_palette
+   inc SRC_ADDR + 1
+   dex
+   bne upload_palette
    rts
   
 set_video_enabled:
