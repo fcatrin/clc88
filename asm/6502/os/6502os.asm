@@ -238,7 +238,7 @@ irq:
    icl 'storage.asm'
    
 charset:
-	ins '../../../res/charset.bin'
+	ins '../../../res/fonts/charset_atari.bin'
 	icl 'palette_atari_ntsc.asm'
 	icl 'palette_spectrum.asm'
 	
