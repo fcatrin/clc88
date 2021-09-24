@@ -144,49 +144,49 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 			palette_value_state = 0;
 		}
 		break;
-	case 6:
+	case 0x0e:
 		page = value & 0x07;
 		break;
-	case 8:
-		CPU_HALT();
-		break;
-	case 9:
-		status = (status & 0xC0) | (value & 0x3F);
-		break;
-	case 0xa:
-		reg_addr_low(&sprites, value);
-		break;
-	case 0xb:
-		reg_addr_high(&sprites, value);
-		break;
-	case 0xc:
-		reg_addr_low(&tileset_small, value);
-		break;
-	case 0xd:
-		reg_addr_high(&tileset_small, value);
-		break;
-	case 0xe:
-		reg_addr_low(&tileset_big, value);
-		break;
-	case 0xf:
-		reg_addr_high(&tileset_big, value);
-		break;
-	case 0x10:
+	case 0x0f:
 		border_color = value;
 		break;
 	case 0x11:
-		hscroll = value;
+		CPU_HALT();
 		break;
 	case 0x12:
-		vscroll = value;
+		status = (status & 0xC0) | (value & 0x3F);
 		break;
 	case 0x14:
-		reg_low(&scanline_interrupt, value);
+		reg_addr_low(&sprites, value);
 		break;
 	case 0x15:
-		reg_high(&scanline_interrupt, value);
+		reg_addr_high(&sprites, value);
 		break;
 	case 0x16:
+		reg_addr_low(&tileset_small, value);
+		break;
+	case 0x17:
+		reg_addr_high(&tileset_small, value);
+		break;
+	case 0x18:
+		reg_addr_low(&tileset_big, value);
+		break;
+	case 0x19:
+		reg_addr_high(&tileset_big, value);
+		break;
+	case 0x20:
+		hscroll = value;
+		break;
+	case 0x21:
+		vscroll = value;
+		break;
+	case 0x22:
+		reg_low(&scanline_interrupt, value);
+		break;
+	case 0x23:
+		reg_high(&scanline_interrupt, value);
+		break;
+	case 0x24:
 		clock_multiplier = clock_multipliers[value & 0x03];
 		break;
 	}
@@ -194,13 +194,13 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 
 UINT8 chroni_register_read(UINT8 index) {
 	switch(index) {
-	case 6: return page & 0x07;
-	case 7: return ypos >> 1;
-	case 9: return status;
-	case 0x10 : return border_color;
-	case 0x11 : return hscroll;
-	case 0x12 : return vscroll;
-	case 0x17 : return rand() & 0xFF;
+	case 0x0e : return page & 0x07;
+	case 0x0f : return border_color;
+	case 0x10 : return ypos >> 1;
+	case 0x12 : return status;
+	case 0x20 : return hscroll;
+	case 0x21 : return vscroll;
+	case 0x25 : return rand() & 0xFF;
 	}
 	return 0;
 }

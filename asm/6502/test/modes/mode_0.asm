@@ -38,21 +38,21 @@ rainbow:
 	lda VCOUNT
 	adc FRAMECOUNT
 	sta WSYNC
-	sta VCOLOR0
+	sta VBORDER
 	jmp rainbow
 	
 dli:
    pha
    lda #$66
    sta WSYNC
-   sta VCOLOR0
+   sta VBORDER
    pla
    rts
 
 vblank:
    pha
    lda #$BF
-   sta VCOLOR0
+   sta VBORDER
    pla
    rts
 	

@@ -72,11 +72,11 @@ waipap
 	bne waipap
 
    lda #8
-   sta VCOLOR0
+   sta VBORDER
 	jsr RASTERMUSICTRACKER+3	;1 play
 
    lda #0
-   sta VCOLOR0
+   sta VBORDER
 
 skip_player:   
    jsr process_keyboard

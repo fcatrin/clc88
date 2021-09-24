@@ -211,7 +211,7 @@ set_edit_mode_2:
    pha
    lda #$66
    sta WSYNC
-   sta VCOLOR0
+   sta VBORDER
    mwa charset_edit_start_vram VCHARSET
    pla
    rts
@@ -220,7 +220,7 @@ set_edit_mode_2:
 .proc vblank
    pha
    lda #0
-   sta VCOLOR0
+   sta VBORDER
    mwa #0 VCHARSET
    pla
    rts

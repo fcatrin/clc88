@@ -3,7 +3,7 @@
    cmp #$FF
    bne read_xex_header
    lda #$4F ; bright border on error
-   sta VCOLOR0
+   sta VBORDER
 halt: jmp halt
 
 read_xex_header:

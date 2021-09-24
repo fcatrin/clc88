@@ -37,7 +37,7 @@ next_frame:
    and #$30
    lsr 
    lsr
-   sta VCOLOR0
+   sta VBORDER
    lsr
    lsr
    sta VCLOCK

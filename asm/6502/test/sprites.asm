@@ -11,7 +11,7 @@
 	mwa VRAM_TO_RAM VSPRITES
 	
 	lda #$0F
-	sta VCOLOR0
+	sta VBORDER
 	
 	mwa DISPLAY_START VRAM_TO_RAM
 	jsr lib_vram_to_ram
@@ -66,7 +66,7 @@ loop:
    lda VCOUNT
    asl
    sta WSYNC
-   sta VCOLOR0
+   sta VBORDER
    jmp loop
    
 write_charset:

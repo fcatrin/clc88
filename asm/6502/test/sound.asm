@@ -59,7 +59,7 @@ noinc:
    asl
    asl
    ora #$0F
-   sta VCOLOR0
+   sta VBORDER
 
    lda #$2F
    ; sta POKEY0_AUDC1

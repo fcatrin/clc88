@@ -85,11 +85,11 @@ waipap
 	bne waipap
 ;
    lda #10
-   sta VCOLOR0
+   sta VBORDER
 	jsr RASTERMUSICTRACKER+3	;1 play
 
    lda #0
-   sta VCOLOR0
+   sta VBORDER
 ;
 	lda KEY						;keyboard
 	cmp #28						;ESCape key?
