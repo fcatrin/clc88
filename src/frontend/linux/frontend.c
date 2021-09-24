@@ -157,7 +157,7 @@ UINT8 frontend_keyb_reg_read(UINT8 index) {
 }
 
 int  frontend_init_screen(int width, int height) {
-	window = SDL_CreateWindow("CLC88 Compy", 100, 100, width, height*2, SDL_WINDOW_SHOWN);
+	window = SDL_CreateWindow("CLC88 Compy", 160, 20, width*2, height*4, SDL_WINDOW_SHOWN);
 	if (window == NULL){
 		printf("SDL_CreateWindow Error: %s", SDL_GetError());
 		SDL_Quit();
