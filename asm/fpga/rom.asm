@@ -1,15 +1,23 @@
 
    icl 'symbols.asm'
    
-   org $fffc
-   .word START
+	org $FFFA
 
+	.word nmi
+	.word boot
+	.word irq
+
+   
 BG_COLOR = $29AC   
 FG_COLOR = $F75B
 BORDER_COLOR = $2167
    
    org $f800
-START:
+nmi:
+	rti
+irq:
+	rti   
+boot:
    lda #0
    sta VCHARSET
 
@@ -63,7 +71,7 @@ dlist_in_ram  = dlist_addr + $a000
    ldx #0
 load6:
    lda (SRC_ADDR), y
-   beq main_loop
+   beq enable_chroni
    jsr put_char
    iny
    bne load6
@@ -71,6 +79,12 @@ load6:
    inx
    cpx #10
    bne load6
+   
+enable_chroni:
+   
+   lda VSTATUS
+   ora #VSTATUS_ENABLE
+   sta VSTATUS
    
 main_loop:   
    lda #0
