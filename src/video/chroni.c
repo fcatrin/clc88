@@ -45,6 +45,7 @@ static UINT16 ypos, xpos;
 static UINT8  border_color = 0;
 static UINT32 subpals;
 
+#define CHARSET_PAGE 1024
 static UINT32 charset;
 static UINT32 sprites;
 
@@ -127,10 +128,7 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 		reg_addr_high(&dl, value);
 		break;
 	case 2:
-		reg_addr_low(&charset, value);
-		break;
-	case 3:
-		reg_addr_high(&charset, value);
+		charset = value;
 		break;
 	case 4:
 		palette_index = value;
@@ -361,7 +359,7 @@ static void do_scan_text_attribs(bool use_hscroll, bool use_vscroll, UINT8 pitch
 			background = attrib & 0x0F;
 
 			UINT8 c = VRAM_DATA(lms + char_offset);
-			row = VRAM_DATA(charset + c*8 + line_offset);
+			row = VRAM_DATA(charset * CHARSET_PAGE + c*8 + line_offset);
 
 			bit = 0x80 >> (pixel_offset & 7);
 
@@ -396,7 +394,7 @@ static void do_scan_text_attribs_double(UINT8 line) {
 			background = attrib & 0x0F;
 
 			UINT8 c = VRAM_DATA(lms + char_offset);
-			row = VRAM_DATA(charset + c*8 + line);
+			row = VRAM_DATA(charset * CHARSET_PAGE + c*8 + line);
 			char_offset++;
 		}
 
