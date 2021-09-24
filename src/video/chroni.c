@@ -392,8 +392,8 @@ static void do_scan_text_attribs(bool use_hscroll, bool use_vscroll, UINT8 pitch
 	for(int i=0; i<width; i++) {
 		if (i  == 0 || (pixel_offset & 7) == 0) {
 			UINT8 attrib = VRAM_DATA(attribs + char_offset);
-			foreground = (attrib & 0xF0) >> 4;
-			background = attrib & 0x0F;
+			background = (attrib & 0xF0) >> 4;
+			foreground = attrib & 0x0F;
 
 			UINT8 c = VRAM_DATA(lms + char_offset);
 			row = VRAM_DATA(charset * CHARSET_PAGE + c*8 + line_offset);
@@ -404,12 +404,12 @@ static void do_scan_text_attribs(bool use_hscroll, bool use_vscroll, UINT8 pitch
 		}
 
 		put_pixel(offset, row & bit ?
-				VRAM_DATA(subpals + foreground) :
-				VRAM_DATA(subpals + background));
+				palette[foreground]:
+				palette[background]);
 		if (!cols80) {
 			put_pixel(offset, row & bit ?
-					VRAM_DATA(subpals + foreground) :
-					VRAM_DATA(subpals + background));
+					palette[foreground]:
+					palette[background]);
 		}
 
 		pixel_offset++;
@@ -802,8 +802,8 @@ static void do_screen() {
 				do_border(offset, SCREEN_XBORDER);
 
 				switch(mode) {
-				case 0x2: do_scan_text_attribs(use_hscroll, use_vscroll, pitch, line, FALSE); break;
-				case 0x3: do_scan_text_attribs(use_hscroll, use_vscroll, pitch, line, TRUE); break;
+				case 0x2: do_scan_text_attribs(use_hscroll, use_vscroll, pitch, line, TRUE); break;
+				case 0x3: do_scan_text_attribs(use_hscroll, use_vscroll, pitch, line, FALSE); break;
 				case 0x4: do_scan_text_attribs_double(line); break;
 				case 0x5: do_scan_text_attribs_double(line >> 1); break;
 				case 0x6: do_scan_pixels_wide_2bpp(); break;

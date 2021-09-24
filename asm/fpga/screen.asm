@@ -62,6 +62,19 @@ next_write:
    rts  
 .endp
    
+.proc upload_font
+   ldx #4
+   ldy #0
+upload_next:   
+   lda (SRC_ADDR), y
+   sta VDATA
+   iny
+   bne upload_next
+   dex
+   bne upload_next
+   rts
+.endp
+   
    org $200
 screen_state  .byte  0
 screen_char   .byte  0   
