@@ -118,6 +118,8 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 	static int    palette_value_state;
 	static UINT8  palette_index;
 	static UINT16 palette_value;
+	static UINT32 vram_write_address;
+	static UINT32 vram_write_address_aux;
 
 	LOGV(LOGTAG, "chroni reg write: 0x%04X = 0x%02X", index, value);
 	switch (index) {
@@ -143,6 +145,30 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 			palette[palette_index++] = palette_value;
 			palette_value_state = 0;
 		}
+		break;
+	case 0x06:
+		vram_write_address = (vram_write_address & 0x1FF00) | value;
+		break;
+	case 0x07:
+		vram_write_address = (vram_write_address & 0x100FF) | (value << 8);
+		break;
+	case 0x08:
+		vram_write_address = (vram_write_address & 0x0FFFF) | ((value & 1) << 16);
+		break;
+	case 0x09:
+		vram[vram_write_address++] = value;
+		break;
+	case 0x0a:
+		vram_write_address_aux = (vram_write_address_aux & 0x1FF00) | value;
+		break;
+	case 0x0b:
+		vram_write_address_aux = (vram_write_address_aux & 0x100FF) | (value << 8);
+		break;
+	case 0x0c:
+		vram_write_address_aux = (vram_write_address_aux & 0x0FFFF) | ((value & 1) << 16);
+		break;
+	case 0x0d:
+		vram[vram_write_address_aux++] = value;
 		break;
 	case 0x0e:
 		page = value & 0x07;
