@@ -709,14 +709,14 @@ static void do_scan_pixels_1bpp() {
 }
 
 static UINT8 bytes_per_scan[] = {
-		0, 0, 40, 80,
+		0, 0, 80, 40,
 		20, 20, 40, 40,
 		80, 80, 40, 80,
 		160, 40, 10, 20
 };
 
 static UINT8 bytes_per_scan_scroll[] = {
-		0, 0, 48, 88,
+		0, 0, 88, 48,
 		20, 20, 40, 40,
 		80, 80, 40, 80,
 		160, 40, 10, 20
