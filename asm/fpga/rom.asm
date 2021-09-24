@@ -31,7 +31,7 @@ set_palette:
    bne set_palette
    // ldx #0
 
-   mwa #BORDER_COLOR VBORDER
+   mva #1 VBORDER
    
 // copy 16*256 bytes from $e000 to VRAM $00000
 
