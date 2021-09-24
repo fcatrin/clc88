@@ -19,6 +19,7 @@
 
 #define VRAM_WORD(addr) (WORD(VRAM_DATA(addr), VRAM_DATA(addr+1)))
 #define VRAM_PTR(addr) (VRAM_WORD(addr) << 1)
+#define VRAM_PTR_LONG(addr) (VRAM_WORD(addr) + ((vram[addr+2] & 1) << 16))
 #define VRAM_DATA(addr) (vram[(addr) & 0x1FFFF])
 
 #define VRAM_MAX 128*1024
@@ -32,7 +33,6 @@ UINT16 palette[PALETTE_SIZE];
 #define PAGE_SHIFT_HIGH (PAGE_SHIFT-8)
 #define PAGE_BASE(x)    (x << PAGE_SHIFT)
 
-static UINT16 scanline;
 static UINT16 scanline_interrupt;
 static UINT8  page;
 static UINT32 offset;
@@ -40,7 +40,7 @@ static UINT32 offset;
 static UINT32 dl;
 static UINT16 lms = 0;
 static UINT16 attribs = 0;
-static UINT16 ypos, xpos;
+static UINT16 ypos, xpos, memscan;
 
 static UINT8  border_color = 0;
 static UINT32 subpals;
@@ -222,7 +222,7 @@ UINT8 chroni_register_read(UINT8 index) {
 	switch(index) {
 	case 0x0e : return page & 0x07;
 	case 0x0f : return border_color;
-	case 0x10 : return ypos >> 1;
+	case 0x10 : return ypos;
 	case 0x12 : return status;
 	case 0x20 : return hscroll;
 	case 0x21 : return vscroll;
@@ -252,7 +252,7 @@ static UINT8 sprite_scanlines[SPRITES_MAX];
 
 static void do_scan_start() {
 	status |= STATUS_HBLANK;
-	if ((scanline_interrupt == scanline + 1) && (status & STATUS_ENABLE_INTS)) {
+	if ((scanline_interrupt == ypos + 1) && (status & STATUS_ENABLE_INTS)) {
 		LOGV(LOGTAG, "do_scan_start fire DLI");
 		cpuexec_nmi(1);
 	}
@@ -274,7 +274,7 @@ static void do_scan_start() {
 
 		int sprite_y = VRAM_WORD(sprites + SPRITES_Y + s*2) - 16;
 
-		int sprite_scanline = scanline - sprite_y;
+		int sprite_scanline = ypos - sprite_y;
 		if (sprite_scanline< 0 || sprite_scanline >=16) continue;
 		sprite_scanlines[s] = sprite_scanline;
 	}
@@ -283,7 +283,7 @@ static void do_scan_start() {
 static void do_scan_end() {
 	CPU_RESUME();
 	CPU_RUN(8);
-	if (scan_callback) scan_callback(scanline);
+	if (scan_callback) scan_callback(ypos);
 }
 
 static inline PAIR do_sprites() {
@@ -348,17 +348,28 @@ static void inline do_scan_off(int offset, int size) {
 		screen[offset + xpos*3 + 2] = 0;
 		CPU_XPOS();
 	}
-	if (scan_callback) scan_callback(scanline);
+	if (scan_callback) scan_callback(ypos);
 }
 
 static void do_scan_blank() {
-	int offset = scanline * screen_pitch;
+	int offset = memscan * screen_pitch;
 	xpos = 0;
 
 	if (status & STATUS_ENABLE_CHRONI) {
 		do_scan_start();
 		do_border(offset, screen_width);
 		do_scan_end();
+	} else {
+		do_scan_off(offset, screen_width);
+	}
+}
+
+static void do_scan_border() {
+	int offset = memscan * screen_pitch;
+	xpos = 0;
+
+	if (status & STATUS_ENABLE_CHRONI) {
+		do_border(offset, screen_width);
 	} else {
 		do_scan_off(offset, screen_width);
 	}
@@ -723,10 +734,8 @@ static UINT8 lines_per_mode[] = {
 
 
 static void do_screen() {
-	/* 0-7 scanlines are not displayed because of vblank
-	 *
-	 */
-	for(ypos = 0; ypos <8; ypos++) {
+	/* emulate some scanlines running only cpu code because of blanking */
+	for(int i=0; i<8; i++) {
 		CPU_SCANLINE();
 	}
 	cpuexec_nmi(0);
@@ -734,13 +743,19 @@ static void do_screen() {
 	status &= (255 - STATUS_VBLANK);
 	LOGV(LOGTAG, "set status %02X enabled:%s", status, (status & STATUS_ENABLE_CHRONI) ? "true":"false");
 
-	scanline = 0;
+	int frame_height = screen_height - 2*SCREEN_YBORDER;
+	ypos = 0;
+	memscan = 0;
+	for(int i=0; i<SCREEN_YBORDER; i++) {
+		do_scan_border();
+		memscan++;
+	}
 
 	UINT8 instruction;
 	UINT8 use_hscroll = 0;
 	UINT8 use_vscroll = 0;
 	int dlpos = 0;
-	while(ypos < screen_height && (status & STATUS_ENABLE_CHRONI)) {
+	while(ypos < frame_height && (status & STATUS_ENABLE_CHRONI)) {
 		instruction = VRAM_DATA(dl + dlpos);
 		LOGV(LOGTAG, "DL instruction %05X = %02X", dl + dlpos, instruction);
 		dlpos++;
@@ -752,21 +767,28 @@ static void do_screen() {
 			LOGV(LOGTAG, "do_scan_blank lines %d", lines);
 			for(int line=0; line<lines; line++) {
 				do_scan_blank();
-				scanline++;
 				ypos++;
-				if (ypos == screen_height) return;
+				memscan++;
+				if (ypos == frame_height) return;
 			}
 		} else {
 			if (instruction & 64) {
 				use_hscroll = instruction & 16;
 				use_vscroll = instruction & 32;
 
+#ifdef EMULATE_FPGA
+				lms     = VRAM_PTR_LONG(dl + dlpos);
+				dlpos+=3;
+				attribs = VRAM_PTR_LONG(dl + dlpos);
+				dlpos+=3;
+#else
 				lms     = VRAM_PTR(dl + dlpos);
 				dlpos+=2;
 				attribs = VRAM_PTR(dl + dlpos);
 				dlpos+=2;
 				subpals = VRAM_PTR(dl + dlpos);
 				dlpos+=2;
+#endif
 			}
 			int lines = lines_per_mode[mode];
 			UINT8 pitch = use_hscroll ? bytes_per_scan_scroll[mode] : bytes_per_scan[mode];
@@ -775,7 +797,7 @@ static void do_screen() {
 
 				do_scan_start();
 
-				offset = scanline * screen_pitch;
+				offset = memscan * screen_pitch;
 				xpos = 0;
 				do_border(offset, SCREEN_XBORDER);
 
@@ -799,9 +821,9 @@ static void do_screen() {
 				do_border(offset, SCREEN_XBORDER);
 				do_scan_end();
 
-				scanline++;
 				ypos++;
-				if (ypos == screen_height) return;
+				memscan++;
+				if (ypos == frame_height) return;
 
 			}
 
@@ -809,10 +831,17 @@ static void do_screen() {
 			attribs += pitch;
 		}
 	}
-	for(;scanline <screen_height; scanline++) {
+
+	for(;ypos < frame_height; ypos++) {
 		do_scan_blank();
-		ypos++;
+		memscan++;
 	}
+
+	for(int i=0; i<SCREEN_YBORDER; i++) {
+		do_scan_border();
+		memscan++;
+	}
+
 }
 
 static void init_rgb565_table() {
