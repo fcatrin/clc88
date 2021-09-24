@@ -142,6 +142,7 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 			palette_value_state = 1;
 		} else {
 			palette_value = (palette_value & 0x00FF) | (value << 8);
+
 			palette[palette_index++] = palette_value;
 			palette_value_state = 0;
 		}
@@ -403,13 +404,10 @@ static void do_scan_text_attribs(bool use_hscroll, bool use_vscroll, UINT8 pitch
 			char_offset++;
 		}
 
-		put_pixel(offset, row & bit ?
-				palette[foreground]:
-				palette[background]);
+
+		put_pixel(offset, row & bit ? foreground : background);
 		if (!cols80) {
-			put_pixel(offset, row & bit ?
-					palette[foreground]:
-					palette[background]);
+			put_pixel(offset, row & bit ? foreground : background);
 		}
 
 		pixel_offset++;
