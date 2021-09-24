@@ -115,8 +115,9 @@ display_list:
    .byte 0
    .word attr_location
    .byte 0
-.rept 29 
-   .byte 02
+   .byte $02
+.rept 29
+   .byte $02
 .endr 
    .byte $41
 
@@ -136,4 +137,7 @@ test_string:
    .byte 'another color', 0
    
    icl 'screen.asm'
+   
+   org $e000
+   ins '../../res/fonts/charset_atari.bin'
    
