@@ -64,6 +64,7 @@ XEX = $(addprefix $(ASMDIR)/, \
 	6502/test/modes/mode_0_attribs.xex \
 	6502/test/modes/mode_0.xex \
 	6502/test/modes/mode_1_attribs.xex \
+	6502/test/modes/mode_1.xex \
 	)
 
 	#6502/test/modes/mode_1.xex \
