@@ -6,6 +6,7 @@ void  chroni_vram_write(UINT16 index, UINT8 value);
 
 UINT8 chroni_register_read(UINT8 index);
 UINT8 chroni_vram_read(UINT16 index);
+UINT8 chroni_vram_read_linear(UINT32 index); // used by monitor
 
 void  chroni_init();
 void  chroni_run_frame();

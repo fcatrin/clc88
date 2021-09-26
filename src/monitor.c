@@ -7,6 +7,7 @@
 #include "bus.h"
 #include "cpu.h"
 #include "cpu/m6502/m6502.h"
+#include "video/chroni.h"
 #include "frontend/frontend.h"
 #include "monitor.h"
 
@@ -123,6 +124,33 @@ static unsigned dump_memory(unsigned addr, unsigned lines) {
 	return addr;
 }
 
+static UINT32 dump_vram(UINT32 addr, unsigned lines) {
+	for(int line=0; line < lines; line++) {
+		printf("%05X|", addr);
+		for(int i=0; i<16; i++) {
+			printf("%02X", chroni_vram_read_linear(addr + i));
+			if (((i+1) % 4) == 0) {
+				printf("|");
+			} else {
+				printf(" ");
+			}
+		}
+		for(int i=0; i<16; i++) {
+			UINT8 c = chroni_vram_read_linear(addr + i);
+			if (0x20 <= c && c <= 0x7F) {
+				printf("%c", c);
+			} else {
+				printf(".");
+			}
+
+		}
+		printf("\n");
+		addr += 16;
+	}
+	return addr;
+}
+
+
 static unsigned dump_code(unsigned addr) {
 	char disasm[100];
 	unsigned next_addr = cpu->disasm(addr, disasm);
@@ -224,6 +252,8 @@ void monitor_help() {
 	printf("da            Disassembly (again) from PC address\n");
 	printf("m             Memory dump\n");
 	printf("m addr        Memory dump from address\n");
+	printf("v             VRAM dump\n");
+	printf("v addr        VRAM dump from address\n");
 	printf("s             Step one instruction\n");
 	printf("t             Step over one instruction\n");
 	printf("g             Run\n");
@@ -248,6 +278,7 @@ void monitor_enter() {
 
 	unsigned dasm_start = cpu->get_pc();
 	unsigned mem_start  = 0;
+	UINT32   vram_start  = 0;
 
 	dump_registers();
 	dump_code(cpu->get_pc());
@@ -283,6 +314,13 @@ void monitor_enter() {
 			} else {
 				unsigned addr = parse_hex(parts[1]);
 				mem_start = dump_memory(addr, 16);
+			}
+		} else if (!strcmp(parts[0], "v")) {
+			if (nparts == 1) {
+				vram_start = dump_vram(vram_start, 16);
+			} else {
+				UINT32 addr = parse_hex(parts[1]);
+				vram_start = dump_vram(addr, 16);
 			}
 		} else if (!strcmp(parts[0], "da")) {
 			dasm_start = disasm(cpu->get_pc(), 16);

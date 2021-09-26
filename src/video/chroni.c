@@ -100,6 +100,10 @@ UINT8 chroni_vram_read(UINT16 index) {
 	return VRAM_DATA(PAGE_BASE(page) + index);
 }
 
+UINT8 chroni_vram_read_linear(UINT32 index) {
+	return VRAM_DATA(index & 0x1FFFF);
+}
+
 static void reg_addr_low(UINT32 *reg, UINT8 value) {
 	*reg = (*reg & 0xFFFE00) | (value << 1);
 }
