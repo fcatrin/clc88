@@ -7,22 +7,6 @@
    ldx #OS_SET_VIDEO_MODE
    jsr OS_CALL
    
-   mwa SUBPAL_START VRAM_TO_RAM
-   jsr lib_vram_to_ram
-   
-   ldy #0
-   lda #$9A
-   sta (RAM_TO_VRAM), y
-   iny
-   lda #$9F
-   sta (RAM_TO_VRAM), y
-   iny
-   lda #$C8
-   sta (RAM_TO_VRAM), y
-   iny
-   lda #$4C
-   sta (RAM_TO_VRAM), y
-   
    mwa DISPLAY_START VRAM_TO_RAM
    jsr lib_vram_to_ram
    mwa RAM_TO_VRAM R0
