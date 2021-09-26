@@ -36,9 +36,31 @@ stop:
 
 	
 message:
-	.byte 'Hello world!', 255
+	.byte 'This is a multi color text using attributes', 255
 attribs:	
-	.byte $9F, $92, $1E, $E1, $01, $02, $03, $04, $21, $22, $23, $24
-	.byte $1F, $2F, $3F, $4F, $5F, $00
+.rept 5
+	.byte $9F
+.endr
+
+.rept 5
+   .byte $94
+.endr
+
+.rept 5
+   .byte $92
+.endr
+
+.rept 5
+   .byte $93
+.endr
+
+.rept 7
+   .byte $9A
+.endr
+
+.rept 16
+   .byte $F9
+.endr
+   .byte $00
 
    icl '../../os/stdlib.asm'
