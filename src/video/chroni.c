@@ -163,6 +163,7 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 		break;
 	case 0x09:
 		vram[vram_write_address++] = value;
+		vram_write_address = vram_write_address & 0x1FFFF;
 		break;
 	case 0x0a:
 		vram_write_address_aux = (vram_write_address_aux & 0x1FF00) | value;
@@ -175,6 +176,7 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 		break;
 	case 0x0d:
 		vram[vram_write_address_aux++] = value;
+		vram_write_address_aux = vram_write_address_aux & 0x1FFFF;
 		break;
 	case 0x0e:
 		page = value & 0x07;
