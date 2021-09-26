@@ -10,7 +10,7 @@ lib_ram_to_vram:
    jmp OS_CALL
    
 
-lib_vram_set_bytes:
+lib_vram_set:
    ldx #OS_VRAM_SET_BYTES
    jmp OS_CALL
 

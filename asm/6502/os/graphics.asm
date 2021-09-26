@@ -154,6 +154,14 @@ set_video_mode_screen:
    tya
    ora #$40
    sta VDATA
+   lda #0
+   
+   sta VDATA // this will be overwritten later with LMS and ATTR pointers
+   sta VDATA
+   sta VDATA
+   sta VDATA
+   sta VDATA
+   sta VDATA
 
    tya
    ldx #1
@@ -166,13 +174,22 @@ vmode_set_lines:
    sta VDATA ; End of Screen
    
 ; calculate display, attribs and free addresses
-   mwa VADDR DISPLAY_START
+   mwa VADDR DISPLAY_START 
    adw SCREEN_SIZE DISPLAY_START ATTRIB_START
    adw ATTRIB_SIZE ATTRIB_START VRAM_FREE
 
-; set values on LMS command
-   mwa DISPLAY_START VRAM_ADDR_SCREEN+4
-   mwa ATTRIB_START  VRAM_ADDR_SCREEN+7
+; set addresses for LMS and Atrribs on display list
+   mwa #VRAM_ADDR_SCREEN+4 VADDR
+   lda DISPLAY_START
+   sta VDATA
+   lda DISPLAY_START+1
+   sta VDATA
+   
+   mwa #VRAM_ADDR_SCREEN+7 VADDR
+   lda ATTRIB_START
+   sta VDATA
+   lda ATTRIB_START+1
+   sta VDATA
    
 ; initialize display and attrib data
    lda #0
@@ -201,15 +218,27 @@ vram_clear:
 ; it will carefully walk through memory until the end of the current bank
 vram_set:
    sta VDATA
-      
-vram_set_bytes_next:
    dec SIZE
-   bne vram_set_bytes_next
+   bne vram_set
    dec SIZE+1
    ldx SIZE+1
    cpx #$ff
-   bne vram_set_bytes_next
+   bne vram_set
    rts
+   
+.proc vram_set_charset
+   ldy #0
+   ldx #4
+next:   
+   lda (SRC_ADDR), y
+   sta VDATA
+   iny
+   bne next
+   inc SRC_ADDR+1
+   dex
+   bne next
+   rts
+.endp
 
 ; naive and slow implementation for now
 ; it will carefully copy from ram to vram until the end of the current bank

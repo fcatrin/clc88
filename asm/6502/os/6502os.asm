@@ -44,9 +44,10 @@ copy_vector:
 	
    mwa #0 CHARSET_START
    mwa #0 VCHARSET
-   
-   mwa #copy_params_charset COPY_PARAMS
-   jsr copy_block_with_params
+   mwa #0 VADDR
+   mwa #charset SRC_ADDR
+   jsr vram_set_charset
+
 
 	lda #$ff
 	jsr set_video_mode
@@ -154,9 +155,6 @@ os_vector_table
 	.word storage_file_read_byte
 	.word storage_file_read_block
 	.word storage_file_close
-
-copy_params_charset:
-	.word charset, VRAM_ADDR_CHARSET, CHARSET_SIZE
 
 copy_block_with_params:
 	ldy #5
