@@ -9,7 +9,7 @@
 ;
 ;
 	opt h-						;RMT module is standard Atari binary file already
-	ins "songs/tyrian_zanac5.rmt"				;include music RMT module
+	ins "songs/acidjazzed_evening.rmt"				;include music RMT module
 	opt h+
 ;
 ;
@@ -22,13 +22,13 @@ VLINE	equ 16					;screen line for synchronization
 	org BOOTADDR
 	jmp start
 
-	org $3e00
+	org $3c00
 
 start
 
-   lda #0
+   lda #1
    sta ROS7
-   lda #0
+   lda #1
    ldx #OS_SET_VIDEO_MODE
    jsr OS_CALL
 	
