@@ -357,9 +357,9 @@ video_mode_params_0:
 video_mode_params_1:
    .word VMODE_1_LINES, VMODE_1_SCREEN_SIZE, VMODE_1_ATTRIB_SIZE, VMODE_1_SUBPAL_SIZE, video_mode_subpal_0, $9F
 video_mode_params_2:
-   .word VMODE_2_LINES, VMODE_2_SCREEN_SIZE, VMODE_2_ATTRIB_SIZE, VMODE_2_SUBPAL_SIZE, video_mode_subpal_0, $10
+   .word VMODE_2_LINES, VMODE_2_SCREEN_SIZE, VMODE_2_ATTRIB_SIZE, VMODE_2_SUBPAL_SIZE, video_mode_subpal_0, $9F
 video_mode_params_3:
-   .word VMODE_3_LINES, VMODE_3_SCREEN_SIZE, VMODE_3_ATTRIB_SIZE, VMODE_3_SUBPAL_SIZE, video_mode_subpal_0, $10
+   .word VMODE_3_LINES, VMODE_3_SCREEN_SIZE, VMODE_3_ATTRIB_SIZE, VMODE_3_SUBPAL_SIZE, video_mode_subpal_0, $9F
 video_mode_params_4:
    .word VMODE_4_LINES, VMODE_4_SCREEN_SIZE, VMODE_4_ATTRIB_SIZE, VMODE_4_SUBPAL_SIZE, video_mode_subpal_3, $00
 video_mode_params_5:

@@ -438,20 +438,16 @@ static void do_scan_text_attribs_double(UINT8 line) {
 	for(int i=0; i<SCREEN_XRES/2; i++) {
 		if (i % 0x10 == 0) {
 			UINT8 attrib = VRAM_DATA(attribs + char_offset);
-			foreground = (attrib & 0xF0) >> 4;
-			background = attrib & 0x0F;
+			background = (attrib & 0xF0) >> 4;
+			foreground = attrib & 0x0F;
 
 			UINT8 c = VRAM_DATA(lms + char_offset);
 			row = VRAM_DATA(charset * CHARSET_PAGE + c*8 + line);
 			char_offset++;
 		}
 
-		put_pixel(offset, row & 0x80 ?
-				VRAM_DATA(subpals + foreground) :
-				VRAM_DATA(subpals + background));
-		put_pixel(offset, row & 0x80 ?
-				VRAM_DATA(subpals + foreground) :
-				VRAM_DATA(subpals + background));
+		put_pixel(offset, row & 0x80 ? foreground : background);
+		put_pixel(offset, row & 0x80 ? foreground : background);
 		if (!first) row <<= 1;
 		first = !first;
 	}

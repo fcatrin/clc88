@@ -2,21 +2,19 @@
 	
 	org BOOTADDR
 
-   lda #0
-   sta ROS7
+   ldy #0
    lda #3
    ldx #OS_SET_VIDEO_MODE
    jsr OS_CALL
 
-   mwa DISPLAY_START VRAM_TO_RAM
-   jsr lib_vram_to_ram
+   mwa DISPLAY_START VADDR
 	
 	ldy #0
 copy:
 	lda message, y
 	cmp #255
 	beq stop
-	sta (RAM_TO_VRAM), y
+	sta VDATA
 	iny
 	bne copy
 
