@@ -2,8 +2,9 @@
 	
 	org BOOTADDR
 
+   lda #1
+   sta ROS7
    lda #0
-   ldy #0
    ldx #OS_SET_VIDEO_MODE
    jsr OS_CALL
 	
@@ -17,7 +18,7 @@
    ora #VSTATUS_EN_INTS
    sta VSTATUS
 
-   mwa DISPLAY_START VRAM_TO_RAM
+   
    jsr lib_vram_to_ram
 	
 	lda #255
@@ -26,12 +27,13 @@
 	lda #$CF
 	sta POKEY0_AUDC1
 	
+	mwa DISPLAY_START VADDR
 	ldy #0
 copy:
 	lda message, y
 	cmp #255
 	beq stop
-	sta (RAM_TO_VRAM), y
+	sta VDATA
 	iny
 	bne copy
 	ldx #0
