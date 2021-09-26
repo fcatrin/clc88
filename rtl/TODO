@@ -1,0 +1,5 @@
+* Use indexed value for border color
+* Upload fonts from ROM to VRAM
+* Read VADDR registers
+* Read data through VADDR
+
