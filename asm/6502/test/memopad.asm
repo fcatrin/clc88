@@ -1,6 +1,6 @@
    icl '../os/symbols.asm'
 
-POS_BASE = 22*40+9
+POS_BASE = 22*80+9
 POS_CAPS  = POS_BASE
 POS_SHIFT = POS_CAPS  + 6 
 POS_CTRL  = POS_SHIFT + 7
@@ -9,10 +9,12 @@ POS_ALT   = POS_CTRL  + 6
 
 	org BOOTADDR
 
+   lda #1
+   sta ROS7
    lda #0
-   ldy #0
    ldx #OS_SET_VIDEO_MODE
    jsr OS_CALL
+
    
    jsr calc_screen_offset
    
@@ -236,7 +238,7 @@ normal_key:
    sta (RAM_TO_VRAM), y
    inc pos_x
    lda pos_x
-   cmp #40
+   cmp #80
    jeq line_feed
    rts
 next_char:   
@@ -249,8 +251,10 @@ end_print_key:
 calc_screen_offset:
    mwa #0 pos_offset
      
-   // pos_offset = y*32
+   // pos_offset = y*64
    lda pos_y
+   asl
+   rol pos_offset+1
    asl
    rol pos_offset+1
    asl
@@ -263,8 +267,9 @@ calc_screen_offset:
    rol pos_offset +1
    sta pos_offset
    
-   // pos_offset += y*8   => pos_offset = y*40
+   // pos_offset += y*16   => pos_offset = y*(64+16 from above)
    lda pos_y
+   asl
    asl
    asl
    asl
@@ -295,7 +300,7 @@ backspace_wrap_left:
    lda pos_y
    cmp #0
    beq backspace_abort
-   lda #39
+   lda #79
    sta pos_x
    dec pos_y
 backspace_del:
@@ -327,13 +332,13 @@ cursor_left:
    dec pos_x
    jmp calc_screen_offset
 cursor_wrap_left:   
-   lda #39
+   lda #79
    sta pos_x
    jmp calc_screen_offset
    
 cursor_right:
    lda pos_x
-   cmp #39
+   cmp #79
    beq cursor_wrap_right
    inc pos_x
    jmp calc_screen_offset
@@ -367,14 +372,14 @@ cursor_wrap_down:
 cursor_on:
    lda #1
    sta is_cursor_on
-   lda #$01
+   lda #$f9
    jmp change_cursor_attr
 
 cursor_off:
    lda #0
    sta is_cursor_on
    
-   lda #$10
+   lda #$9f
    
 change_cursor_attr:
       
@@ -422,7 +427,7 @@ cursor_end:
 
    lda pos_x
    sta R0
-   cmp #39
+   cmp #79
    bne cursor_end_start
    rts
    
@@ -432,14 +437,14 @@ cursor_end_start:
    jsr calc_screen_offset
    adw RAM_TO_VRAM pos_offset
 
-   ldy #39
+   ldy #79
 cursor_end_next:   
    lda (RAM_TO_VRAM), y
    bne cursor_end_found
    dey
    cpy R0
    bne cursor_end_next
-   ldy #39
+   ldy #79
 cursor_end_found:
    sty pos_x
    jmp calc_screen_offset
@@ -460,7 +465,7 @@ word_prev_next:
    bne word_prev_y
    rts
 word_prev_y:
-   lda #39
+   lda #79
    sta pos_x
    dec pos_y
    jmp word_prev_start
@@ -492,7 +497,7 @@ word_next_next:
    mwa display_base RAM_TO_VRAM
 
    lda pos_x
-   cmp #39
+   cmp #79
    bne word_next_x
    lda pos_y
    cmp #22
