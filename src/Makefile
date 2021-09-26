@@ -70,6 +70,7 @@ XEX = $(addprefix $(ASMDIR)/, \
 	6502/test/sprites.xex \
 	6502/test/scroll.xex \
 	6502/test/storage.xex \
+	6502/test/storage_block.xex \
 	)
 
 	#6502/test/modes/mode_4.xex \
@@ -82,8 +83,6 @@ XEX = $(addprefix $(ASMDIR)/, \
 	6502/test/modes/mode_b.xex \
 	6502/test/modes/mode_c.xex \
 	6502/test/modes/mode_d.xex \
-	6502/test/storage.xex \
-	6502/test/storage_block.xex \
 	6502/test/storage_list.xex \
 	6502/test/sound.xex \
 	6502/test/keyb.xex \
