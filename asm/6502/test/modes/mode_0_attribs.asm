@@ -8,49 +8,32 @@
    ldx #OS_SET_VIDEO_MODE
    jsr OS_CALL
 
-   mwa SUBPAL_START VRAM_TO_RAM
-   jsr lib_vram_to_ram
-
-; use first 16 entries as subpal
-   ldy #0
-set_subpal:
-   tya
-   sta (RAM_TO_VRAM), y
-   iny
-   cpy #16
-   bne set_subpal
-   
-; reset all attributes to $0F   
-   mwa ATTRIB_START VRAM_TO_RAM
-   jsr lib_vram_to_ram
-   
-   mwa RAM_TO_VRAM DST_ADDR
-   mwa SCREEN_SIZE SIZE
    lda #$0F
-   jsr lib_vram_set_bytes
+   mwa ATTRIB_SIZE SIZE
+   mwa ATTRIB_START VADDR
+   jsr lib_vram_set
+   
 
 ; copy test attrbutes
-   mwa ATTRIB_START VRAM_TO_RAM
-   jsr lib_vram_to_ram
+   mwa ATTRIB_START VADDR
    
    ldy #0
 copy_attribs:   
    lda attribs, y
    beq display_message
-   sta (RAM_TO_VRAM), y
+   sta VDATA
    iny
    bne copy_attribs
    
 display_message:
-   mwa DISPLAY_START VRAM_TO_RAM
-   jsr lib_vram_to_ram
+   mwa DISPLAY_START VADDR
 	
 	ldy #0
 copy:
 	lda message, y
 	cmp #255
 	beq stop
-	sta (RAM_TO_VRAM), y
+	sta VDATA
 	iny
 	bne copy
 	
