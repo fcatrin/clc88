@@ -13,8 +13,8 @@ CHARSET_POS_Y = 19
 	
    org BOOTADDR
 
-   lda #0
-   ldy #0
+   lda #1
+   sta ROS7
    ldx #OS_SET_VIDEO_MODE
    jsr OS_CALL
 

@@ -56,7 +56,7 @@
    beq not_reset_attrib
    
    ldy #0
-   mva #$10 (RAM_TO_VRAM),y
+   mva #$9f (RAM_TO_VRAM),y
    
 not_reset_attrib
    adb charpix_char_x #CHARPIX_POS_X screen_pos_x

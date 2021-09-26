@@ -78,6 +78,7 @@ XEX = $(addprefix $(ASMDIR)/, \
 	6502/test/vclock_rand.xex \
 	6502/demos/rmt/music.xex \
 	6502/demos/rmtplayer/player.xex \
+	6502/tools/charset_editor/editor.xex \
 	)
 
 	#6502/test/modes/mode_4.xex \
@@ -90,7 +91,6 @@ XEX = $(addprefix $(ASMDIR)/, \
 	6502/test/modes/mode_b.xex \
 	6502/test/modes/mode_c.xex \
 	6502/test/modes/mode_d.xex \
-	6502/tools/charset_editor/editor.xex 
 
 ifeq ($(FRONTEND), linux)
 
