@@ -21,20 +21,19 @@
    ora #VSTATUS_EN_INTS
    sta VSTATUS
 	
-   mwa DISPLAY_START VRAM_TO_RAM
-   jsr lib_vram_to_ram
+   mwa DISPLAY_START VADDR
 	
 	ldy #0
 copy:
 	lda message, y
 	cmp #255
 	beq rainbow
-	sta (RAM_TO_VRAM), y
+	sta VDATA
 	iny
 	bne copy
 	ldx #0
 rainbow:
-    clc
+   clc
 	lda VCOUNT
 	adc FRAMECOUNT
 	sta WSYNC
