@@ -4,14 +4,15 @@
 	
 	org BOOTADDR
 	
-	lda #0
+   lda #1
+   sta ROS7
+   lda #0
    ldx #OS_SET_VIDEO_MODE
    jsr OS_CALL
    
    sta ST_WRITE_RESET
    
-   mwa DISPLAY_START VRAM_TO_RAM
-   jsr lib_vram_to_ram
+   mwa DISPLAY_START VADDR
    
 ; Call command to open file
    mwa #filename SRC_ADDR
@@ -51,11 +52,7 @@ end:
    jmp end
       
 .proc screen_putc
-   sty R0
-   ldy #0
-   sta (RAM_TO_VRAM), y
-   inw RAM_TO_VRAM
-   ldy R0
+   sta VDATA
    rts
 .endp  
    
