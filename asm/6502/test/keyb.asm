@@ -2,8 +2,9 @@
 	
 	org BOOTADDR
 
+   lda #1
+   sta ROS7
    lda #0
-   ldy #0
    ldx #OS_SET_VIDEO_MODE
    jsr OS_CALL
    
@@ -33,7 +34,7 @@ next_bit:
 	bcc key_off
 	lda #'1'
 key_off:
-    ldy SCREENPOS
+   ldy SCREENPOS
 	sta (RAM_TO_VRAM), y
 	iny
 	tya
@@ -53,7 +54,7 @@ next_row:
 next_line:
 	lda #0
 	sta SCREENPOS
-	adw RAM_TO_VRAM #40
+	adw RAM_TO_VRAM #80
 	jmp next_reg
 
 KSTAT     .byte 0

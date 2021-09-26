@@ -322,15 +322,6 @@ vram2ram:
    lsr
    sta VRAM_PAGE
    
-   lda VRAM_TO_RAM+1
-   and #$1F
-   sta VRAM_TO_RAM+1
-   
-   lda VRAM_TO_RAM
-   asl
-   sta VRAM_TO_RAM
-   rol VRAM_TO_RAM+1
-   
    adw VRAM_TO_RAM #VRAM RAM_TO_VRAM
    rts
 
