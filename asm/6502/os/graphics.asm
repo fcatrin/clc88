@@ -130,7 +130,7 @@ set_video_mode_dl:
    lda #<VRAM_ADDR_SCREEN
    sta DLIST
    sta VDLIST
-   lda #<VRAM_ADDR_SCREEN+1
+   lda #<VRAM_ADDR_SCREEN
    sta DLIST+1
    sta VDLIST+1
    rts
