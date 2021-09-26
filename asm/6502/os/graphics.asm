@@ -127,10 +127,10 @@ set_video_disabled:
    rts
    
 set_video_mode_dl:
-   lda #<VRAM_ADDR_SCREEN
+   lda #<(VRAM_ADDR_SCREEN/2)
    sta DLIST
    sta VDLIST
-   lda #<VRAM_ADDR_SCREEN
+   lda #>(VRAM_ADDR_SCREEN/2)
    sta DLIST+1
    sta VDLIST+1
    rts
@@ -353,7 +353,7 @@ word_mul2:
    rts
 
 video_mode_params_0:
-   .word VMODE_0_LINES, VMODE_0_SCREEN_SIZE, VMODE_0_ATTRIB_SIZE, VMODE_0_SUBPAL_SIZE, video_mode_subpal_0, $10
+   .word VMODE_0_LINES, VMODE_0_SCREEN_SIZE, VMODE_0_ATTRIB_SIZE, VMODE_0_SUBPAL_SIZE, video_mode_subpal_0, $9F
 video_mode_params_1:
    .word VMODE_1_LINES, VMODE_1_SCREEN_SIZE, VMODE_1_ATTRIB_SIZE, VMODE_1_SUBPAL_SIZE, video_mode_subpal_0, $10
 video_mode_params_2:

@@ -775,7 +775,7 @@ static void do_screen() {
 			break;
 		} else if (mode == 0) { // blank lines
 			UINT8 lines = 1 + ((instruction & 0x70) >> 4);
-			LOGV(LOGTAG, "do_scan_blank lines %d", lines);
+			LOGV(LOGTAG, "DL do_scan_blank lines %d", lines);
 			for(int line=0; line<lines; line++) {
 				do_scan_blank();
 				ypos++;
@@ -800,6 +800,7 @@ static void do_screen() {
 				subpals = VRAM_PTR(dl + dlpos);
 				dlpos+=2;
 #endif
+				LOGV(LOGTAG, "DL LMS %04X ATTR %04X", lms, attribs);
 			}
 			int lines = lines_per_mode[mode];
 			UINT8 pitch = use_hscroll ? bytes_per_scan_scroll[mode] : bytes_per_scan[mode];

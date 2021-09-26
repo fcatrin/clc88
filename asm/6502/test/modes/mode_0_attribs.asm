@@ -8,12 +8,6 @@
    ldx #OS_SET_VIDEO_MODE
    jsr OS_CALL
 
-   lda #$0F
-   mwa ATTRIB_SIZE SIZE
-   mwa ATTRIB_START VADDR
-   jsr lib_vram_set
-   
-
 ; copy test attrbutes
    mwa ATTRIB_START VADDR
    
@@ -42,9 +36,9 @@ stop:
 
 	
 message:
-	.byte 40, 101, 108, 108, 111, 0, 55, 111, 114, 108, 100, 1, 1, 1, 1, 255
+	.byte 'Hello world!', 255
 attribs:	
-	.byte $0F, $01, $1E, $E1, $01, $02, $03, $04, $21, $22, $23, $24
+	.byte $9F, $92, $1E, $E1, $01, $02, $03, $04, $21, $22, $23, $24
 	.byte $1F, $2F, $3F, $4F, $5F, $00
 
    icl '../../os/stdlib.asm'
