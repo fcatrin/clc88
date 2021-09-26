@@ -194,16 +194,20 @@ vmode_set_lines:
 ; initialize display and attrib data
    lda #0
    sta VADDR+2
-   
+
+   jsr display_clear
+   jmp attrib_clear   
+
+display_clear:
    mwa DISPLAY_START VADDR
    mwa SCREEN_SIZE SIZE
-   jsr vram_clear
-   
+   jmp vram_clear
+
+attrib_clear:
    mwa ATTRIB_START VADDR
    mwa SCREEN_SIZE SIZE
    lda ATTRIB_DEFAULT
    jmp vram_set
-
    
 vram_copy:
    jsr vram2ram

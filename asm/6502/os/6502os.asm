@@ -155,6 +155,9 @@ os_vector_table
 	.word storage_file_read_byte
 	.word storage_file_read_block
 	.word storage_file_close
+	.word set_video_palette
+	.word display_clear
+	.word attrib_clear
 
 copy_block_with_params:
 	ldy #5

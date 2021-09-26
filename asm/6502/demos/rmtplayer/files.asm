@@ -186,7 +186,7 @@ file_type  .word 0
    cpx #$FF
    beq no_erase_row
 
-   lda #$10
+   lda #$12
    jsr paint_file_row
   
 no_erase_row:
@@ -195,7 +195,7 @@ no_erase_row:
    sta last_row
    tax
    
-   lda #$62
+   lda #$37
    jmp paint_file_row
 .endp
 

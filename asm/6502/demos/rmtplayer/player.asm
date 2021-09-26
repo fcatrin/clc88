@@ -13,22 +13,20 @@ VLINE	equ 16					;screen line for synchronization
 
 start
 
-   lda #0
+   lda #1
    sta ROS7
-   lda #0
+   lda #1
    ldx #OS_SET_VIDEO_MODE
    jsr OS_CALL
 	
-	mwa SUBPAL_START VRAM_TO_RAM
-   mwa #custom_subpal SRC_ADDR
-   mwa #10 SIZE
-   jsr lib_copy_to_vram
+	lda #$12
+	sta ATTRIB_DEFAULT
+	ldx #OS_ATTRIB_CLEAR
+	jsr OS_CALL
 	
-	mwa PALETTE_START VRAM_TO_RAM
    mwa #custom_palette SRC_ADDR
-   mwa #16*2 SIZE
-	jsr lib_copy_to_vram
-
+   ldx #OS_SET_VIDEO_PALETTE
+   jsr OS_CALL
 	
 	jsr display_credits
 	
@@ -38,7 +36,7 @@ start
 	mva #19 screen_margin_top
 	mva #24 screen_margin_bottom
 	
-	lda #$32
+	lda #$34
 	jsr screen_fill_attrib
 
    ; paint Credits Info area
@@ -47,7 +45,7 @@ start
    mva #0  screen_margin_top
    mva #19 screen_margin_bottom
    
-   lda #$54
+   lda #$56
    jsr screen_fill_attrib
 	
    jsr list_files
