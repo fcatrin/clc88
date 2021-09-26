@@ -33,6 +33,9 @@ UINT16 palette[PALETTE_SIZE];
 #define PAGE_SHIFT_HIGH (PAGE_SHIFT-8)
 #define PAGE_BASE(x)    (x << PAGE_SHIFT)
 
+static UINT32 vram_write_address;
+static UINT32 vram_write_address_aux;
+
 static UINT16 scanline_interrupt;
 static UINT8  page;
 static UINT32 offset;
@@ -118,8 +121,6 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 	static int    palette_value_state;
 	static UINT8  palette_index;
 	static UINT16 palette_value;
-	static UINT32 vram_write_address;
-	static UINT32 vram_write_address_aux;
 
 	LOGV(LOGTAG, "chroni reg write: 0x%04X = 0x%02X", index, value);
 	switch (index) {
@@ -221,6 +222,12 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 
 UINT8 chroni_register_read(UINT8 index) {
 	switch(index) {
+	case 0x06 : return (vram_write_address & 0x000FF);
+	case 0x07 : return (vram_write_address & 0x0FF00) >> 8;
+	case 0x08 : return (vram_write_address & 0x10000) >> 16;
+	case 0x0a : return (vram_write_address_aux & 0x000FF);
+	case 0x0b : return (vram_write_address_aux & 0x0FF00) >> 8;
+	case 0x0c : return (vram_write_address_aux & 0x10000) >> 16;
 	case 0x0e : return page & 0x07;
 	case 0x0f : return border_color;
 	case 0x10 : return ypos;
