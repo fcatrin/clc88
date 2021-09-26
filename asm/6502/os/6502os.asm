@@ -2,8 +2,8 @@
 
 CHARSET_SIZE  = $0400
 
-VRAM_CHARSET   = VRAM
-VRAM_SCREEN    = VRAM + CHARSET_SIZE
+VRAM_ADDR_CHARSET   = 0
+VRAM_ADDR_SCREEN    = VRAM_ADDR_CHARSET + CHARSET_SIZE
 
 TEXT_SCREEN_SIZE       = 40*24
 TEXT_SCREEN_SIZE_WIDE  = 20*24
@@ -129,12 +129,12 @@ set_video_mode_off:
 	ldx #0
 	lda #112
 create_dl_mode_off:	
-	sta VRAM_SCREEN, x
+	sta VRAM_ADDR_SCREEN, x
 	inx
 	cpx #24
 	bne create_dl_mode_off
 	lda #$41
-	sta VRAM_SCREEN, x
+	sta VRAM_ADDR_SCREEN, x
 	
 	jmp set_video_mode_dl
 	
@@ -145,7 +145,7 @@ os_vector_table
 	.word mem_set_bytes
 	.word ram2vram
 	.word vram2ram
-	.word vram_set_bytes
+	.word vram_set
 	.word keyb_poll
 	.word storage_dir_open
 	.word storage_dir_read
@@ -156,7 +156,7 @@ os_vector_table
 	.word storage_file_close
 
 copy_params_charset:
-	.word charset, VRAM_CHARSET, CHARSET_SIZE
+	.word charset, VRAM_ADDR_CHARSET, CHARSET_SIZE
 
 copy_block_with_params:
 	ldy #5

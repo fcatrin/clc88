@@ -1,11 +1,11 @@
 VMODE_0_LINES       = 24
-VMODE_0_SCREEN_SIZE = 40*VMODE_0_LINES
-VMODE_0_ATTRIB_SIZE = 40*VMODE_0_LINES
+VMODE_0_SCREEN_SIZE = 80*VMODE_0_LINES
+VMODE_0_ATTRIB_SIZE = 80*VMODE_0_LINES
 VMODE_0_SUBPAL_SIZE = 16
 
 VMODE_1_LINES       = 24
-VMODE_1_SCREEN_SIZE = 80*VMODE_1_LINES
-VMODE_1_ATTRIB_SIZE = 80*VMODE_1_LINES
+VMODE_1_SCREEN_SIZE = 40*VMODE_1_LINES
+VMODE_1_ATTRIB_SIZE = 40*VMODE_1_LINES
 VMODE_1_SUBPAL_SIZE = 16
 
 VMODE_2_LINES       = 24
@@ -94,7 +94,7 @@ set_video_mode_finish:
    jmp set_video_enabled
  
  
- set_video_palette:
+set_video_palette:
    lda #0
    sta VPAL_INDEX
    ldx #2
@@ -127,14 +127,10 @@ set_video_disabled:
    rts
    
 set_video_mode_dl:
-   lda #0
-   sta VRAM_PAGE
-   mwa #VRAM_SCREEN RAM_TO_VRAM
-   jsr ram2vram
-   lda VRAM_TO_RAM
+   lda #<VRAM_ADDR_SCREEN
    sta DLIST
    sta VDLIST
-   lda VRAM_TO_RAM+1
+   lda #<VRAM_ADDR_SCREEN+1
    sta DLIST+1
    sta VDLIST+1
    rts
@@ -147,92 +143,49 @@ set_video_mode_screen:
    mwa #SCREEN_LINES DST_ADDR
    jsr copy_block
 
+   mwa #VRAM_ADDR_SCREEN VADDR
+
    pla
    tay
    lda #112
-   sta VRAM_SCREEN
-   sta VRAM_SCREEN+1
-   sta VRAM_SCREEN+2
+   sta VDATA
+   sta VDATA
+   sta VDATA
    tya
    ora #$40
-   sta VRAM_SCREEN+3
+   sta VDATA
 
    tya
    ldx #1
-vmode_set_lines:   
-   sta VRAM_SCREEN+9, x ; take LMS part as already done
+vmode_set_lines:
+   sta VDATA   
    inx
    cpx SCREEN_LINES
    bne vmode_set_lines
    lda #$41
-   sta VRAM_SCREEN+9, x ; End of Screen
+   sta VDATA ; End of Screen
    
-; calculate display, attribs and subpal adresses
-   clc
-   lda #<(VRAM_SCREEN + 3 + 7 + 1 + 1) ; 3 blank scans + 7 bytes LMS + 1 byte End of screen
-   adc SCREEN_LINES
-   and #$fe
-   sta RAM_TO_VRAM
-   
-   lda #>(VRAM_SCREEN + 3 + 7 + 1 + 1)
-   adc SCREEN_LINES+1
-   sta RAM_TO_VRAM+1
-
-   lda #0
-   sta VRAM_PAGE
-   
-   jsr ram2vram
-   
-   mwa VRAM_TO_RAM DISPLAY_START
-   
-   lda SCREEN_SIZE
-   ldx SCREEN_SIZE+1
-   jsr word_div2
-   
-   adw DISPLAY_START ROS0 ATTRIB_START
-   
-   lda ATTRIB_SIZE
-   ldx ATTRIB_SIZE+1
-   jsr word_div2
-   
-   adw ATTRIB_START ROS0 SUBPAL_START
-
-   lda SUBPAL_SIZE
-   ldx SUBPAL_SIZE+1
-   jsr word_div2
-   
-   adw SUBPAL_START ROS0 VRAM_FREE
+; calculate display, attribs and free addresses
+   mwa VADDR DISPLAY_START
+   adw SCREEN_SIZE DISPLAY_START ATTRIB_START
+   adw ATTRIB_SIZE ATTRIB_START VRAM_FREE
 
 ; set values on LMS command
-   mwa DISPLAY_START VRAM_SCREEN+4
-   mwa ATTRIB_START  VRAM_SCREEN+6
-   mwa SUBPAL_START  VRAM_SCREEN+8
+   mwa DISPLAY_START VRAM_ADDR_SCREEN+4
+   mwa ATTRIB_START  VRAM_ADDR_SCREEN+7
    
-   mwa DISPLAY_START VRAM_TO_RAM
+; initialize display and attrib data
+   lda #0
+   sta VADDR+2
+   
+   mwa DISPLAY_START VADDR
    mwa SCREEN_SIZE SIZE
-   
    jsr vram_clear
    
-   mwa ATTRIB_START VRAM_TO_RAM
-   mwa ATTRIB_SIZE SIZE
+   mwa ATTRIB_START VADDR
+   mwa SCREEN_SIZE SIZE
    lda ATTRIB_DEFAULT
-   jsr vram_clear_to
-
-   mwa SUBPAL_START VRAM_TO_RAM
-   mwa SUBPAL_SIZE  SIZE
-   mwa SUBPAL_ADDR  SRC_ADDR
-   jmp vram_copy
-   
-vram_clear:
-   lda #$00
-
-vram_clear_to:
-   pha
-   jsr vram2ram
-   mwa RAM_TO_VRAM DST_ADDR
-   mva VRAM_PAGE   VPAGE
-   pla
-   jmp vram_set_bytes
+   jmp vram_set
 
    
 vram_copy:
@@ -240,42 +193,22 @@ vram_copy:
    mwa RAM_TO_VRAM DST_ADDR
    mva VRAM_PAGE   VPAGE
    jmp ram_vram_copy
+
+vram_clear:
+   lda #$00
    
 ; naive and slow implementation for now
 ; it will carefully walk through memory until the end of the current bank
-vram_set_bytes:
-   sta R0
-   lda VPAGE
-   sta R1
-   
-   ldy #0
-   lda R0
-vram_set_bytes_loop:   
-   sta (DST_ADDR), y
-   inc DST_ADDR
-   bne vram_set_bytes_next
-   ldx DST_ADDR+1
-   inx
-   cpx #$e0
-   bne vram_set_bytes_next_page
-   
-   ldx #$a0
-   inc VPAGE
-   lda R0    ; restore byte to be written
-   
-vram_set_bytes_next_page:
-   stx DST_ADDR+1
+vram_set:
+   sta VDATA
       
 vram_set_bytes_next:
    dec SIZE
-   bne vram_set_bytes_loop
+   bne vram_set_bytes_next
    dec SIZE+1
    ldx SIZE+1
    cpx #$ff
-   bne vram_set_bytes_loop
-   
-   lda R1
-   sta VPAGE
+   bne vram_set_bytes_next
    rts
 
 ; naive and slow implementation for now
