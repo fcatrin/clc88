@@ -17,16 +17,16 @@ wait:
 	jmp next_frame
 	
 keybscan:
-    mwa DISPLAY_START VRAM_TO_RAM
-    jsr lib_vram_to_ram
+   adw DISPLAY_START #(18 + 4*40) DST_ADDR
 
 	lda #0
 	sta KSTAT
-	sta SCREENPOS
 
 next_reg:
+   mwa DST_ADDR VADDRW
 	ldy KSTAT
 	lda KEY_STATUS, y
+	ldx #0
 next_bit:
 	rol
 	sta STATUS
@@ -34,13 +34,10 @@ next_bit:
 	bcc key_off
 	lda #'1'
 key_off:
-   ldy SCREENPOS
-	sta (RAM_TO_VRAM), y
-	iny
-	tya
-	cpy #8
+   sta VDATA
+	inx
+	cpx #8
 	beq next_row
-	sty SCREENPOS
 	lda STATUS
 	jmp next_bit
 	 
@@ -52,9 +49,7 @@ next_row:
 	rts
 	
 next_line:
-	lda #0
-	sta SCREENPOS
-	adw RAM_TO_VRAM #80
+	adw DST_ADDR #40
 	jmp next_reg
 
 KSTAT     .byte 0
