@@ -223,6 +223,19 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 	case 0x24:
 		clock_multiplier = clock_multipliers[value & 0x03];
 		break;
+	case 0x26:
+		vram_write_address = (vram_write_address & 0x1FE00) | (value << 1);
+		break;
+	case 0x27:
+		vram_write_address = (vram_write_address & 0x001FF) | (value << 9);
+		break;
+	case 0x28:
+		vram_write_address_aux = (vram_write_address_aux & 0x1FE00) | (value << 1);
+		break;
+	case 0x29:
+		vram_write_address_aux = (vram_write_address_aux & 0x001FF) | (value << 9);
+		break;
+
 	}
 }
 
@@ -241,6 +254,10 @@ UINT8 chroni_register_read(UINT8 index) {
 	case 0x20 : return hscroll;
 	case 0x21 : return vscroll;
 	case 0x25 : return rand() & 0xFF;
+	case 0x26 : return ((vram_write_address+1) & 0x001FF) >> 1;
+	case 0x27 : return ((vram_write_address+1) & 0x01E00) >> (8+1);
+	case 0x28 : return ((vram_write_address_aux+1) & 0x001FF) >> 1;
+	case 0x29 : return ((vram_write_address_aux+1) & 0x01E00) >> (8+1);
 	}
 	return 0;
 }
@@ -783,19 +800,10 @@ static void do_screen() {
 				use_hscroll = instruction & 16;
 				use_vscroll = instruction & 32;
 
-#ifdef EMULATE_FPGA
-				lms     = VRAM_PTR_LONG(dl + dlpos);
-				dlpos+=3;
-				attribs = VRAM_PTR_LONG(dl + dlpos);
-				dlpos+=3;
-#else
 				lms     = VRAM_PTR(dl + dlpos);
 				dlpos+=2;
 				attribs = VRAM_PTR(dl + dlpos);
 				dlpos+=2;
-				subpals = VRAM_PTR(dl + dlpos);
-				dlpos+=2;
-#endif
 				LOGV(LOGTAG, "DL LMS %04X ATTR %04X", lms, attribs);
 			}
 			int lines = lines_per_mode[mode];

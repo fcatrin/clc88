@@ -160,8 +160,6 @@ set_video_mode_screen:
    sta VDATA
    sta VDATA
    sta VDATA
-   sta VDATA
-   sta VDATA
 
    tya
    ldx #1
@@ -173,10 +171,15 @@ vmode_set_lines:
    lda #$41
    sta VDATA ; End of Screen
    
-; calculate display, attribs and free addresses
-   mwa VADDR DISPLAY_START 
-   adw SCREEN_SIZE DISPLAY_START ATTRIB_START
-   adw ATTRIB_SIZE ATTRIB_START VRAM_FREE
+; calculate display, attribs and free addresses in words
+; DISPLAY_START = current word address
+; ATTRIB_START  = DISPLAY_START + SCREEN_SIZE / 2
+   mwa VADDRW DISPLAY_START
+   mwa SCREEN_SIZE VADDR ; use VADDR->VADDRW for simple division by 2
+   adw VADDRW DISPLAY_START ATTRIB_START
+   
+   mwa ATTRIB_SIZE VADDR
+   adw VADDRW ATTRIB_START VRAM_FREE
 
 ; set addresses for LMS and Atrribs on display list
    mwa #VRAM_ADDR_SCREEN+4 VADDR
@@ -185,7 +188,7 @@ vmode_set_lines:
    lda DISPLAY_START+1
    sta VDATA
    
-   mwa #VRAM_ADDR_SCREEN+7 VADDR
+   mwa #VRAM_ADDR_SCREEN+6 VADDR
    lda ATTRIB_START
    sta VDATA
    lda ATTRIB_START+1
@@ -199,12 +202,12 @@ vmode_set_lines:
    jmp attrib_clear   
 
 display_clear:
-   mwa DISPLAY_START VADDR
+   mwa DISPLAY_START VADDRW
    mwa SCREEN_SIZE SIZE
    jmp vram_clear
 
 attrib_clear:
-   mwa ATTRIB_START VADDR
+   mwa ATTRIB_START VADDRW
    mwa SCREEN_SIZE SIZE
    lda ATTRIB_DEFAULT
    jmp vram_set
