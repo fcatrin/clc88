@@ -67,7 +67,18 @@ static UINT8 pixel_color_b;
 #define STATUS_ENABLE_SPRITES 0x08
 #define STATUS_ENABLE_CHRONI  0x10
 
+#define AUTOINC_VADDR_KEEP 0x00
+#define AUTOINC_VADDR_INC  0x01
+#define AUTOINC_VADDR_DEC  0x03
+#define AUTOINC_VADDR_AUX_KEEP 0x00
+#define AUTOINC_VADDR_AUX_INC  0x04
+#define AUTOINC_VADDR_AUX_DEC  0x0C
+#define AUTOINC_KEEP  (AUTOINC_VADDR_KEEP | AUTOINC_VADDR_AUX_KEEP)
+#define AUTOINC_INC   (AUTOINC_VADDR_INC | AUTOINC_VADDR_AUX_INC)
+#define AUTOINC_DEC   (AUTOINC_VADDR_DEC | AUTOINC_VADDR_AUX_DEC)
+
 static UINT8 status;
+static UINT8 autoinc;
 
 static UINT8 vscroll;
 static UINT8 hscroll;
@@ -87,6 +98,8 @@ void chroni_reset() {
 	hscroll = 0;
 	scanline_interrupt = 0;
 	clock_multiplier = clock_multipliers[0];
+
+	autoinc = AUTOINC_INC;
 
 	srand(time(NULL));
 }
@@ -120,6 +133,23 @@ static void reg_high(UINT16 *reg, UINT8 value) {
 	*reg = (*reg & 0x00FF) | (value << 8);
 }
 
+void vaddr_autoinc() {
+	if (autoinc & AUTOINC_VADDR_INC) {
+		vram_write_address++;
+	} else if (autoinc & AUTOINC_VADDR_DEC) {
+		vram_write_address--;
+	}
+	vram_write_address = vram_write_address & 0x1FFFF;
+}
+
+void vaddr_aux_autoinc() {
+	if (autoinc & AUTOINC_VADDR_AUX_INC) {
+		vram_write_address_aux++;
+	} else if (autoinc & AUTOINC_VADDR_AUX_DEC) {
+		vram_write_address_aux--;
+	}
+	vram_write_address_aux = vram_write_address_aux & 0x1FFFF;
+}
 
 void chroni_register_write(UINT8 index, UINT8 value) {
 	static int    palette_value_state;
@@ -162,8 +192,8 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 		vram_write_address = (vram_write_address & 0x0FFFF) | ((value & 1) << 16);
 		break;
 	case 0x09:
-		vram[vram_write_address++] = value;
-		vram_write_address = vram_write_address & 0x1FFFF;
+		vram[vram_write_address] = value;
+		vaddr_autoinc();
 		break;
 	case 0x0a:
 		vram_write_address_aux = (vram_write_address_aux & 0x1FF00) | value;
@@ -175,8 +205,8 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 		vram_write_address_aux = (vram_write_address_aux & 0x0FFFF) | ((value & 1) << 16);
 		break;
 	case 0x0d:
-		vram[vram_write_address_aux++] = value;
-		vram_write_address_aux = vram_write_address_aux & 0x1FFFF;
+		vram[vram_write_address_aux] = value;
+		vaddr_aux_autoinc();
 		break;
 	case 0x0e:
 		page = value & 0x07;
@@ -235,7 +265,9 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 	case 0x29:
 		vram_write_address_aux = (vram_write_address_aux & 0x001FF) | (value << 9);
 		break;
-
+	case 0x2a:
+		autoinc = value;
+		break;
 	}
 }
 
@@ -244,9 +276,19 @@ UINT8 chroni_register_read(UINT8 index) {
 	case 0x06 : return (vram_write_address & 0x000FF);
 	case 0x07 : return (vram_write_address & 0x0FF00) >> 8;
 	case 0x08 : return (vram_write_address & 0x10000) >> 16;
+	case 0x09 : {
+		UINT8 value = vram[vram_write_address];
+		vaddr_autoinc();
+		return value;
+	}
 	case 0x0a : return (vram_write_address_aux & 0x000FF);
 	case 0x0b : return (vram_write_address_aux & 0x0FF00) >> 8;
 	case 0x0c : return (vram_write_address_aux & 0x10000) >> 16;
+	case 0x0d : {
+		UINT8 value = vram[vram_write_address_aux];
+		vaddr_aux_autoinc();
+		return value;
+	}
 	case 0x0e : return page & 0x07;
 	case 0x0f : return border_color;
 	case 0x10 : return ypos;
@@ -258,6 +300,7 @@ UINT8 chroni_register_read(UINT8 index) {
 	case 0x27 : return ((vram_write_address+1) & 0x01E00) >> (8+1);
 	case 0x28 : return ((vram_write_address_aux+1) & 0x001FF) >> 1;
 	case 0x29 : return ((vram_write_address_aux+1) & 0x01E00) >> (8+1);
+	case 0x2a : return autoinc;
 	}
 	return 0;
 }
