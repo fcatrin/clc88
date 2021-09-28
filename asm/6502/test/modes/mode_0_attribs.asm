@@ -9,7 +9,7 @@
    jsr OS_CALL
 
 ; copy test attrbutes
-   mwa ATTRIB_START VADDR
+   mwa ATTRIB_START VADDRW
    
    ldy #0
 copy_attribs:   
@@ -20,7 +20,7 @@ copy_attribs:
    bne copy_attribs
    
 display_message:
-   mwa DISPLAY_START VADDR
+   mwa DISPLAY_START VADDRW
 	
 	ldy #0
 copy:
