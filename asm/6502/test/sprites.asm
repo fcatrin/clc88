@@ -13,7 +13,7 @@
 	lda #$0F
 	sta VBORDER
 	
-	adw DISPLAY_START #44 VADDR
+	adw DISPLAY_START #22 VADDRW
 	
 	ldy #0
 copy:
@@ -26,20 +26,17 @@ copy:
 	
 set_chars_full:
 
-	adw RAM_TO_VRAM #120 R4
+	adw DISPLAY_START #(20*4)+2 VADDRW
+	adw ATTRIB_START  #(20*4)+2 VADDRW_AUX
 	
-	mwa ATTRIB_START VRAM_TO_RAM
-	jsr lib_vram_to_ram
-	adw RAM_TO_VRAM #(40*4)+4 R6
-	
-	lda #$32
+	lda #$2F
 	sta R1
 	jsr write_charset
 	
-	lda #$43
+	lda #$F2
 	sta R1
-	adw R4 #120
-	adw R6 #120
+   adw DISPLAY_START #(20*10)+2 VADDRW
+   adw ATTRIB_START  #(20*10)+2 VADDRW_AUX
 	
 	jsr write_charset
 	
@@ -67,21 +64,25 @@ loop:
    jmp loop
    
 write_charset:
+   mwa VADDRW R4
+   mwa VADDRW_AUX R6
    ldx #0
    stx R0
 set_chars_line:
    ldy #0
 set_chars:   
    lda R0
-   sta (R4), y
+   sta VDATA
    lda R1
-   sta (R6), y
+   sta VDATA_AUX
    inc R0
    iny
    cpy #32
    bne set_chars
-   adw R4 #40
-   adw R6 #40
+   adw R4 #20
+   adw R6 #20
+   mwa R4 VADDRW
+   mwa R6 VADDRW_AUX
    inx
    cpx #4
    bne set_chars_line
