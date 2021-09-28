@@ -65,7 +65,7 @@
    beq not_reset_attrib
    
    ldy #0
-   mva #$10 (RAM_TO_VRAM),y
+   mva #$9F (RAM_TO_VRAM),y
    
 not_reset_attrib
    adb charset_char_x #CHARSET_POS_X screen_pos_x
@@ -77,7 +77,7 @@ not_reset_attrib
    mwa RAM_TO_VRAM charset_char_attrib_last
    
    ldy #0
-   mva #$23 (RAM_TO_VRAM),y
+   mva #$2f (RAM_TO_VRAM),y
    rts
 .endp   
 

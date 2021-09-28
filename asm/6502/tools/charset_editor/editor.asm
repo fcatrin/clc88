@@ -20,13 +20,23 @@ CHARSET_POS_Y = 19
 
    jsr set_scanline_interrupt
 
-   mwa VRAM_FREE VRAM_TO_RAM
-   mwa VRAM_FREE charset_edit_start_vram
-   jsr lib_vram_to_ram
+   mwa VRAM_FREE SRC_ADDR
+   adw SRC_ADDR #$1FF ; align to $400
+   lda #0 
+   sta VRAM_TO_RAM
+   lda SRC_ADDR+1
+   and #$FE
+   sta SRC_ADDR+1
+   sta VRAM_TO_RAM+1
+   
+   lsr
+   sta charset_edit_start_page
+   
+   jsr lib_vramw_to_ram
    mwa RAM_TO_VRAM charset_edit_start
 
    mwa CHARSET_START VRAM_TO_RAM
-   jsr lib_vram_to_ram
+   jsr lib_vramw_to_ram
 
    mwa RAM_TO_VRAM        SRC_ADDR
    mwa charset_edit_start DST_ADDR
@@ -76,7 +86,7 @@ next_char
 
 .proc prepare_editor_charset
    mwa CHARSET_START VRAM_TO_RAM
-   jsr lib_vram_to_ram
+   jsr lib_vramw_to_ram
    adw RAM_TO_VRAM #8
    
    mwa #block_chars SRC_ADDR
@@ -212,7 +222,7 @@ set_edit_mode_2:
    lda #$66
    sta WSYNC
    sta VBORDER
-   mwa charset_edit_start_vram VCHARSET
+   mva charset_edit_start_page VCHARSET
    pla
    rts
 .endp
@@ -221,13 +231,13 @@ set_edit_mode_2:
    pha
    lda #0
    sta VBORDER
-   mwa #0 VCHARSET
+   mva #0 VCHARSET
    pla
    rts
 .endp   
 
 charset_edit_start .word 0
-charset_edit_start_vram .word 0
+charset_edit_start_page .byte 0
 
 charset_char_index .byte 0
 
