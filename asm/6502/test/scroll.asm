@@ -13,47 +13,46 @@
 	lda #$0F
 	sta VBORDER
 	
-	mwa DISPLAY_START VRAM_TO_RAM
-	jsr lib_vram_to_ram
-	
-	adw RAM_TO_VRAM #48+4
+	adw DISPLAY_START #44+16 VADDRW
 	
 	ldy #0
 copy:
 	lda message, y
 	cmp #255
 	beq set_chars_full
-	sta (RAM_TO_VRAM), y
+	sta VDATA
 	iny
 	bne copy
 	
 set_chars_full:
 
-	adw RAM_TO_VRAM #(48*3) R4
-	
-	mwa ATTRIB_START VRAM_TO_RAM
-	jsr lib_vram_to_ram
-	adw RAM_TO_VRAM #(48*4)+4 R6
-	
-	lda #$32
-	sta R1
-	jsr write_charset
-	
-	lda #$43
-	sta R1
-	adw R4 #(48*3)
-	adw R6 #(48*3)
-	
-	jsr write_charset
+   adw DISPLAY_START #(44*4)+8 VADDRW
+   adw ATTRIB_START  #(44*4)+8 VADDRW_AUX
+   
+   lda #$2F
+   sta R1
+   jsr write_charset
+   
+   lda #$F2
+   sta R1
+   adw DISPLAY_START #(44*10)+8 VADDRW
+   adw ATTRIB_START  #(44*10)+8 VADDRW_AUX
+   
+   jsr write_charset
 	
 end:
 
-   mwa DLIST VRAM_TO_RAM
-   jsr lib_vram_to_ram
-   ldy #3
-   lda (RAM_TO_VRAM), y
+   mwa DLIST VADDRW
+   lda VDATA ; skip blank scanlines
+   lda VDATA
+   lda VDATA
+   
+   lda #AUTOINC_KEEP ; keep adddress
+   sta VAUTOINC
+   
+   lda VDATA ; enable hw scroll
    ora #$30
-   sta (RAM_TO_VRAM), y
+   sta VDATA
 
    lda VSTATUS
    and #(255 - VSTATUS_EN_INTS)
@@ -99,21 +98,25 @@ no_scroll:
    rts   
    
 write_charset:
+   mwa VADDRW R4
+   mwa VADDRW_AUX R6
    ldx #0
    stx R0
 set_chars_line:
    ldy #0
 set_chars:   
    lda R0
-   sta (R4), y
+   sta VDATA
    lda R1
-   sta (R6), y
+   sta VDATA_AUX
    inc R0
    iny
    cpy #32
    bne set_chars
-   adw R4 #48
-   adw R6 #48
+   adw R4 #44
+   adw R6 #44
+   mwa R4 VADDRW
+   mwa R6 VADDRW_AUX
    inx
    cpx #4
    bne set_chars_line
