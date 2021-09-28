@@ -136,7 +136,7 @@ print_alt:
 
 print:
    mwa DISPLAY_START VRAM_TO_RAM
-   jsr lib_vram_to_ram
+   jsr lib_vramw_to_ram
 	adw RAM_TO_VRAM R2
 
 	ldy #0
@@ -188,7 +188,7 @@ print_key_noctrl:
    jeq caps_toggle
 
    mwa DISPLAY_START VRAM_TO_RAM
-   jsr lib_vram_to_ram
+   jsr lib_vramw_to_ram
 
    jsr calc_screen_offset
    adw RAM_TO_VRAM pos_offset
@@ -305,7 +305,7 @@ backspace_wrap_left:
    dec pos_y
 backspace_del:
    mwa DISPLAY_START VRAM_TO_RAM
-   jsr lib_vram_to_ram
+   jsr lib_vramw_to_ram
 
    jsr calc_screen_offset
    adw RAM_TO_VRAM pos_offset
@@ -385,7 +385,7 @@ change_cursor_attr:
       
    pha
    mwa ATTRIB_START VRAM_TO_RAM
-   jsr lib_vram_to_ram
+   jsr lib_vramw_to_ram
 
    jsr calc_screen_offset
    adw RAM_TO_VRAM pos_offset
@@ -396,7 +396,7 @@ change_cursor_attr:
    
 cursor_home:
    mwa DISPLAY_START VRAM_TO_RAM
-   jsr lib_vram_to_ram
+   jsr lib_vramw_to_ram
 
    lda pos_x
    sta R0
@@ -423,7 +423,7 @@ cursor_home_found:
    
 cursor_end:
    mwa DISPLAY_START VRAM_TO_RAM
-   jsr lib_vram_to_ram
+   jsr lib_vramw_to_ram
 
    lda pos_x
    sta R0
@@ -451,7 +451,7 @@ cursor_end_found:
    
 word_prev:
    mwa DISPLAY_START VRAM_TO_RAM
-   jsr lib_vram_to_ram
+   jsr lib_vramw_to_ram
    mwa RAM_TO_VRAM display_base
    ldx #1
       
@@ -490,7 +490,7 @@ word_prev_end:
 
 word_next:
    mwa DISPLAY_START VRAM_TO_RAM
-   jsr lib_vram_to_ram
+   jsr lib_vramw_to_ram
    mwa RAM_TO_VRAM display_base
       
 word_next_next:
