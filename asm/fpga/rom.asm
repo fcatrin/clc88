@@ -63,8 +63,8 @@ dlist_in_ram  = dlist_addr + $a000
 
    mwa #dlist_in_vram VDLIST
    
-   mwa #text_location DISPLAY_START
-   mwa #attr_location ATTRIB_START
+   mwa #text_location/2 DISPLAY_START
+   mwa #attr_location/2 ATTRIB_START
    lda #$01
    jsr clear_screen
          
@@ -113,10 +113,8 @@ attr_location = text_location + 80*30
 
 display_list:
    .byte $42
-   .word text_location 
-   .byte 0
-   .word attr_location
-   .byte 0
+   .word text_location/2 
+   .word attr_location/2
    .byte $02
 .rept 29
    .byte $02
