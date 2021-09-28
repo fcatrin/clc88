@@ -2,12 +2,12 @@
 	
 	org BOOTADDR
 
+   mva #1 ROS7
    lda #2
-   ldy #0
    ldx #OS_SET_VIDEO_MODE
    jsr OS_CALL
 
-   mwa DISPLAY_START VADDR
+   mwa DISPLAY_START VADDRW
 	
 	ldy #0
 copy:

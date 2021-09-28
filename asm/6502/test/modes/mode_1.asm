@@ -21,7 +21,7 @@
    ora #VSTATUS_EN_INTS
    sta VSTATUS
    
-   mwa DISPLAY_START VADDR
+   mwa DISPLAY_START VADDRW
    
    ldy #0
 copy:
