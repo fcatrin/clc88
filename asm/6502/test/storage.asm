@@ -12,7 +12,7 @@
    
    sta ST_WRITE_RESET
    
-   mwa DISPLAY_START VADDR
+   mwa DISPLAY_START VADDRW
    
 ; Call command to open file
    mwa #filename SRC_ADDR
