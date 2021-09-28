@@ -49,7 +49,7 @@ static UINT8  border_color = 0;
 static UINT32 subpals;
 
 #define CHARSET_PAGE 1024
-static UINT32 charset;
+static UINT8  charset;
 static UINT32 sprites;
 
 static UINT32 tileset_small;
