@@ -847,7 +847,9 @@ static void do_screen() {
 				dlpos+=2;
 				attribs = VRAM_PTR(dl + dlpos);
 				dlpos+=2;
-				LOGV(LOGTAG, "DL LMS %04X ATTR %04X", lms, attribs);
+				LOGV(LOGTAG, "DL LMS %04X ATTR %04X HS:%s VS:%s", lms, attribs,
+						use_hscroll? "true":"false",
+						use_vscroll? "true":"false");
 			}
 			int lines = lines_per_mode[mode];
 			UINT8 pitch = use_hscroll ? bytes_per_scan_scroll[mode] : bytes_per_scan[mode];
