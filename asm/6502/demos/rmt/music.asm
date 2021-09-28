@@ -32,8 +32,7 @@ start
    ldx #OS_SET_VIDEO_MODE
    jsr OS_CALL
 	
-	mwa DISPLAY_START VRAM_TO_RAM
-   jsr lib_vram_to_ram
+	mwa DISPLAY_START VADDRW
 	
 ;
 	ldx #<MODUL					;low byte of RMT module to X reg
@@ -51,7 +50,7 @@ start
    pha
    ora #'0'
    ldy #0
-   sta (RAM_TO_VRAM), y
+   sta VDATA
    pla
    cmp #4
    beq set_pokey_mono

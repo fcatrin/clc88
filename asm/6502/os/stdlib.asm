@@ -111,7 +111,7 @@ calc_x:
    scc
    inc screen_offset+1
   
-   jsr lib_vram_to_ram
+   jsr lib_vramw_to_ram
    adw RAM_TO_VRAM screen_offset
    rts
 screen_offset: .word 0   
