@@ -27,9 +27,10 @@ set_palette:
    lda palette_dark, x
    STA VPAL_VALUE
    inx
-   // cpx #8
+   cpx #8
    bne set_palette
-   // ldx #0
+   
+   ldx #0
 
    mva #1 VBORDER
    
