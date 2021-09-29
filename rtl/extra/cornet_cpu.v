@@ -132,6 +132,7 @@ module cornet_cpu(
    localparam RTS1      = 35;
    localparam RTS2      = 36;
    localparam AND       = 39;
+   localparam ORA       = 40;
    
    reg[5:0] cpu_inst_state = NOP;
    reg[5:0] cpu_next_op    = NOP;
@@ -158,6 +159,8 @@ module cornet_cpu(
          end else if (cpu_fetch_state == CPU_EXECUTE) begin
             pc_delta <= 0;
             case (reg_i)
+               8'h09: /* ORA # */
+                  cpu_inst_state <= ORA;
                8'h20: /* JSR $ */
                begin
                   cpu_inst_state <= JSR0;
@@ -234,6 +237,7 @@ module cornet_cpu(
             
             // apply bit level logic for tese cases when instruction set is complete
             case(reg_i)
+               8'h09,
                8'h29,
                8'hA0, 8'hA2, 8'hA5,
                8'hA9, 8'h85, 8'hB1,
@@ -398,6 +402,13 @@ module cornet_cpu(
                begin
                   reg_a  <=  reg_a & reg_byte;
                   flag_z <= (reg_a & reg_byte) == 0;
+                  pc_next <= pc + pc_delta;
+                  cpu_inst_done <= 1;
+               end
+               ORA:
+               begin
+                  reg_a  <=  reg_a | reg_byte;
+                  flag_z <= (reg_a | reg_byte) == 0;
                   pc_next <= pc + pc_delta;
                   cpu_inst_done <= 1;
                end
