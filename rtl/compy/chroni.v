@@ -328,7 +328,7 @@ module chroni (
                vram_dl_addr     <= display_list_ptr;
                display_list_ptr <= display_list_ptr + 1'b1;
                mem_wait <= 2;
-               addr_part <= 5;
+               addr_part <= 3;
                dlproc_state <= DL_LMS_READ;
             end
             DL_LMS_READ:
@@ -337,12 +337,10 @@ module chroni (
                mem_wait <= mem_wait - 1'b1;
                if (mem_wait == 0) begin
                   case(addr_part)
-                     5: dl_lms[7:0]  <= vram_chroni_rd_data;
-                     4: dl_lms[15:8] <= vram_chroni_rd_data;
-                     3: dl_lms[16]   <= vram_chroni_rd_data[0];
-                     2: dl_attr[7:0]  <= vram_chroni_rd_data;
-                     1: dl_attr[15:8] <= vram_chroni_rd_data;
-                     0: dl_attr[16]   <= vram_chroni_rd_data[0];
+                     3: dl_lms[8:0]   <= {vram_chroni_rd_data, 1'b0};
+                     2: dl_lms[16:9]  <= vram_chroni_rd_data;
+                     1: dl_attr[8:0]  <= {vram_chroni_rd_data, 1'b0};
+                     0: dl_attr[16:9] <= vram_chroni_rd_data;
                   endcase
                   
                   if (addr_part == 0) begin
