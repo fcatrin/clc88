@@ -20,7 +20,8 @@ module vga_output (
       input read_font,
       input [15:0] pixel,
       input [16:0] border_color,
-      input blank_scanline
+      input blank_scanline,
+      input double_pixel
       );
 
    `include "chroni.vh"
@@ -180,6 +181,7 @@ module vga_output (
          if (!scanline_start_busy) begin
             scanline_start_req <= 1;
          end
+         double_pixel_active <= double_pixel;
       end else begin
          if (render_start_ack) begin
             render_start_req <= 0;
@@ -206,18 +208,18 @@ module vga_output (
       else if(y_cnt == v_pf_end) v_pf <= 1'b0;
    end
    
+   reg double_pixel_active;
+   wire[1:0] scale_x = double_pixel_active ? (vga_scale ? 2'd3 : 2'd1) : (vga_scale ? 2'd1 : 2'd0);
+   
    // pixel x counter
    always @ (posedge vga_clk) begin
-      reg[7:0] pixel_x_dbl;
+      reg[1:0] pixel_x_dbl;
       if (h_pf_pix && v_pf) begin
-         if (vga_scale) begin
-            if (pixel_x_dbl == 1) begin
-               pixel_buffer_index_out <= pixel_buffer_index_out + 1'b1;
-               pixel_x_dbl <= 0;
-            end else 
-               pixel_x_dbl <= pixel_x_dbl + 1'b1;
-         end else begin
+         if (pixel_x_dbl == scale_x) begin
             pixel_buffer_index_out <= pixel_buffer_index_out + 1'b1;
+            pixel_x_dbl <= 0;
+         end else begin 
+            pixel_x_dbl <= pixel_x_dbl + 1'b1;
          end
       end else begin
          pixel_buffer_index_out <= output_buffer ?  11'd640 : 11'd0;
@@ -332,6 +334,5 @@ module vga_output (
          .src_req(sys_vga_mode),
          .signal(vga_mode_in)
       );
-
    
 endmodule

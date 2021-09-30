@@ -117,6 +117,7 @@ module chroni (
    localparam FD_FONT_DONE  = 14;
    reg[3:0]  font_decode_state;
    reg[7:0]  charset_base;
+   reg[7:0]  pitch;
 
    // state machine to read char or font from rom
    always @(posedge sys_clk) begin : char_gen
@@ -124,8 +125,6 @@ module chroni (
       reg[16:0] attr_memory_addr;
       reg[16:0] load_memory_addr;
       reg[16:0] load_attr_addr;
-      reg[6:0]  scan_size;
-      reg[6:0]  last_char;
       reg[7:0]  text_attr;
       reg       vram_render_prev;
       reg[2:0]  font_scan;
@@ -140,8 +139,6 @@ module chroni (
          font_decode_state <= FD_IDLE;
          vram_render_prev <= 0;
          font_scan <= 0;
-         scan_size <= 80;
-         last_char <= 79;
          pixel_buffer_index_in <= 0;
          wr_bitmap_bits <= 0;
       end else begin
@@ -172,7 +169,7 @@ module chroni (
                      text_buffer_addr    <= text_buffer_index;
                      text_buffer_data_wr <= vram_chroni_rd_data;
                      text_buffer_we <= 1;
-                     if (text_buffer_index == last_char) begin
+                     if (text_buffer_index == pitch-1) begin
                         text_buffer_index <= 0;
                         mem_wait <= 3;
                         font_decode_state <= FD_ATTR_READ;
@@ -191,7 +188,7 @@ module chroni (
                      attr_buffer_addr    <= attr_buffer_index;
                      attr_buffer_data_wr <= vram_chroni_rd_data;
                      attr_buffer_we <= 1;
-                     if (attr_buffer_index == last_char) begin
+                     if (attr_buffer_index == pitch-1) begin
                         attr_buffer_index <= 0;
                         mem_wait <= 2;
                         font_decode_state <= FD_FONT_READ;
@@ -246,12 +243,12 @@ module chroni (
                   font_decode_state <= FD_FONT_DONE;
                end
                FD_FONT_DONE:
-               if (text_buffer_index == last_char+2) begin
+               if (text_buffer_index == pitch+1) begin
                   font_decode_state <= FD_IDLE;
                   font_scan <= font_scan + 1'b1;
                   if (font_scan == 7) begin
-                     load_memory_addr <= load_memory_addr + scan_size;
-                     load_attr_addr <= load_attr_addr + scan_size;
+                     load_memory_addr <= load_memory_addr + pitch;
+                     load_attr_addr <= load_attr_addr + pitch;
                   end
                end else begin
                   font_decode_state <= FD_FONT_FETCH;
@@ -297,6 +294,7 @@ module chroni (
          dlproc_state <= DL_IDLE;
          dl_inst <= 0;
          scanlines <= 0;
+         double_pixel <= 0;
       end else if (~render_flag_prev & render_flag) begin
          report_lms_changed <= 0;
          blank_scanline <= 1;
@@ -371,6 +369,15 @@ module chroni (
                   scanlines <= 7;
                   vram_render <= 1;
                   lms_changed <= report_lms_changed;
+                  pitch <= 80;
+                  double_pixel <= 0;
+               end else if (dl_inst == 3) begin
+                  blank_scanline <= 0;
+                  scanlines <= 7;
+                  vram_render <= 1;
+                  lms_changed <= report_lms_changed;
+                  pitch <= 40;
+                  double_pixel <= 1;
                end else if (dl_inst == 0) begin
                   blank_scanline <= 1;
                   scanlines <= dl_value[6:4];
@@ -526,6 +533,7 @@ module chroni (
    wire vga_scanline_start;
    
    reg blank_scanline;
+   reg double_pixel;
    
    wire read_text = 0; // font_decode_state == FD_TEXT_READ || font_decode_state == FD_FONT_READ || font_decode_state == FD_FONT_FETCH;
    wire read_font = 0; // font_decode_state == FD_FONT_WRITE;
@@ -550,7 +558,8 @@ module chroni (
          .read_text(read_text),
          .read_font(read_font),
          .blank_scanline(blank_scanline),
-         .border_color(border_color)
+         .border_color(border_color),
+         .double_pixel(double_pixel)
       );
 
 endmodule
