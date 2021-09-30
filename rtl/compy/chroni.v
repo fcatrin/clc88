@@ -36,18 +36,18 @@ module chroni (
       cpu_port_wr_en <= 0;
       if (register_cs && cpu_wr_en) begin
          case (cpu_addr[6:0])
-            7'h0:
+            7'h00:
                display_list_addr[8:1]  <= cpu_wr_data;
-            7'h1:
+            7'h01:
                display_list_addr[16:9] <= cpu_wr_data;
-            7'h2:
+            7'h02:
                charset_base <= cpu_wr_data;
-            7'h4:
+            7'h04:
             begin
                palette_write_index <= cpu_wr_data;
                palette_write_state <= PAL_WRITE_LO;
             end
-            7'h5:
+            7'h05:
                if (palette_write_state == PAL_WRITE_LO) begin
                   palette_write_value[7:0]  <= cpu_wr_data;
                   palette_write_state   <= PAL_WRITE_HI;
@@ -55,13 +55,13 @@ module chroni (
                   palette_write_value[15:8] <= cpu_wr_data;
                   palette_write_state   <= PAL_WRITE;
                end
-            7'h6:
+            7'h06:
                vram_write_address[7:0]  <= cpu_wr_data;
-            7'h7:
+            7'h07:
                vram_write_address[15:8] <= cpu_wr_data;
-            7'h8:
+            7'h08:
                vram_write_address[16] <= cpu_wr_data[0];
-            7'h9:
+            7'h09:
             begin
                cpu_port_cs      <= 1;
                cpu_port_wr_en   <= 1;
@@ -69,13 +69,13 @@ module chroni (
                cpu_port_addr    <= vram_write_address;
                vram_write_address <= vram_write_address + 1'b1;
             end
-            7'ha:
+            7'h0a:
                vram_write_address_aux[7:0]  <= cpu_wr_data;
-            7'hb:
+            7'h0b:
                vram_write_address_aux[15:8] <= cpu_wr_data;
-            7'hc:
+            7'h0c:
                vram_write_address_aux[16] <= cpu_wr_data[0];
-            7'hd:
+            7'h0d:
             begin
                cpu_port_cs      <= 1;
                cpu_port_wr_en   <= 1;
@@ -83,9 +83,9 @@ module chroni (
                cpu_port_addr    <= vram_write_address_aux;
                vram_write_address_aux <= vram_write_address_aux + 1'b1;
             end
-            7'he:
+            7'h1a:
                border_color[7:0]  <= cpu_wr_data;
-            7'hf:
+            7'h1b:
                border_color[15:8] <= cpu_wr_data;
             7'h26:
                vram_write_address[8:0] <= {cpu_wr_data, 1'b0};

@@ -45,7 +45,7 @@ static UINT16 lms = 0;
 static UINT16 attribs = 0;
 static UINT16 ypos, xpos, memscan;
 
-static UINT8  border_color = 0;
+static UINT16 border_color;
 static UINT32 subpals;
 
 #define CHARSET_PAGE 1024
@@ -211,9 +211,6 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 	case 0x0e:
 		page = value & 0x07;
 		break;
-	case 0x0f:
-		border_color = value;
-		break;
 	case 0x11:
 		CPU_HALT();
 		break;
@@ -237,6 +234,12 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 		break;
 	case 0x19:
 		reg_addr_high(&tileset_big, value);
+		break;
+	case 0x1a:
+		reg_low(&border_color, value);
+		break;
+	case 0x1b:
+		reg_high(&border_color, value);
 		break;
 	case 0x20:
 		hscroll = value;
@@ -289,9 +292,9 @@ UINT8 chroni_register_read(UINT8 index) {
 		vaddr_aux_autoinc();
 		return value;
 	}
-	case 0x0e : return page & 0x07;
-	case 0x0f : return border_color;
 	case 0x10 : return ypos;
+	case 0x1a : return (border_color & 0x00ff);
+	case 0x1b : return border_color >> 8;
 	case 0x12 : return status;
 	case 0x20 : return hscroll;
 	case 0x21 : return vscroll;
@@ -305,12 +308,16 @@ UINT8 chroni_register_read(UINT8 index) {
 	return 0;
 }
 
-static inline void set_pixel_color(UINT8 color) {
-	UINT16 pixel_color_rgb565 = palette[color];
 
+static inline void set_pixel_color_rgb(UINT16 pixel_color_rgb565) {
 	pixel_color_r = rgb565[pixel_color_rgb565*3 + 0];
 	pixel_color_g = rgb565[pixel_color_rgb565*3 + 1];
 	pixel_color_b = rgb565[pixel_color_rgb565*3 + 2];
+}
+
+static inline void set_pixel_color(UINT8 color) {
+	UINT16 pixel_color_rgb565 = palette[color];
+	set_pixel_color_rgb(pixel_color_rgb565);
 }
 
 #define SPRITE_ATTR_ENABLED 0x10
@@ -409,9 +416,22 @@ static void inline put_pixel(int offset, UINT8 color) {
 	CPU_XPOS();
 }
 
+static void inline put_pixel_rgb(int offset, UINT16 rgb_color) {
+	PAIR sprite = do_sprites();
+	if (sprite.b.h == 0) {
+		set_pixel_color_rgb(rgb_color);
+	} else {
+		set_pixel_color(sprite.b.l);
+	}
+	screen[offset + xpos*3 + 0] = pixel_color_r;
+	screen[offset + xpos*3 + 1] = pixel_color_g;
+	screen[offset + xpos*3 + 2] = pixel_color_b;
+	CPU_XPOS();
+}
+
 static void inline do_border(int offset, int size) {
 	for(int i=0; i<size; i++) {
-		put_pixel(offset, border_color);
+		put_pixel_rgb(offset, border_color);
 	}
 }
 

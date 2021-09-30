@@ -32,7 +32,7 @@ set_palette:
    
    ldx #0
 
-   mva #1 VBORDER
+   mwa #BORDER_COLOR VBORDER
    
 // copy 16*256 bytes from $e000 to VRAM $00000
 
