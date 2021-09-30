@@ -6,7 +6,8 @@ DST_ADDR      = $02
 SIZE          = $04
 
 DISPLAY_START = $08
-ATTRIB_START  = $0B
+ATTRIB_START  = $0A
+SCREEN_SIZE   = $0C
 
 
 VDLIST     = $9000

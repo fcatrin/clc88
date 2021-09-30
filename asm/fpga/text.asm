@@ -1,6 +1,6 @@
 // screen handling routines (for the FPGA version)
 
-.proc put_char
+.proc txt_put_char
    sta screen_char
    lda screen_state
    cmp #1
@@ -35,12 +35,13 @@ set_attr:
    
 .endp
 
-.proc clear_screen
+.proc txt_clear_screen
    sta screen_attr
    jsr init_screen_addr
   
-   ldx #10
-   ldy #96
+   ldx SCREEN_SIZE+1
+   inx
+   ldy SCREEN_SIZE
 next_write:   
    lda #$0
    sta VDATA
@@ -57,19 +58,6 @@ next_write:
    mwa DISPLAY_START  VADDRW
    mwa ATTRIB_START   VADDRW_AUX
    rts  
-.endp
-   
-.proc upload_font
-   ldx #4
-   ldy #0
-upload_next:   
-   lda (SRC_ADDR), y
-   sta VDATA
-   iny
-   bne upload_next
-   dex
-   bne upload_next
-   rts
 .endp
    
    org $200
