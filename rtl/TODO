@@ -1,5 +1,11 @@
-* Use indexed value for border color
-* Upload fonts from ROM to VRAM
+DONE Use words for lms / attrib
+? Use indexed value for border color
+DONE Upload fonts from ROM to VRAM
+DONE Add VADDRW registers
 * Read VADDR registers
 * Read data through VADDR
+* Add inc/dec/keep for VADDR
+
+
+
 

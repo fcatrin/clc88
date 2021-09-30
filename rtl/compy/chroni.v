@@ -22,7 +22,7 @@ module chroni (
    localparam PAL_WRITE_HI   = 2;
    localparam PAL_WRITE      = 3;
    
-   wire register_cs = cpu_addr[15:4] == 12'b100100000000;
+   wire register_cs = cpu_addr[15:7] == 9'b100100000;
    
    always @(posedge sys_clk) begin : register_write
       reg[1:0]  palette_write_state = PAL_WRITE_IDLE;
@@ -35,19 +35,19 @@ module chroni (
       cpu_port_cs <= 0;
       cpu_port_wr_en <= 0;
       if (register_cs && cpu_wr_en) begin
-         case (cpu_addr[3:0])
-            4'h0:
+         case (cpu_addr[6:0])
+            7'h0:
                display_list_addr[8:1]  <= cpu_wr_data;
-            4'h1:
+            7'h1:
                display_list_addr[16:9] <= cpu_wr_data;
-            4'h2:
+            7'h2:
                charset_base <= cpu_wr_data;
-            4'h4:
+            7'h4:
             begin
                palette_write_index <= cpu_wr_data;
                palette_write_state <= PAL_WRITE_LO;
             end
-            4'h5:
+            7'h5:
                if (palette_write_state == PAL_WRITE_LO) begin
                   palette_write_value[7:0]  <= cpu_wr_data;
                   palette_write_state   <= PAL_WRITE_HI;
@@ -55,13 +55,13 @@ module chroni (
                   palette_write_value[15:8] <= cpu_wr_data;
                   palette_write_state   <= PAL_WRITE;
                end
-            4'h6:
+            7'h6:
                vram_write_address[7:0]  <= cpu_wr_data;
-            4'h7:
+            7'h7:
                vram_write_address[15:8] <= cpu_wr_data;
-            4'h8:
+            7'h8:
                vram_write_address[16] <= cpu_wr_data[0];
-            4'h9:
+            7'h9:
             begin
                cpu_port_cs      <= 1;
                cpu_port_wr_en   <= 1;
@@ -69,13 +69,13 @@ module chroni (
                cpu_port_addr    <= vram_write_address;
                vram_write_address <= vram_write_address + 1'b1;
             end
-            4'ha:
+            7'ha:
                vram_write_address_aux[7:0]  <= cpu_wr_data;
-            4'hb:
+            7'hb:
                vram_write_address_aux[15:8] <= cpu_wr_data;
-            4'hc:
+            7'hc:
                vram_write_address_aux[16] <= cpu_wr_data[0];
-            4'hd:
+            7'hd:
             begin
                cpu_port_cs      <= 1;
                cpu_port_wr_en   <= 1;
@@ -83,10 +83,18 @@ module chroni (
                cpu_port_addr    <= vram_write_address_aux;
                vram_write_address_aux <= vram_write_address_aux + 1'b1;
             end
-            4'he:
+            7'he:
                border_color[7:0]  <= cpu_wr_data;
-            4'hf:
+            7'hf:
                border_color[15:8] <= cpu_wr_data;
+            7'h26:
+               vram_write_address[8:0] <= {cpu_wr_data, 1'b0};
+            7'h27:
+               vram_write_address[16:9] <= cpu_wr_data;
+            7'h28:
+               vram_write_address_aux[8:0] <= {cpu_wr_data, 1'b0};
+            7'h29:
+               vram_write_address_aux[16:9] <= cpu_wr_data;
          endcase
       end else if (palette_write_state == PAL_WRITE) begin
          palette_wr_en   <= 1;
