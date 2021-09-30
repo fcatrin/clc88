@@ -133,6 +133,10 @@ module cornet_cpu(
    localparam RTS2      = 36;
    localparam AND       = 39;
    localparam ORA       = 40;
+   localparam LDX_Z     = 41;
+   localparam LDY_Z     = 42;
+   localparam LDX_ADDR  = 43;
+   localparam LDY_ADDR  = 44;
    
    reg[5:0] cpu_inst_state = NOP;
    reg[5:0] cpu_next_op    = NOP;
@@ -181,8 +185,12 @@ module cornet_cpu(
                   cpu_inst_state <= LDY;
                8'hA2: /* LDX # */
                   cpu_inst_state <= LDX;
+               8'hA4: /* LDY Z */
+                  cpu_inst_state <= LDY_Z;
                8'hA5: /* LDA # */
                   cpu_inst_state <= LDA_Z;
+               8'hA6: /* LDX Z */
+                  cpu_inst_state <= LDX_Z;
                8'hA9: /* LDA # */
                   cpu_inst_state <= LDA;
                8'h85: /* STA Z */
@@ -239,7 +247,7 @@ module cornet_cpu(
             case(reg_i)
                8'h09,
                8'h29,
-               8'hA0, 8'hA2, 8'hA5,
+               8'hA0, 8'hA2, 8'hA4, 8'hA5, 8'hA6,
                8'hA9, 8'h85, 8'hB1,
                8'hC0, 8'hC9, 8'hE0,
                8'hE6:
@@ -277,6 +285,18 @@ module cornet_cpu(
                   data_rd_byte_req <= 1;
                   data_rd_addr <= op_addr;
                   cpu_inst_state <= LDA;
+               end
+               LDX_ADDR:
+               begin
+                  data_rd_byte_req <= 1;
+                  data_rd_addr <= op_addr;
+                  cpu_inst_state <= LDX;
+               end
+               LDY_ADDR:
+               begin
+                  data_rd_byte_req <= 1;
+                  data_rd_addr <= op_addr;
+                  cpu_inst_state <= LDY;
                end
                STA_ADDR:
                begin
@@ -461,6 +481,16 @@ module cornet_cpu(
                begin
                   op_addr <= {8'd0, reg_byte};
                   cpu_next_op <= LDA_ADDR;
+               end
+               LDX_Z:
+               begin
+                  op_addr <= {8'd0, reg_byte};
+                  cpu_next_op <= LDX_ADDR;
+               end
+               LDY_Z:
+               begin
+                  op_addr <= {8'd0, reg_byte};
+                  cpu_next_op <= LDY_ADDR;
                end
                LDA_ABS:
                begin
