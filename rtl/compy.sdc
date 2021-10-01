@@ -72,7 +72,8 @@ derive_clock_uncertainty
 set_clock_groups -logically_exclusive \
    -group {system_inst|pll_inst|altpll_component|auto_generated|pll1|clk[0]} \
    -group {system_inst|pll_inst|altpll_component|auto_generated|pll1|clk[1]} \
-   -group {system_inst|pll_inst|altpll_component|auto_generated|pll1|clk[2]}
+   -group {system_inst|pll_inst|altpll_component|auto_generated|pll1|clk[2]} \
+   -group {system_inst|pll2_inst|altpll_component|auto_generated|pll1|clk[0]}
 
 #**************************************************************
 # Set False Path

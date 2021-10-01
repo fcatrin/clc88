@@ -76,22 +76,34 @@ module system (
       );
          
 
+   assign pll_locked = pll1_locked & pll2_locked;
+   wire pll1_locked;
+   wire pll2_locked;
+   
    pll pll_inst (// Clock in ports
       .inclk0(clk),      // IN
       .c0(CLK_OUT1),     // 25.17Mhz  (640x480)
       .c1(CLK_OUT2),     // 40Mhz     (800x600)
-      .c2(CLK_OUT3),     // 150Mhz    (1920x1080)
+      .c2(CLK_OUT3_OLD),     // 150Mhz    (1920x1080)
       .c3(sys_clk),      // 100Mhz (system)
       .areset(1'b0),     // reset input 
-      .locked(pll_locked)
+      .locked(pll1_locked)
    );        // OUT
    
+   pll2  pll2_inst (
+         .inclk0 ( clk ),
+         .c0 ( CLK_OUT3 ),
+         .areset ( 1'b0 ),
+         .locked ( pll2_locked )
+      );
+
    reg[1:0] vga_mode;
 
    wire CLK_OUT1;
    wire CLK_OUT2;
    wire CLK_OUT3;
    wire CLK_OUT4;
+   wire CLK_OUT3_OLD;
 
    wire vga_clock = 
       vga_mode == VGA_MODE_640x480 ? CLK_OUT1 : 
