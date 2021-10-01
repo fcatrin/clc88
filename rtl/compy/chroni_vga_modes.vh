@@ -42,7 +42,7 @@ parameter Mode2_V_PfEnd   = Mode2_V_PfStart   + 12'd480;
 parameter Mode2_H_SyncP   = 1'b0;
 parameter Mode2_V_SyncP   = 1'b0;
 
-// Modeline "1920x1080_60.00" 172.80 1920 2040 2248 2576 1080 1081 1084 1118 -HSync +Vsync
+// ModeLine "1920x1080" 148.50 1920 2008 2052 2200 1080 1084 1088 1125 -HSync -VSync
 
 // 1920x1080 => Allow 4x and 5x scaling mode. 5x assumes screens with a visible area of 320x216 pixels max
 parameter Mode3_H_Display    = 12'd1920;
@@ -63,7 +63,7 @@ parameter Mode3_V_DeEnd   = Mode3_V_DeStart   + Mode3_V_Display;
 parameter Mode3_V_Total   = Mode3_V_DeEnd     + Mode3_V_FrontPorch;
 parameter Mode3_V_PfStart = Mode3_V_DeStart   + 12'd64;
 parameter Mode3_V_PfEnd   = Mode3_V_PfStart   + 12'd960;
-parameter Mode3_H_SyncP   = 1'b0;
+parameter Mode3_H_SyncP   = 1'b1;
 parameter Mode3_V_SyncP   = 1'b1;
 
 /*
