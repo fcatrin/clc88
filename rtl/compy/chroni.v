@@ -126,7 +126,7 @@ module chroni (
       reg[16:0] load_memory_addr;
       reg[16:0] load_attr_addr;
       reg[7:0]  text_attr;
-      reg       vram_render_prev;
+      reg       vram_render_trigger_prev;
       reg[2:0]  font_scan;
       reg[6:0]  text_buffer_index;
       reg[6:0]  attr_buffer_index;
@@ -137,13 +137,13 @@ module chroni (
       wr_en <= 0;
       if (!reset_n || vga_mode_changed || vga_frame_start) begin
          font_decode_state <= FD_IDLE;
-         vram_render_prev <= 0;
+         vram_render_trigger_prev <= 0;
          font_scan <= 0;
          pixel_buffer_index_in <= 0;
          wr_bitmap_bits <= 0;
       end else begin
-         vram_render_prev <= vram_render;
-         if (~vram_render_prev && vram_render) begin
+         vram_render_trigger_prev <= vram_render_trigger;
+         if (~vram_render_trigger_prev && vram_render_trigger) begin
             text_buffer_index <= 0;
             attr_buffer_index <= 0;
             pixel_buffer_index_in <= render_buffer ? 11'd640 : 11'd0;
@@ -274,6 +274,7 @@ module chroni (
    reg[3:0]  dl_inst;
    reg[7:0]  dl_value;
    reg vram_render;
+   reg vram_render_trigger;
    reg lms_changed;
    
    always @ (posedge sys_clk) begin : dlproc
@@ -285,7 +286,7 @@ module chroni (
       reg[3:0] scanlines;
       
       render_flag_prev <= render_flag;
-      vram_render <= 0;
+      vram_render_trigger <= 0;
       lms_changed <= 0;
       if (!reset_n || vga_mode_changed || vga_frame_start) begin
          display_list_ptr <= display_list_addr;
@@ -302,13 +303,14 @@ module chroni (
             dlproc_state <= dl_inst == 1 ? DL_IDLE : DL_READ;
          end else begin
             scanlines <= scanlines - 1'b1;
-            vram_render    <= dl_inst == 2 || dl_inst == 3;
+            vram_render_trigger <= vram_render;
             blank_scanline <= dl_inst == 0;
          end
       end else begin
             case(dlproc_state)
             DL_READ:
             begin
+               vram_render  <= 0;
                vram_read_dl <= 1;
                vram_dl_addr     <= display_list_ptr;
                display_list_ptr <= display_list_ptr + 1'b1;
@@ -364,22 +366,22 @@ module chroni (
             begin
                dlproc_state = DL_WAIT;
                vram_read_dl <= 0;
+               vram_render_trigger <= 1;
+               lms_changed <= report_lms_changed;
+               blank_scanline <= 0;
                if (dl_inst == 2) begin
-                  blank_scanline <= 0;
                   scanlines <= 7;
-                  vram_render <= 1;
-                  lms_changed <= report_lms_changed;
                   pitch <= 80;
                   double_pixel <= 0;
-               end else if (dl_inst == 3) begin
-                  blank_scanline <= 0;
-                  scanlines <= 7;
                   vram_render <= 1;
-                  lms_changed <= report_lms_changed;
+               end else if (dl_inst == 3) begin
+                  scanlines <= 7;
                   pitch <= 40;
                   double_pixel <= 1;
+                  vram_render <= 1;
                end else if (dl_inst == 0) begin
                   blank_scanline <= 1;
+                  vram_render_trigger <= 0;
                   scanlines <= dl_value[6:4];
                end
             end
