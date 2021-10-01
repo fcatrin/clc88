@@ -83,8 +83,8 @@ display_list:
    .byte $42
    .word text_location 
    .word attr_location
-   .byte $02
-.rept ROWS-1
+.rept (ROWS-1)/2
+   .byte $03
    .byte $02
 .endr 
    .byte $41
@@ -96,6 +96,15 @@ palette_dark:
    .word $43B5
 
 test_string:
+   .byte 'This is Compy CLC-88 testing VRAM port access and attributes! '
+   .byte $F0, $02
+   .byte 'Now in color'
+   .byte $F0, $01
+   .byte ', then '
+   .byte $F0, $03
+   .byte 'another color '
+   .byte $F0, $01
+   .byte 'and back to normal... '
    .byte 'This is Compy CLC-88 testing VRAM port access and attributes! '
    .byte $F0, $02
    .byte 'Now in color'

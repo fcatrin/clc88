@@ -302,7 +302,7 @@ module chroni (
             dlproc_state <= dl_inst == 1 ? DL_IDLE : DL_READ;
          end else begin
             scanlines <= scanlines - 1'b1;
-            vram_render    <= dl_inst == 2;
+            vram_render    <= dl_inst == 2 || dl_inst == 3;
             blank_scanline <= dl_inst == 0;
          end
       end else begin
