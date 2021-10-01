@@ -4,7 +4,7 @@
 // MODULE: altpll 
 
 // ============================================================
-// File Name: pll.v
+// File Name: pll1.v
 // Megafunction Name(s):
 // 			altpll
 //
@@ -36,7 +36,7 @@
 // synopsys translate_off
 `timescale 1 ps / 1 ps
 // synopsys translate_on
-module pll (
+module pll1 (
 	areset,
 	inclk0,
 	c0,
@@ -263,7 +263,7 @@ endmodule
 // Retrieval info: PRIVATE: PLL_PFDENA_CHECK STRING "0"
 // Retrieval info: PRIVATE: PLL_TARGET_HARCOPY_CHECK NUMERIC "0"
 // Retrieval info: PRIVATE: PRIMARY_CLK_COMBO STRING "inclk0"
-// Retrieval info: PRIVATE: RECONFIG_FILE STRING "pll.mif"
+// Retrieval info: PRIVATE: RECONFIG_FILE STRING "pll1.mif"
 // Retrieval info: PRIVATE: SACN_INPUTS_CHECK STRING "0"
 // Retrieval info: PRIVATE: SCAN_FEATURE_ENABLED STRING "1"
 // Retrieval info: PRIVATE: SELF_RESET_LOCK_LOSS STRING "0"
@@ -365,12 +365,12 @@ endmodule
 // Retrieval info: CONNECT: c1 0 0 0 0 @clk 0 0 1 1
 // Retrieval info: CONNECT: c2 0 0 0 0 @clk 0 0 1 2
 // Retrieval info: CONNECT: locked 0 0 0 0 @locked 0 0 0 0
-// Retrieval info: GEN_FILE: TYPE_NORMAL pll.v TRUE
-// Retrieval info: GEN_FILE: TYPE_NORMAL pll.ppf TRUE
-// Retrieval info: GEN_FILE: TYPE_NORMAL pll.inc FALSE
-// Retrieval info: GEN_FILE: TYPE_NORMAL pll.cmp FALSE
-// Retrieval info: GEN_FILE: TYPE_NORMAL pll.bsf FALSE
-// Retrieval info: GEN_FILE: TYPE_NORMAL pll_inst.v FALSE
-// Retrieval info: GEN_FILE: TYPE_NORMAL pll_bb.v FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL pll1.v TRUE
+// Retrieval info: GEN_FILE: TYPE_NORMAL pll1.ppf TRUE
+// Retrieval info: GEN_FILE: TYPE_NORMAL pll1.inc FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL pll1.cmp FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL pll1.bsf FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL pll1_inst.v FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL pll1_bb.v FALSE
 // Retrieval info: LIB_FILE: altera_mf
 // Retrieval info: CBX_MODULE_PREFIX: ON

@@ -80,7 +80,7 @@ module system (
    wire pll1_locked;
    wire pll2_locked;
    
-   pll pll_inst (
+   pll1 pll1_inst (
       .inclk0(clk),      // IN
       .c0(sys_clk),      // 100Mhz    (system)
       .c1(CLK_OUT1),     // 25.17Mhz  (640x480)

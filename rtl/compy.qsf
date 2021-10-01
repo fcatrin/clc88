@@ -106,12 +106,12 @@ set_global_assignment -name VERILOG_FILE common/crossclock_signal.v
 set_global_assignment -name VERILOG_FILE extra/cornet_cpu.v
 set_global_assignment -name VERILOG_FILE extra/qmtech_board.v
 set_global_assignment -name QIP_FILE compy/rom.qip
-set_global_assignment -name QIP_FILE pll/pll.qip
+set_global_assignment -name QIP_FILE pll/pll1.qip
+set_global_assignment -name QIP_FILE pll/pll2.qip
 set_global_assignment -name CDF_FILE output_files/compy.cdf
 set_global_assignment -name SIGNALTAP_FILE signaltap.stp
 set_global_assignment -name SMART_RECOMPILE OFF
 set_global_assignment -name SIGNALTAP_FILE signaltap_cpu.stp
-set_global_assignment -name QIP_FILE pll/pll2.qip
 set_global_assignment -name SLD_NODE_CREATOR_ID 110 -section_id chroni_vga
 set_global_assignment -name SLD_NODE_ENTITY_NAME sld_signaltap -section_id chroni_vga
 set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_clk -to "system:system_inst|chroni:chroni_inst|vga_clk" -section_id chroni_vga
