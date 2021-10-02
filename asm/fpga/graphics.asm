@@ -1,10 +1,10 @@
 VMODE_DEF_SIZE = 6
 
-VMODE_0_LINES       = 24
+VMODE_0_LINES       = 30
 VMODE_0_SCREEN_SIZE = 80*VMODE_0_LINES
 VMODE_0_ATTRIB_SIZE = 80*VMODE_0_LINES
 
-VMODE_1_LINES       = 24
+VMODE_1_LINES       = 30
 VMODE_1_SCREEN_SIZE = 40*VMODE_1_LINES
 VMODE_1_ATTRIB_SIZE = 40*VMODE_1_LINES
 
@@ -62,11 +62,13 @@ set_video_mode_screen:
 
    pla
    tay
-   lda #112
-   sta VDATA
-   sta VDATA
-   sta VDATA
-   tya
+   
+   // lda #112
+   // sta VDATA
+   // sta VDATA
+   // sta VDATA
+   // tya
+
    ora #$40
    sta VDATA
    lda #0
@@ -97,13 +99,13 @@ vmode_set_lines:
    adw VADDRW ATTRIB_START VRAM_FREE
 
 ; set addresses for LMS and Atrribs on display list
-   mwa #VRAM_ADDR_SCREEN+4 VADDR
+   mwa #VRAM_ADDR_SCREEN+1 VADDR
    lda DISPLAY_START
    sta VDATA
    lda DISPLAY_START+1
    sta VDATA
    
-   mwa #VRAM_ADDR_SCREEN+6 VADDR
+   mwa #VRAM_ADDR_SCREEN+3 VADDR
    lda ATTRIB_START
    sta VDATA
    lda ATTRIB_START+1

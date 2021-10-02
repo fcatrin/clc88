@@ -5,7 +5,7 @@ BORDER_COLOR = $2167
    
 demo:
 
-   lda #1
+   lda #0
    jsr gfx_set_video_mode
       
    mwa #palette_dark SRC_ADDR
