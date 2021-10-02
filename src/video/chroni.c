@@ -856,7 +856,7 @@ static void do_screen() {
 				do_scan_blank();
 				ypos++;
 				memscan++;
-				if (ypos == frame_height) return;
+				if (ypos == frame_height) break;
 			}
 		} else {
 			if (instruction & 64) {
@@ -904,7 +904,7 @@ static void do_screen() {
 
 				ypos++;
 				memscan++;
-				if (ypos == frame_height) return;
+				if (ypos == frame_height) break;
 
 			}
 
