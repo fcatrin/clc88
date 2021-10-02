@@ -144,6 +144,9 @@ module cornet_cpu(
    localparam TYA       = 49;
    localparam TAX       = 50;
    localparam TAY       = 51;
+   localparam CLC       = 52;
+   localparam SEC       = 53;
+   localparam ADC       = 54;
    
    reg[5:0] cpu_inst_state = NOP;
    reg[5:0] cpu_next_op    = NOP;
@@ -175,6 +178,10 @@ module cornet_cpu(
                   cpu_inst_state <= ORA;
                8'h0A: /* ASL */
                   cpu_inst_state <= ASL;
+               8'h18: /* CLC */
+                  cpu_inst_state <= CLC;
+               8'h38: /* SEC */
+                  cpu_inst_state <= SEC;
                8'h20: /* JSR $ */
                begin
                   cpu_inst_state <= JSR0;
@@ -193,6 +200,8 @@ module cornet_cpu(
                   cpu_inst_state <= RTS0;
                8'h68: /* PLA */
                   cpu_inst_state <= PLA;
+               8'h69: /* ADC */
+                  cpu_inst_state <= ADC;
                8'h88: /* DEY */
                   cpu_inst_state <= DEY;
                8'h8A: /* TXA */
@@ -268,7 +277,7 @@ module cornet_cpu(
             // apply bit level logic for tese cases when instruction set is complete
             case(reg_i)
                8'h09,
-               8'h29,
+               8'h29, 8'h69,
                8'hA0, 8'hA2, 8'hA4, 8'hA5, 8'hA6,
                8'hA9, 8'h85, 8'hB1,
                8'hC0, 8'hC9, 8'hE0,
@@ -287,7 +296,7 @@ module cornet_cpu(
             endcase
             
             case(reg_i)
-               8'h0a,
+               8'h0a, 8'h18, 8'h38,
                8'h48, 8'h68, 8'h88, 8'h8A, 
                8'h98, 8'hA8, 8'hAA, 8'hC8, 8'hCA, 8'hE8, 8'h60:
                   pc_delta <= 1;
@@ -368,9 +377,17 @@ module cornet_cpu(
       if (cpu_inst_done == 0 && cpu_fetch_state == CPU_EXECUTE_WAIT) begin
          case (cpu_inst_state)
             CLC:
-               reg_c <= 0;
+            begin
+               flag_c <= 0;
+               pc_next <= pc + pc_delta;
+               cpu_inst_done <= 1;
+            end
             SEC:
-               reg_c <= 1;
+            begin
+               flag_c <= 1;
+               pc_next <= pc + pc_delta;
+               cpu_inst_done <= 1;
+            end
             TYA:
             begin
                reg_a <= reg_y;
@@ -445,6 +462,7 @@ module cornet_cpu(
                reg_tmp <= reg_a;
                cpu_next_op <= PUSH;
                cpu_back_state <= DONE;
+               pc_next <= pc + pc_delta;
             end
             PLA:
             begin
@@ -481,6 +499,13 @@ module cornet_cpu(
                   flag_c <= 0;
                   flag_z <= 0;
                   pc_next <= reg_word;
+                  cpu_inst_done <= 1;
+               end
+               ADC:
+               begin
+                  {flag_c, reg_a} <= reg_a + reg_byte + flag_c;
+                  flag_z <= reg_a + reg_byte + flag_c == 0; // ALUuuuu
+                  pc_next <= pc + pc_delta;
                   cpu_inst_done <= 1;
                end
                LDA:

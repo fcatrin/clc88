@@ -1,5 +1,9 @@
 // screen handling routines (for the FPGA version)
 
+screen_state  = $300
+screen_char   = $301   
+screen_attr   = $302
+
 .proc txt_put_char
    sta screen_char
    lda screen_state
@@ -60,9 +64,5 @@ next_write:
    rts  
 .endp
    
-   org $300
-screen_state  .byte  0
-screen_char   .byte  0   
-screen_attr   .byte 0
-      
+     
   
