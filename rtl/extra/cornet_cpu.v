@@ -209,6 +209,8 @@ module cornet_cpu(
                   cpu_inst_state <= LDA_Z;
                8'hA6: /* LDX Z */
                   cpu_inst_state <= LDX_Z;
+               8'hA8: /* TAY */
+                  cpu_inst_state <= TAY;
                8'hA9: /* LDA # */
                   cpu_inst_state <= LDA;
                8'hAA: /* TAX */
@@ -287,7 +289,7 @@ module cornet_cpu(
             case(reg_i)
                8'h0a,
                8'h48, 8'h68, 8'h88, 8'h8A, 
-               8'h98, 8'hC8, 8'hCA, 8'hE8, 8'h60:
+               8'h98, 8'hA8, 8'hAA, 8'hC8, 8'hCA, 8'hE8, 8'h60:
                   pc_delta <= 1;
             endcase
             
@@ -365,6 +367,10 @@ module cornet_cpu(
       cpu_next_op    <= NOP;
       if (cpu_inst_done == 0 && cpu_fetch_state == CPU_EXECUTE_WAIT) begin
          case (cpu_inst_state)
+            CLC:
+               reg_c <= 0;
+            SEC:
+               reg_c <= 1;
             TYA:
             begin
                reg_a <= reg_y;

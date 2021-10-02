@@ -15,7 +15,7 @@ VMODE_1_ATTRIB_SIZE = 40*VMODE_1_LINES
    ldy #0
 set_palette:   
    lda (SRC_ADDR), y
-   STA VPAL_VALUE
+   sta VPAL_VALUE
    iny
    bne set_palette
    dex
