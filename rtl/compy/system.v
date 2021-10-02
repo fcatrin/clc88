@@ -18,10 +18,11 @@ module system (
    wire sys_clk;
    
    // global bus
-   wire[7:0]  data = ram_cs ? ram_rd_data : (io_cs ? io_rd_data : rom_rd_data);
-   wire rom_cs = cpu_addr[15:14] == 2'b11;  // 0xc000 and above
-   wire ram_cs = cpu_addr[15:12] == 4'b1000 || !cpu_addr[15]; // 0x0000 -> 0x8fff
-   wire io_cs  = cpu_addr[15:8]  == 8'b10010010; // 0x92XX
+   wire[7:0]  data = chroni_cs ? chroni_rd_data : (ram_cs ? ram_rd_data : (io_cs ? io_rd_data : rom_rd_data));
+   wire rom_cs    = cpu_addr[15:14] == 2'b11;  // 0xc000 and above
+   wire ram_cs    = cpu_addr[15:12] == 4'b1000 || !cpu_addr[15]; // 0x0000 -> 0x8fff
+   wire io_cs     = cpu_addr[15:8]  == 8'b10010010; // 0x92XX
+   wire chroni_cs = cpu_addr[15:7] == 9'b100100000;
    
    wire[15:0] cpu_addr;
    wire       cpu_rd_req;
@@ -131,6 +132,7 @@ module system (
    end
    
 
+   wire[7:0] chroni_rd_data;
    chroni chroni_inst (
       .vga_clk(vga_clock),
       .sys_clk(sys_clk),
@@ -141,8 +143,9 @@ module system (
       .vga_r(vga_r),
       .vga_g(vga_g),
       .vga_b(vga_b),
+      .cpu_rd_data(chroni_rd_data),
       .cpu_wr_data(cpu_wr_data),
-      .cpu_wr_en(cpu_wr_en),
+      .cpu_wr_en(cpu_wr_en & chroni_cs),
       .cpu_addr(cpu_addr)
    );
    

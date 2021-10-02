@@ -19,14 +19,12 @@ irq:
 boot:
 
    lda #$22
-   sta 0
+   sta VDLIST
    lda #$33
-   sta 1
-   ldy #$08
-   lda #$55
-   sta (0),y
-   lda #$aa
-   lda (0),y
+   sta VDLIST+1
+   
+   lda VDLIST
+   lda VDLIST+1
 
    jmp demo
    
