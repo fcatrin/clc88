@@ -137,6 +137,13 @@ module cornet_cpu(
    localparam LDY_Z     = 42;
    localparam LDX_ADDR  = 43;
    localparam LDY_ADDR  = 44;
+   localparam PHA       = 45;
+   localparam PLA       = 46;
+   localparam ASL       = 47;
+   localparam TXA       = 48;
+   localparam TYA       = 49;
+   localparam TAX       = 50;
+   localparam TAY       = 51;
    
    reg[5:0] cpu_inst_state = NOP;
    reg[5:0] cpu_next_op    = NOP;
@@ -147,6 +154,7 @@ module cornet_cpu(
    reg[15:0] op_addr;
    
    reg flag_z;
+   reg flag_c;
    
    always @ (posedge clk) begin : cpu_decode
       data_rd_word_req <= 0;
@@ -165,6 +173,8 @@ module cornet_cpu(
             case (reg_i)
                8'h09: /* ORA # */
                   cpu_inst_state <= ORA;
+               8'h0A: /* ASL */
+                  cpu_inst_state <= ASL;
                8'h20: /* JSR $ */
                begin
                   cpu_inst_state <= JSR0;
@@ -172,6 +182,8 @@ module cornet_cpu(
                end
                8'h29: /* AND # */
                   cpu_inst_state <= AND;
+               8'h48: /* PHA */
+                  cpu_inst_state <= PHA;
                8'h4C: /* JMP $ */
                begin
                   cpu_inst_state <= JMP;
@@ -179,8 +191,14 @@ module cornet_cpu(
                end
                8'h60: /* RTS */
                   cpu_inst_state <= RTS0;
-               8'h88: /* RTS */
+               8'h68: /* PLA */
+                  cpu_inst_state <= PLA;
+               8'h88: /* DEY */
                   cpu_inst_state <= DEY;
+               8'h8A: /* TXA */
+                  cpu_inst_state <= TXA;
+               8'h98: /* TYA */
+                  cpu_inst_state <= TYA;
                8'hA0: /* LDY # */
                   cpu_inst_state <= LDY;
                8'hA2: /* LDX # */
@@ -193,6 +211,8 @@ module cornet_cpu(
                   cpu_inst_state <= LDX_Z;
                8'hA9: /* LDA # */
                   cpu_inst_state <= LDA;
+               8'hAA: /* TAX */
+                  cpu_inst_state <= TAX;
                8'h85: /* STA Z */
                   cpu_inst_state <= STA_Z;
                8'h8D: /* STA $ */
@@ -265,7 +285,9 @@ module cornet_cpu(
             endcase
             
             case(reg_i)
-               8'h88, 8'hC8, 8'hCA, 8'hE8, 8'h60:
+               8'h0a,
+               8'h48, 8'h68, 8'h88, 8'h8A, 
+               8'h98, 8'hC8, 8'hCA, 8'hE8, 8'h60:
                   pc_delta <= 1;
             endcase
             
@@ -343,6 +365,34 @@ module cornet_cpu(
       cpu_next_op    <= NOP;
       if (cpu_inst_done == 0 && cpu_fetch_state == CPU_EXECUTE_WAIT) begin
          case (cpu_inst_state)
+            TYA:
+            begin
+               reg_a <= reg_y;
+               flag_z <= reg_y == 0;
+               pc_next <= pc + pc_delta;
+               cpu_inst_done <= 1;
+            end               
+            TXA:
+            begin
+               reg_a <= reg_x;
+               flag_z <= reg_x == 0;
+               pc_next <= pc + pc_delta;
+               cpu_inst_done <= 1;
+            end               
+            TAX:
+            begin
+               reg_x <= reg_a;
+               flag_z <= reg_a == 0;
+               pc_next <= pc + pc_delta;
+               cpu_inst_done <= 1;
+            end               
+            TAY:
+            begin
+               reg_y <= reg_a;
+               flag_z <= reg_a == 0;
+               pc_next <= pc + pc_delta;
+               cpu_inst_done <= 1;
+            end               
             INX:
             begin
                reg_x  <= reg_x + 1'b1;
@@ -371,10 +421,29 @@ module cornet_cpu(
                pc_next <= pc + pc_delta;
                cpu_inst_done <= 1;
             end
+            ASL:
+            begin
+               reg_a  <= {reg_a[6:0], 1'b0}; 
+               flag_z <= {reg_a[6:0], 1'b0} == 0; // now we need an ALU
+               flag_c <= reg_a[7];
+               pc_next <= pc + pc_delta;
+               cpu_inst_done <= 1;
+            end
             STA, STM:
             begin
                pc_next <= pc + pc_delta;
                cpu_inst_done <= 1;
+            end
+            PHA:
+            begin
+               reg_tmp <= reg_a;
+               cpu_next_op <= PUSH;
+               cpu_back_state <= DONE;
+            end
+            PLA:
+            begin
+               cpu_next_op <= POP;
+               cpu_back_state <= LDA;
             end
             JSR1:
             begin
@@ -402,6 +471,9 @@ module cornet_cpu(
                begin
                   reg_a <= 0;
                   reg_x <= 0;
+                  reg_y <= 0;
+                  flag_c <= 0;
+                  flag_z <= 0;
                   pc_next <= reg_word;
                   cpu_inst_done <= 1;
                end
