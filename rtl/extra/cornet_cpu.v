@@ -143,6 +143,8 @@ module cornet_cpu(
    localparam ORA       = 40;
    localparam LDX_Z     = 41;
    localparam LDY_Z     = 42;
+   localparam LDX_ABS   = 69;
+   localparam LDY_ABS   = 70;
    localparam LDX_ADDR  = 43;
    localparam LDY_ADDR  = 44;
    localparam PHA       = 45;
@@ -250,8 +252,12 @@ module cornet_cpu(
                   cpu_inst_state <= STA_Z_Y;
                8'h9D: /* STA $,X */
                   cpu_inst_state <= STA_ABS_X;
+               8'hAC: /* LDA $ */
+                  cpu_inst_state <= LDY_ABS;
                8'hAD: /* LDA $ */
                   cpu_inst_state <= LDA_ABS;
+               8'hAE: /* LDA $ */
+                  cpu_inst_state <= LDX_ABS;
                8'hB1: /* LDA (Z),Y */
                   cpu_inst_state <= LDA_Z_Y;
                8'hBD: /* LDA $,X */
@@ -319,7 +325,7 @@ module cornet_cpu(
                   pc_delta <= 2;
                end
                   
-               8'h8D, 8'h9D, 8'hAD,
+               8'h8D, 8'h9D, 8'hAC, 8'hAD, 8'hAE,
                8'hBD, 8'hBE, 8'hCC, 8'hCE, 8'hEE, 8'hEC:
                begin
                   data_rd_word_req <= 1;
@@ -701,6 +707,16 @@ module cornet_cpu(
                LDY_Z:
                begin
                   op_addr <= {8'd0, reg_byte};
+                  cpu_next_op <= LDY_ADDR;
+               end
+               LDX_ABS:
+               begin
+                  op_addr <= reg_word;
+                  cpu_next_op <= LDX_ADDR;
+               end
+               LDY_ABS:
+               begin
+                  op_addr <= reg_word;
                   cpu_next_op <= LDY_ADDR;
                end
                LDA_ABS:
