@@ -60,7 +60,7 @@ next_write:
    rts  
 .endp
    
-   org $200
+   org $300
 screen_state  .byte  0
 screen_char   .byte  0   
 screen_attr   .byte 0
