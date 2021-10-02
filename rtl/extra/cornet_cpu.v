@@ -116,8 +116,10 @@ module cornet_cpu(
    localparam CPY       = 17;
    localparam CPX_Z     = 57;
    localparam CPY_Z     = 58;
-   localparam CPX_ADDR  = 59;
-   localparam CPY_ADDR  = 60;
+   localparam CPX_ABS   = 59;
+   localparam CPY_ABS   = 60;
+   localparam CPX_ADDR  = 61;
+   localparam CPY_ADDR  = 62;
    localparam STA       = 18;
    localparam STA_Z     = 19;
    localparam STA_Z_Y   = 55;
@@ -256,6 +258,8 @@ module cornet_cpu(
                   cpu_inst_state <= CMP;
                8'hCA: /* DEX */
                   cpu_inst_state <= DEX;
+               8'hCC: /* CPY $ */
+                  cpu_inst_state <= CPY_ABS;
                8'hE0: /* CPX # */
                   cpu_inst_state <= CPX;
                8'hE4: /* CPX Z */
@@ -264,6 +268,8 @@ module cornet_cpu(
                   cpu_inst_state <= INC_Z;
                8'hE8: /* INX */
                   cpu_inst_state <= INX;
+               8'hEC: /* CPX $ */
+                  cpu_inst_state <= CPX_ABS;
                8'hEE: /* INC_ABS */
                   cpu_inst_state <= INC_ABS;
                8'hD0: /* BNE */
@@ -300,7 +306,7 @@ module cornet_cpu(
                end
                   
                8'h8D, 8'h9D, 8'hAD,
-               8'hBD, 8'hBE, 8'hEE:
+               8'hBD, 8'hBE, 8'hCC, 8'hEE, 8'hEC:
                begin
                   data_rd_word_req <= 1;
                   pc_delta <= 3;
@@ -591,6 +597,16 @@ module cornet_cpu(
                CPY_Z:
                begin
                   op_addr <= {8'd0, reg_byte};
+                  cpu_next_op <= CPY_ADDR;
+               end
+               CPX_ABS:
+               begin
+                  op_addr <= reg_word;
+                  cpu_next_op <= CPX_ADDR;
+               end
+               CPY_ABS:
+               begin
+                  op_addr <= reg_word;
                   cpu_next_op <= CPY_ADDR;
                end
                LDY:
