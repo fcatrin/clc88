@@ -114,10 +114,16 @@ module cornet_cpu(
    localparam CMP       = 15;
    localparam CPX       = 16;
    localparam CPY       = 17;
+   localparam CPX_Z     = 57;
+   localparam CPY_Z     = 58;
+   localparam CPX_ADDR  = 59;
+   localparam CPY_ADDR  = 60;
    localparam STA       = 18;
    localparam STA_Z     = 19;
+   localparam STA_Z_Y   = 55;
    localparam STA_ABS   = 20;
    localparam STA_ABS_X = 21;
+   localparam STA_ABS_Y = 56;
    localparam STA_ADDR  = 22;
    localparam STM       = 23;
    localparam STM_ADDR  = 24;
@@ -228,6 +234,8 @@ module cornet_cpu(
                   cpu_inst_state <= STA_Z;
                8'h8D: /* STA $ */
                   cpu_inst_state <= STA_ABS;
+               8'h91: /* STA (Z),Y */
+                  cpu_inst_state <= STA_Z_Y;
                8'h9D: /* STA $,X */
                   cpu_inst_state <= STA_ABS_X;
                8'hAD: /* LDA $ */
@@ -240,6 +248,8 @@ module cornet_cpu(
                   cpu_inst_state <= LDA_ABS_Y;
                8'hC0: /* CPY # */
                   cpu_inst_state <= CPY;
+               8'hC4: /* CPY Z */
+                  cpu_inst_state <= CPY_Z;
                8'hC8: /* INY */
                   cpu_inst_state <= INY;
                8'hC9: /* CMP # */
@@ -248,6 +258,8 @@ module cornet_cpu(
                   cpu_inst_state <= DEX;
                8'hE0: /* CPX # */
                   cpu_inst_state <= CPX;
+               8'hE4: /* CPX Z */
+                  cpu_inst_state <= CPX_Z;
                8'hE6: /* INC Z */
                   cpu_inst_state <= INC_Z;
                8'hE8: /* INX */
@@ -277,11 +289,11 @@ module cornet_cpu(
             // apply bit level logic for tese cases when instruction set is complete
             case(reg_i)
                8'h09,
-               8'h29, 8'h69,
+               8'h29, 8'h69, 8'h91,
                8'hA0, 8'hA2, 8'hA4, 8'hA5, 8'hA6,
                8'hA9, 8'h85, 8'hB1,
-               8'hC0, 8'hC9, 8'hE0,
-               8'hE6:
+               8'hC0, 8'hC4, 8'hC9, 8'hE0,
+               8'hE4, 8'hE6:
                begin
                   data_rd_byte_req <= 1;
                   pc_delta <= 2;
@@ -331,6 +343,12 @@ module cornet_cpu(
                   data_rd_addr <= op_addr;
                   cpu_inst_state <= LDY;
                end
+               STA_Z_Y:
+               begin
+                  data_rd_word_req <= 1;
+                  data_rd_addr <= op_addr;
+                  cpu_inst_state <= STA_ABS_Y;
+               end
                STA_ADDR:
                begin
                   data_wr_addr <= op_addr; 
@@ -350,6 +368,18 @@ module cornet_cpu(
                   data_wr_data <= reg_m;
                   data_wr_en   <= 1;
                   cpu_inst_state <= STM;
+               end
+               CPY_ADDR:
+               begin
+                  data_rd_byte_req <= 1;
+                  data_rd_addr <= op_addr;
+                  cpu_inst_state <= CPY;
+               end
+               CPX_ADDR:
+               begin
+                  data_rd_byte_req <= 1;
+                  data_rd_addr <= op_addr;
+                  cpu_inst_state <= CPX;
                end
                PUSH:
                begin
@@ -553,6 +583,16 @@ module cornet_cpu(
                   pc_next <= pc + pc_delta;
                   cpu_inst_done <= 1;
                end
+               CPX_Z:
+               begin
+                  op_addr <= {8'd0, reg_byte};
+                  cpu_next_op <= CPX_ADDR;
+               end
+               CPY_Z:
+               begin
+                  op_addr <= {8'd0, reg_byte};
+                  cpu_next_op <= CPY_ADDR;
+               end
                LDY:
                begin
                   reg_y <= reg_byte;
@@ -615,6 +655,11 @@ module cornet_cpu(
                   op_addr <= {8'd0, reg_byte};
                   cpu_next_op <= STA_ADDR;
                end
+               STA_Z_Y:
+               begin
+                  op_addr <= {8'd0, reg_byte};
+                  cpu_next_op <= STA_Z_Y;
+               end
                STA_ABS:
                begin
                   op_addr <= reg_word;
@@ -623,6 +668,11 @@ module cornet_cpu(
                STA_ABS_X:
                begin
                   op_addr <= reg_word + reg_x;
+                  cpu_next_op <= STA_ADDR;
+               end
+               STA_ABS_Y:
+               begin
+                  op_addr <= reg_word + reg_y;
                   cpu_next_op <= STA_ADDR;
                end
                JMP:

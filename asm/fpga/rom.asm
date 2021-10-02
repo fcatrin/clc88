@@ -17,35 +17,16 @@ nmi:
 irq:
 	rti   
 boot:
-   lda #1
-   ldx #2
-   ldy #3
-   txa
-   tya
-   lda #4
-   tax
-   lda #5
-   tay
-   
-   lda #0
-   clc
-   adc #20
-   adc #20
-   sec
-   adc #20
-   clc
-   adc #200
-   
-   
-   lda #30
-   pha
-   lda #40
-   pla
-   
-   lda #$ff
-   asl
-   lda #$7f
-   asl
+
+   lda #$22
+   sta 0
+   lda #$33
+   sta 1
+   ldy #$08
+   lda #$55
+   sta (0),y
+   lda #$aa
+   lda (0),y
 
    jmp demo
    
