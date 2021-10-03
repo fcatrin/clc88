@@ -1,0 +1,73 @@
+ALU -> input AI, input BI, output O
+ALU ops:
+  ADD : O = AI + BI + c,  c=O[8]
+  ASL : O = {AI[6:0], 0}, c=AI[7]
+  CMP : O = AI == BI
+  INC : O = AI+1
+  DEC : O = AI-1
+  AND : O = AI & BI
+  OR  : O = AI | BI
+  EOR : O = AI ^ BI
+  LSR : O = {0, AI[7:1]}, c=AI[0]
+  ROL : O = {AI[6:0], c}, c=AI[7]
+  ROR : O = {c, AI[7:1]}, c=AI[0]
+  SUB : O = AI - BI - !c, c=O[8]
+  
+  
+always: PC=PC+1 after fetch
+
+ADC  : load M, AI=A, BI=M, ALU(ADD), A=O, modifies : n,z,c,v
+AND  : load M, AI=A, BI=M, ALU(AND), A=O, modifies:n,z
+ASLA : AI=A, ALU(ASL), A=O, modifies: n,z,c
+ASL  : load M, AI=M, ALU(ASL), store O, modifies: n,z,c
+BIT  : load M, AI=A, BI=M, ALU(AND), n=M[7], v=M[6], modifies: z
+BRK  : PUSH pc+2, set flag_i, PUSH status, JMP (irq)
+CLC  : c=0
+CLI  : i=0
+CLV  : v=0
+CMP  : load M, AI=A, BI=M, ALU(CMP), modifies: n,z
+CPX  : load M, AI=X, BI=M, ALU(CMP), modifies: n,z
+CPY  : load M, AI=Y, BI=M, ALU(CMP), modifies: n,z
+DEC  : load M, AI=M, ALU(DEC), store O, modifies: n,z
+DEX  : AI=X, ALU(DEC), X=O, modifies: n,z
+DEY  : AI=Y, ALU(DEC), Y=O, modifies: n,z
+EOR  : load M, AI=A, BI=M, ALU=AI^BI, A=O, modifies:n,z
+INC  : load M, AI=M, ALU(INC), store O, modifies: n,z
+INX  : AI=X, ALU(INC), X=O, modifies: n,z
+INY  : AI=Y, ALU(INC), Y=O, modifies: n,z
+JMP  : load M, PCL=M, Load M, PCH=M
+JSR  : PC=PC+1, M=PCL, PUSH, M=PCH, PUSH, JMP
+LDA  : load M, A=M, AI=M, modifies: n,z
+LDX  : load M, X=M, AI=M, modifies: n,z
+LDY  : load M, Y=M, AI=M, modifies: n,z
+LSRA : AI=A, ALU(LSR), A=O, modifies:n,z,c
+LSR  : load M, AI=M, ALU(LSR), store O, modifies n,z,c
+NOP  : :-)
+ORA  : load M, AI=A, BI=M, ALU(OR), A=O, modifies:n,z
+PUSH : store M in {1,SP}, SP=SP-1
+PHA  : M=A, PUSH
+PHP  : M=P, PUSH
+PLA  : POP, A=M, AI=M, modifies:n,z
+PLP  : POP, S=M
+POP  : SP=SP-1, load M from {1,SP}
+ROLA : AI=A, ALU(ROL), A=O, modifies:n,z
+ROL  : load M, AI=M, ALU(ROL), store M, modifies:n,z
+RORA : AI=A, ALU(ROR), A=O, modifies:n,z
+ROR  : load M, AI=M, ALU(ROR), store M, modifies:n,z
+RTI  : POP, S=M, POP, PCL=M, POP, PCH=M
+RTS  : POP, PCL=M, POP, PCH=M
+SBC  : load M, ALU(SBC), A=O, modifies n,z,c,v 
+SEC  : c=1
+SED  : d=1
+SEI  : i=1
+STA  : M=A, store M
+STX  : M=X, store M
+STY  : M=Y, store M
+TAX  : X = A, AI=A, modifies n,z
+TAY  : Y = A, AI=A, modifies n,z
+TSX  : X = SP, AI=SP, modifies n,z
+TXA  : A = X, AI=X, modifies n,z
+TYA  : A = X, AI=X, modifies n,z
+
+
+   
