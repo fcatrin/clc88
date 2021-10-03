@@ -2,7 +2,7 @@ ALU -> input AI, input BI, output O
 ALU ops:
   ADD : O = AI + BI + c,  c=O[8]
   ASL : O = {AI[6:0], 0}, c=AI[7]
-  CMP : O = AI == BI
+  CMP : O = AI == BI (*)
   INC : O = AI+1
   DEC : O = AI-1
   AND : O = AI & BI
@@ -69,5 +69,9 @@ TSX  : X = SP, AI=SP, modifies n,z
 TXA  : A = X, AI=X, modifies n,z
 TYA  : A = X, AI=X, modifies n,z
 
+(*) in CMP
+  AI < BI  : n=s, z = 0, c = 0
+  AI == BI : n=0, z = 1, c = 1
+  AI > BI :  n=s, z = 0, c = 1
 
-   
+  s sign of AI-BI   
