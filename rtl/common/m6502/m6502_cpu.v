@@ -94,28 +94,86 @@ module m6502_cpu (
          if (cpu_reset) begin
             cpu_inst_state <= RESET;
          end else if (cpu_fetch_state == CPU_EXECUTE) begin
-            reg_ndx <= 0;
-            reg_ndx_pre <= 0;
-            reg_ndx_post <= 0;
-            pc_delta <= 0;
+            address_mode_prepare <= MODE_IDLE;
+            
             // format aaabbbcc
+            casex (reg_i)
+               8'b101xxx01: /* LDA */
+               begin
+                  do_load_store <= DO_LOAD;
+                  case (reg_i[4:2])
+                     0: address_mode_prepare <= MODE_IND_X;
+                     1: address_mode_prepare <= MODE_Z;
+                     2: address_mode_prepare <= MODE_IMM;
+                     3: address_mode_prepare <= MODE_ABS;
+                     4: address_mode_prepare <= MODE_IND_Y;
+                     5: address_mode_prepare <= MODE_Z_X;
+                     6: address_mode_prepare <= MODE_ABS_X;
+                     7: address_mode_prepare <= MODE_ABS_Y;
+                  endcase
+               end
+            endcase
+         end else if (cpu_inst_done == 0 && cpu_fetch_state == CPU_EXECUTE_WAIT) begin
             casex (reg_i)
                8'b101xxx01: /* LDA */
                if (load_complete) begin
                   reg_a <= reg_m;
                   cpu_inst_done <= 1;
-               end else begin
-                  do_load_store <= DO_LOAD;
-                  // address_mode  = reg_i[4:2];
+                  pc_next <= pc + pc_delta;
                end
             endcase
          end
       end
    end
    
-   localparam DO_NOTHING = 0;
-   localparam DO_LOAD    = 1;
-   localparam DO_STORE   = 2;
+   always @ (negedge clk) begin : cpu_set_addr_mode
+      reg_ndx <= 0;
+      reg_ndx_pre <= 0;
+      reg_ndx_post <= 0;
+      pc_delta <= 0;
+      address_mode <= MODE_IDLE;
+      case(address_mode_prepare)
+         MODE_IMM:
+         begin
+            address_mode <= MODE_IMM;
+            pc_delta <= 1;
+         end
+         MODE_Z, MODE_Z_X, MODE_Z_Y:
+         begin
+            address_mode <= MODE_Z;
+            pc_delta <= 1;
+         end
+         MODE_IND_X, MODE_IND_Y:
+         begin
+            address_mode <= MODE_IND_Z;
+            pc_delta <= 1;
+         end
+         MODE_ABS, MODE_ABS_X, MODE_ABS_Y:
+         begin
+            address_mode <= MODE_ABS;
+            pc_delta <= 2;
+         end
+         MODE_IND_ABS:
+         begin
+            address_mode <= MODE_IND_ABS;
+            pc_delta <= 2;
+         end
+      endcase
+      case (address_mode_prepare)
+         MODE_Z_X, MODE_ABS_X:
+            reg_ndx <= reg_x;
+         MODE_Z_Y, MODE_ABS_Y:
+            reg_ndx <= reg_y;
+         MODE_IND_X:
+            reg_ndx_pre <= reg_x;
+         MODE_IND_Y:
+            reg_ndx_post <= reg_y;
+      endcase
+   end
+   
+   localparam DO_NOTHING  = 0;
+   localparam DO_LOAD     = 1;
+   localparam DO_STORE    = 2;
    
    reg[1:0] load_store    = DO_NOTHING;
    reg[1:0] do_load_store = DO_NOTHING;
@@ -126,6 +184,8 @@ module m6502_cpu (
    
    always @ (negedge clk) begin : cpu_load_store
       store_complete <= 0;
+      bus_rd_req <= 0;
+      bus_wr_en  <= 0;
       if (load_store == DO_LOAD) begin
          bus_rd_req <= 1;
       end else if (load_store == DO_STORE) begin
@@ -136,92 +196,115 @@ module m6502_cpu (
    end
    
    localparam MODE_IDLE     = 0;
-   localparam MODE_READ_M   = 1;
-   localparam MODE_IMM      = 2;
-   localparam MODE_Z        = 3;
-   localparam MODE_ABS      = 4;
-   localparam MODE_ABS1     = 5;
-   localparam MODE_IND_ABS  = 6;
-   localparam MODE_IND_ABS1 = 7;
-   localparam MODE_IND_ABS2 = 8;
-   localparam MODE_IND_ABS3 = 9;
-   localparam MODE_IND_Z    = 10;
-   localparam MODE_IND_Z1   = 11;
-   localparam MODE_IND_Z2   = 12;
+   localparam MODE_IMM      = 1;
+   localparam MODE_Z        = 2;
+   localparam MODE_Z_X      = 3;
+   localparam MODE_Z_Y      = 4;
+   localparam MODE_ABS      = 5;
+   localparam MODE_ABS_X    = 6;
+   localparam MODE_ABS_Y    = 7;
+   localparam MODE_IND_Z    = 8;
+   localparam MODE_IND_X    = 9;
+   localparam MODE_IND_Y    = 10;
+   localparam MODE_IND_ABS  = 11;
    
+   localparam NEXT_IDLE     = 0;
+   localparam NEXT_READ_M   = 1;
+   localparam NEXT_ABS      = 2;
+   localparam NEXT_IND_ABS1 = 3;
+   localparam NEXT_IND_ABS2 = 4;
+   localparam NEXT_IND_ABS3 = 5;
+   localparam NEXT_IND_Z1   = 6;
+   localparam NEXT_IND_Z2   = 7;
+
+   reg[3:0] address_mode;
+   reg[3:0] address_mode_prepare;
    
    always @ (posedge clk) begin : cpu_load_store_decode
-      reg[3:0] address_mode;
+      reg[3:0] next_op;
       reg[7:0] tmp_addr;
       
-      load_store = DO_NOTHING;
-      load_complete <= 0;
-      case(address_mode)
-         MODE_READ_M:
-         begin
-            reg_m <= rd_data;
-            load_complete <= 1;
-         end
-         MODE_IMM:    /* IMM */
-         begin
-            bus_addr <= pc;
-            load_store = DO_LOAD;
-         end
-         MODE_Z:      /* Z */
-         begin
-            bus_addr   <= {8'd0, rd_data} + reg_ndx;
-            load_store <= do_load_store;
-         end
-         MODE_ABS:  /* ABS */
-         begin
-            tmp_addr <= rd_data;
-            bus_addr <= pc + 1;
-            load_store <= DO_LOAD;
-         end
-         MODE_ABS1:
-         begin
-            bus_addr[15:8] <= {rd_data, tmp_addr} + reg_ndx;
-            load_store <= do_load_store;
-         end
-         MODE_IND_ABS: // JMP (IND)
-         begin
-            tmp_addr <= rd_data;
-            bus_addr <= pc + 1;
-            load_store <= DO_LOAD;
-         end
-         MODE_IND_ABS1:
-         begin
-            bus_addr <= {rd_data, tmp_addr};
-            load_store <= DO_LOAD;
-         end
-         MODE_IND_ABS2:
-         begin
-            tmp_addr <= rd_data;
-            bus_addr <= bus_addr + 1;
-            load_store <= DO_LOAD;
-         end
-         MODE_IND_ABS3:
-         begin
-            reg_word <= {rd_data, tmp_addr};
-            load_complete <= 1;
-         end
-         MODE_IND_Z:
-         begin
-            bus_addr <= {8'd0, rd_data} + reg_ndx_pre;
-            load_store <= DO_LOAD;
-         end
-         MODE_IND_Z1:
-         begin
-            tmp_addr <= rd_data;
-            bus_addr <= bus_addr + 1;
-            load_store <= DO_LOAD;
-         end
-         MODE_IND_Z2:
-         begin
-            bus_addr <= {rd_data, tmp_addr} + reg_ndx_post;
-            load_store <= do_load_store;
-         end
-      endcase            
+      if (bus_rd_ack) begin
+         load_store <= DO_NOTHING;
+         load_complete <= 0;
+         next_op <= NEXT_IDLE;
+         
+         case(address_mode)
+            MODE_IMM:    /* IMM */
+            begin
+               bus_addr <= pc;
+               load_store <= DO_LOAD;
+            end
+            MODE_Z:      /* Z */
+            begin
+               bus_addr   <= {8'd0, rd_data} + reg_ndx;
+               load_store <= do_load_store;
+            end
+            MODE_ABS:  /* ABS */
+            begin
+               tmp_addr <= rd_data;
+               bus_addr <= pc + 1;
+               load_store <= DO_LOAD;
+               next_op <= NEXT_ABS;
+            end
+            MODE_IND_ABS: // JMP (IND)
+            begin
+               tmp_addr <= rd_data;
+               bus_addr <= pc + 1;
+               load_store <= DO_LOAD;
+               next_op <= NEXT_IND_ABS1; 
+            end
+            MODE_IND_Z:
+            begin
+               bus_addr <= {8'd0, rd_data} + reg_ndx_pre;
+               load_store <= DO_LOAD;
+               next_op <= NEXT_IND_Z1;
+            end
+         endcase
+         
+         case (next_op)
+            NEXT_IDLE:
+               if (load_store == DO_LOAD) begin
+                  reg_m <= rd_data;
+                  load_complete <= 1;
+               end
+            NEXT_ABS:
+            begin
+               bus_addr[15:8] <= {rd_data, tmp_addr} + reg_ndx;
+               load_store <= do_load_store;
+            end
+            NEXT_IND_ABS1:
+            begin
+               bus_addr <= {rd_data, tmp_addr};
+               load_store <= DO_LOAD;
+               next_op <= NEXT_IND_ABS2;
+            end
+            NEXT_IND_ABS2:
+            begin
+               tmp_addr <= rd_data;
+               bus_addr <= bus_addr + 1;
+               load_store <= DO_LOAD;
+               next_op <= NEXT_IND_ABS3;
+            end
+            NEXT_IND_ABS3:
+            begin
+               reg_word <= {rd_data, tmp_addr};
+               load_complete <= 1;
+            end
+            NEXT_IND_Z1:
+            begin
+               tmp_addr <= rd_data;
+               bus_addr <= bus_addr + 1;
+               load_store <= DO_LOAD;
+               next_op <= NEXT_IND_Z2;
+            end
+            NEXT_IND_Z2:
+            begin
+               bus_addr <= {rd_data, tmp_addr} + reg_ndx_post;
+               load_store <= do_load_store;
+            end
+         endcase
+      end
    end
    
    /*
