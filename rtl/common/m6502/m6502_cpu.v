@@ -86,43 +86,46 @@ module m6502_cpu (
    localparam RESET = 1;
    
    always @ (posedge clk) begin : cpu_decode
-      cpu_inst_done <= 0;
       if (~reset_n) begin
-         cpu_inst_state <= NOP;
-         reg_sp <= 8'hff;
-      end else begin
+         address_mode_prepare <= MODE_IDLE;
+      end else if (cpu_fetch_state == CPU_EXECUTE) begin
+         cpu_inst_done <= 0;
+         address_mode_prepare <= MODE_IDLE;
+         
          if (cpu_reset) begin
-            cpu_inst_state <= RESET;
-         end else if (cpu_fetch_state == CPU_EXECUTE) begin
-            address_mode_prepare <= MODE_IDLE;
-            
-            // format aaabbbcc
-            casex (reg_i)
-               8'b101xxx01: /* LDA */
-               begin
-                  do_load_store <= DO_LOAD;
-                  case (reg_i[4:2])
-                     0: address_mode_prepare <= MODE_IND_X;
-                     1: address_mode_prepare <= MODE_Z;
-                     2: address_mode_prepare <= MODE_IMM;
-                     3: address_mode_prepare <= MODE_ABS;
-                     4: address_mode_prepare <= MODE_IND_Y;
-                     5: address_mode_prepare <= MODE_Z_X;
-                     6: address_mode_prepare <= MODE_ABS_X;
-                     7: address_mode_prepare <= MODE_ABS_Y;
-                  endcase
-               end
-            endcase
-         end else if (cpu_inst_done == 0 && cpu_fetch_state == CPU_EXECUTE_WAIT) begin
-            casex (reg_i)
-               8'b101xxx01: /* LDA */
-               if (load_complete) begin
-                  reg_a <= reg_m;
-                  cpu_inst_done <= 1;
-                  pc_next <= pc + pc_delta;
-               end
-            endcase
-         end
+            reg_a <= 0;
+            reg_x <= 0;
+            reg_y <= 0;
+            reg_sp <= 8'hff;
+            address_mode_prepare <= MODE_RESET;
+         end casex (reg_i)  // format aaabbbcc
+            8'b101xxx01: /* LDA */
+            begin
+               do_load_store <= DO_LOAD;
+               case (reg_i[4:2])
+                  0: address_mode_prepare <= MODE_IND_X;
+                  1: address_mode_prepare <= MODE_Z;
+                  2: address_mode_prepare <= MODE_IMM;
+                  3: address_mode_prepare <= MODE_ABS;
+                  4: address_mode_prepare <= MODE_IND_Y;
+                  5: address_mode_prepare <= MODE_Z_X;
+                  6: address_mode_prepare <= MODE_ABS_X;
+                  7: address_mode_prepare <= MODE_ABS_Y;
+               endcase
+            end
+         endcase
+      end else if (cpu_inst_done == 0 && cpu_fetch_state == CPU_EXECUTE_WAIT) begin
+         if (load_complete & address_mode_prepare == MODE_RESET) begin
+            pc_next <= reg_word;
+            cpu_inst_done <= 1;
+         end casex (reg_i)
+            8'b101xxx01: /* LDA */
+            if (load_complete) begin
+               reg_a <= reg_m;
+               cpu_inst_done <= 1;
+               pc_next <= pc + pc_delta;
+            end
+         endcase
       end
    end
    
@@ -196,26 +199,29 @@ module m6502_cpu (
    end
    
    localparam MODE_IDLE     = 0;
-   localparam MODE_IMM      = 1;
-   localparam MODE_Z        = 2;
-   localparam MODE_Z_X      = 3;
-   localparam MODE_Z_Y      = 4;
-   localparam MODE_ABS      = 5;
-   localparam MODE_ABS_X    = 6;
-   localparam MODE_ABS_Y    = 7;
-   localparam MODE_IND_Z    = 8;
-   localparam MODE_IND_X    = 9;
-   localparam MODE_IND_Y    = 10;
-   localparam MODE_IND_ABS  = 11;
+   localparam MODE_RESET    = 1;
+   localparam MODE_IMM      = 2;
+   localparam MODE_Z        = 3;
+   localparam MODE_Z_X      = 4;
+   localparam MODE_Z_Y      = 5;
+   localparam MODE_ABS      = 6;
+   localparam MODE_ABS_X    = 7;
+   localparam MODE_ABS_Y    = 8;
+   localparam MODE_IND_Z    = 9;
+   localparam MODE_IND_X    = 10;
+   localparam MODE_IND_Y    = 11;
+   localparam MODE_IND_ABS  = 12;
    
    localparam NEXT_IDLE     = 0;
-   localparam NEXT_READ_M   = 1;
-   localparam NEXT_ABS      = 2;
-   localparam NEXT_IND_ABS1 = 3;
-   localparam NEXT_IND_ABS2 = 4;
-   localparam NEXT_IND_ABS3 = 5;
-   localparam NEXT_IND_Z1   = 6;
-   localparam NEXT_IND_Z2   = 7;
+   localparam NEXT_RESET1   = 1;
+   localparam NEXT_RESET2   = 2;
+   localparam NEXT_READ_M   = 3;
+   localparam NEXT_ABS      = 4;
+   localparam NEXT_IND_ABS1 = 5;
+   localparam NEXT_IND_ABS2 = 6;
+   localparam NEXT_IND_ABS3 = 7;
+   localparam NEXT_IND_Z1   = 8;
+   localparam NEXT_IND_Z2   = 9;
 
    reg[3:0] address_mode;
    reg[3:0] address_mode_prepare;
@@ -260,6 +266,12 @@ module m6502_cpu (
                load_store <= DO_LOAD;
                next_op <= NEXT_IND_Z1;
             end
+            MODE_RESET:
+            begin
+               bus_addr <= 16'hFFFC;
+               load_store <= DO_LOAD;
+               next_op <= NEXT_RESET1;
+            end
          endcase
          
          case (next_op)
@@ -302,6 +314,18 @@ module m6502_cpu (
             begin
                bus_addr <= {rd_data, tmp_addr} + reg_ndx_post;
                load_store <= do_load_store;
+            end
+            NEXT_RESET1:
+            begin
+               tmp_addr <= rd_data;
+               bus_addr <= bus_addr + 1;
+               load_store <= DO_LOAD;
+               next_op <= NEXT_RESET2;
+            end
+            NEXT_RESET2:
+            begin
+               reg_word <= {rd_data, tmp_addr};
+               load_complete <= 1;
             end
          endcase
       end
