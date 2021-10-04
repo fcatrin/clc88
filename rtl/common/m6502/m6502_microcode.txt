@@ -1,3 +1,6 @@
+Based on :
+https://www.masswerk.at/6502/6502_instruction_set.html
+
 ALU -> input AI, input BI, output O
 ALU ops:
   ADD : O = AI + BI + c,  c=O[8]

@@ -82,9 +82,6 @@ module m6502_cpu (
       end
    end
    
-   localparam NOP = 0;
-   localparam RESET = 1;
-   
    always @ (posedge clk) begin : cpu_decode
       if (~reset_n) begin
          address_mode_prepare <= MODE_IDLE;
@@ -330,30 +327,6 @@ module m6502_cpu (
          endcase
       end
    end
-   
-   /*
-   always @ (posedge clk) begin : cpu_execute
-      cpu_inst_done  <= 0;
-      cpu_next_op    <= NOP;
-      if (cpu_inst_done == 0 && cpu_fetch_state == CPU_EXECUTE_WAIT) begin
-         case (cpu_inst_state)
-            CLC:
-            begin
-               flag_c <= 0;
-               pc_next <= pc + pc_delta;
-               cpu_inst_done <= 1;
-            end
-            DONE:
-               cpu_inst_done <= 1;
-         endcase
-
-         if (bus_rd_ack) begin
-            case (cpu_inst_state)
-         endcase
-         end
-      end
-   end
-   */
    
    reg[15:0] bus_addr;
    reg bus_rd_req;
