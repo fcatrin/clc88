@@ -103,6 +103,7 @@ set_global_assignment -name VERILOG_FILE common/bram.v
 set_global_assignment -name VERILOG_FILE common/debouncer.v
 set_global_assignment -name VERILOG_FILE common/crossclock_handshake.v
 set_global_assignment -name VERILOG_FILE common/crossclock_signal.v
+set_global_assignment -name VERILOG_FILE common/m6502/m6502_cpu.v
 set_global_assignment -name VERILOG_FILE extra/cornet_cpu.v
 set_global_assignment -name VERILOG_FILE extra/qmtech_board.v
 set_global_assignment -name QIP_FILE compy/rom.qip
