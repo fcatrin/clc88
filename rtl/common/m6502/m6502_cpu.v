@@ -110,6 +110,20 @@ module m6502_cpu (
                   7: address_mode_prepare <= MODE_ABS_Y;
                endcase
             end
+            8'b100xxx01: /* STA */
+            begin
+               do_load_store <= DO_STORE;
+               reg_m <= reg_a;
+               case (reg_i[4:2])
+                  0: address_mode_prepare <= MODE_IND_X;
+                  1: address_mode_prepare <= MODE_Z;
+                  3: address_mode_prepare <= MODE_ABS;
+                  4: address_mode_prepare <= MODE_IND_Y;
+                  5: address_mode_prepare <= MODE_Z_X;
+                  6: address_mode_prepare <= MODE_ABS_X;
+                  7: address_mode_prepare <= MODE_ABS_Y;
+               endcase
+            end
          endcase
       end else if (cpu_inst_done == 0 && cpu_fetch_state == CPU_EXECUTE_WAIT) begin
          if (load_complete & address_mode_prepare == MODE_RESET) begin
@@ -117,8 +131,13 @@ module m6502_cpu (
             cpu_inst_done <= 1;
          end casex (reg_i)
             8'b101xxx01: /* LDA */
-            if (load_complete) begin
+            if (load_store_complete) begin
                reg_a <= reg_m;
+               cpu_inst_done <= 1;
+               pc_next <= pc + pc_delta;
+            end
+            8'b100xxx01: /* STA */
+            if (load_store_complete) begin
                cpu_inst_done <= 1;
                pc_next <= pc + pc_delta;
             end
