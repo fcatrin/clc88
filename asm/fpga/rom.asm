@@ -18,13 +18,12 @@ irq:
 	rti   
 boot:
 
-   lda #$22
-   sta VDLIST
-   lda #$33
-   sta VDLIST+1
-   
-   lda VDLIST
-   lda VDLIST+1
+   lda #$aa
+   sta 20
+   lda #$bb
+   sta 1024
+   lda 20
+   lda 1024
 
    jmp demo
    

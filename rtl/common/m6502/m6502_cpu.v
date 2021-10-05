@@ -84,19 +84,22 @@ module m6502_cpu (
    end
    
    always @ (posedge clk) begin : cpu_decode
+      reg wait_for_reset;
+      
+      address_mode_prepare <= MODE_IDLE;
       if (~reset_n) begin
-         address_mode_prepare <= MODE_IDLE;
+         wait_for_reset <= 0;
       end else if (cpu_fetch_state == CPU_EXECUTE) begin
-         cpu_inst_done <= 0;
          address_mode_prepare <= MODE_IDLE;
-         
+         cpu_inst_done <= 0;
          if (cpu_reset) begin
             reg_a <= 0;
             reg_x <= 0;
             reg_y <= 0;
             reg_sp <= 8'hff;
             address_mode_prepare <= MODE_RESET;
-         end casex (reg_i)  // format aaabbbcc
+            wait_for_reset <= 1;
+         end else casex (reg_i)  // format aaabbbcc
             8'b101xxx01: /* LDA */
             begin
                do_load_store <= DO_LOAD;
@@ -127,10 +130,13 @@ module m6502_cpu (
             end
          endcase
       end else if (cpu_inst_done == 0 && cpu_fetch_state == CPU_EXECUTE_WAIT) begin
-         if (load_complete & address_mode_prepare == MODE_RESET) begin
-            pc_next <= reg_word;
-            cpu_inst_done <= 1;
-         end casex (reg_i)
+         if (wait_for_reset) begin
+            if (load_complete) begin
+               pc_next <= reg_word;
+               cpu_inst_done <= 1;
+               wait_for_reset <= 0;
+            end
+         end else casex (reg_i)
             8'b101xxx01: /* LDA */
             if (load_store_complete) begin
                reg_a <= reg_m;
@@ -152,7 +158,10 @@ module m6502_cpu (
       reg_ndx_post <= 0;
       pc_delta <= 0;
       address_mode <= MODE_IDLE;
+      
       case(address_mode_prepare)
+         MODE_RESET:
+            address_mode <= MODE_RESET;
          MODE_IMM:
          begin
             address_mode <= MODE_IMM;
@@ -248,7 +257,10 @@ module m6502_cpu (
       reg[3:0] next_op;
       reg[7:0] tmp_addr;
       
-      if (ready && !bus_rd_req) begin
+      load_store <= DO_NOTHING;
+      if (!reset_n) begin
+         next_op <= NEXT_IDLE;
+      end else if (ready && !bus_rd_req) begin
          load_store <= DO_NOTHING;
          load_complete <= 0;
          next_op <= NEXT_IDLE;
