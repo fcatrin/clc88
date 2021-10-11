@@ -153,10 +153,6 @@ module m6502_cpu (
    end
    
    always @ (negedge clk) begin : cpu_set_addr_mode
-      reg_ndx <= 0;
-      reg_ndx_pre <= 0;
-      reg_ndx_post <= 0;
-      pc_delta <= 0;
       address_mode <= MODE_IDLE;
       
       case(address_mode_prepare)
@@ -187,16 +183,26 @@ module m6502_cpu (
             address_mode <= MODE_IND_ABS;
             pc_delta <= 2;
          end
+         MODE_SINGLE:
+            pc_delta <= 0;
       endcase
       case (address_mode_prepare)
+         MODE_Z, MODE_ABS:
+            reg_ndx <= 0;
          MODE_Z_X, MODE_ABS_X:
             reg_ndx <= reg_x;
          MODE_Z_Y, MODE_ABS_Y:
             reg_ndx <= reg_y;
          MODE_IND_X:
-            reg_ndx_pre <= reg_x;
+         begin
+            reg_ndx_pre  <= reg_x;
+            reg_ndx_post <= 0;
+         end
          MODE_IND_Y:
+         begin
+            reg_ndx_pre  <= 0;
             reg_ndx_post <= reg_y;
+         end
       endcase
    end
    
@@ -226,29 +232,31 @@ module m6502_cpu (
    
    localparam MODE_IDLE     = 0;
    localparam MODE_RESET    = 1;
-   localparam MODE_IMM      = 2;
-   localparam MODE_Z        = 3;
-   localparam MODE_Z_X      = 4;
-   localparam MODE_Z_Y      = 5;
-   localparam MODE_ABS      = 6;
-   localparam MODE_ABS_X    = 7;
-   localparam MODE_ABS_Y    = 8;
-   localparam MODE_IND_Z    = 9;
-   localparam MODE_IND_X    = 10;
-   localparam MODE_IND_Y    = 11;
-   localparam MODE_IND_ABS  = 12;
+   localparam MODE_SINGLE   = 2;
+   localparam MODE_IMM      = 3;
+   localparam MODE_Z        = 4;
+   localparam MODE_Z_X      = 5;
+   localparam MODE_Z_Y      = 6;
+   localparam MODE_ABS      = 7;
+   localparam MODE_ABS_X    = 8;
+   localparam MODE_ABS_Y    = 9;
+   localparam MODE_IND_Z    = 10;
+   localparam MODE_IND_X    = 11;
+   localparam MODE_IND_Y    = 12;
+   localparam MODE_IND_ABS  = 13;
    
    localparam NEXT_IDLE     = 0;
    localparam NEXT_RESET1   = 1;
    localparam NEXT_RESET2   = 2;
    localparam NEXT_READ_M   = 3;
-   localparam NEXT_ABS1     = 4;
-   localparam NEXT_ABS2     = 5;
-   localparam NEXT_IND_ABS1 = 6;
-   localparam NEXT_IND_ABS2 = 7;
-   localparam NEXT_IND_ABS3 = 8;
-   localparam NEXT_IND_Z1   = 9;
-   localparam NEXT_IND_Z2   = 10;
+   localparam NEXT_Z        = 4;
+   localparam NEXT_ABS1     = 5;
+   localparam NEXT_ABS2     = 6;
+   localparam NEXT_IND_ABS1 = 7;
+   localparam NEXT_IND_ABS2 = 8;
+   localparam NEXT_IND_ABS3 = 9;
+   localparam NEXT_IND_Z1   = 10;
+   localparam NEXT_IND_Z2   = 11;
 
    reg[3:0] address_mode;
    reg[3:0] address_mode_prepare;
@@ -256,12 +264,14 @@ module m6502_cpu (
    always @ (posedge clk) begin : cpu_load_store_decode
       reg[3:0] next_op;
       reg[7:0] tmp_addr;
+      reg wait_for_load;
       
       load_store <= DO_NOTHING;
       if (!reset_n) begin
          next_op <= NEXT_IDLE;
-      end else if (ready && !bus_rd_req) begin
-         load_store <= DO_NOTHING;
+      end else if (bus_rd_req) begin
+         wait_for_load <= 1;
+      end else if (ready) begin
          load_complete <= 0;
          next_op <= NEXT_IDLE;
          
@@ -271,10 +281,11 @@ module m6502_cpu (
                bus_addr <= pc;
                load_store <= DO_LOAD;
             end
-            MODE_Z:      /* Z */
+            MODE_Z:
             begin
-               bus_addr   <= {8'd0, rd_data} + reg_ndx;
-               load_store <= do_load_store;
+               bus_addr <= pc;
+               load_store <= DO_LOAD;
+               next_op <= NEXT_Z;
             end
             MODE_ABS:  /* ABS */
             begin
@@ -305,10 +316,16 @@ module m6502_cpu (
          
          case (next_op)
             NEXT_IDLE:
-               if (load_store == DO_LOAD) begin
+               if (wait_for_load) begin
                   reg_m <= rd_data;
                   load_complete <= 1;
+                  wait_for_load <= 0;
                end
+            NEXT_Z:
+            begin
+               bus_addr   <= {8'd0, rd_data} + reg_ndx;
+               load_store <= do_load_store;
+            end
             NEXT_ABS1:
             begin
                tmp_addr <= rd_data;
@@ -318,7 +335,7 @@ module m6502_cpu (
             end
             NEXT_ABS2:
             begin
-               bus_addr[15:8] <= {rd_data, tmp_addr} + reg_ndx;
+               bus_addr   <= {rd_data, tmp_addr} + reg_ndx;
                load_store <= do_load_store;
             end
             NEXT_IND_ABS1:
