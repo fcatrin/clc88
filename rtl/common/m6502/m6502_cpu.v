@@ -26,11 +26,9 @@ module m6502_cpu (
 
    localparam CPU_WAIT         = 0;
    localparam CPU_FETCH        = 1;
-   localparam CPU_DECODE_WAIT  = 2;
-   localparam CPU_LOAD_INST    = 3;
-   localparam CPU_EXECUTE      = 4;
-   localparam CPU_EXECUTE_WAIT = 5;
-   localparam CPU_RESET        = 6;
+   localparam CPU_EXECUTE      = 2;
+   localparam CPU_EXECUTE_WAIT = 3;
+   localparam CPU_RESET        = 4;
    
    reg[2:0] cpu_fetch_state = CPU_WAIT;
    reg cpu_reset;
@@ -53,15 +51,7 @@ module m6502_cpu (
                cpu_reset <= 1;
                cpu_fetch_state <= CPU_EXECUTE;
             end
-            CPU_FETCH: 
-            begin
-               fetch_rd_addr <= pc;
-               fetch_rd_req  <= 1;
-               pc <= pc + 1;
-               cpu_fetch_state <= CPU_LOAD_INST;
-               hold_fetch_addr <= 1;
-            end
-            CPU_LOAD_INST:
+            CPU_FETCH:
             begin
                hold_fetch_addr <= 1;
                if (ready && !fetch_rd_req) begin
@@ -76,8 +66,11 @@ module m6502_cpu (
             end
             CPU_EXECUTE_WAIT:
                if (cpu_inst_done) begin
-                  pc <= pc_next;
+                  fetch_rd_addr <= pc_next;
+                  fetch_rd_req  <= 1;
+                  pc <= pc_next + 1;
                   cpu_fetch_state <= CPU_FETCH;
+                  hold_fetch_addr <= 1;
                end
          endcase
       end
