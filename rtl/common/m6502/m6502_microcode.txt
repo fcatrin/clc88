@@ -4,11 +4,11 @@ https://www.masswerk.at/6502/6502_instruction_set.html
 ALU -> input AI, input BI, output O
 ALU ops:
   ADD : O = AI + BI + c,  c=O[8]
+  AND : O = AI & BI
   ASL : O = {AI[6:0], 0}, c=AI[7]
   CMP : O = AI == BI (*)
-  INC : O = AI+1
   DEC : O = AI-1
-  AND : O = AI & BI
+  INC : O = AI+1
   OR  : O = AI | BI
   EOR : O = AI ^ BI
   LSR : O = {0, AI[7:1]}, c=AI[0]

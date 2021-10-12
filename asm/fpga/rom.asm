@@ -18,6 +18,10 @@ irq:
 	rti   
 boot:
 
+   lda #0
+   lda #1
+   lda #127
+   lda #128
    lda #$aa
    sta 20
    lda #$bb

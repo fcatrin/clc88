@@ -9,6 +9,8 @@ module m6502_cpu (
       input  ready
       );
 
+   `include "m6502_alu_ops.vh"
+   
    reg[15:0] pc;
    reg[15:0] pc_next;
    reg[1:0]  pc_delta;
@@ -259,12 +261,14 @@ module m6502_cpu (
       reg[7:0] tmp_addr;
       reg wait_for_load;
       
+      alu_proceed <= 0;
       load_store <= DO_NOTHING;
       if (!reset_n) begin
          next_op <= NEXT_IDLE;
       end else if (bus_rd_req) begin
          wait_for_load <= 1;
       end else if (ready) begin
+         wait_for_load <= 0;
          load_complete <= 0;
          next_op <= NEXT_IDLE;
          
@@ -310,9 +314,12 @@ module m6502_cpu (
          case (next_op)
             NEXT_IDLE:
                if (wait_for_load) begin
+                  alu_op <= OP_UPDATE;
+                  alu_proceed <= 1;
+                  alu_in_a <= rd_data;
+                  
                   reg_m <= rd_data;
                   load_complete <= 1;
-                  wait_for_load <= 0;
                end
             NEXT_Z:
             begin
@@ -391,5 +398,31 @@ module m6502_cpu (
    reg[7:0] bus_wr_data;
    assign wr_data = bus_wr_data;
    
+   reg alu_proceed;
+   reg[3:0] alu_op;
+   reg[7:0] alu_in_a;
+   reg[7:0] alu_in_b;
+   wire[7:0] alu_out;
+   wire flag_c;
+   wire flag_z;
+   wire flag_v;
+   wire flag_n;
+   reg  flag_c_set;
+   reg  flag_c_reset;
    
+   m6502_alu alu (
+         .clk(clk),
+         .reset_n(reset_n),
+         .proceed(alu_proceed),
+         .op(alu_op),
+         .in_a(alu_in_a),
+         .in_b(alu_in_b),
+         .flag_c_set(flag_c_set),
+         .flag_c_reset(flag_c_reset),
+         .out(alu_out),
+         .flag_c(flag_c),
+         .flag_z(flag_z),
+         .flag_v(flag_v),
+         .flag_n(flag_n)
+      );
 endmodule
