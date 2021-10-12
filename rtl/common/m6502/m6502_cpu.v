@@ -125,9 +125,10 @@ module m6502_cpu (
                   7: address_mode_prepare <= MODE_ABS_Y;
                endcase
             end
-            8'b101xxx01: /* CMP */
+            8'b110xxx01: /* CMP */
             begin
                do_load_store <= DO_LOAD;
+               cpu_op <= CPU_OP_CMP;
                case (reg_i[4:2])
                   0: address_mode_prepare <= MODE_IND_X;
                   1: address_mode_prepare <= MODE_Z;
@@ -154,7 +155,8 @@ module m6502_cpu (
                cpu_inst_done <= 1;
                pc_next <= pc + pc_delta;
             end
-            8'b100xxx01: /* STA */
+            8'b100xxx01, /* STA */
+            8'b110xxx01: /* CMP */
             if (load_store_complete) begin
                cpu_inst_done <= 1;
                pc_next <= pc + pc_delta;
@@ -274,6 +276,8 @@ module m6502_cpu (
 
    localparam CPU_OP_NOP = 0;
    localparam CPU_OP_LD  = 1;
+   localparam CPU_OP_CMP = 2;
+   
    reg[3:0] cpu_op;
 
    always @ (posedge clk) begin : cpu_load_store_decode
@@ -403,6 +407,14 @@ module m6502_cpu (
                alu_in_a <= rd_data;
                      
                reg_m <= rd_data;
+               load_complete <= 1;
+            end
+            CPU_OP_CMP:
+            begin
+               alu_op <= OP_CMP;
+               alu_proceed <= 1;
+               alu_in_a <= reg_a;
+               alu_in_b <= rd_data;
                load_complete <= 1;
             end
          endcase

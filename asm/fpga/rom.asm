@@ -18,16 +18,11 @@ irq:
 	rti   
 boot:
 
-   lda #0
-   lda #1
-   lda #127
-   lda #128
-   lda #$aa
-   sta 20
-   lda #$bb
-   sta 1024
-   lda 20
-   lda 1024
+   lda #4
+   cmp #1
+   cmp #0
+   cmp #4
+   cmp #5
 
    jmp demo
    
