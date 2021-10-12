@@ -87,6 +87,7 @@ module m6502_cpu (
       end else if (cpu_fetch_state == CPU_EXECUTE) begin
          address_mode_prepare <= MODE_IDLE;
          cpu_inst_done <= 0;
+         cpu_op <= CPU_OP_NOP;
          if (cpu_reset) begin
             reg_a <= 0;
             reg_x <= 0;
@@ -98,6 +99,7 @@ module m6502_cpu (
             8'b101xxx01: /* LDA */
             begin
                do_load_store <= DO_LOAD;
+               cpu_op <= CPU_OP_LD;
                case (reg_i[4:2])
                   0: address_mode_prepare <= MODE_IND_X;
                   1: address_mode_prepare <= MODE_Z;
@@ -116,6 +118,20 @@ module m6502_cpu (
                case (reg_i[4:2])
                   0: address_mode_prepare <= MODE_IND_X;
                   1: address_mode_prepare <= MODE_Z;
+                  3: address_mode_prepare <= MODE_ABS;
+                  4: address_mode_prepare <= MODE_IND_Y;
+                  5: address_mode_prepare <= MODE_Z_X;
+                  6: address_mode_prepare <= MODE_ABS_X;
+                  7: address_mode_prepare <= MODE_ABS_Y;
+               endcase
+            end
+            8'b101xxx01: /* CMP */
+            begin
+               do_load_store <= DO_LOAD;
+               case (reg_i[4:2])
+                  0: address_mode_prepare <= MODE_IND_X;
+                  1: address_mode_prepare <= MODE_Z;
+                  2: address_mode_prepare <= MODE_IMM;
                   3: address_mode_prepare <= MODE_ABS;
                   4: address_mode_prepare <= MODE_IND_Y;
                   5: address_mode_prepare <= MODE_Z_X;
@@ -255,101 +271,97 @@ module m6502_cpu (
 
    reg[3:0] address_mode;
    reg[3:0] address_mode_prepare;
-   
+
+   localparam CPU_OP_NOP = 0;
+   localparam CPU_OP_LD  = 1;
+   reg[3:0] cpu_op;
+
    always @ (posedge clk) begin : cpu_load_store_decode
-      reg[3:0] next_op;
+      reg[3:0] next_addr_op;
       reg[7:0] tmp_addr;
-      reg wait_for_load;
+      reg cpu_op_finish;
       
       alu_proceed <= 0;
       load_store <= DO_NOTHING;
       if (!reset_n) begin
-         next_op <= NEXT_IDLE;
-      end else if (bus_rd_req) begin
-         wait_for_load <= 1;
-      end else if (ready) begin
-         wait_for_load <= 0;
+         next_addr_op <= NEXT_IDLE;
+      end else if (ready && !bus_rd_req) begin
          load_complete <= 0;
-         next_op <= NEXT_IDLE;
+         cpu_op_finish <= 0;
+         next_addr_op <= NEXT_IDLE;
          
          case(address_mode)
             MODE_IMM:    /* IMM */
             begin
                bus_addr <= pc;
                load_store <= DO_LOAD;
+               cpu_op_finish <= 1;
             end
             MODE_Z:
             begin
                bus_addr <= pc;
                load_store <= DO_LOAD;
-               next_op <= NEXT_Z;
+               next_addr_op <= NEXT_Z;
             end
             MODE_ABS:  /* ABS */
             begin
                bus_addr <= pc;
                load_store <= DO_LOAD;
-               next_op <= NEXT_ABS1;
+               next_addr_op <= NEXT_ABS1;
             end
             MODE_IND_ABS: // JMP (IND)
             begin
                tmp_addr <= rd_data;
                bus_addr <= pc + 1;
                load_store <= DO_LOAD;
-               next_op <= NEXT_IND_ABS1; 
+               next_addr_op <= NEXT_IND_ABS1; 
             end
             MODE_IND_Z:
             begin
                bus_addr <= {8'd0, rd_data} + reg_ndx_pre;
                load_store <= DO_LOAD;
-               next_op <= NEXT_IND_Z1;
+               next_addr_op <= NEXT_IND_Z1;
             end
             MODE_RESET:
             begin
                bus_addr <= 16'hFFFC;
                load_store <= DO_LOAD;
-               next_op <= NEXT_RESET1;
+               next_addr_op <= NEXT_RESET1;
             end
          endcase
          
-         case (next_op)
-            NEXT_IDLE:
-               if (wait_for_load) begin
-                  alu_op <= OP_UPDATE;
-                  alu_proceed <= 1;
-                  alu_in_a <= rd_data;
-                  
-                  reg_m <= rd_data;
-                  load_complete <= 1;
-               end
+         case (next_addr_op)
             NEXT_Z:
             begin
                bus_addr   <= {8'd0, rd_data} + reg_ndx;
                load_store <= do_load_store;
+               cpu_op_finish <= 1;
             end
             NEXT_ABS1:
             begin
                tmp_addr <= rd_data;
                bus_addr <= pc + 1;
                load_store <= DO_LOAD;
-               next_op <= NEXT_ABS2;
+               next_addr_op <= NEXT_ABS2;
             end
             NEXT_ABS2:
             begin
                bus_addr   <= {rd_data, tmp_addr} + reg_ndx;
                load_store <= do_load_store;
+               cpu_op_finish <= 1;
             end
             NEXT_IND_ABS1:
             begin
                bus_addr <= {rd_data, tmp_addr};
                load_store <= DO_LOAD;
-               next_op <= NEXT_IND_ABS2;
+               next_addr_op <= NEXT_IND_ABS2;
             end
             NEXT_IND_ABS2:
             begin
                tmp_addr <= rd_data;
                bus_addr <= bus_addr + 1;
                load_store <= DO_LOAD;
-               next_op <= NEXT_IND_ABS3;
+               next_addr_op <= NEXT_IND_ABS3;
             end
             NEXT_IND_ABS3:
             begin
@@ -361,19 +373,20 @@ module m6502_cpu (
                tmp_addr <= rd_data;
                bus_addr <= bus_addr + 1;
                load_store <= DO_LOAD;
-               next_op <= NEXT_IND_Z2;
+               next_addr_op <= NEXT_IND_Z2;
             end
             NEXT_IND_Z2:
             begin
                bus_addr <= {rd_data, tmp_addr} + reg_ndx_post;
                load_store <= do_load_store;
+               cpu_op_finish <= 1;
             end
             NEXT_RESET1:
             begin
                tmp_addr <= rd_data;
                bus_addr <= bus_addr + 1;
                load_store <= DO_LOAD;
-               next_op <= NEXT_RESET2;
+               next_addr_op <= NEXT_RESET2;
             end
             NEXT_RESET2:
             begin
@@ -381,6 +394,19 @@ module m6502_cpu (
                load_complete <= 1;
             end
          endcase
+         
+         if (cpu_op_finish) case(cpu_op)
+            CPU_OP_LD:
+            begin
+               alu_op <= OP_UPDATE;
+               alu_proceed <= 1;
+               alu_in_a <= rd_data;
+                     
+               reg_m <= rd_data;
+               load_complete <= 1;
+            end
+         endcase
+               
       end
    end
    
