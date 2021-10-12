@@ -71,7 +71,8 @@ module m6502_cpu (
                if (cpu_inst_done) begin
                   fetch_rd_addr <= pc_next;
                   fetch_rd_req  <= 1;
-                  pc <= pc_next + 1;
+                  pc    <= pc_next;
+                  pc_op <= pc_next + 1;
                   cpu_fetch_state <= CPU_FETCH;
                   hold_fetch_addr <= 1;
                end
@@ -160,21 +161,21 @@ module m6502_cpu (
             if (load_store_complete) begin
                reg_a <= reg_m;
                cpu_inst_done <= 1;
-               pc_next <= pc + pc_delta;
+               pc_next <= pc_op + pc_delta;
             end
             8'b100xxx01, /* STA */
             8'b110xxx01: /* CMP */
             if (load_store_complete) begin
                cpu_inst_done <= 1;
-               pc_next <= pc + pc_delta;
+               pc_next <= pc_op + pc_delta;
             end
             8'bxxx10000: /* BRANCH */
             if (load_store_complete) begin
                cpu_inst_done <= 1;
                if (do_branch)
-                  pc_next <= pc + $signed(reg_m) + 1'b1;
+                  pc_next <= pc_op + $signed(reg_m) + 1'b1;
                else
-                  pc_next <= pc + 1;
+                  pc_next <= pc_op + 1;
             end
          endcase
       end
@@ -315,26 +316,26 @@ module m6502_cpu (
          case(address_mode)
             MODE_IMM:    /* IMM */
             begin
-               bus_addr <= pc;
+               bus_addr <= pc_op;
                load_store <= DO_LOAD;
                cpu_op_finish <= 1;
             end
             MODE_Z:
             begin
-               bus_addr <= pc;
+               bus_addr <= pc_op;
                load_store <= DO_LOAD;
                next_addr_op <= NEXT_Z;
             end
             MODE_ABS:  /* ABS */
             begin
-               bus_addr <= pc;
+               bus_addr <= pc_op;
                load_store <= DO_LOAD;
                next_addr_op <= NEXT_ABS1;
             end
             MODE_IND_ABS: // JMP (IND)
             begin
                tmp_addr <= rd_data;
-               bus_addr <= pc + 1;
+               bus_addr <= pc_op + 1;
                load_store <= DO_LOAD;
                next_addr_op <= NEXT_IND_ABS1; 
             end
@@ -362,7 +363,7 @@ module m6502_cpu (
             NEXT_ABS1:
             begin
                tmp_addr <= rd_data;
-               bus_addr <= pc + 1;
+               bus_addr <= pc_op + 1;
                load_store <= DO_LOAD;
                next_addr_op <= NEXT_ABS2;
             end
