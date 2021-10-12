@@ -18,11 +18,15 @@ irq:
 	rti   
 boot:
 
-   lda #4
-   cmp #1
-   cmp #0
-   cmp #4
-   cmp #5
+   lda #22
+   cmp #11
+   bne skip
+   lda #44
+skip:
+   cmp #33
+   beq skip
+   cmp #22
+   beq boot   
 
    jmp demo
    

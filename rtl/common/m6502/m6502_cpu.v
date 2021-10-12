@@ -36,6 +36,7 @@ module m6502_cpu (
    reg cpu_reset;
    reg cpu_inst_done;
    reg cpu_inst_state;
+   reg[2:0] cpu_branch;
    reg hold_fetch_addr;
    
    always @ (posedge clk) begin : cpu_fetch
@@ -140,6 +141,12 @@ module m6502_cpu (
                   7: address_mode_prepare <= MODE_ABS_Y;
                endcase
             end
+            8'bxxx10000: /* BRANCH */
+            begin
+               cpu_op <= CPU_OP_BRANCH;
+               cpu_branch <= reg_i[7:5];
+               address_mode_prepare <= MODE_IMM;
+            end
          endcase
       end else if (cpu_inst_done == 0 && cpu_fetch_state == CPU_EXECUTE_WAIT) begin
          if (wait_for_reset) begin
@@ -160,6 +167,14 @@ module m6502_cpu (
             if (load_store_complete) begin
                cpu_inst_done <= 1;
                pc_next <= pc + pc_delta;
+            end
+            8'bxxx10000: /* BRANCH */
+            if (load_store_complete) begin
+               cpu_inst_done <= 1;
+               if (do_branch)
+                  pc_next <= pc + $signed(reg_m) + 1'b1;
+               else
+                  pc_next <= pc + 1;
             end
          endcase
       end
@@ -274,11 +289,13 @@ module m6502_cpu (
    reg[3:0] address_mode;
    reg[3:0] address_mode_prepare;
 
-   localparam CPU_OP_NOP = 0;
-   localparam CPU_OP_LD  = 1;
-   localparam CPU_OP_CMP = 2;
+   localparam CPU_OP_NOP    = 0;
+   localparam CPU_OP_LD     = 1;
+   localparam CPU_OP_CMP    = 2;
+   localparam CPU_OP_BRANCH = 3;
    
    reg[3:0] cpu_op;
+   reg do_branch;
 
    always @ (posedge clk) begin : cpu_load_store_decode
       reg[3:0] next_addr_op;
@@ -286,6 +303,7 @@ module m6502_cpu (
       reg cpu_op_finish;
       
       alu_proceed <= 0;
+      do_branch <= 0;
       load_store <= DO_NOTHING;
       if (!reset_n) begin
          next_addr_op <= NEXT_IDLE;
@@ -415,6 +433,21 @@ module m6502_cpu (
                alu_proceed <= 1;
                alu_in_a <= reg_a;
                alu_in_b <= rd_data;
+               load_complete <= 1;
+            end
+            CPU_OP_BRANCH:
+            begin
+               reg_m <= rd_data;
+               case(cpu_branch)
+                  3'b000 : do_branch <= !flag_n; // BPL
+                  3'b001 : do_branch <=  flag_n; // BMI
+                  3'b010 : do_branch <= !flag_v; // BVC
+                  3'b011 : do_branch <=  flag_v; // BVS
+                  3'b100 : do_branch <= !flag_c; // BCC
+                  3'b101 : do_branch <=  flag_c; // BCS
+                  3'b110 : do_branch <= !flag_z; // BNE
+                  3'b111 : do_branch <=  flag_z; // BEQ
+               endcase
                load_complete <= 1;
             end
          endcase
