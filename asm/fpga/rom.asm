@@ -18,9 +18,9 @@ irq:
 	rti   
 boot:
 
-   lda #$1A
-   ora #$95  // result should be 9F
-   ora #$C0  // result should be DF
+   lda #$9A
+   and #$f8  // result should be 98
+   and #$82  // result should be 80
    jmp demo
    
    // icl 'demos/text_mode_attrib.asm'

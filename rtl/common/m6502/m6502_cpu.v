@@ -115,6 +115,11 @@ module m6502_cpu (
                      do_load_store <= DO_LOAD;
                      cpu_op <= CPU_OP_ORA;
                   end
+                  6'b001: /* AND */
+                  begin
+                     do_load_store <= DO_LOAD;
+                     cpu_op <= CPU_OP_AND;
+                  end
                   6'b101: /* LDA */
                   begin
                      do_load_store <= DO_LOAD;
@@ -151,13 +156,12 @@ module m6502_cpu (
                wait_for_reset <= 0;
             end
          end else casex (reg_i)
-            8'b000xxx01: /* ORA */
+            8'b000xxx01, /* ORA */
+            8'b001xxx01: /* AND */
             if (load_store_complete) begin
                reg_a <= alu_out;
-               reg_x <= trace;
                cpu_inst_done <= 1;
                pc <= pc + pc_delta;
-               trace <= 1;
             end
             8'b101xxx01: /* LDA */
             if (load_store_complete) begin
@@ -299,6 +303,7 @@ module m6502_cpu (
    localparam CPU_OP_CMP    = 2;
    localparam CPU_OP_BRANCH = 3;
    localparam CPU_OP_ORA    = 4;
+   localparam CPU_OP_AND    = 5;
    
    reg[3:0] cpu_op;
    reg do_branch;
@@ -423,49 +428,52 @@ module m6502_cpu (
             end
          endcase
          
-         if (cpu_op_finish) case(cpu_op)
-            CPU_OP_LD:
-            begin
-               alu_op <= OP_UPDATE;
-               alu_proceed <= 1;
-               alu_in_a <= rd_data;
-                     
-               reg_m <= rd_data;
-               load_complete <= 1;
-            end
-            CPU_OP_CMP:
-            begin
-               alu_op <= OP_CMP;
-               alu_proceed <= 1;
-               alu_in_a <= reg_a;
-               alu_in_b <= rd_data;
-               load_complete <= 1;
-            end
-            CPU_OP_ORA:
-            begin
-               alu_op <= OP_OR;
-               alu_proceed <= 1;
-               alu_in_a <= reg_a;
-               alu_in_b <= rd_data;
-               load_complete <= 1;
-            end
-            CPU_OP_BRANCH:
-            begin
-               reg_m <= rd_data;
-               case(cpu_branch)
-                  3'b000 : do_branch <= !flag_n; // BPL
-                  3'b001 : do_branch <=  flag_n; // BMI
-                  3'b010 : do_branch <= !flag_v; // BVC
-                  3'b011 : do_branch <=  flag_v; // BVS
-                  3'b100 : do_branch <= !flag_c; // BCC
-                  3'b101 : do_branch <=  flag_c; // BCS
-                  3'b110 : do_branch <= !flag_z; // BNE
-                  3'b111 : do_branch <=  flag_z; // BEQ
-               endcase
-               load_complete <= 1;
-            end
-         endcase
+         if (cpu_op_finish) begin
+            case(cpu_op)
+               CPU_OP_AND,
+               CPU_OP_ORA,
+               CPU_OP_CMP:
+               begin
+                  alu_proceed <= 1;
+                  alu_in_a <= reg_a;
+                  alu_in_b <= rd_data;
+                  load_complete <= 1;
+               end
+            endcase
                
+            case(cpu_op)
+               CPU_OP_LD:
+               begin
+                  alu_op <= OP_UPDATE;
+                  alu_proceed <= 1;
+                  alu_in_a <= rd_data;
+                        
+                  reg_m <= rd_data;
+                  load_complete <= 1;
+               end
+               CPU_OP_CMP:
+                  alu_op <= OP_CMP;
+               CPU_OP_ORA:
+                  alu_op <= OP_OR;
+               CPU_OP_AND:
+                  alu_op <= OP_AND;
+               CPU_OP_BRANCH:
+               begin
+                  reg_m <= rd_data;
+                  case(cpu_branch)
+                     3'b000 : do_branch <= !flag_n; // BPL
+                     3'b001 : do_branch <=  flag_n; // BMI
+                     3'b010 : do_branch <= !flag_v; // BVC
+                     3'b011 : do_branch <=  flag_v; // BVS
+                     3'b100 : do_branch <= !flag_c; // BCC
+                     3'b101 : do_branch <=  flag_c; // BCS
+                     3'b110 : do_branch <= !flag_z; // BNE
+                     3'b111 : do_branch <=  flag_z; // BEQ
+                  endcase
+                  load_complete <= 1;
+               end
+            endcase
+         end   
       end
    end
    
