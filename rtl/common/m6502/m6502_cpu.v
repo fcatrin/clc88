@@ -12,7 +12,7 @@ module m6502_cpu (
    `include "m6502_alu_ops.vh"
    
    reg[15:0] pc;
-   reg[15:0] pc_next;
+   reg[15:0] pc_op;
    reg[1:0]  pc_delta;
    reg[7:0]  reg_i;
    reg[7:0]  reg_a;
@@ -69,10 +69,9 @@ module m6502_cpu (
             end
             CPU_EXECUTE_WAIT:
                if (cpu_inst_done) begin
-                  fetch_rd_addr <= pc_next;
+                  fetch_rd_addr <= pc;
                   fetch_rd_req  <= 1;
-                  pc    <= pc_next;
-                  pc_op <= pc_next + 1;
+                  pc_op <= pc + 1;
                   cpu_fetch_state <= CPU_FETCH;
                   hold_fetch_addr <= 1;
                end
@@ -97,11 +96,9 @@ module m6502_cpu (
             reg_sp <= 8'hff;
             address_mode_prepare <= MODE_RESET;
             wait_for_reset <= 1;
-         end else casex (reg_i)  // format aaabbbcc
-            8'b101xxx01: /* LDA */
+         end else case (reg_i[1:0])  // format aaabbbcc. Check cc first
+            2'b01:
             begin
-               do_load_store <= DO_LOAD;
-               cpu_op <= CPU_OP_LD;
                case (reg_i[4:2])
                   0: address_mode_prepare <= MODE_IND_X;
                   1: address_mode_prepare <= MODE_Z;
@@ -112,47 +109,38 @@ module m6502_cpu (
                   6: address_mode_prepare <= MODE_ABS_X;
                   7: address_mode_prepare <= MODE_ABS_Y;
                endcase
-            end
-            8'b100xxx01: /* STA */
-            begin
-               do_load_store <= DO_STORE;
-               reg_write <= reg_a;
-               case (reg_i[4:2])
-                  0: address_mode_prepare <= MODE_IND_X;
-                  1: address_mode_prepare <= MODE_Z;
-                  3: address_mode_prepare <= MODE_ABS;
-                  4: address_mode_prepare <= MODE_IND_Y;
-                  5: address_mode_prepare <= MODE_Z_X;
-                  6: address_mode_prepare <= MODE_ABS_X;
-                  7: address_mode_prepare <= MODE_ABS_Y;
+               case (reg_i[7:5])
+                  6'b101: /* LDA */
+                  begin
+                     do_load_store <= DO_LOAD;
+                     cpu_op <= CPU_OP_LD;
+                  end
+                  6'b100: /* STA */
+                  begin
+                     do_load_store <= DO_STORE;
+                     reg_write <= reg_a;
+                  end
+                  6'b110: /* CMP */
+                  begin
+                     do_load_store <= DO_LOAD;
+                     cpu_op <= CPU_OP_CMP;
+                  end
                endcase
             end
-            8'b110xxx01: /* CMP */
-            begin
-               do_load_store <= DO_LOAD;
-               cpu_op <= CPU_OP_CMP;
-               case (reg_i[4:2])
-                  0: address_mode_prepare <= MODE_IND_X;
-                  1: address_mode_prepare <= MODE_Z;
-                  2: address_mode_prepare <= MODE_IMM;
-                  3: address_mode_prepare <= MODE_ABS;
-                  4: address_mode_prepare <= MODE_IND_Y;
-                  5: address_mode_prepare <= MODE_Z_X;
-                  6: address_mode_prepare <= MODE_ABS_X;
-                  7: address_mode_prepare <= MODE_ABS_Y;
-               endcase
-            end
-            8'bxxx10000: /* BRANCH */
-            begin
-               cpu_op <= CPU_OP_BRANCH;
-               cpu_branch <= reg_i[7:5];
-               address_mode_prepare <= MODE_IMM;
-            end
+            2'b00:
+            casex (reg_i[7:2])
+               6'bxxx100: /* BRANCH */
+               begin
+                  cpu_op <= CPU_OP_BRANCH;
+                  cpu_branch <= reg_i[7:5];
+                  address_mode_prepare <= MODE_IMM;
+               end
+            endcase
          endcase
       end else if (cpu_inst_done == 0 && cpu_fetch_state == CPU_EXECUTE_WAIT) begin
          if (wait_for_reset) begin
             if (load_complete) begin
-               pc_next <= reg_word;
+               pc <= reg_word;
                cpu_inst_done <= 1;
                wait_for_reset <= 0;
             end
@@ -161,21 +149,18 @@ module m6502_cpu (
             if (load_store_complete) begin
                reg_a <= reg_m;
                cpu_inst_done <= 1;
-               pc_next <= pc_op + pc_delta;
+               pc <= pc + pc_delta;
             end
             8'b100xxx01, /* STA */
             8'b110xxx01: /* CMP */
             if (load_store_complete) begin
                cpu_inst_done <= 1;
-               pc_next <= pc_op + pc_delta;
+               pc <= pc + pc_delta;
             end
             8'bxxx10000: /* BRANCH */
             if (load_store_complete) begin
                cpu_inst_done <= 1;
-               if (do_branch)
-                  pc_next <= pc_op + $signed(reg_m) + 1'b1;
-               else
-                  pc_next <= pc_op + 1;
+               pc <= pc + 2 + (do_branch ? $signed(reg_m) : 0);
             end
          endcase
       end
@@ -190,30 +175,30 @@ module m6502_cpu (
          MODE_IMM:
          begin
             address_mode <= MODE_IMM;
-            pc_delta <= 1;
+            pc_delta <= 2;
          end
          MODE_Z, MODE_Z_X, MODE_Z_Y:
          begin
             address_mode <= MODE_Z;
-            pc_delta <= 1;
+            pc_delta <= 2;
          end
          MODE_IND_X, MODE_IND_Y:
          begin
             address_mode <= MODE_IND_Z;
-            pc_delta <= 1;
+            pc_delta <= 2;
          end
          MODE_ABS, MODE_ABS_X, MODE_ABS_Y:
          begin
             address_mode <= MODE_ABS;
-            pc_delta <= 2;
+            pc_delta <= 3;
          end
          MODE_IND_ABS:
          begin
             address_mode <= MODE_IND_ABS;
-            pc_delta <= 2;
+            pc_delta <= 3;
          end
          MODE_SINGLE:
-            pc_delta <= 0;
+            pc_delta <= 1;
       endcase
       case (address_mode_prepare)
          MODE_Z, MODE_ABS:
