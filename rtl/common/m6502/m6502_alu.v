@@ -37,11 +37,11 @@ module m6502_alu (
                result <= in_a | in_b;
             OP_EOR:
                result <= in_a ^ in_b;
-            OP_ADD:
+            OP_ADC:
             begin
                result   <= in_a + in_b + flag_c;
                ov       <= in_a[6:0] + in_b[6:0] + flag_c;
-               op_post  <= OP_ADD;
+               op_post  <= OP_ADC;
             end
             OP_INC:
                result <= in_a + 1;
@@ -92,7 +92,7 @@ module m6502_alu (
       end else if (!flag_c_reset_prev & flag_c_reset_prev) begin
          flag_c <= 0;
       end else case (op_post)
-         OP_ADD:
+         OP_ADC:
          begin
             flag_c <= result[8];
             flag_v <= (!in_a[7] & !in_b[7] & ov[7]) | (in_a[7] & in_b[7] & ov[7]);

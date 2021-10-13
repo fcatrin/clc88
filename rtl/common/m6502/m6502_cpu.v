@@ -113,6 +113,7 @@ module m6502_cpu (
                   6'b000, /* ORA */
                   6'b001, /* AND */
                   6'b010, /* EOR */
+                  6'b011, /* ADC */
                   6'b101, /* LDA */
                   6'b110: /* CMP */
                      do_load_store <= DO_LOAD;
@@ -122,6 +123,7 @@ module m6502_cpu (
                   6'b000: cpu_op <= CPU_OP_ORA;
                   6'b001: cpu_op <= CPU_OP_AND;
                   6'b010: cpu_op <= CPU_OP_EOR;
+                  6'b011: cpu_op <= CPU_OP_ADC;
                   6'b101: cpu_op <= CPU_OP_LD;
                   6'b110: cpu_op <= CPU_OP_CMP;
                   6'b100: /* STA */
@@ -152,6 +154,7 @@ module m6502_cpu (
             8'b000xxx01, /* ORA */
             8'b001xxx01, /* AND */
             8'b010xxx01, /* EOR */
+            8'b011xxx01, /* ADC */
             8'b101xxx01: /* LDA */
             if (load_store_complete) begin
                reg_a <= alu_out;
@@ -289,6 +292,7 @@ module m6502_cpu (
    localparam CPU_OP_ORA    = 4;
    localparam CPU_OP_AND    = 5;
    localparam CPU_OP_EOR    = 6;
+   localparam CPU_OP_ADC    = 7;
    
    reg[3:0] cpu_op;
    reg do_branch;
@@ -418,6 +422,7 @@ module m6502_cpu (
          end else if (cpu_op_finish) begin
             case(cpu_op)
                CPU_OP_AND,
+               CPU_OP_ADC,
                CPU_OP_ORA,
                CPU_OP_CMP,
                CPU_OP_EOR:
@@ -441,6 +446,7 @@ module m6502_cpu (
                CPU_OP_ORA: alu_op <= OP_OR;
                CPU_OP_AND: alu_op <= OP_AND;
                CPU_OP_EOR: alu_op <= OP_EOR;
+               CPU_OP_ADC: alu_op <= OP_ADC;
                CPU_OP_BRANCH:
                begin
                   reg_m <= rd_data;
