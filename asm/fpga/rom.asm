@@ -19,8 +19,8 @@ irq:
 boot:
 
    lda #$9A
-   and #$f8  // result should be 98
-   and #$82  // result should be 80
+   eor #$f8  // result should be 62
+   eor #$82  // result should be e0
    jmp demo
    
    // icl 'demos/text_mode_attrib.asm'

@@ -22,7 +22,7 @@ module m6502_alu (
    reg      next_c;
    assign out = result[7:0];
    
-   always @ (negedge clk) begin 
+   always @ (posedge clk) begin 
       reg proceed_prev;
 
       op_post <= OP_NOP;
