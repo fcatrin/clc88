@@ -22,7 +22,7 @@ module m6502_alu (
    reg      next_c;
    assign out = result[7:0];
    
-   always @ (posedge clk) begin 
+   always @ (negedge clk) begin 
       reg proceed_prev;
 
       op_post <= OP_NOP;
@@ -77,7 +77,7 @@ module m6502_alu (
       end
    end
    
-   always @ (negedge clk) begin : update_flags
+   always @ (posedge clk) begin : update_flags
       reg flag_c_set_prev;
       reg flag_c_reset_prev;
       

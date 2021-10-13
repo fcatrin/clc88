@@ -18,16 +18,9 @@ irq:
 	rti   
 boot:
 
-   lda #22
-   cmp #11
-   bne skip
-   lda #44
-skip:
-   cmp #33
-   beq skip
-   cmp #22
-   beq boot   
-
+   lda #$1A
+   ora #$95  // result should be 9F
+   ora #$C0  // result should be DF
    jmp demo
    
    // icl 'demos/text_mode_attrib.asm'

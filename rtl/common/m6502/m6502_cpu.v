@@ -110,6 +110,11 @@ module m6502_cpu (
                   7: address_mode_prepare <= MODE_ABS_Y;
                endcase
                case (reg_i[7:5])
+                  6'b000: /* ORA */
+                  begin
+                     do_load_store <= DO_LOAD;
+                     cpu_op <= CPU_OP_ORA;
+                  end
                   6'b101: /* LDA */
                   begin
                      do_load_store <= DO_LOAD;
@@ -138,6 +143,7 @@ module m6502_cpu (
             endcase
          endcase
       end else if (cpu_inst_done == 0 && cpu_fetch_state == CPU_EXECUTE_WAIT) begin
+         trace <= 8'hff;
          if (wait_for_reset) begin
             if (load_complete) begin
                pc <= reg_word;
@@ -145,26 +151,39 @@ module m6502_cpu (
                wait_for_reset <= 0;
             end
          end else casex (reg_i)
+            8'b000xxx01: /* ORA */
+            if (load_store_complete) begin
+               reg_a <= alu_out;
+               reg_x <= trace;
+               cpu_inst_done <= 1;
+               pc <= pc + pc_delta;
+               trace <= 1;
+            end
             8'b101xxx01: /* LDA */
             if (load_store_complete) begin
                reg_a <= reg_m;
                cpu_inst_done <= 1;
                pc <= pc + pc_delta;
+               trace <= 2;
             end
             8'b100xxx01, /* STA */
             8'b110xxx01: /* CMP */
             if (load_store_complete) begin
                cpu_inst_done <= 1;
                pc <= pc + pc_delta;
+               trace <= 3;
             end
             8'bxxx10000: /* BRANCH */
             if (load_store_complete) begin
                cpu_inst_done <= 1;
                pc <= pc + 2 + (do_branch ? $signed(reg_m) : 0);
+               trace <= 4;
             end
          endcase
       end
    end
+   
+   reg[7:0] trace = 0;
    
    always @ (negedge clk) begin : cpu_set_addr_mode
       address_mode <= MODE_IDLE;
@@ -279,6 +298,7 @@ module m6502_cpu (
    localparam CPU_OP_LD     = 1;
    localparam CPU_OP_CMP    = 2;
    localparam CPU_OP_BRANCH = 3;
+   localparam CPU_OP_ORA    = 4;
    
    reg[3:0] cpu_op;
    reg do_branch;
@@ -416,6 +436,14 @@ module m6502_cpu (
             CPU_OP_CMP:
             begin
                alu_op <= OP_CMP;
+               alu_proceed <= 1;
+               alu_in_a <= reg_a;
+               alu_in_b <= rd_data;
+               load_complete <= 1;
+            end
+            CPU_OP_ORA:
+            begin
+               alu_op <= OP_OR;
                alu_proceed <= 1;
                alu_in_a <= reg_a;
                alu_in_b <= rd_data;
