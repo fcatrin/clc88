@@ -1,3 +1,14 @@
+/*
+ * MOS 6502 (based con cornet_cpu draft) 
+ * 
+ * Instruction reference and decoding tips
+ * https://www.masswerk.at/6502/6502_instruction_set.html
+ * 
+ * Also got some ideas from 
+ * https://github.com/dmsc/my6502/blob/master/rtl/cpu.v
+ * 
+ */
+
 module m6502_cpu (
       input clk,
       input reset_n,
@@ -135,20 +146,24 @@ module m6502_cpu (
                end
             end
             2'b10:
+            begin
+               if (!reg_i[7]) begin
+                  do_load_store <= DO_LOAD;
+                  case (reg_i[4:2])
+                     1: address_mode_prepare <= MODE_Z;
+                     2: address_mode_prepare <= MODE_A;
+                     3: address_mode_prepare <= MODE_ABS;
+                     5: address_mode_prepare <= MODE_Z_X;
+                     7: address_mode_prepare <= MODE_ABS_Y;
+                  endcase
+               end
                case (reg_i[7:5])
                   6'b000:
-                  begin
-                     do_load_store <= DO_LOAD;
                      cpu_op <= CPU_OP_ASL;
-                     case (reg_i[4:2])
-                        1: address_mode_prepare <= MODE_Z;
-                        2: address_mode_prepare <= MODE_A;
-                        3: address_mode_prepare <= MODE_ABS;
-                        5: address_mode_prepare <= MODE_Z_X;
-                        7: address_mode_prepare <= MODE_ABS_Y;
-                     endcase
-                  end
+                  6'b001:
+                     cpu_op <= CPU_OP_ROL;
                endcase
+            end
          endcase
       end else if (cpu_inst_done == 0 && cpu_fetch_state == CPU_EXECUTE_WAIT) begin
          if (wait_for_reset) begin
@@ -166,7 +181,8 @@ module m6502_cpu (
                8'b011xxx01, /* ADC */
                8'b101xxx01, /* LDA */
                8'b111xxx01, /* SBC */
-               8'b000xxx10: /* ASL */
+               8'b000xxx10, /* ASL */
+               8'b001xxx10: /* ROL */
                begin
                   reg_a <= alu_out;
                   pc <= pc + pc_delta;
@@ -308,6 +324,7 @@ module m6502_cpu (
    localparam CPU_OP_ADC    = 7;
    localparam CPU_OP_SBC    = 8;
    localparam CPU_OP_ASL    = 9;
+   localparam CPU_OP_ROL    = 10;
    
    reg[3:0] cpu_op;
    reg do_branch;
@@ -471,6 +488,12 @@ module m6502_cpu (
                CPU_OP_ASL:
                begin
                   alu_op <= OP_ASL;
+                  alu_proceed <= 1;
+                  alu_in_a <= use_a ? reg_a : rd_data;
+               end
+               CPU_OP_ROL:
+               begin
+                  alu_op <= OP_ROL;
                   alu_proceed <= 1;
                   alu_in_a <= use_a ? reg_a : rd_data;
                end
