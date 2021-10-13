@@ -97,6 +97,15 @@ module m6502_cpu (
             address_mode_prepare <= MODE_RESET;
             wait_for_reset <= 1;
          end else case (reg_i[1:0])  // format aaabbbcc. Check cc first
+            2'b00:
+               casex (reg_i[7:2])
+                  6'bxxx100: /* BRANCH */
+                  begin
+                     cpu_op <= CPU_OP_BRANCH;
+                     cpu_branch <= reg_i[7:5];
+                     address_mode_prepare <= MODE_IMM;
+                  end
+               endcase
             2'b01:
             begin
                case (reg_i[4:2])
@@ -125,15 +134,21 @@ module m6502_cpu (
                   endcase
                end
             end
-            2'b00:
-            casex (reg_i[7:2])
-               6'bxxx100: /* BRANCH */
-               begin
-                  cpu_op <= CPU_OP_BRANCH;
-                  cpu_branch <= reg_i[7:5];
-                  address_mode_prepare <= MODE_IMM;
-               end
-            endcase
+            2'b10:
+               case (reg_i[7:5])
+                  6'b000:
+                  begin
+                     do_load_store <= DO_LOAD;
+                     cpu_op <= CPU_OP_ASL;
+                     case (reg_i[4:2])
+                        1: address_mode_prepare <= MODE_Z;
+                        2: address_mode_prepare <= MODE_A;
+                        3: address_mode_prepare <= MODE_ABS;
+                        5: address_mode_prepare <= MODE_Z_X;
+                        7: address_mode_prepare <= MODE_ABS_Y;
+                     endcase
+                  end
+               endcase
          endcase
       end else if (cpu_inst_done == 0 && cpu_fetch_state == CPU_EXECUTE_WAIT) begin
          if (wait_for_reset) begin
@@ -150,7 +165,8 @@ module m6502_cpu (
                8'b010xxx01, /* EOR */
                8'b011xxx01, /* ADC */
                8'b101xxx01, /* LDA */
-               8'b111xxx01: /* SBC */
+               8'b111xxx01, /* SBC */
+               8'b000xxx10: /* ASL */
                begin
                   reg_a <= alu_out;
                   pc <= pc + pc_delta;
@@ -177,6 +193,11 @@ module m6502_cpu (
          begin
             address_mode <= MODE_IMM;
             pc_delta <= 2;
+         end
+         MODE_A:
+         begin
+            address_mode <= MODE_A;
+            pc_delta <= 1;
          end
          MODE_Z, MODE_Z_X, MODE_Z_Y:
          begin
@@ -248,17 +269,18 @@ module m6502_cpu (
    localparam MODE_IDLE     = 0;
    localparam MODE_RESET    = 1;
    localparam MODE_SINGLE   = 2;
-   localparam MODE_IMM      = 3;
-   localparam MODE_Z        = 4;
-   localparam MODE_Z_X      = 5;
-   localparam MODE_Z_Y      = 6;
-   localparam MODE_ABS      = 7;
-   localparam MODE_ABS_X    = 8;
-   localparam MODE_ABS_Y    = 9;
-   localparam MODE_IND_Z    = 10;
-   localparam MODE_IND_X    = 11;
-   localparam MODE_IND_Y    = 12;
-   localparam MODE_IND_ABS  = 13;
+   localparam MODE_A        = 3;
+   localparam MODE_IMM      = 4;
+   localparam MODE_Z        = 5;
+   localparam MODE_Z_X      = 6;
+   localparam MODE_Z_Y      = 7;
+   localparam MODE_ABS      = 8;
+   localparam MODE_ABS_X    = 9;
+   localparam MODE_ABS_Y    = 10;
+   localparam MODE_IND_Z    = 11;
+   localparam MODE_IND_X    = 12;
+   localparam MODE_IND_Y    = 13;
+   localparam MODE_IND_ABS  = 14;
    
    localparam NEXT_IDLE     = 0;
    localparam NEXT_RESET1   = 1;
@@ -285,6 +307,7 @@ module m6502_cpu (
    localparam CPU_OP_EOR    = 6;
    localparam CPU_OP_ADC    = 7;
    localparam CPU_OP_SBC    = 8;
+   localparam CPU_OP_ASL    = 9;
    
    reg[3:0] cpu_op;
    reg do_branch;
@@ -293,7 +316,9 @@ module m6502_cpu (
       reg[3:0] next_addr_op;
       reg[7:0] tmp_addr;
       reg cpu_op_finish;
+      reg use_a;
       
+      use_a <= 0;
       alu_proceed <= 0;
       do_branch <= 0;
       load_store <= DO_NOTHING;
@@ -305,6 +330,11 @@ module m6502_cpu (
          next_addr_op <= NEXT_IDLE;
          
          case(address_mode)
+            MODE_A:      /* A */
+            begin
+               use_a <= 1;
+               cpu_op_finish <= 1;
+            end
             MODE_IMM:    /* IMM */
             begin
                bus_addr <= pc_op;
@@ -437,6 +467,12 @@ module m6502_cpu (
                   alu_proceed <= 1;
                   alu_in_a <= reg_a;
                   alu_in_b <= 8'hff ^ rd_data;
+               end
+               CPU_OP_ASL:
+               begin
+                  alu_op <= OP_ASL;
+                  alu_proceed <= 1;
+                  alu_in_a <= use_a ? reg_a : rd_data;
                end
                CPU_OP_CMP: alu_op <= OP_CMP;
                CPU_OP_ORA: alu_op <= OP_OR;
