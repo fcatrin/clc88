@@ -81,27 +81,36 @@ module m6502_alu (
       reg flag_c_set_prev;
       reg flag_c_reset_prev;
       
-      flag_c_set_prev   <= flag_c_set;
-      flag_c_reset_prev <= flag_c_reset;
-
-      flag_z <= out == 0;
-      flag_n <= out[7];
-      
-      if (!flag_c_set_prev & flag_c_set) begin
-         flag_c <= 1;
-      end else if (!flag_c_reset_prev & flag_c_reset_prev) begin
+      if (~reset_n) begin
+         flag_c_set_prev   <= 0;
+         flag_c_reset_prev <= 0;
          flag_c <= 0;
-      end else case (op_post)
-         OP_ADC:
-         begin
-            flag_c <= result[8];
-            flag_v <= (!in_a[7] & !in_b[7] & ov[7]) | (in_a[7] & in_b[7] & ov[7]);
-         end
-         OP_CMP:
-            flag_c <= !result[8];
-         OP_UPDATE_C:
-            flag_c <= next_c;
-      endcase
+         flag_z <= 0;
+         flag_n <= 0;
+         flag_v <= 0;
+      end else begin
+         flag_c_set_prev   <= flag_c_set;
+         flag_c_reset_prev <= flag_c_reset;
+   
+         flag_z <= out == 0;
+         flag_n <= out[7];
+         
+         if (!flag_c_set_prev & flag_c_set) begin
+            flag_c <= 1;
+         end else if (!flag_c_reset_prev & flag_c_reset_prev) begin
+            flag_c <= 0;
+         end else case (op_post)
+            OP_ADC:
+            begin
+               flag_c <= result[8];
+               flag_v <= (!in_a[7] & !in_b[7] & ov[7]) | (in_a[7] & in_b[7] & ov[7]);
+            end
+            OP_CMP:
+               flag_c <= !result[8];
+            OP_UPDATE_C:
+               flag_c <= next_c;
+         endcase
+      end
    end
    
 endmodule
