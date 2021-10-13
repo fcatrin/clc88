@@ -18,12 +18,9 @@ irq:
 	rti   
 boot:
 
-   lda #$7F
-   adc #$02  // result should be $81
-   adc #$8A  // result should be $0B, flag_c = 1
-   adc #$01  // result should be $0D
-   adc #$23  // result should be $30, flag_c = 0, flag_v = 0
-   adc #$70  // result should be $A0, flag_c = 0, flag_v = 1
+   lda #$0A
+   sbc #$02 // result should be 7, flag_c = 1
+   sbc #$03 // result should be 4, flag_c = 1 
    jmp demo
    
    // icl 'demos/text_mode_attrib.asm'

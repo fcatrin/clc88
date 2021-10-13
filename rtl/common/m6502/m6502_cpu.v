@@ -115,7 +115,8 @@ module m6502_cpu (
                   6'b010, /* EOR */
                   6'b011, /* ADC */
                   6'b101, /* LDA */
-                  6'b110: /* CMP */
+                  6'b110, /* SBC */
+                  6'b111: /* CMP */
                      do_load_store <= DO_LOAD;
                endcase
 
@@ -126,6 +127,7 @@ module m6502_cpu (
                   6'b011: cpu_op <= CPU_OP_ADC;
                   6'b101: cpu_op <= CPU_OP_LD;
                   6'b110: cpu_op <= CPU_OP_CMP;
+                  6'b111: cpu_op <= CPU_OP_SBC;
                   6'b100: /* STA */
                   begin
                      do_load_store <= DO_STORE;
@@ -155,7 +157,8 @@ module m6502_cpu (
             8'b001xxx01, /* AND */
             8'b010xxx01, /* EOR */
             8'b011xxx01, /* ADC */
-            8'b101xxx01: /* LDA */
+            8'b101xxx01, /* LDA */
+            8'b111xxx01: /* SBC */
             if (load_store_complete) begin
                reg_a <= alu_out;
                cpu_inst_done <= 1;
@@ -293,6 +296,7 @@ module m6502_cpu (
    localparam CPU_OP_AND    = 5;
    localparam CPU_OP_EOR    = 6;
    localparam CPU_OP_ADC    = 7;
+   localparam CPU_OP_SBC    = 8;
    
    reg[3:0] cpu_op;
    reg do_branch;
@@ -303,7 +307,6 @@ module m6502_cpu (
       reg cpu_op_finish;
       
       alu_proceed <= 0;
-      alu_wait <= 0;
       do_branch <= 0;
       load_store <= DO_NOTHING;
       if (!reset_n) begin
@@ -417,7 +420,7 @@ module m6502_cpu (
                load_complete <= 1;
             end
          endcase
-         if (alu_wait) begin
+         if (alu_proceed) begin
             load_complete <= 1;
          end else if (cpu_op_finish) begin
             case(cpu_op)
@@ -430,7 +433,6 @@ module m6502_cpu (
                   alu_proceed <= 1;
                   alu_in_a <= reg_a;
                   alu_in_b <= rd_data;
-                  alu_wait <= 1;
                end
             endcase
                
@@ -440,7 +442,13 @@ module m6502_cpu (
                   alu_op <= OP_UPDATE;
                   alu_proceed <= 1;
                   alu_in_a <= rd_data;
-                  alu_wait <= 1;
+               end
+               CPU_OP_SBC:
+               begin
+                  alu_op <= OP_ADC;
+                  alu_proceed <= 1;
+                  alu_in_a <= reg_a;
+                  alu_in_b <= 8'hff ^ rd_data;
                end
                CPU_OP_CMP: alu_op <= OP_CMP;
                CPU_OP_ORA: alu_op <= OP_OR;
@@ -482,7 +490,6 @@ module m6502_cpu (
    assign wr_data = bus_wr_data;
    
    reg alu_proceed;
-   reg alu_wait;
    reg[3:0]  alu_op;
    reg[7:0]  alu_in_a;
    reg[7:0]  alu_in_b;
