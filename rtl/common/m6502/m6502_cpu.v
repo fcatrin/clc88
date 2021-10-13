@@ -102,38 +102,28 @@ module m6502_cpu (
                case (reg_i[4:2])
                   0: address_mode_prepare <= MODE_IND_X;
                   1: address_mode_prepare <= MODE_Z;
-                  2: address_mode_prepare <= MODE_IMM;
+                  2: address_mode_prepare <= MODE_IMM; // undetermined with STA
                   3: address_mode_prepare <= MODE_ABS;
                   4: address_mode_prepare <= MODE_IND_Y;
                   5: address_mode_prepare <= MODE_Z_X;
                   6: address_mode_prepare <= MODE_ABS_X;
                   7: address_mode_prepare <= MODE_ABS_Y;
                endcase
-               case (reg_i[7:5])
-                  6'b000, /* ORA */
-                  6'b001, /* AND */
-                  6'b010, /* EOR */
-                  6'b011, /* ADC */
-                  6'b101, /* LDA */
-                  6'b110, /* SBC */
-                  6'b111: /* CMP */
-                     do_load_store <= DO_LOAD;
-               endcase
-
-               case (reg_i[7:5])
-                  6'b000: cpu_op <= CPU_OP_ORA;
-                  6'b001: cpu_op <= CPU_OP_AND;
-                  6'b010: cpu_op <= CPU_OP_EOR;
-                  6'b011: cpu_op <= CPU_OP_ADC;
-                  6'b101: cpu_op <= CPU_OP_LD;
-                  6'b110: cpu_op <= CPU_OP_CMP;
-                  6'b111: cpu_op <= CPU_OP_SBC;
-                  6'b100: /* STA */
-                  begin
-                     do_load_store <= DO_STORE;
-                     reg_write <= reg_a;
-                  end
-               endcase
+               if (reg_i[7:5] == 6'b100) begin // STA
+                  do_load_store <= DO_STORE;
+                  reg_write <= reg_a;
+               end else begin
+                  do_load_store <= DO_LOAD;
+                  case (reg_i[7:5])
+                     6'b000: cpu_op <= CPU_OP_ORA;
+                     6'b001: cpu_op <= CPU_OP_AND;
+                     6'b010: cpu_op <= CPU_OP_EOR;
+                     6'b011: cpu_op <= CPU_OP_ADC;
+                     6'b101: cpu_op <= CPU_OP_LD;
+                     6'b110: cpu_op <= CPU_OP_CMP;
+                     6'b111: cpu_op <= CPU_OP_SBC;
+                  endcase
+               end
             end
             2'b00:
             casex (reg_i[7:2])
@@ -152,30 +142,28 @@ module m6502_cpu (
                cpu_inst_done <= 1;
                wait_for_reset <= 0;
             end
-         end else casex (reg_i)
-            8'b000xxx01, /* ORA */
-            8'b001xxx01, /* AND */
-            8'b010xxx01, /* EOR */
-            8'b011xxx01, /* ADC */
-            8'b101xxx01, /* LDA */
-            8'b111xxx01: /* SBC */
-            if (load_store_complete) begin
-               reg_a <= alu_out;
-               cpu_inst_done <= 1;
-               pc <= pc + pc_delta;
-            end
-            8'b100xxx01, /* STA */
-            8'b110xxx01: /* CMP */
-            if (load_store_complete) begin
-               cpu_inst_done <= 1;
-               pc <= pc + pc_delta;
-            end
-            8'bxxx10000: /* BRANCH */
-            if (load_store_complete) begin
-               cpu_inst_done <= 1;
-               pc <= pc + 2 + (do_branch ? $signed(reg_m) : 0);
-            end
-         endcase
+         end else if (load_store_complete) begin 
+            cpu_inst_done <= 1;
+            casex (reg_i)
+               8'b000xxx01, /* ORA */
+               8'b001xxx01, /* AND */
+               8'b010xxx01, /* EOR */
+               8'b011xxx01, /* ADC */
+               8'b101xxx01, /* LDA */
+               8'b111xxx01: /* SBC */
+               begin
+                  reg_a <= alu_out;
+                  pc <= pc + pc_delta;
+               end
+               8'b100xxx01, /* STA */
+               8'b110xxx01: /* CMP */
+                  pc <= pc + pc_delta;
+               8'bxxx10000: /* BRANCH */
+               begin
+                  pc <= pc + 2 + (do_branch ? $signed(reg_m) : 0);
+               end
+            endcase
+         end
       end
    end
    
