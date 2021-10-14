@@ -18,13 +18,15 @@ irq:
 	rti   
 boot:
 
-   ldx #$36
-   stx $20
-   lda $20
-   ldx #$87
-   txa
-   ldx #$32
+   ldx #$11
    txs
+   ldx #$22
+   tsx
+   
+   lda #33
+   tax
+   ldx #44
+   txa
    // icl 'demos/text_mode_attrib.asm'
    icl 'demos/video_modes.asm'
    

@@ -568,8 +568,7 @@ module m6502_cpu (
             endcase
             
             case(cpu_op)
-               CPU_OP_TXA,
-               CPU_OP_TXS:
+               CPU_OP_TXA:
                begin
                   alu_op <= OP_UPDATE;
                   alu_proceed <= 1;
@@ -582,6 +581,12 @@ module m6502_cpu (
                   alu_in_a <= reg_a;
                end
                CPU_OP_TSX:
+               begin
+                  alu_op <= OP_UPDATE;
+                  alu_proceed <= 1;
+                  alu_in_a <= reg_sp;
+               end
+               CPU_OP_TXS:
                   load_complete <= 1;
             endcase
             
