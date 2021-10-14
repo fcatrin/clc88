@@ -7,11 +7,15 @@ module m6502_alu (
       input  [7:0] in_b,
       input  flag_c_set,
       input  flag_c_reset,
+      input  flag_d_set,
+      input  flag_d_reset,
+      input  flag_v_reset,
       output [7:0] out,
       output reg flag_c,
       output reg flag_z,
       output reg flag_v,
-      output reg flag_n
+      output reg flag_n,
+      output reg flag_d
       );
    
    `include "m6502_alu_ops.vh"   
@@ -80,6 +84,9 @@ module m6502_alu (
    always @ (posedge clk) begin : update_flags
       reg flag_c_set_prev;
       reg flag_c_reset_prev;
+      reg flag_d_set_prev;
+      reg flag_d_reset_prev;
+      reg flag_v_reset_prev;
       
       if (~reset_n) begin
          flag_c_set_prev   <= 0;
@@ -88,17 +95,27 @@ module m6502_alu (
          flag_z <= 0;
          flag_n <= 0;
          flag_v <= 0;
+         flag_d <= 0;
       end else begin
          flag_c_set_prev   <= flag_c_set;
          flag_c_reset_prev <= flag_c_reset;
+         flag_d_set_prev   <= flag_d_set;
+         flag_d_reset_prev <= flag_d_reset;
+         flag_v_reset_prev <= flag_v_reset;
    
          flag_z <= out == 0;
          flag_n <= out[7];
          
          if (!flag_c_set_prev & flag_c_set) begin
             flag_c <= 1;
-         end else if (!flag_c_reset_prev & flag_c_reset_prev) begin
+         end else if (!flag_c_reset_prev & flag_c_reset) begin
             flag_c <= 0;
+         end else if (!flag_d_set_prev   & flag_d_set) begin
+            flag_d <= 1;
+         end else if (!flag_d_reset_prev & flag_d_reset) begin
+            flag_d <= 0;
+         end else if (!flag_v_reset_prev & flag_v_reset) begin
+            flag_v <= 0;
          end else case (op_post)
             OP_ADC:
             begin
