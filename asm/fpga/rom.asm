@@ -18,10 +18,16 @@ irq:
 	rti   
 boot:
 
-   ldy #1
-   iny
+   lda #4
+   sta $20
+   dec $20
+   lda $20
+   
    ldx #10
-   inx
+   dex
+   
+   ldy #8
+   dey
    jmp demo
    // icl 'demos/text_mode_attrib.asm'
    icl 'demos/video_modes.asm'
