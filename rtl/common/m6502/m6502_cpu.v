@@ -134,37 +134,55 @@ module m6502_cpu (
                      6: cpu_op <= CPU_OP_CLD;
                      7: cpu_op <= CPU_OP_SED;
                   endcase
-               end else case(aaa)
-                  4: 
-                  if (bbb[0]) begin
-                     cpu_op <= CPU_OP_STY;
-                     do_load_store <= DO_STORE; 
-                     reg_write <= reg_y;
+               end else begin
+                  if (aaa[2]) case(bbb)
+                     0: address_mode_prepare <= MODE_IMM;
+                     1: address_mode_prepare <= MODE_Z;
+                     3: address_mode_prepare <= MODE_ABS;
+                     5: address_mode_prepare <= MODE_Z_X;
+                     7: address_mode_prepare <= MODE_ABS_X;
+                  endcase
+                  case(aaa)
+                     4: 
                      case(bbb)
-                        1: address_mode_prepare <= MODE_Z;
-                        3: address_mode_prepare <= MODE_ABS;
-                        5: address_mode_prepare <= MODE_Z_X;
+                        1,3,5: 
+                        begin
+                           cpu_op <= CPU_OP_STY;
+                           do_load_store <= DO_STORE; 
+                           reg_write <= reg_y;
+                        end
+                        2: 
+                        begin
+                           cpu_op <= CPU_OP_DEY;
+                           do_load_store <= DO_NOTHING;
+                        end
                      endcase
-                  end else if (bbb == 2) begin
-                     cpu_op <= CPU_OP_DEY;
-                     do_load_store <= DO_NOTHING;
-                  end
-                  5:
-                  if (bbb[0] | bbb == 0) begin
-                     cpu_op <= CPU_OP_LDY;
-                     do_load_store <= DO_LOAD; 
+                     5: 
                      case(bbb)
-                        0: address_mode_prepare <= MODE_IMM;
-                        1: address_mode_prepare <= MODE_Z;
-                        3: address_mode_prepare <= MODE_ABS;
-                        5: address_mode_prepare <= MODE_Z_X;
-                        7: address_mode_prepare <= MODE_ABS_X;
+                        0,1,3,5,7: 
+                        begin
+                           cpu_op <= CPU_OP_LDY;
+                           do_load_store <= DO_LOAD;
+                        end
+                        2: 
+                        begin
+                           cpu_op <= CPU_OP_TAY;
+                           do_load_store <= DO_NOTHING;
+                        end
                      endcase
-                  end else if (bbb == 2) begin
-                     cpu_op <= CPU_OP_TAY;
-                     do_load_store <= DO_NOTHING;
-                  end
-               endcase
+                     6,7:
+                     begin
+                        case(bbb)
+                           0,1,3:
+                           begin
+                              cpu_op <= aaa == 6 ? CPU_OP_CPY : CPU_OP_CPX;
+                              do_load_store <= DO_LOAD;
+                           end
+                           2: cpu_op <= aaa == 6 ? CPU_OP_INY : CPU_OP_INX;
+                        endcase
+                     end 
+                  endcase
+               end
             2'b01:
             begin
                case (bbb)
@@ -434,6 +452,8 @@ module m6502_cpu (
    localparam CPU_OP_DEY    = 32;
    localparam CPU_OP_INX    = 33;
    localparam CPU_OP_INY    = 34;
+   localparam CPU_OP_CPX    = 35;
+   localparam CPU_OP_CPY    = 36;
    
    reg[5:0] cpu_op;
    reg do_branch;
@@ -599,6 +619,18 @@ module m6502_cpu (
                   alu_in_a <= reg_a;
                   alu_in_b <= rd_data;
                end
+               CPU_OP_CPX:
+               begin
+                  alu_proceed <= 1;
+                  alu_in_a <= reg_x;
+                  alu_in_b <= rd_data;
+               end
+               CPU_OP_CPY:
+               begin
+                  alu_proceed <= 1;
+                  alu_in_a <= reg_y;
+                  alu_in_b <= rd_data;
+               end
                CPU_OP_ASL,
                CPU_OP_LSR,
                CPU_OP_ROL,
@@ -625,11 +657,13 @@ module m6502_cpu (
                   alu_in_a <= reg_a;
                   alu_in_b <= 8'hff ^ rd_data;
                end
+               CPU_OP_CPX,
+               CPU_OP_CPY,
+               CPU_OP_CMP: alu_op <= OP_CMP;
                CPU_OP_ASL: alu_op <= OP_ASL;
                CPU_OP_ROL: alu_op <= OP_ROL;
                CPU_OP_LSR: alu_op <= OP_LSR;
                CPU_OP_ROR: alu_op <= OP_ROR;
-               CPU_OP_CMP: alu_op <= OP_CMP;
                CPU_OP_ORA: alu_op <= OP_OR;
                CPU_OP_AND: alu_op <= OP_AND;
                CPU_OP_EOR: alu_op <= OP_EOR;
