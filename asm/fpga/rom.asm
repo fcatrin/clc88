@@ -20,14 +20,13 @@ boot:
 
    lda #4
    sta $20
-   dec $20
+   inc $20
    lda $20
    
-   ldx #10
-   dex
-   
-   ldy #8
-   dey
+   nop
+   inc $20
+   lda $20
+
    jmp demo
    // icl 'demos/text_mode_attrib.asm'
    icl 'demos/video_modes.asm'

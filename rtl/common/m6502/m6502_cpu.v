@@ -101,12 +101,12 @@ module m6502_cpu (
       reg wait_for_reset;
       
       address_mode_prepare <= MODE_IDLE;
+      cpu_inst_done <= 0;
       if (~reset_n) begin
          wait_for_reset <= 0;
       end else if (cpu_fetch_state == CPU_EXECUTE) begin
          do_load_store <= DO_NOTHING;
          address_mode_prepare <= MODE_SINGLE;
-         cpu_inst_done <= 0;
          cpu_inst_single <= 0;
          cpu_op <= CPU_OP_NOP;
          if (cpu_reset) begin
@@ -268,7 +268,20 @@ module m6502_cpu (
                         end
                         2: cpu_op <= CPU_OP_DEX;
                      endcase
-                  endcase
+                     3:
+                     case(bbb)
+                        1,3,5,7:
+                        begin
+                           cpu_op <= CPU_OP_INC;
+                           do_load_store <= DO_LOAD;
+                        end
+                        2:
+                        begin
+                           cpu_op <= CPU_OP_NOP;
+                           cpu_inst_single <= 1;
+                        end
+                     endcase
+               endcase
                end
             end
          endcase
@@ -502,7 +515,10 @@ module m6502_cpu (
          
          case(address_mode)
             MODE_SINGLE:
+            begin
                cpu_op_finish <= 1;
+               if (cpu_inst_single) load_complete <= 1;
+            end
             MODE_A:      /* A */
             begin
                use_a <= 1;
@@ -557,8 +573,6 @@ module m6502_cpu (
             CPU_OP_SED : flag_d_set   <= 1;
          endcase
 
-         if (cpu_inst_single) load_complete <= 1;
-         
          case (next_addr_op)
             NEXT_Z:
             begin
@@ -753,6 +767,17 @@ module m6502_cpu (
                begin
                   if (!alu_wait) begin
                      alu_op <= OP_DEC;
+                     alu_in_a <= rd_data;
+                     alu_proceed <= 1;
+                     alu_wait <= 1;
+                  end else begin
+                     write_from_alu <= 1;
+                  end
+               end
+               CPU_OP_INC:
+               begin
+                  if (!alu_wait) begin
+                     alu_op <= OP_INC;
                      alu_in_a <= rd_data;
                      alu_proceed <= 1;
                      alu_wait <= 1;
