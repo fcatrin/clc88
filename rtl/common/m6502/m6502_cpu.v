@@ -138,6 +138,7 @@ module m6502_cpu (
                   if (aaa[2]) case(bbb)
                      0: address_mode_prepare <= MODE_IMM;
                      1: address_mode_prepare <= MODE_Z;
+                     2: address_mode_prepare <= MODE_SINGLE;
                      3: address_mode_prepare <= MODE_ABS;
                      5: address_mode_prepare <= MODE_Z_X;
                      7: address_mode_prepare <= MODE_ABS_X;
@@ -288,8 +289,10 @@ module m6502_cpu (
                CPU_OP_TYA:    reg_a <= alu_out;
                CPU_OP_LDX,
                CPU_OP_TAX,
+               CPU_OP_INX,
                CPU_OP_TSX:    reg_x <= alu_out;
                CPU_OP_LDY,
+               CPU_OP_INY,
                CPU_OP_TAY:    reg_y <= alu_out;
                CPU_OP_TXS:    reg_sp <= reg_x;
                CPU_OP_BRANCH: pc <= pc + 2 + (do_branch ? $signed(reg_m) : 0);
@@ -300,6 +303,7 @@ module m6502_cpu (
    end
    
    always @ (negedge clk) begin : cpu_set_addr_mode
+      pc_delta <= 1;
       address_mode <= MODE_IDLE;
       
       case(address_mode_prepare)
@@ -337,7 +341,6 @@ module m6502_cpu (
          end
          MODE_SINGLE:
          begin
-            pc_delta <= 1;
             address_mode <= MODE_SINGLE;
          end
       endcase
@@ -630,6 +633,18 @@ module m6502_cpu (
                   alu_proceed <= 1;
                   alu_in_a <= reg_y;
                   alu_in_b <= rd_data;
+               end
+               CPU_OP_INX:
+               begin
+                  alu_proceed <= 1;
+                  alu_in_a <= reg_x;
+                  alu_op <= OP_INC;
+               end
+               CPU_OP_INY:
+               begin
+                  alu_proceed <= 1;
+                  alu_in_a <= reg_y;
+                  alu_op <= OP_INC;
                end
                CPU_OP_ASL,
                CPU_OP_LSR,

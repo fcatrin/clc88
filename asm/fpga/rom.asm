@@ -19,11 +19,9 @@ irq:
 boot:
 
    ldy #1
-   cpy #1
-   cpy #10
-   ldx #2
-   cpx #2
-   cpx #10
+   iny
+   ldx #10
+   inx
    jmp demo
    // icl 'demos/text_mode_attrib.asm'
    icl 'demos/video_modes.asm'
