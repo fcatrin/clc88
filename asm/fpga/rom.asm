@@ -18,22 +18,9 @@ irq:
 	rti   
 boot:
 
-   sec
-   clc
-   sed
-   cld
-   sei
-   cli
-   clv
-   ldy #1
-   lda #0
-   tya
+   lda #$33
    ldy #0
-   lda #1
-   tya
-   ldy #$80
-   lda #0
-   tya
+   tay
    jmp demo
    // icl 'demos/text_mode_attrib.asm'
    icl 'demos/video_modes.asm'

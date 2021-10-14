@@ -117,11 +117,11 @@ module m6502_cpu (
             wait_for_reset <= 1;
          end else case (cc)  // reg_i format aaabbbcc. Check cc first
             2'b00:
-               if (bbb == 3'b100) begin /* BRANCH */
+               if (bbb == 4) begin /* BRANCH */
                   cpu_op <= CPU_OP_BRANCH;
                   cpu_branch <= aaa;
                   address_mode_prepare <= MODE_IMM;
-               end else if (bbb == 3'b110) begin
+               end else if (bbb == 6) begin
                   address_mode_prepare <= MODE_SINGLE;
                   cpu_inst_single <= aaa != 4;
                   case (aaa)
@@ -134,9 +134,37 @@ module m6502_cpu (
                      6: cpu_op <= CPU_OP_CLD;
                      7: cpu_op <= CPU_OP_SED;
                   endcase
-               end/* else case(aaa)
-                  
-               endcase */
+               end else case(aaa)
+                  4: 
+                  if (bbb[0]) begin
+                     cpu_op <= CPU_OP_STY;
+                     do_load_store <= DO_STORE; 
+                     reg_write <= reg_y;
+                     case(bbb)
+                        1: address_mode_prepare <= MODE_Z;
+                        3: address_mode_prepare <= MODE_ABS;
+                        5: address_mode_prepare <= MODE_Z_X;
+                     endcase
+                  end else if (bbb == 2) begin
+                     cpu_op <= CPU_OP_DEY;
+                     do_load_store <= DO_NOTHING;
+                  end
+                  5:
+                  if (bbb[0] | bbb == 0) begin
+                     cpu_op <= CPU_OP_LDY;
+                     do_load_store <= DO_LOAD; 
+                     case(bbb)
+                        0: address_mode_prepare <= MODE_IMM;
+                        1: address_mode_prepare <= MODE_Z;
+                        3: address_mode_prepare <= MODE_ABS;
+                        5: address_mode_prepare <= MODE_Z_X;
+                        7: address_mode_prepare <= MODE_ABS_X;
+                     endcase
+                  end else if (bbb == 2) begin
+                     cpu_op <= CPU_OP_TAY;
+                     do_load_store <= DO_NOTHING;
+                  end
+               endcase
             2'b01:
             begin
                case (bbb)
@@ -243,6 +271,8 @@ module m6502_cpu (
                CPU_OP_LDX,
                CPU_OP_TAX,
                CPU_OP_TSX:    reg_x <= alu_out;
+               CPU_OP_LDY,
+               CPU_OP_TAY:    reg_y <= alu_out;
                CPU_OP_TXS:    reg_sp <= reg_x;
                CPU_OP_BRANCH: pc <= pc + 2 + (do_branch ? $signed(reg_m) : 0);
             endcase
@@ -400,6 +430,10 @@ module m6502_cpu (
    localparam CPU_OP_CLV    = 28;
    localparam CPU_OP_CLD    = 29;
    localparam CPU_OP_SED    = 30;
+   localparam CPU_OP_DEX    = 31;
+   localparam CPU_OP_DEY    = 32;
+   localparam CPU_OP_INX    = 33;
+   localparam CPU_OP_INY    = 34;
    
    reg[5:0] cpu_op;
    reg do_branch;
@@ -618,9 +652,10 @@ module m6502_cpu (
             endcase
             
             case(cpu_op)
-               CPU_OP_TYA,
                CPU_OP_TXA,
+               CPU_OP_TYA,
                CPU_OP_TAX,
+               CPU_OP_TAY,
                CPU_OP_TSX:
                begin
                   alu_op <= OP_UPDATE;
@@ -630,7 +665,8 @@ module m6502_cpu (
 
             case(cpu_op)
                CPU_OP_TYA: alu_in_a <= reg_y; 
-               CPU_OP_TXA: alu_in_a <= reg_x; 
+               CPU_OP_TXA: alu_in_a <= reg_x;
+               CPU_OP_TAY,
                CPU_OP_TAX: alu_in_a <= reg_a;
                CPU_OP_TSX: alu_in_a <= reg_sp;
                CPU_OP_TXS: load_complete <= 1;
