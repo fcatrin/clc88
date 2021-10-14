@@ -18,14 +18,13 @@ irq:
 	rti   
 boot:
 
-   lda #$4C
-   ror        ; $26 
-   ror        ; $13 
-   ror        ; $09  c = 1
-   ror        ; $84  c = 1
-   ror        ; $C2  c = 0 
-   jmp demo
-   
+   ldx #$36
+   stx $20
+   lda $20
+   ldx #$87
+   txa
+   ldx #$32
+   txs
    // icl 'demos/text_mode_attrib.asm'
    icl 'demos/video_modes.asm'
    

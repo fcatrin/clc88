@@ -130,6 +130,7 @@ module m6502_cpu (
                   7: address_mode_prepare <= MODE_ABS_Y;
                endcase
                if (reg_i[7:5] == 6'b100) begin // STA
+                  cpu_op <= CPU_OP_STA;
                   do_load_store <= DO_STORE;
                   reg_write <= reg_a;
                end else begin
@@ -139,7 +140,7 @@ module m6502_cpu (
                      3'b001: cpu_op <= CPU_OP_AND;
                      3'b010: cpu_op <= CPU_OP_EOR;
                      3'b011: cpu_op <= CPU_OP_ADC;
-                     3'b101: cpu_op <= CPU_OP_LD;
+                     3'b101: cpu_op <= CPU_OP_LDA;
                      3'b110: cpu_op <= CPU_OP_CMP;
                      3'b111: cpu_op <= CPU_OP_SBC;
                   endcase
@@ -162,6 +163,37 @@ module m6502_cpu (
                      2'b10: cpu_op <= CPU_OP_LSR;
                      2'b11: cpu_op <= CPU_OP_ROR;
                   endcase
+               end else begin
+                  case(reg_i[4:2])
+                     0: address_mode_prepare <= MODE_IMM; // undefined for a in 4,6,7
+                     1: address_mode_prepare <= MODE_Z;
+                     2: address_mode_prepare <= MODE_SINGLE;
+                     3: address_mode_prepare <= MODE_ABS;
+                     5: address_mode_prepare <= reg_i[6] ? MODE_Z_X : MODE_Z_Y;
+                     6: address_mode_prepare <= MODE_SINGLE; // undefined for a in 6,7
+                     7: address_mode_prepare <= reg_i[6] ? MODE_ABS_X : MODE_ABS_Y; // undefined for a = 4
+                  endcase
+                  case(reg_i[6:5])
+                     0:
+                     begin
+                        cpu_op <= CPU_OP_STX;
+                        do_load_store <= reg_i[2] ? DO_STORE : DO_NOTHING;
+                        reg_write <= reg_x;
+                        case(reg_i[4:2])
+                           3'b010 : cpu_op <= CPU_OP_TXA;
+                           3'b110 : cpu_op <= CPU_OP_TXS;
+                        endcase
+                     end
+                     1:
+                     begin
+                        cpu_op <= CPU_OP_LDX;
+                        do_load_store <= reg_i[2] ? DO_LOAD : DO_NOTHING;
+                        case(reg_i[4:2])
+                           3'b010 : cpu_op <= CPU_OP_TAX;
+                           3'b110 : cpu_op <= CPU_OP_TSX;
+                        endcase
+                     end
+                  endcase
                end
             end
          endcase
@@ -174,28 +206,24 @@ module m6502_cpu (
             end
          end else if (load_store_complete) begin 
             cpu_inst_done <= 1;
-            casex (reg_i)
-               8'b000xxx01, /* ORA */
-               8'b001xxx01, /* AND */
-               8'b010xxx01, /* EOR */
-               8'b011xxx01, /* ADC */
-               8'b101xxx01, /* LDA */
-               8'b111xxx01, /* SBC */
-               8'b000xxx10, /* ASL */
-               8'b001xxx10, /* ROL */
-               8'b010xxx10, /* LSR */
-               8'b011xxx10: /* ROR */
-               begin
-                  reg_a <= alu_out;
-                  pc <= pc + pc_delta;
-               end
-               8'b100xxx01, /* STA */
-               8'b110xxx01: /* CMP */
-                  pc <= pc + pc_delta;
-               8'bxxx10000: /* BRANCH */
-               begin
-                  pc <= pc + 2 + (do_branch ? $signed(reg_m) : 0);
-               end
+            pc <= pc + pc_delta;
+            case (cpu_op)
+               CPU_OP_ORA,
+               CPU_OP_AND,
+               CPU_OP_EOR,
+               CPU_OP_ADC,
+               CPU_OP_LDA,
+               CPU_OP_SBC,
+               CPU_OP_ASL,
+               CPU_OP_ROL,
+               CPU_OP_LSR,
+               CPU_OP_ROR,
+               CPU_OP_TXA:    reg_a <= alu_out;
+               CPU_OP_LDX,
+               CPU_OP_TAX,
+               CPU_OP_TSX:    reg_x <= alu_out;
+               CPU_OP_TXS:    reg_sp <= reg_x;
+               CPU_OP_BRANCH: pc <= pc + 2 + (do_branch ? $signed(reg_m) : 0);
             endcase
          end
       end
@@ -238,7 +266,10 @@ module m6502_cpu (
             pc_delta <= 3;
          end
          MODE_SINGLE:
+         begin
             pc_delta <= 1;
+            address_mode <= MODE_SINGLE;
+         end
       endcase
       case (address_mode_prepare)
          MODE_Z, MODE_ABS:
@@ -317,20 +348,29 @@ module m6502_cpu (
    reg[3:0] address_mode_prepare;
 
    localparam CPU_OP_NOP    = 0;
-   localparam CPU_OP_LD     = 1;
-   localparam CPU_OP_CMP    = 2;
-   localparam CPU_OP_BRANCH = 3;
-   localparam CPU_OP_ORA    = 4;
-   localparam CPU_OP_AND    = 5;
-   localparam CPU_OP_EOR    = 6;
-   localparam CPU_OP_ADC    = 7;
-   localparam CPU_OP_SBC    = 8;
-   localparam CPU_OP_ASL    = 9;
-   localparam CPU_OP_LSR    = 10;
-   localparam CPU_OP_ROL    = 11;
-   localparam CPU_OP_ROR    = 12;
+   localparam CPU_OP_LDA    = 1;
+   localparam CPU_OP_LDX    = 2;
+   localparam CPU_OP_LDY    = 3;
+   localparam CPU_OP_STA    = 4;
+   localparam CPU_OP_STX    = 5;
+   localparam CPU_OP_STY    = 6;
+   localparam CPU_OP_CMP    = 7;
+   localparam CPU_OP_BRANCH = 8;
+   localparam CPU_OP_ORA    = 9;
+   localparam CPU_OP_AND    = 10;
+   localparam CPU_OP_EOR    = 11;
+   localparam CPU_OP_ADC    = 12;
+   localparam CPU_OP_SBC    = 13;
+   localparam CPU_OP_ASL    = 14;
+   localparam CPU_OP_LSR    = 15;
+   localparam CPU_OP_ROL    = 16;
+   localparam CPU_OP_ROR    = 17;
+   localparam CPU_OP_TXA    = 18;
+   localparam CPU_OP_TXS    = 19;
+   localparam CPU_OP_TAX    = 20;
+   localparam CPU_OP_TSX    = 21;
    
-   reg[3:0] cpu_op;
+   reg[4:0] cpu_op;
    reg do_branch;
 
    always @ (posedge clk) begin : cpu_load_store_decode
@@ -351,6 +391,8 @@ module m6502_cpu (
          next_addr_op <= NEXT_IDLE;
          
          case(address_mode)
+            MODE_SINGLE:
+               cpu_op_finish <= 1;
             MODE_A:      /* A */
             begin
                use_a <= 1;
@@ -482,9 +524,11 @@ module m6502_cpu (
                   alu_in_a <= use_a ? reg_a : rd_data;
                end
             endcase
-               
+            
             case(cpu_op)
-               CPU_OP_LD:
+               CPU_OP_LDA,
+               CPU_OP_LDX,
+               CPU_OP_LDY:
                begin
                   alu_op <= OP_UPDATE;
                   alu_proceed <= 1;
@@ -522,6 +566,25 @@ module m6502_cpu (
                   load_complete <= 1;
                end
             endcase
+            
+            case(cpu_op)
+               CPU_OP_TXA,
+               CPU_OP_TXS:
+               begin
+                  alu_op <= OP_UPDATE;
+                  alu_proceed <= 1;
+                  alu_in_a <= reg_x;
+               end
+               CPU_OP_TAX:
+               begin
+                  alu_op <= OP_UPDATE;
+                  alu_proceed <= 1;
+                  alu_in_a <= reg_a;
+               end
+               CPU_OP_TSX:
+                  load_complete <= 1;
+            endcase
+            
          end   
       end
    end
