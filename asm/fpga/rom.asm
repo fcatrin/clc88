@@ -19,10 +19,11 @@ irq:
 boot:
 
    lda #$4C
-   rol        ; $98 flag_c = 0 
-   rol        ; $30 flag_c = 1
-   rol        ; $61 flag_c = 0
-   rol        ; $C2 flag_c = 0
+   ror        ; $26 
+   ror        ; $13 
+   ror        ; $09  c = 1
+   ror        ; $84  c = 1
+   ror        ; $C2  c = 0 
    jmp demo
    
    // icl 'demos/text_mode_attrib.asm'

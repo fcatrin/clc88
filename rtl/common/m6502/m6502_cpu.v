@@ -135,13 +135,13 @@ module m6502_cpu (
                end else begin
                   do_load_store <= DO_LOAD;
                   case (reg_i[7:5])
-                     6'b000: cpu_op <= CPU_OP_ORA;
-                     6'b001: cpu_op <= CPU_OP_AND;
-                     6'b010: cpu_op <= CPU_OP_EOR;
-                     6'b011: cpu_op <= CPU_OP_ADC;
-                     6'b101: cpu_op <= CPU_OP_LD;
-                     6'b110: cpu_op <= CPU_OP_CMP;
-                     6'b111: cpu_op <= CPU_OP_SBC;
+                     3'b000: cpu_op <= CPU_OP_ORA;
+                     3'b001: cpu_op <= CPU_OP_AND;
+                     3'b010: cpu_op <= CPU_OP_EOR;
+                     3'b011: cpu_op <= CPU_OP_ADC;
+                     3'b101: cpu_op <= CPU_OP_LD;
+                     3'b110: cpu_op <= CPU_OP_CMP;
+                     3'b111: cpu_op <= CPU_OP_SBC;
                   endcase
                end
             end
@@ -156,13 +156,13 @@ module m6502_cpu (
                      5: address_mode_prepare <= MODE_Z_X;
                      7: address_mode_prepare <= MODE_ABS_Y;
                   endcase
+                  case (reg_i[6:5])
+                     2'b00: cpu_op <= CPU_OP_ASL;
+                     2'b01: cpu_op <= CPU_OP_ROL;
+                     2'b10: cpu_op <= CPU_OP_LSR;
+                     2'b11: cpu_op <= CPU_OP_ROR;
+                  endcase
                end
-               case (reg_i[7:5])
-                  6'b000:
-                     cpu_op <= CPU_OP_ASL;
-                  6'b001:
-                     cpu_op <= CPU_OP_ROL;
-               endcase
             end
          endcase
       end else if (cpu_inst_done == 0 && cpu_fetch_state == CPU_EXECUTE_WAIT) begin
@@ -182,7 +182,9 @@ module m6502_cpu (
                8'b101xxx01, /* LDA */
                8'b111xxx01, /* SBC */
                8'b000xxx10, /* ASL */
-               8'b001xxx10: /* ROL */
+               8'b001xxx10, /* ROL */
+               8'b010xxx10, /* LSR */
+               8'b011xxx10: /* ROR */
                begin
                   reg_a <= alu_out;
                   pc <= pc + pc_delta;
@@ -324,7 +326,9 @@ module m6502_cpu (
    localparam CPU_OP_ADC    = 7;
    localparam CPU_OP_SBC    = 8;
    localparam CPU_OP_ASL    = 9;
-   localparam CPU_OP_ROL    = 10;
+   localparam CPU_OP_LSR    = 10;
+   localparam CPU_OP_ROL    = 11;
+   localparam CPU_OP_ROR    = 12;
    
    reg[3:0] cpu_op;
    reg do_branch;
@@ -469,6 +473,14 @@ module m6502_cpu (
                   alu_in_a <= reg_a;
                   alu_in_b <= rd_data;
                end
+               CPU_OP_ASL,
+               CPU_OP_LSR,
+               CPU_OP_ROL,
+               CPU_OP_ROR:
+               begin
+                  alu_proceed <= 1;
+                  alu_in_a <= use_a ? reg_a : rd_data;
+               end
             endcase
                
             case(cpu_op)
@@ -485,18 +497,10 @@ module m6502_cpu (
                   alu_in_a <= reg_a;
                   alu_in_b <= 8'hff ^ rd_data;
                end
-               CPU_OP_ASL:
-               begin
-                  alu_op <= OP_ASL;
-                  alu_proceed <= 1;
-                  alu_in_a <= use_a ? reg_a : rd_data;
-               end
-               CPU_OP_ROL:
-               begin
-                  alu_op <= OP_ROL;
-                  alu_proceed <= 1;
-                  alu_in_a <= use_a ? reg_a : rd_data;
-               end
+               CPU_OP_ASL: alu_op <= OP_ASL;
+               CPU_OP_ROL: alu_op <= OP_ROL;
+               CPU_OP_LSR: alu_op <= OP_LSR;
+               CPU_OP_ROR: alu_op <= OP_ROR;
                CPU_OP_CMP: alu_op <= OP_CMP;
                CPU_OP_ORA: alu_op <= OP_OR;
                CPU_OP_AND: alu_op <= OP_AND;
