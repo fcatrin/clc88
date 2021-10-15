@@ -18,13 +18,20 @@ irq:
 	rti   
 boot:
 
-   lda #$55
-   pha
-   lda #$aa
-   pha
    lda #0
-   pla
-   pla
+   php
+   lda #$80
+   php
+   clc
+   php
+   sec
+   php
+   clc
+   plp
+   plp
+   plp
+   plp
+
 halt
    jmp halt   
 

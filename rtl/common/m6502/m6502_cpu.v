@@ -572,11 +572,11 @@ module m6502_cpu (
       store_and_finish <= 1;
       do_branch <= 0;
       
-      flag_c_reset <= 0;
-      flag_c_set   <= 0;
-      flag_v_reset <= 0;
-      flag_d_reset <= 0;
-      flag_d_set   <= 0;
+      flag_n_set <= ALU_FLAG_KEEP;
+      flag_v_set <= ALU_FLAG_KEEP;
+      flag_d_set <= ALU_FLAG_KEEP;
+      flag_z_set <= ALU_FLAG_KEEP;
+      flag_c_set <= ALU_FLAG_KEEP;
       
       load_store <= DO_NOTHING;
       if (!reset_n) begin
@@ -656,13 +656,13 @@ module m6502_cpu (
          endcase
          
          case (cpu_op)
-            CPU_OP_CLC : flag_c_reset <= 1;
-            CPU_OP_SEC : flag_c_set   <= 1;
+            CPU_OP_CLC : flag_c_set <= ALU_FLAG_RESET;
+            CPU_OP_SEC : flag_c_set <= ALU_FLAG_SET;
+            CPU_OP_CLD : flag_d_set <= ALU_FLAG_RESET;
+            CPU_OP_SED : flag_d_set <= ALU_FLAG_SET;
             CPU_OP_CLI : flag_i <= 0;
             CPU_OP_SEI : flag_i <= 1;
-            CPU_OP_CLV : flag_v_reset <= 1;
-            CPU_OP_CLD : flag_d_reset <= 1;
-            CPU_OP_SED : flag_d_set   <= 1;
+            CPU_OP_CLV : flag_v_set <= ALU_FLAG_RESET;
          endcase
 
          case (next_addr_op)
@@ -768,17 +768,12 @@ module m6502_cpu (
             end
             NEXT_PLP:
             begin
-               flag_n_set   <=  stack_value[7];
-               flag_n_reset <= !stack_value[7];
-               flag_v_set   <=  stack_value[6];
-               flag_v_reset <= !stack_value[6];
-               flag_d_set   <=  stack_value[3];
-               flag_d_reset <= !stack_value[3];
+               flag_n_set   <=  {1'b1, stack_value[7]};
+               flag_v_set   <=  {1'b1, stack_value[6]};
+               flag_d_set   <=  {1'b1, stack_value[3]};
                flag_i       <=  stack_value[2];
-               flag_z_set   <=  stack_value[1];
-               flag_z_reset <= !stack_value[1];
-               flag_c_set   <=  stack_value[0];
-               flag_c_reset <= !stack_value[0];
+               flag_z_set   <=  {1'b1, stack_value[1]};
+               flag_c_set   <=  {1'b1, stack_value[0]};
                load_complete <= 1;
             end
          endcase
@@ -994,16 +989,15 @@ module m6502_cpu (
    
    reg write_from_alu;
    
-   reg  flag_n_set;
-   reg  flag_n_reset;
-   reg  flag_v_set;
-   reg  flag_v_reset;
-   reg  flag_d_set;
-   reg  flag_d_reset;
-   reg  flag_z_set;
-   reg  flag_z_reset;
-   reg  flag_c_set;
-   reg  flag_c_reset;
+   localparam ALU_FLAG_KEEP  = 2'b00;
+   localparam ALU_FLAG_RESET = 2'b10;
+   localparam ALU_FLAG_SET   = 2'b11;
+   
+   reg[1:0] flag_n_set;
+   reg[1:0] flag_v_set;
+   reg[1:0] flag_d_set;
+   reg[1:0] flag_z_set;
+   reg[1:0] flag_c_set;
    
    m6502_alu alu (
          .clk(clk),
@@ -1013,15 +1007,10 @@ module m6502_cpu (
          .in_a(alu_in_a),
          .in_b(alu_in_b),
          .flag_n_set(flag_n_set),
-         .flag_n_reset(flag_n_reset),
          .flag_v_set(flag_v_set),
-         .flag_v_reset(flag_v_reset),
          .flag_d_set(flag_d_set),
-         .flag_d_reset(flag_d_reset),
          .flag_z_set(flag_z_set),
-         .flag_z_reset(flag_z_reset),
          .flag_c_set(flag_c_set),
-         .flag_c_reset(flag_c_reset),
          .out(alu_out),
          .flag_c(flag_c),
          .flag_z(flag_z),

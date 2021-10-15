@@ -5,16 +5,11 @@ module m6502_alu (
       input  [3:0] op,
       input  [7:0] in_a,
       input  [7:0] in_b,
-      input  flag_n_set,
-      input  flag_n_reset,
-      input  flag_v_set,
-      input  flag_v_reset,
-      input  flag_d_set,
-      input  flag_d_reset,
-      input  flag_z_set,
-      input  flag_z_reset,
-      input  flag_c_set,
-      input  flag_c_reset,
+      input  [1:0] flag_n_set,
+      input  [1:0] flag_v_set,
+      input  [1:0] flag_d_set,
+      input  [1:0] flag_z_set,
+      input  [1:0] flag_c_set,
       output [7:0] out,
       output reg flag_c,
       output reg flag_z,
@@ -81,82 +76,35 @@ module m6502_alu (
    end
    
    always @ (posedge clk) begin : update_flags
-      reg flag_n_set_prev;
-      reg flag_n_reset_prev;
-      reg flag_v_set_prev;
-      reg flag_v_reset_prev;
-      reg flag_d_set_prev;
-      reg flag_d_reset_prev;
-      reg flag_z_set_prev;
-      reg flag_z_reset_prev;
-      reg flag_c_set_prev;
-      reg flag_c_reset_prev;
 
       if (~reset_n) begin
-         flag_n_set_prev   <= 0;
-         flag_n_reset_prev <= 0;
-         flag_v_set_prev   <= 0;
-         flag_v_reset_prev <= 0;
-         flag_d_set_prev   <= 0;
-         flag_d_reset_prev <= 0;
-         flag_z_set_prev   <= 0;
-         flag_z_reset_prev <= 0;
-         flag_c_set_prev   <= 0;
-         flag_c_reset_prev <= 0;
          flag_n <= 0;
          flag_v <= 0;
          flag_d <= 0;
          flag_z <= 0;
          flag_c <= 0;
       end else begin
-         flag_n_set_prev   <= flag_n_set;
-         flag_n_reset_prev <= flag_n_reset;
-         flag_v_set_prev   <= flag_v_set;
-         flag_v_reset_prev <= flag_v_reset;
-         flag_d_set_prev   <= flag_d_set;
-         flag_d_reset_prev <= flag_d_reset;
-         flag_z_set_prev   <= flag_z_set;
-         flag_z_reset_prev <= flag_z_reset;
-         flag_c_set_prev   <= flag_c_set;
-         flag_c_reset_prev <= flag_c_reset;
-   
-         if (!flag_c_set_prev & flag_c_set) begin
-            flag_c <= 1;
-         end else if (!flag_c_reset_prev & flag_c_reset) begin
-            flag_c <= 0;
-         end else if (!flag_d_set_prev   & flag_d_set) begin
-            flag_d <= 1;
-         end else if (!flag_d_reset_prev & flag_d_reset) begin
-            flag_d <= 0;
-         end else if (!flag_v_set_prev & flag_v_set) begin
-            flag_v <= 0;
-         end else if (!flag_v_reset_prev & flag_v_reset) begin
-            flag_v <= 0;
-         end else if (!flag_z_set_prev & flag_z_set) begin
-            flag_z <= 0;
-         end else if (!flag_z_reset_prev & flag_z_reset) begin
-            flag_z <= 0;
-         end else if (!flag_n_set_prev & flag_n_set) begin
-            flag_n <= 0;
-         end else if (!flag_n_reset_prev & flag_n_reset) begin
-            flag_n <= 0;
-         end else begin
-            if (op_post != OP_NOP) begin
-               flag_z <= out == 0;
-               flag_n <= out[7];
-            end
-            case (op_post)
-               OP_ADC:
-               begin
-                  flag_c <= result[8];
-                  flag_v <= (!in_a[7] & !in_b[7] & ov[7]) | (in_a[7] & in_b[7] & ov[7]);
-               end
-               OP_CMP:
-                  flag_c <= !result[8];
-               OP_UPDATE_C:
-                  flag_c <= next_c;
-            endcase
+         if (flag_n_set[1]) flag_n <= flag_n_set[0];
+         if (flag_v_set[1]) flag_v <= flag_v_set[0];
+         if (flag_d_set[1]) flag_d <= flag_d_set[0];
+         if (flag_z_set[1]) flag_z <= flag_z_set[0];
+         if (flag_c_set[1]) flag_c <= flag_c_set[0];
+         
+         if (op_post != OP_NOP) begin
+            flag_z <= out == 0;
+            flag_n <= out[7];
          end
+         case (op_post)
+            OP_ADC:
+            begin
+               flag_c <= result[8];
+               flag_v <= (!in_a[7] & !in_b[7] & ov[7]) | (in_a[7] & in_b[7] & ov[7]);
+            end
+            OP_CMP:
+               flag_c <= !result[8];
+            OP_UPDATE_C:
+               flag_c <= next_c;
+         endcase
       end
    end
    
