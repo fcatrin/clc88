@@ -348,6 +348,9 @@ module m6502_cpu (
                CPU_OP_DEY,
                CPU_OP_TAY:    reg_y <= alu_out;
                CPU_OP_BRANCH: pc <= pc + 2 + (do_branch ? $signed(reg_m) : 0);
+               CPU_OP_JMP,
+               CPU_OP_JSR,
+               CPU_OP_RTS:    pc <= jmp_addr;
             endcase
             cpu_op <= CPU_OP_NOP;
          end
@@ -433,8 +436,8 @@ module m6502_cpu (
       bus_wr_en  <= 0;
       if (load_store == DO_LOAD) begin
          bus_rd_req <= 1;
-      end else if (load_store == DO_STORE | write_from_alu | write_push_value) begin
-         bus_wr_data <= write_from_alu ? alu_out : (write_push_value ? push_value : reg_write);
+      end else if (load_store == DO_STORE | write_from_alu | write_stack_value) begin
+         bus_wr_data <= write_from_alu ? alu_out : (write_stack_value ? stack_value : reg_write);
          bus_wr_en   <= 1;
          store_complete <= 1;
       end
@@ -471,9 +474,11 @@ module m6502_cpu (
    localparam NEXT_JSR1     = 12;
    localparam NEXT_JSR2     = 13;
    localparam NEXT_JSR3     = 14;
+   localparam NEXT_RTS1     = 15;
+   localparam NEXT_RTS2     = 16;
 
-   reg[3:0] address_mode;
-   reg[3:0] address_mode_prepare;
+   reg[4:0] address_mode;
+   reg[4:0] address_mode_prepare;
 
    localparam CPU_OP_NOP    = 0;
    localparam CPU_OP_LDA    = 1;
@@ -527,26 +532,27 @@ module m6502_cpu (
    localparam CPU_OP_JMP    = 48;
    
    reg[15:0] jmp_addr;
-   reg[7:0]  push_value;
-   reg       write_push_value;
+   reg[7:0]  stack_value;
+   reg       write_stack_value;
    reg[5:0]  cpu_op;
    reg       do_branch;
 
    always @ (posedge clk) begin : cpu_load_store_decode
-      reg[3:0] next_addr_op;
+      reg[4:0] next_addr_op;
       reg[7:0] tmp_addr;
       reg cpu_op_finish;
       reg use_a;
       reg alu_wait;
       reg[1:0] push_state;
-      reg[5:0] push_op_back;
+      reg[1:0] pop_state;
+      reg[4:0] stack_op_back;
       reg[15:0] ret_addr;
       
       use_a <= 0;
       alu_proceed <= 0;
       alu_wait <= 0;
       write_from_alu <= 0;
-      write_push_value <= 0;
+      write_stack_value <= 0;
       do_branch <= 0;
       
       flag_c_reset <= 0;
@@ -696,19 +702,54 @@ module m6502_cpu (
          case (next_addr_op)
             NEXT_JSR1:
             begin
-               push_value <= ret_addr[7:0];
-               push_state <= 1;
-               push_op_back <= NEXT_JSR2;
+               push_state  <= 1;
+               stack_value <= ret_addr[7:0];
+               stack_op_back <= NEXT_JSR2;
             end
             NEXT_JSR2:
             begin
-               push_value <= ret_addr[15:8];
-               push_state <= 1;
-               push_op_back <= NEXT_JSR3;
+               push_state  <= 1;
+               stack_value <= ret_addr[15:8];
+               stack_op_back <= NEXT_JSR3;
             end
             NEXT_JSR3:
             begin
                load_complete <= 1;
+            end
+            NEXT_RTS1:
+            begin
+               jmp_addr[15:8] <= stack_value;
+               pop_state <=1;
+               stack_op_back <= NEXT_RTS2;
+            end
+            NEXT_RTS2:
+            begin
+               jmp_addr[7:0] <= stack_value;
+               load_complete <= 1;
+            end
+         endcase
+         
+         case (cpu_op)
+            CPU_OP_RTS:
+            begin
+               pop_state <= 1;
+               stack_op_back <= NEXT_RTS1;
+            end
+         endcase
+         
+         case (pop_state)
+            1 :
+            begin
+               bus_addr <= {8'd1, reg_sp};
+               reg_sp <= reg_sp + 1'b1;
+               load_store <= DO_LOAD;
+               pop_state <= 2;
+            end
+            2 : 
+            begin
+               stack_value  <= rd_data;
+               next_addr_op <= stack_op_back;
+               pop_state <= 0;
             end
          endcase
          
@@ -718,11 +759,11 @@ module m6502_cpu (
                bus_addr <= {8'd1, reg_sp};
                reg_sp <= reg_sp - 1'b1;
                push_state <= 2;
-               write_push_value <= 1;
+               write_stack_value <= 1;
             end
             2 :
             begin
-               next_addr_op <= push_op_back;
+               next_addr_op <= stack_op_back;
                push_state <= 0;
             end
          endcase
