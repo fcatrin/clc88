@@ -18,13 +18,15 @@ irq:
 	rti   
 boot:
 
-   lda #1
-   jsr test_sub
-halt:   
-   jmp halt
-test_sub   
+   lda #$55
+   pha
    lda #$aa
-   rts
+   pha
+   lda #0
+   pla
+   pla
+halt
+   jmp halt   
 
    jmp demo
    // icl 'demos/text_mode_attrib.asm'

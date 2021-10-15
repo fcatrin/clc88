@@ -341,6 +341,7 @@ module m6502_cpu (
                CPU_OP_ROL,
                CPU_OP_LSR,
                CPU_OP_ROR,
+               CPU_OP_PLA,
                CPU_OP_TXA,
                CPU_OP_TYA:    reg_a <= alu_out;
                CPU_OP_LDX,
@@ -482,6 +483,7 @@ module m6502_cpu (
    localparam NEXT_JSR3     = 14;
    localparam NEXT_RTS1     = 15;
    localparam NEXT_RTS2     = 16;
+   localparam NEXT_PLA      = 17;
 
    reg[4:0] address_mode;
    reg[4:0] address_mode_prepare;
@@ -585,6 +587,12 @@ module m6502_cpu (
             if (cpu_op == CPU_OP_RTS) begin
                pop_state <= 1;
                stack_op_back <= NEXT_RTS1;
+            end else if (cpu_op == CPU_OP_PHA) begin
+               stack_value <= reg_a;
+               push_state <= 1;
+            end else if (cpu_op == CPU_OP_PLA) begin
+               pop_state <= 1;
+               stack_op_back <= NEXT_PLA;
             end else begin
                cpu_op_finish <= 1;
                if (cpu_inst_single) load_complete <= 1;
@@ -739,6 +747,11 @@ module m6502_cpu (
                jmp_addr[7:0] <= stack_value;
                load_complete <= 1;
             end
+            NEXT_PLA:
+            begin
+               alu_in_a <= stack_value;
+               alu_proceed <= 1;
+            end
          endcase
          
          case (pop_state)
@@ -889,7 +902,7 @@ module m6502_cpu (
                   alu_proceed <= 1;
                end
             endcase
-
+            
             case(cpu_op)
                CPU_OP_TYA: alu_in_a <= reg_y; 
                CPU_OP_TXA: alu_in_a <= reg_x;
