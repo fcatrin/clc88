@@ -113,7 +113,6 @@ module m6502_cpu (
             reg_a <= 0;
             reg_x <= 0;
             reg_y <= 0;
-            reg_sp <= 8'hff;
             address_mode_prepare <= MODE_RESET;
             wait_for_reset <= 1;
          end else case (cc)  // reg_i format aaabbbcc. Check cc first
@@ -144,6 +143,37 @@ module m6502_cpu (
                      7: address_mode_prepare <= MODE_ABS_X;
                   endcase
                   case(aaa)
+                     0,1,2,3:
+                        case(bbb)
+                           0: case(aaa)
+                                 0: cpu_op <= CPU_OP_BRK;
+                                 1: cpu_op <= CPU_OP_JSR;
+                                 2: cpu_op <= CPU_OP_RTI;
+                                 3: cpu_op <= CPU_OP_RTS;
+                              endcase
+                           1: if (aaa == 1) begin
+                                 cpu_op <= CPU_OP_BIT;
+                                 address_mode_prepare <= MODE_Z;
+                              end
+                           2: case(aaa)
+                                 0: cpu_op <= CPU_OP_PHP;
+                                 1: cpu_op <= CPU_OP_PLP;
+                                 2: cpu_op <= CPU_OP_PHA;
+                                 3: cpu_op <= CPU_OP_PLA;
+                              endcase
+                           3: case(aaa)
+                                 2: 
+                                 begin
+                                    cpu_op <= CPU_OP_JMP;
+                                    address_mode_prepare <= MODE_ABS;
+                                 end
+                                 3: 
+                                 begin
+                                    cpu_op <= CPU_OP_JMP;
+                                    address_mode_prepare <= MODE_IND_ABS;
+                                 end
+                              endcase
+                        endcase
                      4: 
                      case(bbb)
                         1,3,5: 
@@ -317,7 +347,6 @@ module m6502_cpu (
                CPU_OP_INY,
                CPU_OP_DEY,
                CPU_OP_TAY:    reg_y <= alu_out;
-               CPU_OP_TXS:    reg_sp <= reg_x;
                CPU_OP_BRANCH: pc <= pc + 2 + (do_branch ? $signed(reg_m) : 0);
             endcase
             cpu_op <= CPU_OP_NOP;
@@ -404,8 +433,8 @@ module m6502_cpu (
       bus_wr_en  <= 0;
       if (load_store == DO_LOAD) begin
          bus_rd_req <= 1;
-      end else if (load_store == DO_STORE || write_from_alu) begin
-         bus_wr_data <= write_from_alu ? alu_out : reg_write;
+      end else if (load_store == DO_STORE | write_from_alu | write_push_value) begin
+         bus_wr_data <= write_from_alu ? alu_out : (write_push_value ? push_value : reg_write);
          bus_wr_en   <= 1;
          store_complete <= 1;
       end
@@ -439,6 +468,9 @@ module m6502_cpu (
    localparam NEXT_IND_ABS3 = 9;
    localparam NEXT_IND_Z1   = 10;
    localparam NEXT_IND_Z2   = 11;
+   localparam NEXT_JSR1     = 12;
+   localparam NEXT_JSR2     = 13;
+   localparam NEXT_JSR3     = 14;
 
    reg[3:0] address_mode;
    reg[3:0] address_mode_prepare;
@@ -483,8 +515,22 @@ module m6502_cpu (
    localparam CPU_OP_DEC    = 37;
    localparam CPU_OP_INC    = 38;
    
-   reg[5:0] cpu_op;
-   reg do_branch;
+   localparam CPU_OP_BRK    = 39;
+   localparam CPU_OP_JSR    = 40;
+   localparam CPU_OP_RTI    = 41;
+   localparam CPU_OP_RTS    = 42;
+   localparam CPU_OP_BIT    = 43;
+   localparam CPU_OP_PHP    = 44;
+   localparam CPU_OP_PLP    = 45;
+   localparam CPU_OP_PHA    = 46;
+   localparam CPU_OP_PLA    = 47;
+   localparam CPU_OP_JMP    = 48;
+   
+   reg[15:0] jmp_addr;
+   reg[7:0]  push_value;
+   reg       write_push_value;
+   reg[5:0]  cpu_op;
+   reg       do_branch;
 
    always @ (posedge clk) begin : cpu_load_store_decode
       reg[3:0] next_addr_op;
@@ -492,11 +538,15 @@ module m6502_cpu (
       reg cpu_op_finish;
       reg use_a;
       reg alu_wait;
+      reg[1:0] push_state;
+      reg[5:0] push_op_back;
+      reg[15:0] ret_addr;
       
       use_a <= 0;
       alu_proceed <= 0;
       alu_wait <= 0;
       write_from_alu <= 0;
+      write_push_value <= 0;
       do_branch <= 0;
       
       flag_c_reset <= 0;
@@ -507,6 +557,7 @@ module m6502_cpu (
       
       load_store <= DO_NOTHING;
       if (!reset_n) begin
+         reg_sp <= 8'hff;
          next_addr_op <= NEXT_IDLE;
       end else if (ready && !bus_rd_req) begin
          load_complete <= 0;
@@ -588,7 +639,11 @@ module m6502_cpu (
                next_addr_op <= NEXT_ABS2;
             end
             NEXT_ABS2:
-            begin
+            if (cpu_op == CPU_OP_JSR) begin
+               jmp_addr <= {rd_data, tmp_addr};
+               ret_addr <= pc + 3;
+               next_addr_op <= NEXT_JSR1;
+            end else begin
                bus_addr   <= {rd_data, tmp_addr} + reg_ndx;
                load_store <= do_load_store;
                cpu_op_finish <= 1;
@@ -637,6 +692,41 @@ module m6502_cpu (
                load_complete <= 1;
             end
          endcase
+         
+         case (next_addr_op)
+            NEXT_JSR1:
+            begin
+               push_value <= ret_addr[7:0];
+               push_state <= 1;
+               push_op_back <= NEXT_JSR2;
+            end
+            NEXT_JSR2:
+            begin
+               push_value <= ret_addr[15:8];
+               push_state <= 1;
+               push_op_back <= NEXT_JSR3;
+            end
+            NEXT_JSR3:
+            begin
+               load_complete <= 1;
+            end
+         endcase
+         
+         case (push_state)
+            1 : 
+            begin
+               bus_addr <= {8'd1, reg_sp};
+               reg_sp <= reg_sp - 1'b1;
+               push_state <= 2;
+               write_push_value <= 1;
+            end
+            2 :
+            begin
+               next_addr_op <= push_op_back;
+               push_state <= 0;
+            end
+         endcase
+         
          if (alu_proceed & !alu_wait) begin
             load_complete <= 1;
          end else if (cpu_op_finish || alu_wait) begin
@@ -759,7 +849,10 @@ module m6502_cpu (
                CPU_OP_TAY,
                CPU_OP_TAX: alu_in_a <= reg_a;
                CPU_OP_TSX: alu_in_a <= reg_sp;
-               CPU_OP_TXS: load_complete <= 1;
+               CPU_OP_TXS: begin
+                  reg_sp <= reg_x;
+                  load_complete <= 1;
+               end
             endcase
 
             case(cpu_op)
