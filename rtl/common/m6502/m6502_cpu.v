@@ -41,7 +41,14 @@ module m6502_cpu (
    wire[2:0] bbb = reg_i[4:2];
    wire[2:0] cc  = reg_i[1:0];
 
-   reg flag_i;
+   wire flag_n;
+   wire flag_v;
+   wire flag_d;
+   reg  flag_i;
+   wire flag_z;
+   wire flag_c;
+   
+   wire[7:0] reg_sr = {flag_n, flag_v, 1'b0, 1'b0, flag_d, flag_i, flag_z, flag_c}; 
 
    localparam CPU_WAIT         = 0;
    localparam CPU_FETCH        = 1;
@@ -484,6 +491,7 @@ module m6502_cpu (
    localparam NEXT_RTS1     = 15;
    localparam NEXT_RTS2     = 16;
    localparam NEXT_PLA      = 17;
+   localparam NEXT_PLP      = 18;
 
    reg[4:0] address_mode;
    reg[4:0] address_mode_prepare;
@@ -593,6 +601,12 @@ module m6502_cpu (
             end else if (cpu_op == CPU_OP_PLA) begin
                pop_state <= 1;
                stack_op_back <= NEXT_PLA;
+            end else if (cpu_op == CPU_OP_PHP) begin
+               stack_value <= reg_sr | 8'b00010000; // BREAK flag is always 1 on PHP and BRK
+               push_state <= 1;
+            end else if (cpu_op == CPU_OP_PLP) begin
+               pop_state <= 1;
+               stack_op_back <= NEXT_PLP;
             end else begin
                cpu_op_finish <= 1;
                if (cpu_inst_single) load_complete <= 1;
@@ -751,6 +765,21 @@ module m6502_cpu (
             begin
                alu_in_a <= stack_value;
                alu_proceed <= 1;
+            end
+            NEXT_PLP:
+            begin
+               flag_n_set   <=  stack_value[7];
+               flag_n_reset <= !stack_value[7];
+               flag_v_set   <=  stack_value[6];
+               flag_v_reset <= !stack_value[6];
+               flag_d_set   <=  stack_value[3];
+               flag_d_reset <= !stack_value[3];
+               flag_i       <=  stack_value[2];
+               flag_z_set   <=  stack_value[1];
+               flag_z_reset <= !stack_value[1];
+               flag_c_set   <=  stack_value[0];
+               flag_c_reset <= !stack_value[0];
+               load_complete <= 1;
             end
          endcase
          
@@ -965,16 +994,16 @@ module m6502_cpu (
    
    reg write_from_alu;
    
-   wire flag_c;
-   wire flag_z;
-   wire flag_v;
-   wire flag_n;
-   wire flag_d;
-   reg  flag_c_set;
-   reg  flag_c_reset;
+   reg  flag_n_set;
+   reg  flag_n_reset;
+   reg  flag_v_set;
+   reg  flag_v_reset;
    reg  flag_d_set;
    reg  flag_d_reset;
-   reg  flag_v_reset;
+   reg  flag_z_set;
+   reg  flag_z_reset;
+   reg  flag_c_set;
+   reg  flag_c_reset;
    
    m6502_alu alu (
          .clk(clk),
@@ -983,11 +1012,16 @@ module m6502_cpu (
          .op(alu_op),
          .in_a(alu_in_a),
          .in_b(alu_in_b),
-         .flag_c_set(flag_c_set),
-         .flag_c_reset(flag_c_reset),
+         .flag_n_set(flag_n_set),
+         .flag_n_reset(flag_n_reset),
+         .flag_v_set(flag_v_set),
+         .flag_v_reset(flag_v_reset),
          .flag_d_set(flag_d_set),
          .flag_d_reset(flag_d_reset),
-         .flag_v_reset(flag_v_reset),
+         .flag_z_set(flag_z_set),
+         .flag_z_reset(flag_z_reset),
+         .flag_c_set(flag_c_set),
+         .flag_c_reset(flag_c_reset),
          .out(alu_out),
          .flag_c(flag_c),
          .flag_z(flag_z),
