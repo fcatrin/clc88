@@ -483,15 +483,16 @@ module m6502_cpu (
    localparam NEXT_IND_ABS1 = 7;
    localparam NEXT_IND_ABS2 = 8;
    localparam NEXT_IND_ABS3 = 9;
-   localparam NEXT_IND_Z1   = 10;
-   localparam NEXT_IND_Z2   = 11;
-   localparam NEXT_JSR1     = 12;
-   localparam NEXT_JSR2     = 13;
-   localparam NEXT_JSR3     = 14;
-   localparam NEXT_RTS1     = 15;
-   localparam NEXT_RTS2     = 16;
-   localparam NEXT_PLA      = 17;
-   localparam NEXT_PLP      = 18;
+   localparam NEXT_IND_ABS4 = 10;
+   localparam NEXT_IND_Z1   = 11;
+   localparam NEXT_IND_Z2   = 12;
+   localparam NEXT_JSR1     = 13;
+   localparam NEXT_JSR2     = 14;
+   localparam NEXT_JSR3     = 15;
+   localparam NEXT_RTS1     = 16;
+   localparam NEXT_RTS2     = 17;
+   localparam NEXT_PLA      = 18;
+   localparam NEXT_PLP      = 19;
 
    reg[4:0] address_mode;
    reg[4:0] address_mode_prepare;
@@ -636,8 +637,7 @@ module m6502_cpu (
             end
             MODE_IND_ABS: // JMP (IND)
             begin
-               tmp_addr <= rd_data;
-               bus_addr <= pc_op + 1;
+               bus_addr <= pc_op;
                load_store <= DO_LOAD;
                next_addr_op <= NEXT_IND_ABS1; 
             end
@@ -694,20 +694,27 @@ module m6502_cpu (
             end
             NEXT_IND_ABS1:
             begin
-               bus_addr <= {rd_data, tmp_addr};
+               tmp_addr <= rd_data;
+               bus_addr <= pc + 2;
                load_store <= DO_LOAD;
                next_addr_op <= NEXT_IND_ABS2;
             end
             NEXT_IND_ABS2:
             begin
-               tmp_addr <= rd_data;
-               bus_addr <= bus_addr + 1;
+               bus_addr <= {rd_data, tmp_addr};
                load_store <= DO_LOAD;
                next_addr_op <= NEXT_IND_ABS3;
             end
             NEXT_IND_ABS3:
             begin
-               reg_word <= {rd_data, tmp_addr};
+               tmp_addr <= rd_data;
+               bus_addr <= bus_addr + 1;
+               load_store <= DO_LOAD;
+               next_addr_op <= NEXT_IND_ABS4;
+            end
+            NEXT_IND_ABS4:
+            begin
+               jmp_addr <= {rd_data, tmp_addr};
                load_complete <= 1;
             end
             NEXT_IND_Z1:

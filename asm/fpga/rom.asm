@@ -18,22 +18,19 @@ irq:
 	rti   
 boot:
 
-   lda #0
-   php
-   lda #$80
-   php
-   clc
-   php
-   sec
-   php
-   clc
-   plp
-   plp
-   plp
-   plp
-
-halt
-   jmp halt   
+   lda #<target
+   sta $20
+   lda #>target
+   sta $21
+   jmp ($20)
+   lda #2
+   lda #3
+wrong:   
+   bne wrong
+target   
+   lda #1
+halt:   
+   jmp halt
 
    jmp demo
    // icl 'demos/text_mode_attrib.asm'
