@@ -113,6 +113,7 @@ module m6502_cpu (
             reg_a <= 0;
             reg_x <= 0;
             reg_y <= 0;
+            cpu_op <= CPU_OP_NOP;
             address_mode_prepare <= MODE_RESET;
             wait_for_reset <= 1;
          end else case (cc)  // reg_i format aaabbbcc. Check cc first
@@ -147,7 +148,11 @@ module m6502_cpu (
                         case(bbb)
                            0: case(aaa)
                                  0: cpu_op <= CPU_OP_BRK;
-                                 1: cpu_op <= CPU_OP_JSR;
+                                 1: 
+                                 begin
+                                    cpu_op <= CPU_OP_JSR;
+                                    address_mode_prepare <= MODE_ABS;
+                                 end
                                  2: cpu_op <= CPU_OP_RTI;
                                  3: cpu_op <= CPU_OP_RTS;
                               endcase
@@ -428,6 +433,7 @@ module m6502_cpu (
    
    reg load_complete;
    reg store_complete;
+   reg store_and_finish;
    wire load_store_complete = load_complete | store_complete;
    
    always @ (negedge clk) begin : cpu_load_store
@@ -439,7 +445,7 @@ module m6502_cpu (
       end else if (load_store == DO_STORE | write_from_alu | write_stack_value) begin
          bus_wr_data <= write_from_alu ? alu_out : (write_stack_value ? stack_value : reg_write);
          bus_wr_en   <= 1;
-         store_complete <= 1;
+         store_complete <= store_and_finish;
       end
    end
    
@@ -553,6 +559,7 @@ module m6502_cpu (
       alu_wait <= 0;
       write_from_alu <= 0;
       write_stack_value <= 0;
+      store_and_finish <= 1;
       do_branch <= 0;
       
       flag_c_reset <= 0;
@@ -563,16 +570,22 @@ module m6502_cpu (
       
       load_store <= DO_NOTHING;
       if (!reset_n) begin
+         pop_state <= 0;
+         push_state <= 0;
          reg_sp <= 8'hff;
          next_addr_op <= NEXT_IDLE;
-      end else if (ready && !bus_rd_req) begin
+         stack_op_back <= NEXT_IDLE;
+      end else if (ready && !bus_rd_req && cpu_fetch_state == CPU_EXECUTE_WAIT) begin
          load_complete <= 0;
          cpu_op_finish <= 0;
          next_addr_op <= NEXT_IDLE;
          
          case(address_mode)
             MODE_SINGLE:
-            begin
+            if (cpu_op == CPU_OP_RTS) begin
+               pop_state <= 1;
+               stack_op_back <= NEXT_RTS1;
+            end else begin
                cpu_op_finish <= 1;
                if (cpu_inst_single) load_complete <= 1;
             end
@@ -649,6 +662,9 @@ module m6502_cpu (
                jmp_addr <= {rd_data, tmp_addr};
                ret_addr <= pc + 3;
                next_addr_op <= NEXT_JSR1;
+            end else if (cpu_op == CPU_OP_JMP) begin
+               jmp_addr <= {rd_data, tmp_addr};
+               load_complete <= 1;
             end else begin
                bus_addr   <= {rd_data, tmp_addr} + reg_ndx;
                load_store <= do_load_store;
@@ -702,7 +718,7 @@ module m6502_cpu (
          case (next_addr_op)
             NEXT_JSR1:
             begin
-               push_state  <= 1;
+               push_state  <= 3;
                stack_value <= ret_addr[7:0];
                stack_op_back <= NEXT_JSR2;
             end
@@ -710,11 +726,7 @@ module m6502_cpu (
             begin
                push_state  <= 1;
                stack_value <= ret_addr[15:8];
-               stack_op_back <= NEXT_JSR3;
-            end
-            NEXT_JSR3:
-            begin
-               load_complete <= 1;
+               stack_op_back <= NEXT_IDLE;
             end
             NEXT_RTS1:
             begin
@@ -729,18 +741,11 @@ module m6502_cpu (
             end
          endcase
          
-         case (cpu_op)
-            CPU_OP_RTS:
-            begin
-               pop_state <= 1;
-               stack_op_back <= NEXT_RTS1;
-            end
-         endcase
-         
          case (pop_state)
             1 :
             begin
-               bus_addr <= {8'd1, reg_sp};
+               bus_addr[7:0]  <= reg_sp + 1'b1;
+               bus_addr[15:8] <= 8'b1;
                reg_sp <= reg_sp + 1'b1;
                load_store <= DO_LOAD;
                pop_state <= 2;
@@ -754,12 +759,13 @@ module m6502_cpu (
          endcase
          
          case (push_state)
-            1 : 
+            1,3 : 
             begin
                bus_addr <= {8'd1, reg_sp};
                reg_sp <= reg_sp - 1'b1;
                push_state <= 2;
                write_stack_value <= 1;
+               store_and_finish <= push_state == 1;
             end
             2 :
             begin
