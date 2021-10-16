@@ -163,7 +163,7 @@ module system (
          .wr_en(cpu_wr_en),
          .rd_req(cpu_rd_req),
          .ready(cpu_ready),
-         .nmi_n(key_mode),
+         .nmi_n(1'b1),
          .irq_n(1'b1)
       );
       
