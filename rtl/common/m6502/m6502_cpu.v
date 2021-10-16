@@ -375,7 +375,8 @@ module m6502_cpu (
                CPU_OP_BRK,
                CPU_OP_JMP,
                CPU_OP_JSR,
-               CPU_OP_RTS:    pc <= jmp_addr;
+               CPU_OP_RTS,
+               CPU_OP_RTI:    pc <= jmp_addr;
             endcase
             cpu_op <= CPU_OP_NOP;
          end
@@ -501,14 +502,15 @@ module m6502_cpu (
    localparam NEXT_JSR1     = 13;
    localparam NEXT_JSR2     = 14;
    localparam NEXT_JSR3     = 15;
-   localparam NEXT_RTS1     = 16;
-   localparam NEXT_RTS2     = 17;
-   localparam NEXT_PLA      = 18;
-   localparam NEXT_PLP      = 19;
-   localparam NEXT_BRK1     = 20;
-   localparam NEXT_BRK2     = 21;
-   localparam NEXT_BRK3     = 22;
-   localparam NEXT_BRK4     = 23;
+   localparam NEXT_RTI      = 16;
+   localparam NEXT_RTS1     = 17;
+   localparam NEXT_RTS2     = 18;
+   localparam NEXT_PLA      = 19;
+   localparam NEXT_PLP      = 20;
+   localparam NEXT_BRK1     = 21;
+   localparam NEXT_BRK2     = 22;
+   localparam NEXT_BRK3     = 23;
+   localparam NEXT_BRK4     = 24;
 
    reg[4:0] address_mode;
    reg[4:0] address_mode_prepare;
@@ -613,6 +615,9 @@ module m6502_cpu (
             if (cpu_op == CPU_OP_RTS) begin
                pop_state <= 1;
                stack_op_back <= NEXT_RTS1;
+            end else if (cpu_op == CPU_OP_RTI) begin
+               pop_state <= 1;
+               stack_op_back <= NEXT_RTI;
             end else if (cpu_op == CPU_OP_PHA) begin
                stack_value <= reg_a;
                push_state <= 1;
@@ -789,7 +794,7 @@ module m6502_cpu (
             end
             NEXT_BRK4:
             begin
-               flag_d_set = ALU_FLAG_RESET;
+               flag_d_set  <= ALU_FLAG_RESET;
                push_state  <= 1;
                stack_value <= reg_sr | 8'b00010000;
                stack_op_back <= NEXT_IDLE;
@@ -823,7 +828,7 @@ module m6502_cpu (
                alu_in_a <= stack_value;
                alu_proceed <= 1;
             end
-            NEXT_PLP:
+            NEXT_RTI, NEXT_PLP:
             begin
                flag_n_set   <=  {1'b1, stack_value[7]};
                flag_v_set   <=  {1'b1, stack_value[6]};
@@ -831,7 +836,12 @@ module m6502_cpu (
                flag_i       <=  stack_value[2];
                flag_z_set   <=  {1'b1, stack_value[1]};
                flag_c_set   <=  {1'b1, stack_value[0]};
-               load_complete <= 1;
+               if (next_addr_op == NEXT_RTI) begin
+                  pop_state <= 1;
+                  stack_op_back <= NEXT_RTS1;
+               end else begin
+                  load_complete <= 1;
+               end
             end
          endcase
          

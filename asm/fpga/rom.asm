@@ -16,8 +16,8 @@ nmi:
 	rti
 irq:
 	lda #$55
-loop: 
-   jmp loop
+	lda #$33
+	rti
 	
 boot:
 
@@ -25,7 +25,8 @@ boot:
    brk
    nop
 
-halt:   
+   lda #$44
+halt:
    jmp halt
 
    jmp demo
