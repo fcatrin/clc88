@@ -22,6 +22,10 @@ module m6502_cpu (
 
    `include "m6502_alu_ops.vh"
    
+   localparam NMI_VECTOR = 16'hfffa;
+   localparam RST_VECTOR = 16'hfffc;
+   localparam IRQ_VECTOR = 16'hfffe;
+   
    reg[15:0] pc;
    reg[15:0] pc_op;
    reg[1:0]  pc_delta;
@@ -368,6 +372,7 @@ module m6502_cpu (
                CPU_OP_DEY,
                CPU_OP_TAY:    reg_y <= alu_out;
                CPU_OP_BRANCH: pc <= pc + 2 + (do_branch ? $signed(reg_m) : 0);
+               CPU_OP_BRK,
                CPU_OP_JMP,
                CPU_OP_JSR,
                CPU_OP_RTS:    pc <= jmp_addr;
@@ -500,6 +505,10 @@ module m6502_cpu (
    localparam NEXT_RTS2     = 17;
    localparam NEXT_PLA      = 18;
    localparam NEXT_PLP      = 19;
+   localparam NEXT_BRK1     = 20;
+   localparam NEXT_BRK2     = 21;
+   localparam NEXT_BRK3     = 22;
+   localparam NEXT_BRK4     = 23;
 
    reg[4:0] address_mode;
    reg[4:0] address_mode_prepare;
@@ -616,6 +625,11 @@ module m6502_cpu (
             end else if (cpu_op == CPU_OP_PLP) begin
                pop_state <= 1;
                stack_op_back <= NEXT_PLP;
+            end else if (cpu_op == CPU_OP_BRK) begin
+               bus_addr <= IRQ_VECTOR;
+               load_store <= DO_LOAD;
+               ret_addr   <= pc + 2;
+               next_addr_op <= NEXT_BRK1;
             end else begin
                cpu_op_finish <= 1;
                if (cpu_inst_single) load_complete <= 1;
@@ -657,7 +671,7 @@ module m6502_cpu (
             end
             MODE_RESET:
             begin
-               bus_addr <= 16'hFFFC;
+               bus_addr <= RST_VECTOR;
                load_store <= DO_LOAD;
                next_addr_op <= NEXT_RESET1;
             end
@@ -741,7 +755,7 @@ module m6502_cpu (
             NEXT_RESET1:
             begin
                tmp_addr <= rd_data;
-               bus_addr <= bus_addr + 1;
+               bus_addr <= RST_VECTOR + 1;
                load_store <= DO_LOAD;
                next_addr_op <= NEXT_RESET2;
             end
@@ -753,6 +767,34 @@ module m6502_cpu (
          endcase
          
          case (next_addr_op)
+            NEXT_BRK1:
+            begin
+               tmp_addr <= rd_data;
+               bus_addr <= IRQ_VECTOR + 1;
+               load_store <= DO_LOAD;
+               next_addr_op <= NEXT_BRK2;
+            end
+            NEXT_BRK2:
+            begin
+               jmp_addr <= {rd_data, tmp_addr};
+               push_state  <= 3;
+               stack_value <= ret_addr[15:8];
+               stack_op_back <= NEXT_BRK3;
+            end
+            NEXT_BRK3:
+            begin
+               push_state  <= 3;
+               stack_value <= ret_addr[7:0];
+               stack_op_back <= NEXT_BRK4;
+            end
+            NEXT_BRK4:
+            begin
+               flag_d_set = ALU_FLAG_RESET;
+               push_state  <= 1;
+               stack_value <= reg_sr | 8'b00010000;
+               stack_op_back <= NEXT_IDLE;
+            end
+            
             NEXT_JSR1:
             begin
                push_state  <= 3;
