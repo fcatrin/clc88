@@ -5,17 +5,19 @@ INCLUDE1=../asm/fpga/symbols.asm
 INCLUDE2=../asm/fpga/text.asm
 INCLUDE3=../asm/fpga/graphics.asm
 INCLUDE4=../asm/fpga/demos/text_mode_attrib.asm
+INCLUDE5=../asm/fpga/demos/m6502_test.asm
 
 ALL:  ${MIF}
 
 ${MIF} : fpga_rom_build
 	./fpga_rom_build
 
+INCLUDES=${INCLUDE1} ${INCLUDE2} ${INCLUDE3} ${INCLUDE4} ${INCLUDE5} 
 
 fpga_rom_build : fpga_rom_build.c ${BIOS_XEX}
 	gcc fpga_rom_build.c -o fpga_rom_build
 
-${BIOS_XEX} : ${BIOS_SRC} ${INCLUDE1} ${INCLUDE2}
+${BIOS_XEX} : ${BIOS_SRC} ${INCLUDES}
 	mads ${BIOS_SRC} -o:${BIOS_XEX} -l
 	
 clean:

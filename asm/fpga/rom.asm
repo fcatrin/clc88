@@ -13,18 +13,13 @@ VRAM_ADDR_SCREEN  = VRAM_ADDR_CHARSET + CHARSET_SIZE
    
    org $ff80
 nmi:
-   lda #$33
 	rti
 irq:
 	rti
 	
 boot:
-
-   lda #$aa
-   lda #$55
-   jmp boot
-
    jmp demo
    // icl 'demos/text_mode_attrib.asm'
-   icl 'demos/video_modes.asm'
+   // icl 'demos/video_modes.asm'
+   icl 'demos/m6502_test.asm'
    
