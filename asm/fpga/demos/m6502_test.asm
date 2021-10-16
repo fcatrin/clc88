@@ -171,13 +171,92 @@ cpyeq_ok
    sta test_results + 28   
    
    // display results if we reach this point!
-   jmp display_results
+   jsr display_results
+   
+   ldy #$1b
+   lda #$33
+   cmp #$44
+   bne cmp_ne_ok
+   ldy #$1c
+cmp_ne_ok 
+   sty test_results + 29
+   ldy #$1d
+   cmp #$33
+   beq cmp_eq_ok
+   ldy #$1e
+cmp_eq_ok
+   sty test_results + 30
+   
+   // test cmp/cpx/cpy with abs an z
+
+   // cmp z
+   ldy #$21
+   lda #$11
+   sta test_buffer_z
+   lda #0
+   cmp test_buffer_z
+   bne cmpz_ne_ok
+   ldy #$22
+cmpz_ne_ok
+   sty test_results + 31
+   ldy #$23
+   lda #$11
+   cmp test_buffer_z
+   beq cmpz_eq_ok
+   ldy #$24
+cmpz_eq_ok      
+   sty test_results + 32
+   
+   // cpx z
+   lda #$25
+   ldx #$22
+   stx test_buffer_z
+   ldx #0
+   cpy test_buffer_z
+   bne cpyz_ne_ok
+   lda #$26
+cpyz_ne_ok
+   sta test_results + 33
+   lda #$27
+   ldx #$22
+   cpx test_buffer_z
+   beq cpyz_eq_ok
+   lda #$28
+cpyz_eq_ok
+   sta test_results + 34
+
+   // cpy z
+   lda #$35
+   ldy #$33
+   sty test_buffer_z
+   ldy #0
+   cpy test_buffer_z
+   bne cpxz_ne_ok
+   lda #$36
+cpxz_ne_ok
+   sta test_results + 35
+   lda #$37
+   ldy #$33
+   cpy test_buffer_z
+   beq cpxz_eq_ok
+   lda #$38
+cpxz_eq_ok
+   sta test_results + 36
+
+   jsr update_results
+   
+halt:
+   nop
+   jmp halt
+      
    
 expected_result:
    .byte $aa, $bb, $cc, $aa, $bb, $cc, $bb, $cc
    .byte $cc, $cc, $bb, $bb, $55, $66, $21, $31
    .byte $3f, $4f, $61, $6f, $03, $05, $13, $32
-   .byte $42, $11, $13, $15, $17
+   .byte $42, $11, $13, $15, $17, $1b, $1d, $21
+   .byte $23, $25, $27, $35, $37
+   .byte 0
    
 display_list:
    .byte $42
@@ -211,8 +290,6 @@ copy_dl:
    mwa #text_location DISPLAY_START
    mwa #attr_location ATTRIB_START
    
-   mwa DISPLAY_START VADDRW
-   mwa ATTRIB_START  VADDRW_AUX
 
 enable_chroni:
    
@@ -220,11 +297,16 @@ enable_chroni:
    ora #VSTATUS_ENABLE
    sta VSTATUS
 
+update_results
+   mwa DISPLAY_START VADDRW
+   mwa ATTRIB_START  VADDRW_AUX
+
    ldx #0
 next_result:   
    ldy #'1'
-   lda test_results,x
-   cmp expected_result, x
+   lda expected_result,x
+   beq no_more_results
+   cmp test_results, x
    beq good_result
    ldy #'0'
 good_result
@@ -234,17 +316,13 @@ good_result
    inx
    txa
    and #$7
-   bne noskip
+   bne next_result
    lda #$00
    sta VDATA
    sta VDATA_AUX
-noskip:   
-   cpx #29
-   bne next_result
-   
-halt:
-   nop
-   jmp halt
+   jmp next_result
+no_more_results   
+   rts
 
 palette_dark:
    .word $2104
