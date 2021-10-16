@@ -89,7 +89,7 @@ copy_first_block:        // if this fails, testing will throw worng results
    dey
    sty test_results + 17
    
-   // test inc z, dec z, inc abs, dec abs
+   // test inc z, dec z
    lda #$60
    sta test_buffer_z
    inc test_buffer_z
@@ -302,6 +302,79 @@ cpya_eq_ok
    jsr update_results
    
    
+   // test inc/dec with abs, z_x, abs_x
+
+   lda #$92
+   sta test_buffer
+   inc test_buffer
+   lda test_buffer
+   sta test_results + 43
+   
+   lda #$a0
+   sta test_buffer
+   dec test_buffer
+   lda test_buffer
+   sta test_results + 44
+   
+   ldx #2
+   lda #$a0
+   sta test_buffer_z + 2
+   inc test_buffer_z,x
+   lda test_buffer_z,x
+   sta test_results + 45
+
+   lda #$b0
+   sta test_buffer_z + 2
+   dec test_buffer_z,x
+   lda test_buffer_z,x
+   sta test_results + 46
+
+   lda #$b0
+   sta test_buffer + 2
+   inc test_buffer,x
+   lda test_buffer,x
+   sta test_results + 47
+
+   lda #$c0
+   sta test_buffer + 2
+   dec test_buffer,x
+   lda test_buffer,x
+   sta test_results + 48
+   
+   jsr update_results
+   
+   // test lda z_x, abs_x, abs_y, ind_x, ind_y
+   ldx #$23
+   stx test_buffer_z + 2 ; z_x
+   inx
+   stx test_buffer + 2   ; abs_x
+   inx
+   stx test_buffer + 3   ; abs_y
+   
+   ldx #2
+   lda test_buffer_z,x  
+   sta test_results + 49
+   lda test_buffer,x
+   sta test_results + 50
+   ldy #3
+   lda test_buffer,y
+   sta test_results + 51
+   
+   ldx #$33
+   stx test_buffer+4
+   mwa #test_buffer+1 $a2
+   ldy #3
+   lda ($a2), y           ; ind_y
+   sta test_results + 52
+   
+   ldx #$44
+   stx test_buffer+1
+   ldx #2
+   lda ($a0, x)
+   sta test_results + 53  ; ind_x
+   
+   jsr update_results
+   
 halt:
    nop
    jmp halt
@@ -313,7 +386,8 @@ expected_result:
    .byte $3f, $4f, $61, $6f, $03, $05, $13, $32
    .byte $42, $11, $13, $15, $17, $1b, $1d, $21
    .byte $23, $25, $27, $35, $37, $41, $43, $45
-   .byte $47, $55, $57
+   .byte $47, $55, $57, $93, $9f, $a1, $af, $b1
+   .byte $bf, $23, $24, $25, $33, $44
    .byte 0
    
 display_list:
