@@ -293,8 +293,8 @@ module m6502_cpu (
                   3: address_mode_prepare <= MODE_ABS;
                   4: address_mode_prepare <= MODE_IND_Y;
                   5: address_mode_prepare <= MODE_Z_X;
-                  6: address_mode_prepare <= MODE_ABS_X;
-                  7: address_mode_prepare <= MODE_ABS_Y;
+                  6: address_mode_prepare <= MODE_ABS_Y;
+                  7: address_mode_prepare <= MODE_ABS_X;
                endcase
                if (aaa == 3'b100) begin // STA
                   cpu_op <= CPU_OP_STA;
@@ -547,18 +547,19 @@ module m6502_cpu (
    localparam NEXT_IND_ABS4 = 10;
    localparam NEXT_IND_Z1   = 11;
    localparam NEXT_IND_Z2   = 12;
-   localparam NEXT_JSR1     = 13;
-   localparam NEXT_JSR2     = 14;
-   localparam NEXT_JSR3     = 15;
-   localparam NEXT_RTI      = 16;
-   localparam NEXT_RTS1     = 17;
-   localparam NEXT_RTS2     = 18;
-   localparam NEXT_PLA      = 19;
-   localparam NEXT_PLP      = 20;
-   localparam NEXT_BRK1     = 21;
-   localparam NEXT_BRK2     = 22;
-   localparam NEXT_BRK3     = 23;
-   localparam NEXT_BRK4     = 24;
+   localparam NEXT_IND_Z3   = 13;
+   localparam NEXT_JSR1     = 14;
+   localparam NEXT_JSR2     = 15;
+   localparam NEXT_JSR3     = 16;
+   localparam NEXT_RTI      = 17;
+   localparam NEXT_RTS1     = 18;
+   localparam NEXT_RTS2     = 19;
+   localparam NEXT_PLA      = 20;
+   localparam NEXT_PLP      = 21;
+   localparam NEXT_BRK1     = 22;
+   localparam NEXT_BRK2     = 23;
+   localparam NEXT_BRK3     = 24;
+   localparam NEXT_BRK4     = 25;
 
    reg[4:0] address_mode;
    reg[4:0] address_mode_prepare;
@@ -718,7 +719,7 @@ module m6502_cpu (
             end
             MODE_IND_Z:
             begin
-               bus_addr <= {8'd0, rd_data} + reg_ndx_pre;
+               bus_addr <= pc_op;
                load_store <= DO_LOAD;
                next_addr_op <= NEXT_IND_Z1;
             end
@@ -794,12 +795,18 @@ module m6502_cpu (
             end
             NEXT_IND_Z1:
             begin
-               tmp_addr <= rd_data;
-               bus_addr <= bus_addr + 1;
+               bus_addr <= {8'd0, rd_data} + reg_ndx_pre;
                load_store <= DO_LOAD;
                next_addr_op <= NEXT_IND_Z2;
             end
             NEXT_IND_Z2:
+            begin
+               tmp_addr <= rd_data;
+               bus_addr <= bus_addr + 1;
+               load_store <= DO_LOAD;
+               next_addr_op <= NEXT_IND_Z3;
+            end
+            NEXT_IND_Z3:
             begin
                bus_addr <= {rd_data, tmp_addr} + reg_ndx_post;
                load_store <= do_load_store;
