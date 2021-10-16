@@ -212,17 +212,17 @@ cmpz_eq_ok
    ldx #$22
    stx test_buffer_z
    ldx #0
-   cpy test_buffer_z
-   bne cpyz_ne_ok
+   cpx test_buffer_z
+   bne cpxz_ne_ok
    lda #$26
-cpyz_ne_ok
+cpxz_ne_ok
    sta test_results + 33
    lda #$27
    ldx #$22
    cpx test_buffer_z
-   beq cpyz_eq_ok
+   beq cpxz_eq_ok
    lda #$28
-cpyz_eq_ok
+cpxz_eq_ok
    sta test_results + 34
 
    // cpy z
@@ -231,19 +231,76 @@ cpyz_eq_ok
    sty test_buffer_z
    ldy #0
    cpy test_buffer_z
-   bne cpxz_ne_ok
+   bne cpyz_ne_ok
    lda #$36
-cpxz_ne_ok
+cpyz_ne_ok
    sta test_results + 35
    lda #$37
    ldy #$33
    cpy test_buffer_z
-   beq cpxz_eq_ok
+   beq cpyz_eq_ok
    lda #$38
-cpxz_eq_ok
+cpyz_eq_ok
    sta test_results + 36
 
    jsr update_results
+
+   // cmp abs
+   ldy #$41
+   lda #$aa
+   sta test_buffer
+   lda #0
+   cmp test_buffer
+   bne cmpa_ne_ok
+   ldy #$42
+cmpa_ne_ok
+   sty test_results + 37
+   ldy #$43
+   lda #$aa
+   cmp test_buffer
+   beq cmpa_eq_ok
+   ldy #$44
+cmpa_eq_ok      
+   sty test_results + 38
+   
+   // cpx abs
+   lda #$45
+   ldx #$bb
+   stx test_buffer
+   ldx #0
+   cpx test_buffer
+   bne cpxa_ne_ok
+   lda #$46
+cpxa_ne_ok
+   sta test_results + 39
+   lda #$47
+   ldx #$bb
+   cpx test_buffer
+   beq cpxa_eq_ok
+   lda #$48
+cpxa_eq_ok
+   sta test_results + 40
+
+   // cpy z
+   lda #$55
+   ldy #$cc
+   sty test_buffer
+   ldy #0
+   cpy test_buffer
+   bne cpya_ne_ok
+   lda #$56
+cpya_ne_ok
+   sta test_results + 41
+   lda #$57
+   ldy #$cc
+   cpy test_buffer
+   beq cpya_eq_ok
+   lda #$58
+cpya_eq_ok
+   sta test_results + 42
+   
+   jsr update_results
+   
    
 halt:
    nop
@@ -255,7 +312,8 @@ expected_result:
    .byte $cc, $cc, $bb, $bb, $55, $66, $21, $31
    .byte $3f, $4f, $61, $6f, $03, $05, $13, $32
    .byte $42, $11, $13, $15, $17, $1b, $1d, $21
-   .byte $23, $25, $27, $35, $37
+   .byte $23, $25, $27, $35, $37, $41, $43, $45
+   .byte $47, $55, $57
    .byte 0
    
 display_list:
