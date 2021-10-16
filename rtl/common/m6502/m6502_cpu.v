@@ -756,24 +756,24 @@ module m6502_cpu (
             NEXT_JSR1:
             begin
                push_state  <= 3;
-               stack_value <= ret_addr[7:0];
+               stack_value <= ret_addr[15:8];
                stack_op_back <= NEXT_JSR2;
             end
             NEXT_JSR2:
             begin
                push_state  <= 1;
-               stack_value <= ret_addr[15:8];
+               stack_value <= ret_addr[7:0];
                stack_op_back <= NEXT_IDLE;
             end
             NEXT_RTS1:
             begin
-               jmp_addr[15:8] <= stack_value;
+               jmp_addr[7:0] <= stack_value;
                pop_state <=1;
                stack_op_back <= NEXT_RTS2;
             end
             NEXT_RTS2:
             begin
-               jmp_addr[7:0] <= stack_value;
+               jmp_addr[15:8] <= stack_value;
                load_complete <= 1;
             end
             NEXT_PLA:
