@@ -105,6 +105,7 @@ module m6502_cpu (
       fetch_rd_req <= 0;
       hold_fetch_addr <= 0;
       pending_irq_ack <= 0;
+      pending_nmi_ack <= 0;
       if (~reset_n) begin
          cpu_fetch_state <= CPU_WAIT;
       end else if (cpu_fetch_state == CPU_WAIT && reset_n) begin
@@ -172,7 +173,7 @@ module m6502_cpu (
             cpu_op <= CPU_OP_NOP;
             address_mode_prepare <= MODE_RESET;
             wait_for_reset <= 1;
-         end else if (cpu_irq) begin
+         end else if (cpu_irq | cpu_nmi) begin
             cpu_op <= CPU_OP_BRK;            
          end else case (cc)  // reg_i format aaabbbcc. Check cc first
             2'b00:
@@ -678,9 +679,9 @@ module m6502_cpu (
                pop_state <= 1;
                stack_op_back <= NEXT_PLP;
             end else if (cpu_op == CPU_OP_BRK) begin
-               bus_addr <= IRQ_VECTOR;
+               bus_addr <= cpu_nmi ? NMI_VECTOR : IRQ_VECTOR;
                load_store <= DO_LOAD;
-               ret_addr   <= pc + (cpu_irq ? 0 : 2);
+               ret_addr   <= pc + ((cpu_irq | cpu_nmi) ? 0 : 2);
                next_addr_op <= NEXT_BRK1;
             end else begin
                cpu_op_finish <= 1;
@@ -822,7 +823,7 @@ module m6502_cpu (
             NEXT_BRK1:
             begin
                tmp_addr <= rd_data;
-               bus_addr <= IRQ_VECTOR + 1;
+               bus_addr <= (cpu_nmi ? NMI_VECTOR : IRQ_VECTOR) + 1;
                load_store <= DO_LOAD;
                next_addr_op <= NEXT_BRK2;
             end
@@ -842,8 +843,9 @@ module m6502_cpu (
             NEXT_BRK4:
             begin
                flag_d_set  <= ALU_FLAG_RESET;
+               flag_i <= 1;
                push_state  <= 1;
-               stack_value <= reg_sr | (cpu_irq ? 0 : 8'b00010000);
+               stack_value <= reg_sr | ((cpu_irq | cpu_nmi) ? 0 : 8'b00010000);
                stack_op_back <= NEXT_IDLE;
             end
             

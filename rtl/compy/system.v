@@ -162,7 +162,9 @@ module system (
          .wr_data(cpu_wr_data),
          .wr_en(cpu_wr_en),
          .rd_req(cpu_rd_req),
-         .ready(cpu_ready)
+         .ready(cpu_ready),
+         .nmi_n(key_mode),
+         .irq_n(1'b1)
       );
       
 

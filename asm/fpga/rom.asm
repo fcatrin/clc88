@@ -13,9 +13,9 @@ VRAM_ADDR_SCREEN  = VRAM_ADDR_CHARSET + CHARSET_SIZE
    
    org $ff80
 nmi:
+   lda #$33
 	rti
 irq:
-	lda #$22
 	rti
 	
 boot:
