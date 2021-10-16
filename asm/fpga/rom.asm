@@ -15,19 +15,14 @@ VRAM_ADDR_SCREEN  = VRAM_ADDR_CHARSET + CHARSET_SIZE
 nmi:
 	rti
 irq:
-	lda #$55
-	lda #$33
+	lda #$22
 	rti
 	
 boot:
 
    lda #$aa
-   brk
-   nop
-
-   lda #$44
-halt:
-   jmp halt
+   lda #$55
+   jmp boot
 
    jmp demo
    // icl 'demos/text_mode_attrib.asm'

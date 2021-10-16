@@ -17,6 +17,8 @@ module m6502_cpu (
       output [7:0]  wr_data,
       output wr_en,
       output rd_req,
+      input  irq_n,
+      input  nmi_n,
       input  ready
       );
 
@@ -68,10 +70,41 @@ module m6502_cpu (
    reg[2:0] cpu_branch;
    reg hold_fetch_addr;
    
+   reg pending_irq;
+   reg pending_irq_ack;
+   reg pending_nmi;
+   reg pending_nmi_ack;
+   reg cpu_irq;
+   reg cpu_nmi;
+   
+   always @ (posedge clk) begin : cpu_interrupts
+      reg irq_n_prev;
+      reg nmi_n_prev;
+      
+      if (~reset_n) begin
+         irq_n_prev = 1'b1;
+         nmi_n_prev = 1'b1;
+      end else begin
+         irq_n_prev <= irq_n;
+         nmi_n_prev <= nmi_n;
+         if (pending_irq_ack) begin
+            pending_irq <= 0;
+         end else if (irq_n_prev & ~irq_n) begin
+            pending_irq <= 1;
+         end
+         if (pending_nmi_ack) begin
+            pending_nmi <= 0;
+         end else if (nmi_n_prev & ~nmi_n) begin
+            pending_nmi <= 1;
+         end
+      end
+   end
+   
    always @ (posedge clk) begin : cpu_fetch
       cpu_reset <= 0;
       fetch_rd_req <= 0;
       hold_fetch_addr <= 0;
+      pending_irq_ack <= 0;
       if (~reset_n) begin
          cpu_fetch_state <= CPU_WAIT;
       end else if (cpu_fetch_state == CPU_WAIT && reset_n) begin
@@ -98,11 +131,23 @@ module m6502_cpu (
             end
             CPU_EXECUTE_WAIT:
                if (cpu_inst_done) begin
-                  fetch_rd_addr <= pc;
-                  fetch_rd_req  <= 1;
-                  pc_op <= pc + 1;
-                  cpu_fetch_state <= CPU_FETCH;
-                  hold_fetch_addr <= 1;
+                  cpu_irq <= 0;
+                  cpu_nmi <= 0;
+                  if (pending_nmi) begin
+                     cpu_nmi <= 1;
+                     cpu_fetch_state <= CPU_EXECUTE;
+                     pending_nmi_ack <= 1;
+                  end else if (pending_irq & !flag_i) begin
+                     cpu_irq <= 1;
+                     cpu_fetch_state <= CPU_EXECUTE;
+                     pending_irq_ack <= 1;
+                  end else begin
+                     fetch_rd_addr <= pc;
+                     fetch_rd_req  <= 1;
+                     pc_op <= pc + 1;
+                     cpu_fetch_state <= CPU_FETCH;
+                     hold_fetch_addr <= 1;
+                  end
                end
          endcase
       end
@@ -127,6 +172,8 @@ module m6502_cpu (
             cpu_op <= CPU_OP_NOP;
             address_mode_prepare <= MODE_RESET;
             wait_for_reset <= 1;
+         end else if (cpu_irq) begin
+            cpu_op <= CPU_OP_BRK;            
          end else case (cc)  // reg_i format aaabbbcc. Check cc first
             2'b00:
                if (bbb == 4) begin /* BRANCH */
@@ -633,7 +680,7 @@ module m6502_cpu (
             end else if (cpu_op == CPU_OP_BRK) begin
                bus_addr <= IRQ_VECTOR;
                load_store <= DO_LOAD;
-               ret_addr   <= pc + 2;
+               ret_addr   <= pc + (cpu_irq ? 0 : 2);
                next_addr_op <= NEXT_BRK1;
             end else begin
                cpu_op_finish <= 1;
@@ -796,7 +843,7 @@ module m6502_cpu (
             begin
                flag_d_set  <= ALU_FLAG_RESET;
                push_state  <= 1;
-               stack_value <= reg_sr | 8'b00010000;
+               stack_value <= reg_sr | (cpu_irq ? 0 : 8'b00010000);
                stack_op_back <= NEXT_IDLE;
             end
             
