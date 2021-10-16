@@ -417,6 +417,74 @@ cpya_eq_ok
 
    jsr update_results
    
+   // now test everything else, sorted by instruction
+
+   // test adc, all addressing modes
+   // start with IMM mode, with and without carry
+   clc
+   lda #2
+   adc #9                ; adc imm, c = 0
+   sta test_results + 62 
+   
+   sec
+   adc #$10              ; adc imm + c
+   sta test_results + 63
+   
+   ldx #$22
+   stx test_buffer_z
+   lda #$11
+   clc
+   adc test_buffer_z     ; adc z
+   sta test_results + 64
+   
+   ldx #$44
+   stx test_buffer
+   lda #$55
+   clc
+   adc test_buffer       ; adc abs
+   sta test_results + 65
+   
+   ldx #$22
+   stx test_buffer_z + 2
+   inx
+   stx test_buffer + 2
+   inx
+   stx test_buffer + 3
+   lda #$10
+   ldx #2
+   ldy #3
+   clc
+   adc test_buffer_z, x   ; adc z_x
+   sta test_results + 66
+   clc
+   adc test_buffer, x     ; adc abs_x
+   sta test_results + 67
+   clc
+   adc test_buffer, y     ; adc abs_y
+   sta test_results + 68
+   
+   mwa #test_buffer $a2
+   ldx #$27
+   stx test_buffer + 3
+   ldx #$92
+   stx test_buffer
+
+   ldy #3
+   lda #$42
+   clc
+   adc ($a2), y           ; adc ind_y
+   sta test_results + 69  ; $27+$42
+   
+   ldx #2
+   lda #$22
+   clc
+   adc ($a0, x)           ; adc ind_x
+   sta test_results + 70  ; $22+$92
+   
+   
+   jsr update_results
+   
+   
    
 halt:
    nop
@@ -431,7 +499,8 @@ expected_result:
    .byte $23, $25, $27, $35, $37, $41, $43, $45
    .byte $47, $55, $57, $93, $9f, $a1, $af, $b1
    .byte $bf, $23, $24, $25, $33, $44, $55, $56
-   .byte $57, $58, $65, $66, $67, $68 
+   .byte $57, $58, $65, $66, $67, $68, $0b, $1c
+   .byte $33, $99, $32, $55, $79, $69, $b4
    .byte 0
    
 display_list:
