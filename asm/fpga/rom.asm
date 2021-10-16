@@ -18,17 +18,20 @@ irq:
 	rti   
 boot:
 
-   lda #<target
+   lda #$aa
    sta $20
-   lda #>target
-   sta $21
-   jmp ($20)
    lda #2
-   lda #3
-wrong:   
-   bne wrong
-target   
+   bit $20  ; z = 0, n = 1, v = 0
+
+   lda #$55
+   bit $20  ; z = 1, n = 1, v = 0
+
+   lda #$f0
+   sta $20
    lda #1
+   bit $20  ; z = 1, n = 1, v = 1
+
+
 halt:   
    jmp halt
 

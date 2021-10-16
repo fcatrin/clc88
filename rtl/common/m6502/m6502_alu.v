@@ -71,6 +71,11 @@ module m6502_alu (
                next_c <= in_a[0];
                op_post <= OP_UPDATE_C;
             end
+            OP_BIT:
+            begin
+               result <= in_a & in_b;
+               op_post <= OP_BIT;
+            end
          endcase
       end
    end
@@ -104,6 +109,11 @@ module m6502_alu (
                flag_c <= !result[8];
             OP_UPDATE_C:
                flag_c <= next_c;
+            OP_BIT:
+            begin
+               flag_n <= in_a[7];
+               flag_v <= in_a[6];
+            end
          endcase
       end
    end

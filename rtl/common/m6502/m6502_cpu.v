@@ -166,6 +166,7 @@ module m6502_cpu (
                            1: if (aaa == 1) begin
                                  cpu_op <= CPU_OP_BIT;
                                  address_mode_prepare <= MODE_Z;
+                                 do_load_store <= DO_LOAD;
                               end
                            2: case(aaa)
                                  0: cpu_op <= CPU_OP_PHP;
@@ -174,6 +175,12 @@ module m6502_cpu (
                                  3: cpu_op <= CPU_OP_PLA;
                               endcase
                            3: case(aaa)
+                                 1:
+                                 begin
+                                    cpu_op <= CPU_OP_BIT;
+                                    address_mode_prepare <= MODE_ABS;
+                                    do_load_store <= DO_LOAD;
+                                 end
                                  2: 
                                  begin
                                     cpu_op <= CPU_OP_JMP;
@@ -586,6 +593,7 @@ module m6502_cpu (
          reg_sp <= 8'hff;
          next_addr_op <= NEXT_IDLE;
          stack_op_back <= NEXT_IDLE;
+         load_complete <= 0;
       end else if (ready && !bus_rd_req && cpu_fetch_state == CPU_EXECUTE_WAIT) begin
          load_complete <= 0;
          cpu_op_finish <= 0;
@@ -875,6 +883,13 @@ module m6502_cpu (
                begin
                   alu_proceed <= 1;
                   alu_in_a <= use_a ? reg_a : rd_data;
+               end
+               CPU_OP_BIT:
+               begin
+                  alu_in_a <= rd_data;
+                  alu_in_b <= reg_a;
+                  alu_op   <= OP_BIT;
+                  alu_proceed <= 1;
                end
             endcase
             

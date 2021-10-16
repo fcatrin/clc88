@@ -11,4 +11,5 @@ parameter OP_ASL      = 9;
 parameter OP_LSR      = 10;
 parameter OP_ROL      = 11;
 parameter OP_ROR      = 12;
-parameter OP_UPDATE_C = 13;
+parameter OP_BIT      = 13;
+parameter OP_UPDATE_C = 14;
