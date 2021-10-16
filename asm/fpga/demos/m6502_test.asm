@@ -375,6 +375,49 @@ cpya_eq_ok
    
    jsr update_results
    
+   // test ldx z, z_y, abs, abs_y
+
+   lda #$55
+   sta test_buffer_z
+   lda #$56
+   sta test_buffer_z + 3
+   lda #$57
+   sta test_buffer
+   lda #$58
+   sta test_buffer + 3
+   ldy #3
+   ldx test_buffer_z
+   stx test_results + 54
+   ldx test_buffer_z, y
+   stx test_results + 55
+   ldx test_buffer
+   stx test_results + 56
+   ldx test_buffer,y
+   stx test_results + 57
+
+   // test ldy z, z_x, abs, abs_x
+
+   lda #$65
+   sta test_buffer_z
+   lda #$66
+   sta test_buffer_z + 4
+   lda #$67
+   sta test_buffer
+   lda #$68
+   sta test_buffer + 4
+   ldx #4
+   ldy test_buffer_z
+   sty test_results + 58
+   ldy test_buffer_z, x
+   sty test_results + 59
+   ldy test_buffer
+   sty test_results + 60
+   ldy test_buffer,x
+   sty test_results + 61
+
+   jsr update_results
+   
+   
 halt:
    nop
    jmp halt
@@ -387,7 +430,8 @@ expected_result:
    .byte $42, $11, $13, $15, $17, $1b, $1d, $21
    .byte $23, $25, $27, $35, $37, $41, $43, $45
    .byte $47, $55, $57, $93, $9f, $a1, $af, $b1
-   .byte $bf, $23, $24, $25, $33, $44
+   .byte $bf, $23, $24, $25, $33, $44, $55, $56
+   .byte $57, $58, $65, $66, $67, $68 
    .byte 0
    
 display_list:
