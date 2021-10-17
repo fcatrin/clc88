@@ -484,7 +484,29 @@ cpya_eq_ok
    
    jsr update_results
    
+   // test and (imm, abs only)
+
+   lda #$AA
+   and #$f2
+   sta test_results + 71
    
+   lda #$55
+   sta test_buffer
+   lda #$1E
+   and test_buffer
+   sta test_results + 72
+   
+   lda #$55
+   clc
+   asl
+   sta test_results + 73
+   clc
+   asl
+   sta test_results + 74
+   adc #1
+   sta test_results + 75
+
+   jsr update_results
    
 halt:
    nop
@@ -500,7 +522,8 @@ expected_result:
    .byte $47, $55, $57, $93, $9f, $a1, $af, $b1
    .byte $bf, $23, $24, $25, $33, $44, $55, $56
    .byte $57, $58, $65, $66, $67, $68, $0b, $1c
-   .byte $33, $99, $32, $55, $79, $69, $b4
+   .byte $33, $99, $32, $55, $79, $69, $b4, $a2
+   .byte $14, $aa, $54, $56
    .byte 0
    
 display_list:
@@ -559,6 +582,8 @@ good_result
    lda #$01
    sta VDATA_AUX
    inx
+   cpx #72
+   beq next_result
    txa
    and #$7
    bne next_result
