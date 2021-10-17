@@ -988,9 +988,17 @@ module m6502_cpu (
                CPU_OP_LSR,
                CPU_OP_ROL,
                CPU_OP_ROR:
-               begin
+               if (use_a) begin
                   alu_proceed <= 1;
-                  alu_in_a <= use_a ? reg_a : rd_data;
+                  alu_in_a <= reg_a;
+               end else begin
+                  if (!alu_wait) begin
+                     alu_in_a <= rd_data;
+                     alu_proceed <= 1;
+                     alu_wait <= 1;
+                  end else begin
+                     write_from_alu <= 1;
+                  end
                end
                CPU_OP_BIT:
                begin
