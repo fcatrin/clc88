@@ -600,6 +600,25 @@ brk_not_in_emulator
    sty test_results + 86
         
    
+   ldx #$40     
+   lda #$aa
+   eor #$ff
+   sta test_results + 87
+   bne eor_nz_ok
+   inx
+eor_nz_ok
+   stx test_results + 88
+   ldx #$50
+   lda #$aa
+   eor #$aa
+   beq eor_z_ok
+   inx
+eor_z_ok 
+   stx test_results + 89
+   tay
+   iny
+   sty test_results + 90
+   
    jsr update_results
    
 halt:
@@ -618,7 +637,8 @@ expected_result:
    .byte $57, $58, $65, $66, $67, $68, $0b, $1c
    .byte $33, $99, $32, $55, $79, $69, $b4, $a2
    .byte $14, $aa, $54, $56, $01, $03, $41, $43
-   .byte $45, $47, $49, $63, $4b, $11, $ab
+   .byte $45, $47, $49, $63, $4b, $11, $ab, $55
+   .byte $40, $50, $01
    .byte 0
    
 display_list:
