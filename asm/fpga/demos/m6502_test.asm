@@ -497,7 +497,7 @@ cpya_eq_ok
    sta test_results + 72
    
    lda #$55
-   clc
+   sec
    asl
    sta test_results + 73
    clc
@@ -506,6 +506,83 @@ cpya_eq_ok
    adc #1
    sta test_results + 75
 
+   jsr update_results
+   
+   lda #1
+   clc
+   bcc carry_clear
+   lda #2
+carry_clear
+   sta test_results + 76
+   lda #3
+   sec
+   bcs carry_set
+   lda #4
+carry_set
+   sta test_results + 77   
+   
+   ldx #$41
+   ldy #$42
+   stx test_results + 78
+   lda #$aa
+   sta test_buffer_z
+   lda #3
+   bit test_buffer_z
+   bmi bit_minus_ok
+   sty test_results + 78
+bit_minus_ok
+   ldx #$43
+   ldy #$44
+   stx test_results + 79
+   lda #$2a
+   sta test_buffer_z
+   lda #3
+   bit test_buffer_z
+   bpl bit_plus_ok
+   sty test_results + 79
+bit_plus_ok   
+   ldx #$45
+   ldy #$46
+   stx test_results + 80
+   lda #$6a
+   sta test_buffer_z
+   lda #3
+   bit test_buffer_z
+   bvs bit_ov_ok
+   sty test_results + 80
+bit_ov_ok   
+   ldx #$47
+   ldy #$48
+   stx test_results + 81
+   lda #$2a
+   sta test_buffer_z
+   lda #3
+   bit test_buffer_z
+   bvc bit_nov_ok
+   sty test_results + 81
+bit_nov_ok   
+   ldx #$49
+   ldy #$4a
+   stx test_results + 82
+   lda #$aa
+   sta test_buffer_z
+   lda #$63
+   bit test_buffer_z
+   sta test_results + 83
+   bne bit_nz_ok
+   sty test_results + 82
+bit_nz_ok
+   ldx #$4b
+   ldy #$4c
+   stx test_results + 84
+   lda #$8c
+   sta test_buffer_z
+   lda #$63
+   bit test_buffer_z
+   beq bit_z_ok
+   sty test_results + 84
+bit_z_ok   
+   
    jsr update_results
    
 halt:
@@ -523,7 +600,8 @@ expected_result:
    .byte $bf, $23, $24, $25, $33, $44, $55, $56
    .byte $57, $58, $65, $66, $67, $68, $0b, $1c
    .byte $33, $99, $32, $55, $79, $69, $b4, $a2
-   .byte $14, $aa, $54, $56
+   .byte $14, $aa, $54, $56, $01, $03, $41, $43
+   .byte $45, $47, $49, $63, $4b
    .byte 0
    
 display_list:
