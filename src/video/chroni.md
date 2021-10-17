@@ -53,10 +53,11 @@ You can find the names declared in asm/6502/os/symbols.asm
     07 : VCOUNT   BYTE Vertical line count / 2
     08 : WSYNC    BYTE Any write will halt the CPU until next HBLANK
     09 : WSTATUS  BYTE
-          XX?XXX??
+          XXXXXX??
                |----- Interrupts enabled
               |------ Sprites enabled
              |------- Chroni enabled
+            |-------- Is emulator 
            |---- HBLANK active (read only)
           |--- VBLANK active (read only)
     0A : VSPRITES WORD Sprites base address (absolute addr)

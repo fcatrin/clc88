@@ -63,9 +63,10 @@ static UINT8 pixel_color_b;
 
 #define STATUS_VBLANK         0x80
 #define STATUS_HBLANK         0x40
-#define STATUS_ENABLE_INTS    0x04
-#define STATUS_ENABLE_SPRITES 0x08
+#define STATUS_IS_EMULATOR    0x20
 #define STATUS_ENABLE_CHRONI  0x10
+#define STATUS_ENABLE_SPRITES 0x08
+#define STATUS_ENABLE_INTS    0x04
 
 #define AUTOINC_VADDR_KEEP 0x00
 #define AUTOINC_VADDR_INC  0x01
@@ -295,7 +296,7 @@ UINT8 chroni_register_read(UINT8 index) {
 	case 0x10 : return ypos;
 	case 0x1a : return (border_color & 0x00ff);
 	case 0x1b : return border_color >> 8;
-	case 0x12 : return status;
+	case 0x12 : return status | STATUS_IS_EMULATOR;
 	case 0x20 : return hscroll;
 	case 0x21 : return vscroll;
 	case 0x25 : return rand() & 0xFF;
