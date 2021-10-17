@@ -929,7 +929,7 @@ module m6502_cpu (
             end
             2 :
             begin
-               next_addr_op <= stack_op_back;
+               next_addr_op <= store_and_finish ? NEXT_IDLE : stack_op_back;
                push_state <= 0;
             end
          endcase
