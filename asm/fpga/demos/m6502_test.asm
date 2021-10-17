@@ -581,7 +581,24 @@ bit_nz_ok
    bit test_buffer_z
    beq bit_z_ok
    sty test_results + 84
-bit_z_ok   
+bit_z_ok
+
+   ldx #$10
+   ldy #$aa
+   lda VSTATUS
+   and #VSTATUS_EMULATOR
+   bne brk_in_emulator
+   lda #$01
+   brk                    ; disabled for emulator
+   inx
+   jmp brk_not_in_emulator
+brk_in_emulator
+   inx
+   iny
+brk_not_in_emulator   
+   stx test_results + 85
+   sty test_results + 86
+        
    
    jsr update_results
    
@@ -601,7 +618,7 @@ expected_result:
    .byte $57, $58, $65, $66, $67, $68, $0b, $1c
    .byte $33, $99, $32, $55, $79, $69, $b4, $a2
    .byte $14, $aa, $54, $56, $01, $03, $41, $43
-   .byte $45, $47, $49, $63, $4b
+   .byte $45, $47, $49, $63, $4b, $11, $ab
    .byte 0
    
 display_list:
@@ -707,5 +724,26 @@ upload_next:
    rts
 .endp
 
+my_irq:
+   cmp #$01
+   bne not_brk
+   cpx #$10
+   bne not_brk
+   cpy #$aa
+   bne not_brk
+   inx
+   iny
+not_brk   
+   rti
+
+
    org FONT_ROM_ADDR
    ins '../../../res/fonts/charset_atari.bin'
+
+   
+   org $FFFA
+
+   .word nmi
+   .word boot
+   .word my_irq
+   
