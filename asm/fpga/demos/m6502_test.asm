@@ -708,7 +708,28 @@ php_c_z_ok
    stx test_results + 103
    php
    sec
-   
+
+   // test rol
+
+   clc
+   lda #$aa
+   rol
+   sta test_results + 104  ; $54 (c=1)
+   rol
+   sta test_results + 105  ; $a9 (c=0)
+   rol
+   sta test_results + 106  ; $52
+
+   // test ror
+
+   clc
+   lda #$55
+   ror
+   sta test_results + 107  ; $2a (c=1)
+   ror
+   sta test_results + 108  ; $95 (c=0)
+   ror
+   sta test_results + 109  ; $4a
    
    
    jsr update_results
@@ -733,6 +754,7 @@ expected_result:
    .byte $45, $47, $49, $63, $4b, $11, $ab, $55  // 80
    .byte $40, $50, $01, $55, $72, $78, $74, $01  // 88
    .byte $5F, $30, $34, $33, $80, $03, $55, $57
+   .byte $54, $a9, $52, $2a, $95, $4a 
    .byte 0
    
 display_list:
