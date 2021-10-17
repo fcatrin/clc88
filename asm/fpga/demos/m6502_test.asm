@@ -792,6 +792,42 @@ sbc_c_n_ok
 
    jsr update_results
    
+   // add missing tests
+
+   // rol z
+   clc
+   lda #$aa
+   sta test_buffer_z
+   rol test_buffer_z
+   lda test_buffer_z
+   sta test_results + 121  ; $54 (c=1)
+   sta test_buffer_z
+   rol test_buffer_z
+   lda test_buffer_z
+   sta test_results + 122  ; $a9 (c=0)
+   sta test_buffer_z
+   rol test_buffer_z
+   lda test_buffer_z
+   sta test_results + 123  ; $52
+
+
+   clc
+   lda #$55
+   sta test_buffer_z
+   ror test_buffer_z
+   lda test_buffer_z
+   sta test_results + 124  ; $2a (c=1)
+   sta test_buffer_z
+   ror test_buffer_z
+   lda test_buffer_z
+   sta test_results + 125  ; $95 (c=0)
+   sta test_buffer_z
+   ror test_buffer_z
+   lda test_buffer_z
+   sta test_results + 126  ; $4a
+   
+   jsr update_results
+   
 halt:
    nop
    jmp halt
@@ -813,7 +849,7 @@ expected_result:
    .byte $5F, $30, $34, $33, $80, $03, $55, $57  // 96
    .byte $54, $a9, $52, $2a, $95, $4a, $03, $a0  // 104
    .byte $fe, $a2, $2f, $38, $31, $41, $fe, $fd  // 112
-   .byte $32
+   .byte $32, $54, $a9, $52, $2a, $95, $4a
    .byte 0
    
 display_list:
