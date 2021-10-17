@@ -731,9 +731,66 @@ php_c_z_ok
    ror
    sta test_results + 109  ; $4a
    
+   // test sbc
+   ldx #$a0
+   sec
+   lda #$8
+   sbc #$5
+   sta test_results + 110
+   bcs sbc_c_set_ok
+   inx
+sbc_c_set_ok
+   stx test_results + 111
+   ldx #$a2
+   sec
+   lda #$8
+   sbc #$a
+   sta test_results + 112
+   bcc sbc_c_n_ok
+   inx
+sbc_c_n_ok   
+   stx test_results + 113
+      
    
+   // test tax, tay
+   lda #$2e
+   tax
+   lda #$37
+   tay
+   lda $0
+   inx
+   iny
+   stx test_results + 114
+   sty test_results + 115
+   
+   // test txa, tya
+   ldx #$30
+   ldy #$40
+   inx
+   iny
+   txa
+   sta test_results + 116
+   tya
+   sta test_results + 117
+
+   // test tsx, txs
+   tsx
+   stx test_results + 118
+   stx test_buffer
+   php                      ; sp..
+   tsx
+   stx test_results + 119
+   
+   ldx #$33
+   txs
+   php
+   tsx
+   stx test_results + 120  ; sp = $33-1
+   
+   ldx test_buffer
+   txs
+
    jsr update_results
-   
    
 halt:
    nop
@@ -753,8 +810,10 @@ expected_result:
    .byte $14, $aa, $54, $56, $01, $03, $41, $43  // 72
    .byte $45, $47, $49, $63, $4b, $11, $ab, $55  // 80
    .byte $40, $50, $01, $55, $72, $78, $74, $01  // 88
-   .byte $5F, $30, $34, $33, $80, $03, $55, $57
-   .byte $54, $a9, $52, $2a, $95, $4a 
+   .byte $5F, $30, $34, $33, $80, $03, $55, $57  // 96
+   .byte $54, $a9, $52, $2a, $95, $4a, $03, $a0  // 104
+   .byte $fe, $a2, $2f, $38, $31, $41, $fe, $fd  // 112
+   .byte $32
    .byte 0
    
 display_list:
