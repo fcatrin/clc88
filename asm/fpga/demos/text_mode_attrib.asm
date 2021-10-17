@@ -84,9 +84,10 @@ display_list:
    .word text_location 
    .word attr_location
 .rept (ROWS-1)/2
-   .byte $03
+   .byte $02
    .byte $02
 .endr 
+   .byte $02
    .byte $41
 
 palette_dark:
@@ -117,6 +118,7 @@ test_string:
    
    icl '../graphics.asm'
    icl '../text.asm'
+   icl '../stdlib.asm'
    
    org FONT_ROM_ADDR
    ins '../../../res/fonts/charset_atari.bin'
