@@ -508,6 +508,7 @@ cpya_eq_ok
 
    jsr update_results
    
+   // test clc/sec/bcc/bcs
    lda #1
    clc
    bcc carry_clear
@@ -521,6 +522,7 @@ carry_clear
 carry_set
    sta test_results + 77   
    
+   // test bit
    ldx #$41
    ldy #$42
    stx test_results + 78
@@ -583,6 +585,7 @@ bit_nz_ok
    sty test_results + 84
 bit_z_ok
 
+   // test brk
    ldx #$10
    ldy #$aa
    lda VSTATUS
@@ -599,7 +602,7 @@ brk_not_in_emulator
    stx test_results + 85
    sty test_results + 86
         
-   
+   // test eor
    ldx #$40     
    lda #$aa
    eor #$ff
@@ -621,6 +624,7 @@ eor_z_ok
    
    jsr update_results
    
+   // test lsr
    ldx #$72
    sec
    lda #$aa
@@ -643,7 +647,72 @@ lsr_c_ok
 lsr_cset_ok
    stx test_results + 94   
    
+   // simple nop test
+   ldx #1
+   nop
+   stx test_results + 95
+   
+   // test ora
+   ldx #$30
+   lda #$55
+   ora #$0F
+   sta test_results + 96
+   bne ora_nz_ok
+   inx
+ora_nz_ok   
+   stx test_results + 97
+   
+   // test php / pla
+   lda #$33
+   pha
+   lda #$34
+   pha
+   lda #0
+   pla
+   sta test_results + 98
+   pla
+   sta test_results + 99
+   
+   // test php
+   sec
+   lda #$00
+   php                      ; n = 0, z = 1, c = 1
+   clc
+   lda #$80
+   php                      ; n = 1, z = 0, c = 0
+   lda #0
+   pla
+   and #$83
+   sta test_results + 100
+   pla
+   and #$83
+   sta test_results + 101
+   
+   // test plp
+   ldx #$55
+   clc
+   php
+   sec
+   php
+   clc
+   plp
+   bcs php_c_set_ok
+   inx
+php_c_set_ok
+   stx test_results + 102
+   ldx #$57
+   plp
+   bcc php_c_z_ok
+   inx
+php_c_z_ok
+   stx test_results + 103
+   php
+   sec
+   
+   
+   
    jsr update_results
+   
    
 halt:
    nop
@@ -651,18 +720,19 @@ halt:
       
    
 expected_result:
-   .byte $aa, $bb, $cc, $aa, $bb, $cc, $bb, $cc
-   .byte $cc, $cc, $bb, $bb, $55, $66, $21, $31
-   .byte $3f, $4f, $61, $6f, $03, $05, $13, $32
-   .byte $42, $11, $13, $15, $17, $1b, $1d, $21
-   .byte $23, $25, $27, $35, $37, $41, $43, $45
-   .byte $47, $55, $57, $93, $9f, $a1, $af, $b1
-   .byte $bf, $23, $24, $25, $33, $44, $55, $56
-   .byte $57, $58, $65, $66, $67, $68, $0b, $1c
-   .byte $33, $99, $32, $55, $79, $69, $b4, $a2
-   .byte $14, $aa, $54, $56, $01, $03, $41, $43
-   .byte $45, $47, $49, $63, $4b, $11, $ab, $55
-   .byte $40, $50, $01, $55, $72, $78, $74
+   .byte $aa, $bb, $cc, $aa, $bb, $cc, $bb, $cc  // 0
+   .byte $cc, $cc, $bb, $bb, $55, $66, $21, $31  // 8
+   .byte $3f, $4f, $61, $6f, $03, $05, $13, $32  // 16
+   .byte $42, $11, $13, $15, $17, $1b, $1d, $21  // 24
+   .byte $23, $25, $27, $35, $37, $41, $43, $45  // 32
+   .byte $47, $55, $57, $93, $9f, $a1, $af, $b1  // 40
+   .byte $bf, $23, $24, $25, $33, $44, $55, $56  // 48
+   .byte $57, $58, $65, $66, $67, $68, $0b, $1c  // 56
+   .byte $33, $99, $32, $55, $79, $69, $b4, $a2  // 64
+   .byte $14, $aa, $54, $56, $01, $03, $41, $43  // 72
+   .byte $45, $47, $49, $63, $4b, $11, $ab, $55  // 80
+   .byte $40, $50, $01, $55, $72, $78, $74, $01  // 88
+   .byte $5F, $30, $34, $33, $80, $03, $55, $57
    .byte 0
    
 display_list:
