@@ -621,6 +621,30 @@ eor_z_ok
    
    jsr update_results
    
+   ldx #$72
+   sec
+   lda #$aa
+   lsr
+   sta test_results + 91
+   bcc lsr_c_ok
+   inx
+lsr_c_ok
+   stx test_results + 92
+   
+   ldx #$74
+   clc
+   ldy #$f1
+   sty test_buffer_z
+   lsr test_buffer_z
+   lda test_buffer_z
+   sta test_results + 93
+   bcs lsr_cset_ok 
+   inx
+lsr_cset_ok
+   stx test_results + 94   
+   
+   jsr update_results
+   
 halt:
    nop
    jmp halt
@@ -638,7 +662,7 @@ expected_result:
    .byte $33, $99, $32, $55, $79, $69, $b4, $a2
    .byte $14, $aa, $54, $56, $01, $03, $41, $43
    .byte $45, $47, $49, $63, $4b, $11, $ab, $55
-   .byte $40, $50, $01
+   .byte $40, $50, $01, $55, $72, $78, $74
    .byte 0
    
 display_list:
