@@ -502,7 +502,6 @@ module m6502_cpu (
    
    reg load_complete;
    reg store_complete;
-   reg store_and_finish;
    wire load_store_complete = load_complete | store_complete;
    
    always @ (negedge clk) begin : cpu_load_store
@@ -515,21 +514,22 @@ module m6502_cpu (
       end else if (load_store == DO_LOAD) begin
          bus_addr   <= data_addr; 
          bus_rd_req <= 1;
+      end else if (stack_rd_req | stack_wr_req) begin
+         bus_addr <= {8'd1, stack_addr};
+         bus_rd_req <= stack_rd_req;
+         bus_wr_en  <= stack_wr_req;
+         bus_wr_data <= stack_wr_value;
+         store_complete <= stack_wr_req & (stack_op_next == NEXT_IDLE);
       end else if (load_store == DO_STORE) begin
          bus_addr    <= data_addr;
          bus_wr_data <= reg_write;
          bus_wr_en   <= 1;
-         store_complete <= store_and_finish;
+         store_complete <= 1;
       end else if (write_from_alu) begin
          bus_addr    <= data_addr;
          bus_wr_data <= alu_out;
          bus_wr_en   <= 1;
-         store_complete <= store_and_finish;
-      end else if (write_stack_value) begin
-         bus_addr    <= data_addr;
-         bus_wr_data <= stack_value;
-         bus_wr_en   <= 1;
-         store_complete <= store_and_finish;
+         store_complete <= 1;
       end
    end
    
@@ -631,8 +631,10 @@ module m6502_cpu (
    localparam CPU_OP_JMP    = 48;
    
    reg[15:0] jmp_addr;
-   reg[7:0]  stack_value;
-   reg       write_stack_value;
+   reg[4:0]  stack_op_back;
+   reg[4:0]  stack_op_next;
+   reg[7:0]  stack_rd_value;
+   reg[7:0]  stack_wr_value;
    reg[5:0]  cpu_op;
    reg       do_branch;
 
@@ -644,16 +646,18 @@ module m6502_cpu (
       reg alu_wait;
       reg[1:0] push_state;
       reg[1:0] pop_state;
-      reg[4:0] stack_op_back;
       reg[15:0] ret_addr;
       
       use_a <= 0;
       alu_proceed <= 0;
       alu_wait <= 0;
       write_from_alu <= 0;
-      write_stack_value <= 0;
-      store_and_finish <= 1;
       do_branch <= 0;
+      
+      reg_sp_update      <= 0;
+      stack_do_pop       <= 0;
+      stack_do_push      <= 0;
+      stack_do_push_back <= 0;
       
       flag_n_set <= ALU_FLAG_KEEP;
       flag_v_set <= ALU_FLAG_KEEP;
@@ -665,7 +669,6 @@ module m6502_cpu (
       if (!reset_n) begin
          pop_state <= 0;
          push_state <= 0;
-         reg_sp <= 8'hff;
          next_addr_op <= NEXT_IDLE;
          stack_op_back <= NEXT_IDLE;
          load_complete <= 0;
@@ -677,22 +680,22 @@ module m6502_cpu (
          case(address_mode)
             MODE_SINGLE:
             if (cpu_op == CPU_OP_RTS) begin
-               pop_state <= 1;
+               stack_do_pop <= 1;
                stack_op_back <= NEXT_RTS1;
             end else if (cpu_op == CPU_OP_RTI) begin
-               pop_state <= 1;
+               stack_do_pop <= 1;
                stack_op_back <= NEXT_RTI;
             end else if (cpu_op == CPU_OP_PHA) begin
-               stack_value <= reg_a;
-               push_state <= 1;
+               stack_wr_value <= reg_a;
+               stack_do_push  <= 1;
             end else if (cpu_op == CPU_OP_PLA) begin
-               pop_state <= 1;
+               stack_do_pop <= 1;
                stack_op_back <= NEXT_PLA;
             end else if (cpu_op == CPU_OP_PHP) begin
-               stack_value <= reg_sr | 8'b00010000; // BREAK flag is always 1 on PHP and BRK
-               push_state <= 1;
+               stack_wr_value <= reg_sr | 8'b00010000; // BREAK flag is always 1 on PHP and BRK
+               stack_do_push  <= 1;
             end else if (cpu_op == CPU_OP_PLP) begin
-               pop_state <= 1;
+               stack_do_pop <= 1;
                stack_op_back <= NEXT_PLP;
             end else if (cpu_op == CPU_OP_BRK) begin
                data_addr <= cpu_nmi ? NMI_VECTOR : IRQ_VECTOR;
@@ -852,63 +855,61 @@ module m6502_cpu (
             NEXT_BRK2:
             begin
                jmp_addr <= {bus_rd_data, tmp_addr};
-               push_state  <= 3;
-               stack_value <= ret_addr[15:8];
-               stack_op_back <= NEXT_BRK3;
+               stack_do_push_back <= 1;
+               stack_wr_value     <= ret_addr[15:8];
+               stack_op_back      <= NEXT_BRK3;
             end
             NEXT_BRK3:
             begin
-               push_state  <= 3;
-               stack_value <= ret_addr[7:0];
-               stack_op_back <= NEXT_BRK4;
+               stack_do_push_back <= 1;
+               stack_wr_value <= ret_addr[7:0];
+               stack_op_back  <= NEXT_BRK4;
             end
             NEXT_BRK4:
             begin
                flag_d_set  <= ALU_FLAG_RESET;
                flag_i <= 1;
-               push_state  <= 1;
-               stack_value <= reg_sr | ((cpu_irq | cpu_nmi) ? 0 : 8'b00010000);
-               stack_op_back <= NEXT_IDLE;
+               stack_wr_value <= reg_sr | ((cpu_irq | cpu_nmi) ? 0 : 8'b00010000);
+               stack_do_push  <= 1;
             end
             
             NEXT_JSR1:
             begin
-               push_state  <= 3;
-               stack_value <= ret_addr[15:8];
+               stack_wr_value <= ret_addr[15:8];
+               stack_do_push_back  <= 1;
                stack_op_back <= NEXT_JSR2;
             end
             NEXT_JSR2:
             begin
-               push_state  <= 1;
-               stack_value <= ret_addr[7:0];
-               stack_op_back <= NEXT_IDLE;
+               stack_wr_value <= ret_addr[7:0];
+               stack_do_push  <= 1;
             end
             NEXT_RTS1:
             begin
-               jmp_addr[7:0] <= stack_value;
-               pop_state <=1;
+               jmp_addr[7:0] <= stack_rd_value;
+               stack_do_pop <=1;
                stack_op_back <= NEXT_RTS2;
             end
             NEXT_RTS2:
             begin
-               jmp_addr[15:8] <= stack_value;
+               jmp_addr[15:8] <= stack_rd_value;
                load_complete <= 1;
             end
             NEXT_PLA:
             begin
-               alu_in_a <= stack_value;
+               alu_in_a <= stack_rd_value;
                alu_proceed <= 1;
             end
             NEXT_RTI, NEXT_PLP:
             begin
-               flag_n_set   <=  {1'b1, stack_value[7]};
-               flag_v_set   <=  {1'b1, stack_value[6]};
-               flag_d_set   <=  {1'b1, stack_value[3]};
-               flag_i       <=  stack_value[2];
-               flag_z_set   <=  {1'b1, stack_value[1]};
-               flag_c_set   <=  {1'b1, stack_value[0]};
+               flag_n_set   <=  {1'b1, stack_rd_value[7]};
+               flag_v_set   <=  {1'b1, stack_rd_value[6]};
+               flag_d_set   <=  {1'b1, stack_rd_value[3]};
+               flag_i       <=  stack_rd_value[2];
+               flag_z_set   <=  {1'b1, stack_rd_value[1]};
+               flag_c_set   <=  {1'b1, stack_rd_value[0]};
                if (next_addr_op == NEXT_RTI) begin
-                  pop_state <= 1;
+                  stack_do_pop <= 1;
                   stack_op_back <= NEXT_RTS1;
                end else begin
                   load_complete <= 1;
@@ -916,38 +917,9 @@ module m6502_cpu (
             end
          endcase
          
-         case (pop_state)
-            1 :
-            begin
-               data_addr[7:0]  <= reg_sp + 1'b1;
-               data_addr[15:8] <= 8'b1;
-               reg_sp <= reg_sp + 1'b1;
-               load_store <= DO_LOAD;
-               pop_state <= 2;
-            end
-            2 : 
-            begin
-               stack_value  <= bus_rd_data;
-               next_addr_op <= stack_op_back;
-               pop_state <= 0;
-            end
-         endcase
-         
-         case (push_state)
-            1,3 : 
-            begin
-               data_addr <= {8'd1, reg_sp};
-               reg_sp <= reg_sp - 1'b1;
-               push_state <= 2;
-               write_stack_value <= 1;
-               store_and_finish <= push_state == 1;
-            end
-            2 :
-            begin
-               next_addr_op <= store_and_finish ? NEXT_IDLE : stack_op_back;
-               push_state <= 0;
-            end
-         endcase
+         if (stack_op_done) begin
+            next_addr_op <= stack_op_next;
+         end
          
          if (alu_proceed & !alu_wait) begin
             load_complete <= 1;
@@ -1087,7 +1059,8 @@ module m6502_cpu (
                CPU_OP_TAX: alu_in_a <= reg_a;
                CPU_OP_TSX: alu_in_a <= reg_sp;
                CPU_OP_TXS: begin
-                  reg_sp <= reg_x;
+                  reg_sp_next   <= reg_x;
+                  reg_sp_update <= 1;
                   load_complete <= 1;
                end
             endcase
@@ -1117,6 +1090,57 @@ module m6502_cpu (
                end
             endcase
          end   
+      end
+   end
+   
+   reg stack_do_pop;
+   reg stack_do_push;
+   reg stack_do_push_back;
+   reg stack_op_done;
+   reg stack_rd_req;
+   reg stack_wr_req;
+   reg[7:0] stack_addr;
+   reg[7:0] reg_sp_next;
+   reg      reg_sp_update;
+   
+   always @ (posedge clk) begin : stack_ops
+      reg pop_wait;
+      reg push_wait;
+      
+      stack_op_done <= 0;
+      stack_rd_req  <= 0;
+      stack_wr_req  <= 0;
+      
+      if (!reset_n) begin
+         pop_wait  <= 0;
+         push_wait <= 0;
+         reg_sp    <= 8'hff;
+         stack_op_next <= NEXT_IDLE;
+      end else if (ready & !bus_rd_req) begin
+         pop_wait  <= 0;
+         push_wait <= 0;
+         if (stack_do_pop) begin
+            stack_rd_req <= 1;
+            stack_addr   <= reg_sp + 1'b1;
+            reg_sp       <= reg_sp + 1'b1;
+            pop_wait     <= 1;
+            stack_op_next <= stack_op_back;
+         end else if (pop_wait) begin
+            stack_rd_value <= bus_rd_data;
+            stack_op_done  <= 1;
+         end
+         if (stack_do_push | stack_do_push_back) begin
+            stack_wr_req <= 1;
+            stack_addr   <= reg_sp;
+            reg_sp       <= reg_sp - 1'b1;
+            push_wait    <= 1;
+            stack_op_next <= stack_do_push_back ? stack_op_back : NEXT_IDLE;
+         end else if (push_wait) begin
+            stack_op_done <= 1;
+         end
+         if (reg_sp_update) begin
+            reg_sp <= reg_sp_next;
+         end
       end
    end
    
