@@ -12,11 +12,11 @@
 module m6502_cpu (
       input clk,
       input reset_n,
-      output [15:0] addr,
-      input  [7:0]  rd_data,
-      output [7:0]  wr_data,
-      output wr_en,
-      output rd_req,
+      output reg [15:0] bus_addr,
+      input       [7:0] bus_rd_data,
+      output reg  [7:0] bus_wr_data,
+      output reg bus_wr_en,
+      output reg bus_rd_req,
       input  irq_n,
       input  nmi_n,
       input  ready
@@ -121,7 +121,7 @@ module m6502_cpu (
             begin
                hold_fetch_addr <= 1;
                if (ready && !fetch_rd_req) begin
-                  reg_i <= rd_data;
+                  reg_i <= bus_rd_data;
                   cpu_fetch_state <= CPU_EXECUTE;
                end
             end
@@ -509,10 +509,25 @@ module m6502_cpu (
       store_complete <= 0;
       bus_rd_req <= 0;
       bus_wr_en  <= 0;
-      if (load_store == DO_LOAD) begin
+      if (hold_fetch_addr) begin
+         bus_addr   <= fetch_rd_addr;
+         bus_rd_req <= fetch_rd_req;
+      end else if (load_store == DO_LOAD) begin
+         bus_addr   <= data_addr; 
          bus_rd_req <= 1;
-      end else if (load_store == DO_STORE | write_from_alu | write_stack_value) begin
-         bus_wr_data <= write_from_alu ? alu_out : (write_stack_value ? stack_value : reg_write);
+      end else if (load_store == DO_STORE) begin
+         bus_addr    <= data_addr;
+         bus_wr_data <= reg_write;
+         bus_wr_en   <= 1;
+         store_complete <= store_and_finish;
+      end else if (write_from_alu) begin
+         bus_addr    <= data_addr;
+         bus_wr_data <= alu_out;
+         bus_wr_en   <= 1;
+         store_complete <= store_and_finish;
+      end else if (write_stack_value) begin
+         bus_addr    <= data_addr;
+         bus_wr_data <= stack_value;
          bus_wr_en   <= 1;
          store_complete <= store_and_finish;
       end
@@ -680,7 +695,7 @@ module m6502_cpu (
                pop_state <= 1;
                stack_op_back <= NEXT_PLP;
             end else if (cpu_op == CPU_OP_BRK) begin
-               bus_addr <= cpu_nmi ? NMI_VECTOR : IRQ_VECTOR;
+               data_addr <= cpu_nmi ? NMI_VECTOR : IRQ_VECTOR;
                load_store <= DO_LOAD;
                ret_addr   <= pc + ((cpu_irq | cpu_nmi) ? 0 : 2);
                next_addr_op <= NEXT_BRK1;
@@ -695,37 +710,37 @@ module m6502_cpu (
             end
             MODE_IMM:    /* IMM */
             begin
-               bus_addr <= pc_op;
+               data_addr <= pc_op;
                load_store <= DO_LOAD;
                cpu_op_finish <= 1;
             end
             MODE_Z:
             begin
-               bus_addr <= pc_op;
+               data_addr <= pc_op;
                load_store <= DO_LOAD;
                next_addr_op <= NEXT_Z;
             end
             MODE_ABS:  /* ABS */
             begin
-               bus_addr <= pc_op;
+               data_addr <= pc_op;
                load_store <= DO_LOAD;
                next_addr_op <= NEXT_ABS1;
             end
             MODE_IND_ABS: // JMP (IND)
             begin
-               bus_addr <= pc_op;
+               data_addr <= pc_op;
                load_store <= DO_LOAD;
                next_addr_op <= NEXT_IND_ABS1; 
             end
             MODE_IND_Z:
             begin
-               bus_addr <= pc_op;
+               data_addr <= pc_op;
                load_store <= DO_LOAD;
                next_addr_op <= NEXT_IND_Z1;
             end
             MODE_RESET:
             begin
-               bus_addr <= RST_VECTOR;
+               data_addr <= RST_VECTOR;
                load_store <= DO_LOAD;
                next_addr_op <= NEXT_RESET1;
             end
@@ -744,84 +759,84 @@ module m6502_cpu (
          case (next_addr_op)
             NEXT_Z:
             begin
-               bus_addr   <= {8'd0, rd_data} + reg_ndx;
+               data_addr   <= {8'd0, bus_rd_data} + reg_ndx;
                load_store <= do_load_store;
                cpu_op_finish <= 1;
             end
             NEXT_ABS1:
             begin
-               tmp_addr <= rd_data;
-               bus_addr <= pc_op + 1;
+               tmp_addr <= bus_rd_data;
+               data_addr <= pc_op + 1;
                load_store <= DO_LOAD;
                next_addr_op <= NEXT_ABS2;
             end
             NEXT_ABS2:
             if (cpu_op == CPU_OP_JSR) begin
-               jmp_addr <= {rd_data, tmp_addr};
+               jmp_addr <= {bus_rd_data, tmp_addr};
                ret_addr <= pc + 3;
                next_addr_op <= NEXT_JSR1;
             end else if (cpu_op == CPU_OP_JMP) begin
-               jmp_addr <= {rd_data, tmp_addr};
+               jmp_addr <= {bus_rd_data, tmp_addr};
                load_complete <= 1;
             end else begin
-               bus_addr   <= {rd_data, tmp_addr} + reg_ndx;
+               data_addr   <= {bus_rd_data, tmp_addr} + reg_ndx;
                load_store <= do_load_store;
                cpu_op_finish <= 1;
             end
             NEXT_IND_ABS1:
             begin
-               tmp_addr <= rd_data;
-               bus_addr <= pc + 2;
+               tmp_addr <= bus_rd_data;
+               data_addr <= pc + 2;
                load_store <= DO_LOAD;
                next_addr_op <= NEXT_IND_ABS2;
             end
             NEXT_IND_ABS2:
             begin
-               bus_addr <= {rd_data, tmp_addr};
+               data_addr <= {bus_rd_data, tmp_addr};
                load_store <= DO_LOAD;
                next_addr_op <= NEXT_IND_ABS3;
             end
             NEXT_IND_ABS3:
             begin
-               tmp_addr <= rd_data;
-               bus_addr <= bus_addr + 1;
+               tmp_addr <= bus_rd_data;
+               data_addr <= data_addr + 1;
                load_store <= DO_LOAD;
                next_addr_op <= NEXT_IND_ABS4;
             end
             NEXT_IND_ABS4:
             begin
-               jmp_addr <= {rd_data, tmp_addr};
+               jmp_addr <= {bus_rd_data, tmp_addr};
                load_complete <= 1;
             end
             NEXT_IND_Z1:
             begin
-               bus_addr <= {8'd0, rd_data} + reg_ndx_pre;
+               data_addr <= {8'd0, bus_rd_data} + reg_ndx_pre;
                load_store <= DO_LOAD;
                next_addr_op <= NEXT_IND_Z2;
             end
             NEXT_IND_Z2:
             begin
-               tmp_addr <= rd_data;
-               bus_addr <= bus_addr + 1;
+               tmp_addr <= bus_rd_data;
+               data_addr <= data_addr + 1;
                load_store <= DO_LOAD;
                next_addr_op <= NEXT_IND_Z3;
             end
             NEXT_IND_Z3:
             begin
-               bus_addr <= {rd_data, tmp_addr} + reg_ndx_post;
+               data_addr <= {bus_rd_data, tmp_addr} + reg_ndx_post;
                load_store <= do_load_store;
                cpu_op_finish <= 1;
             end
             NEXT_RESET1:
             begin
-               tmp_addr <= rd_data;
-               bus_addr <= RST_VECTOR + 1;
+               tmp_addr <= bus_rd_data;
+               data_addr <= RST_VECTOR + 1;
                load_store <= DO_LOAD;
                next_addr_op <= NEXT_RESET2;
             end
             NEXT_RESET2:
             begin
-               reg_word <= {rd_data, tmp_addr};
+               reg_word <= {bus_rd_data, tmp_addr};
                load_complete <= 1;
             end
          endcase
@@ -829,14 +844,14 @@ module m6502_cpu (
          case (next_addr_op)
             NEXT_BRK1:
             begin
-               tmp_addr <= rd_data;
-               bus_addr <= (cpu_nmi ? NMI_VECTOR : IRQ_VECTOR) + 1;
+               tmp_addr <= bus_rd_data;
+               data_addr <= (cpu_nmi ? NMI_VECTOR : IRQ_VECTOR) + 1;
                load_store <= DO_LOAD;
                next_addr_op <= NEXT_BRK2;
             end
             NEXT_BRK2:
             begin
-               jmp_addr <= {rd_data, tmp_addr};
+               jmp_addr <= {bus_rd_data, tmp_addr};
                push_state  <= 3;
                stack_value <= ret_addr[15:8];
                stack_op_back <= NEXT_BRK3;
@@ -904,15 +919,15 @@ module m6502_cpu (
          case (pop_state)
             1 :
             begin
-               bus_addr[7:0]  <= reg_sp + 1'b1;
-               bus_addr[15:8] <= 8'b1;
+               data_addr[7:0]  <= reg_sp + 1'b1;
+               data_addr[15:8] <= 8'b1;
                reg_sp <= reg_sp + 1'b1;
                load_store <= DO_LOAD;
                pop_state <= 2;
             end
             2 : 
             begin
-               stack_value  <= rd_data;
+               stack_value  <= bus_rd_data;
                next_addr_op <= stack_op_back;
                pop_state <= 0;
             end
@@ -921,7 +936,7 @@ module m6502_cpu (
          case (push_state)
             1,3 : 
             begin
-               bus_addr <= {8'd1, reg_sp};
+               data_addr <= {8'd1, reg_sp};
                reg_sp <= reg_sp - 1'b1;
                push_state <= 2;
                write_stack_value <= 1;
@@ -946,19 +961,19 @@ module m6502_cpu (
                begin
                   alu_proceed <= 1;
                   alu_in_a <= reg_a;
-                  alu_in_b <= rd_data;
+                  alu_in_b <= bus_rd_data;
                end
                CPU_OP_CPX:
                begin
                   alu_proceed <= 1;
                   alu_in_a <= reg_x;
-                  alu_in_b <= rd_data;
+                  alu_in_b <= bus_rd_data;
                end
                CPU_OP_CPY:
                begin
                   alu_proceed <= 1;
                   alu_in_a <= reg_y;
-                  alu_in_b <= rd_data;
+                  alu_in_b <= bus_rd_data;
                end
                CPU_OP_INX:
                begin
@@ -993,7 +1008,7 @@ module m6502_cpu (
                   alu_in_a <= reg_a;
                end else begin
                   if (!alu_wait) begin
-                     alu_in_a <= rd_data;
+                     alu_in_a <= bus_rd_data;
                      alu_proceed <= 1;
                      alu_wait <= 1;
                   end else begin
@@ -1002,7 +1017,7 @@ module m6502_cpu (
                end
                CPU_OP_BIT:
                begin
-                  alu_in_a <= rd_data;
+                  alu_in_a <= bus_rd_data;
                   alu_in_b <= reg_a;
                   alu_op   <= OP_BIT;
                   alu_proceed <= 1;
@@ -1016,14 +1031,14 @@ module m6502_cpu (
                begin
                   alu_op <= OP_UPDATE;
                   alu_proceed <= 1;
-                  alu_in_a <= rd_data;
+                  alu_in_a <= bus_rd_data;
                end
                CPU_OP_SBC:
                begin
                   alu_op <= OP_ADC;
                   alu_proceed <= 1;
                   alu_in_a <= reg_a;
-                  alu_in_b <= 8'hff ^ rd_data;
+                  alu_in_b <= 8'hff ^ bus_rd_data;
                end
                CPU_OP_CPX,
                CPU_OP_CPY,
@@ -1038,7 +1053,7 @@ module m6502_cpu (
                CPU_OP_ADC: alu_op <= OP_ADC;
                CPU_OP_BRANCH:
                begin
-                  reg_m <= rd_data;
+                  reg_m <= bus_rd_data;
                   case(cpu_branch)
                      3'b000 : do_branch <= !flag_n; // BPL
                      3'b001 : do_branch <=  flag_n; // BMI
@@ -1082,7 +1097,7 @@ module m6502_cpu (
                begin
                   if (!alu_wait) begin
                      alu_op <= OP_DEC;
-                     alu_in_a <= rd_data;
+                     alu_in_a <= bus_rd_data;
                      alu_proceed <= 1;
                      alu_wait <= 1;
                   end else begin
@@ -1093,7 +1108,7 @@ module m6502_cpu (
                begin
                   if (!alu_wait) begin
                      alu_op <= OP_INC;
-                     alu_in_a <= rd_data;
+                     alu_in_a <= bus_rd_data;
                      alu_proceed <= 1;
                      alu_wait <= 1;
                   end else begin
@@ -1105,19 +1120,9 @@ module m6502_cpu (
       end
    end
    
-   reg[15:0] bus_addr;
-   reg bus_rd_req;
-   reg bus_wr_en;
-
-   assign wr_en  = bus_wr_en;
-   assign rd_req = fetch_rd_req | bus_rd_req;
-   assign addr   = hold_fetch_addr ? fetch_rd_addr : bus_addr;
-
+   reg[15:0] data_addr;
    reg[15:0] fetch_rd_addr;
    reg       fetch_rd_req;
-
-   reg[7:0] bus_wr_data;
-   assign wr_data = bus_wr_data;
    
    reg alu_proceed;
    reg[3:0]  alu_op;

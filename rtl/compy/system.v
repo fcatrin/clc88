@@ -157,11 +157,11 @@ module system (
    m6502_cpu cpu_6502_main (
          .clk(sys_clk),
          .reset_n(reset_n),
-         .addr(cpu_addr),
-         .rd_data(data),
-         .wr_data(cpu_wr_data),
-         .wr_en(cpu_wr_en),
-         .rd_req(cpu_rd_req),
+         .bus_addr(cpu_addr),
+         .bus_rd_data(data),
+         .bus_wr_data(cpu_wr_data),
+         .bus_wr_en(cpu_wr_en),
+         .bus_rd_req(cpu_rd_req),
          .ready(cpu_ready),
          .nmi_n(1'b1),
          .irq_n(1'b1)
