@@ -41,7 +41,6 @@ module m6502_cpu (
    reg[7:0]  reg_ndx;
    reg[7:0]  reg_ndx_pre;
    reg[7:0]  reg_ndx_post;
-   reg[15:0] reg_word;
    
    wire[2:0] aaa = reg_i[7:5];
    wire[2:0] bbb = reg_i[4:2];
@@ -174,7 +173,8 @@ module m6502_cpu (
             address_mode_prepare <= MODE_RESET;
             wait_for_reset <= 1;
          end else if (cpu_irq | cpu_nmi) begin
-            cpu_op <= CPU_OP_BRK;            
+            cpu_op <= CPU_OP_BRK;
+            address_mode_prepare <= MODE_BRK;
          end else case (cc)  // reg_i format aaabbbcc. Check cc first
             2'b00:
                if (bbb == 4) begin /* BRANCH */
@@ -206,7 +206,11 @@ module m6502_cpu (
                      0,1,2,3:
                         case(bbb)
                            0: case(aaa)
-                                 0: cpu_op <= CPU_OP_BRK;
+                                 0: 
+                                 begin
+                                    cpu_op <= CPU_OP_BRK;
+                                    address_mode_prepare <= MODE_BRK;
+                                 end
                                  1: 
                                  begin
                                     cpu_op <= CPU_OP_JSR;
@@ -388,8 +392,8 @@ module m6502_cpu (
          endcase
       end else if (cpu_inst_done == 0 && cpu_fetch_state == CPU_EXECUTE_WAIT) begin
          if (wait_for_reset) begin
-            if (load_complete) begin
-               pc <= reg_word;
+            if (load_store_complete) begin
+               pc <= jmp_addr;
                cpu_inst_done <= 1;
                wait_for_reset <= 0;
             end
@@ -431,66 +435,319 @@ module m6502_cpu (
       end
    end
    
-   always @ (negedge clk) begin : cpu_set_addr_mode
-      address_mode <= MODE_IDLE;
+   reg cpu_op_finish_a;
+   reg cpu_op_finish_b;
+   wire cpu_op_finish = cpu_op_finish_a | cpu_op_finish_b;
+
+   reg use_a;
+
+   always @ (posedge clk) begin : cpu_set_addr_mode
+
+      op_rd_req       <= 0;
+
+      if (cpu_exec) begin
+         address_mode <= MODE_IDLE;
+         use_a <= 0;
+         cpu_op_finish_a <= 0;
+         case(address_mode_prepare)
+            MODE_A:      /* A */
+            begin
+               use_a <= 1;
+               pc_delta <= 1;
+               cpu_op_finish_a <= 1;
+            end
+            MODE_IMM:
+            begin
+               pc_delta <= 2;
+               cpu_op_finish_a <= 1;
+            end
+            MODE_Z, MODE_Z_X, MODE_Z_Y:
+            begin
+               address_mode <= MODE_Z;
+               pc_delta <= 2;
+            end
+            MODE_IND_X, MODE_IND_Y:
+            begin
+               address_mode <= MODE_IND_Z;
+               pc_delta <= 2;
+            end
+            MODE_ABS, MODE_ABS_X, MODE_ABS_Y:
+            begin
+               address_mode <= MODE_ABS;
+               pc_delta <= 3;
+            end
+            MODE_IND_ABS:
+            begin
+               address_mode <= MODE_IND_ABS;
+               pc_delta <= 3;
+            end
+            MODE_SINGLE:
+            begin
+               pc_delta <= 1;
+               address_mode <= MODE_SINGLE;
+               cpu_op_finish_a <= 1;
+            end
+         endcase
+         case (address_mode_prepare)
+            MODE_Z, MODE_ABS:
+               reg_ndx <= 0;
+            MODE_Z_X, MODE_ABS_X:
+               reg_ndx <= reg_x;
+            MODE_Z_Y, MODE_ABS_Y:
+               reg_ndx <= reg_y;
+            MODE_IND_X:
+            begin
+               reg_ndx_pre  <= reg_x;
+               reg_ndx_post <= 0;
+            end
+            MODE_IND_Y:
+            begin
+               reg_ndx_pre  <= 0;
+               reg_ndx_post <= reg_y;
+            end
+         endcase
+         case (address_mode_prepare) // tod group these cases
+            MODE_IMM,
+            MODE_Z, MODE_Z_X, MODE_Z_Y,
+            MODE_IND_X, MODE_IND_Y,
+            MODE_ABS, MODE_ABS_X, MODE_ABS_Y,
+            MODE_IND_ABS:
+            begin
+               op_addr   <= pc_op;
+               op_rd_req <= 1;
+            end
+            MODE_RESET:
+            begin
+               op_addr   <= RST_VECTOR;
+               op_rd_req <= 1;
+            end
+            MODE_BRK:
+            begin
+               op_addr   <= cpu_nmi ? NMI_VECTOR : IRQ_VECTOR;
+               op_rd_req <= 1;
+            end
+         endcase
+      end
+   end
+   
+   localparam INT_IDLE       = 0;
+   localparam INT_GET_VECTOR = 1;
+   localparam INT_PUSH_ADDRH = 2;
+   localparam INT_PUSH_ADDRL = 3;
+   localparam INT_PUSH_SR    = 4;
+   
+   localparam JSR_IDLE       = 0;
+   localparam JSR_PUSH_ADDRH = 1;
+   localparam JSR_PUSH_ADDRL = 2;
+   
+   localparam STACK_IDLE = 0;
+   localparam STACK_RTS1 = 1;
+   localparam STACK_RTS2 = 2;
+   localparam STACK_RTI  = 3;
+   localparam STACK_PLA  = 4;
+   localparam STACK_PLP  = 5;
+   
+   localparam RESET_IDLE       = 0;
+   localparam RESET_GET_VECTOR = 1;
+   localparam RESET_FINISH     = 2;
+   
+   always @ (posedge clk) begin : exec_misc_ops
+      reg[15:0] ret_addr;
+
+      reg[2:0] int_state;
+      reg[2:0] jsr_state;
+      reg[2:0] int_state_next;
+      reg[2:0] jsr_state_next;
+      reg[2:0] stack_state_next;
+      reg[2:0] reset_state;
+
+      flag_n_set <= ALU_FLAG_KEEP;
+      flag_v_set <= ALU_FLAG_KEEP;
+      flag_d_set <= ALU_FLAG_KEEP;
+      flag_z_set <= ALU_FLAG_KEEP;
+      flag_c_set <= ALU_FLAG_KEEP;
+
+      stack_do_pop       <= 0;
+      stack_do_push      <= 0;
+      stack_do_push_back <= 0;
+      reg_sp_update      <= 0;
       
-      case(address_mode_prepare)
-         MODE_RESET:
-            address_mode <= MODE_RESET;
-         MODE_IMM:
-         begin
-            address_mode <= MODE_IMM;
-            pc_delta <= 2;
+      misc_ops_complete  <= 0;
+      misc_rd_req <= 0;
+
+      if (~reset_n) begin
+         int_state <= INT_IDLE;
+         jsr_state <= JSR_IDLE;
+         stack_state <= STACK_IDLE;
+         int_state_next <= INT_IDLE;
+         jsr_state_next <= JSR_IDLE;
+         stack_state_next <= STACK_IDLE;
+         reset_state <= RESET_IDLE;
+      end else if (cpu_exec) begin
+         
+         int_state <= INT_IDLE;
+         jsr_state <= JSR_IDLE;
+         stack_state <= STACK_IDLE;
+         
+         if (address_mode_prepare == MODE_SINGLE) begin
+            if (cpu_op == CPU_OP_RTS) begin // TODO convert to case
+               stack_do_pop  <= 1;
+               stack_state_next <= STACK_RTS1;
+            end else if (cpu_op == CPU_OP_RTI) begin
+               stack_do_pop  <= 1;
+               stack_state_next <= STACK_RTI;
+            end else if (cpu_op == CPU_OP_PHA) begin
+               stack_do_push  <= 1;
+               stack_wr_value <= reg_a;
+            end else if (cpu_op == CPU_OP_PLA) begin
+               stack_do_pop  <= 1;
+               stack_state_next <= STACK_PLA;
+            end else if (cpu_op == CPU_OP_PHP) begin
+               stack_do_push  <= 1;
+               stack_wr_value <= reg_sr | 8'b00010000; // BREAK flag is always 1 on PHP and BRK
+            end else if (cpu_op == CPU_OP_PLP) begin
+               stack_do_pop  <= 1;
+               stack_state_next <= STACK_PLP;
+            end else if (cpu_op == CPU_OP_TXS) begin
+               reg_sp_next   <= reg_x;
+               reg_sp_update <= 1;
+               misc_ops_complete <= 1;
+            end else begin
+               if (cpu_inst_single) misc_ops_complete <= 1;
+            end
+         end else if (address_mode_prepare == MODE_RESET) begin
+            reset_state <= RESET_GET_VECTOR;
+         end else if (address_mode_prepare == MODE_BRK) begin
+            ret_addr  <= pc + ((cpu_irq | cpu_nmi) ? 0 : 2);
+            int_state <= INT_GET_VECTOR;
          end
-         MODE_A:
-         begin
-            address_mode <= MODE_A;
-            pc_delta <= 1;
+         
+         case (int_state)
+            INT_GET_VECTOR:
+            begin
+               jmp_addr[7:0] <= bus_rd_data;
+               misc_addr <= (cpu_nmi ? NMI_VECTOR : IRQ_VECTOR) + 1;
+               misc_rd_req <= 1;
+               int_state <= INT_PUSH_ADDRH;
+            end
+            INT_PUSH_ADDRH:
+            begin
+               jmp_addr[15:8] <= bus_rd_data;
+               stack_do_push_back <= 1;
+               stack_wr_value     <= ret_addr[15:8];
+               int_state_next     <= INT_PUSH_ADDRL;
+            end
+            INT_PUSH_ADDRL:
+            begin
+               stack_do_push_back <= 1;
+               stack_wr_value <= ret_addr[7:0];
+               int_state_next  <= INT_PUSH_SR;
+            end
+            INT_PUSH_SR:
+            begin
+               flag_d_set  <= ALU_FLAG_RESET;
+               flag_i <= 1;
+               stack_wr_value <= reg_sr | ((cpu_irq | cpu_nmi) ? 0 : 8'b00010000);
+               stack_do_push  <= 1;
+            end
+         endcase
+         
+         if (cpu_op == CPU_OP_JSR || cpu_op == CPU_OP_JMP) begin
+            if (next_addr_op == NEXT_ABS) begin
+               jmp_addr <= {bus_rd_data, tmp_addr};
+               if (cpu_op == CPU_OP_JSR) begin
+                  ret_addr <= pc + 3;
+                  jsr_state <= JSR_PUSH_ADDRH;
+               end else begin
+                  misc_ops_complete <= 1;
+               end
+            end
+
+            if (next_addr_op == NEXT_IND_ABS_DONE) begin // TODO unify with jump above
+               jmp_addr <= {bus_rd_data, tmp_addr};
+               misc_ops_complete <= 1;
+            end
+            
+            case(jsr_state)
+               JSR_PUSH_ADDRH:
+               begin
+                  stack_wr_value <= ret_addr[15:8];
+                  stack_do_push_back  <= 1;
+                  jsr_state_next <= JSR_PUSH_ADDRL;
+               end
+               JSR_PUSH_ADDRL:
+               begin
+                  stack_wr_value <= ret_addr[7:0];
+                  stack_do_push  <= 1;
+               end
+            endcase
          end
-         MODE_Z, MODE_Z_X, MODE_Z_Y:
-         begin
-            address_mode <= MODE_Z;
-            pc_delta <= 2;
+         
+         case (stack_state)
+            STACK_RTS1:
+            begin
+               jmp_addr[7:0] <= stack_rd_value;
+               stack_do_pop  <=1;
+               stack_state_next <= STACK_RTS2;
+            end
+            STACK_RTS2:
+            begin
+               jmp_addr[15:8] <= stack_rd_value;
+               misc_ops_complete <= 1;
+            end
+            STACK_RTI, STACK_PLP:
+            begin
+               flag_n_set   <=  {1'b1, stack_rd_value[7]};
+               flag_v_set   <=  {1'b1, stack_rd_value[6]};
+               flag_d_set   <=  {1'b1, stack_rd_value[3]};
+               flag_i       <=  stack_rd_value[2];
+               flag_z_set   <=  {1'b1, stack_rd_value[1]};
+               flag_c_set   <=  {1'b1, stack_rd_value[0]};
+               if (stack_state == STACK_RTI) begin
+                  stack_do_pop <= 1;
+                  stack_state_next <= STACK_RTS1;
+               end else begin
+                  misc_ops_complete <= 1;
+               end
+            end
+         endcase
+         
+         case (reset_state)
+            RESET_GET_VECTOR:
+            begin
+               jmp_addr[7:0] <= bus_rd_data;
+               misc_addr <= RST_VECTOR + 1;
+               misc_rd_req <= 1;
+               reset_state <= RESET_FINISH;
+            end
+            RESET_FINISH:
+            begin
+               jmp_addr[15:8] <= bus_rd_data;
+               misc_ops_complete <= 1;
+               reset_state <= RESET_IDLE;
+            end
+         endcase
+         
+         case (cpu_op)
+            CPU_OP_CLC : flag_c_set <= ALU_FLAG_RESET;
+            CPU_OP_SEC : flag_c_set <= ALU_FLAG_SET;
+            CPU_OP_CLD : flag_d_set <= ALU_FLAG_RESET;
+            CPU_OP_SED : flag_d_set <= ALU_FLAG_SET;
+            CPU_OP_CLI : flag_i <= 0;
+            CPU_OP_SEI : flag_i <= 1;
+            CPU_OP_CLV : flag_v_set <= ALU_FLAG_RESET;
+         endcase
+
+         if (stack_op_done) begin
+            jsr_state   <= jsr_state_next;
+            int_state   <= int_state_next;
+            stack_state <= stack_state_next;
+            
+            int_state_next   <= INT_IDLE;
+            jsr_state_next   <= JSR_IDLE;
+            stack_state_next <= STACK_IDLE;
          end
-         MODE_IND_X, MODE_IND_Y:
-         begin
-            address_mode <= MODE_IND_Z;
-            pc_delta <= 2;
-         end
-         MODE_ABS, MODE_ABS_X, MODE_ABS_Y:
-         begin
-            address_mode <= MODE_ABS;
-            pc_delta <= 3;
-         end
-         MODE_IND_ABS:
-         begin
-            address_mode <= MODE_IND_ABS;
-            pc_delta <= 3;
-         end
-         MODE_SINGLE:
-         begin
-            pc_delta <= 1;
-            address_mode <= MODE_SINGLE;
-         end
-      endcase
-      case (address_mode_prepare)
-         MODE_Z, MODE_ABS:
-            reg_ndx <= 0;
-         MODE_Z_X, MODE_ABS_X:
-            reg_ndx <= reg_x;
-         MODE_Z_Y, MODE_ABS_Y:
-            reg_ndx <= reg_y;
-         MODE_IND_X:
-         begin
-            reg_ndx_pre  <= reg_x;
-            reg_ndx_post <= 0;
-         end
-         MODE_IND_Y:
-         begin
-            reg_ndx_pre  <= 0;
-            reg_ndx_post <= reg_y;
-         end
-      endcase
+      end
    end
    
    localparam DO_NOTHING  = 0;
@@ -502,7 +759,8 @@ module m6502_cpu (
    
    reg load_complete;
    reg store_complete;
-   wire load_store_complete = load_complete | store_complete;
+   reg misc_ops_complete;
+   wire load_store_complete = load_complete | store_complete | misc_ops_complete;
    
    always @ (negedge clk) begin : cpu_load_store
       store_complete <= 0;
@@ -511,6 +769,12 @@ module m6502_cpu (
       if (hold_fetch_addr) begin
          bus_addr   <= fetch_rd_addr;
          bus_rd_req <= fetch_rd_req;
+      end else if (misc_rd_req) begin
+         bus_addr   <= misc_addr;
+         bus_rd_req <= 1;
+      end else if (op_rd_req) begin
+         bus_addr   <= op_addr;
+         bus_rd_req <= 1;
       end else if (load_store == DO_LOAD) begin
          bus_addr   <= data_addr; 
          bus_rd_req <= 1;
@@ -519,7 +783,7 @@ module m6502_cpu (
          bus_rd_req <= stack_rd_req;
          bus_wr_en  <= stack_wr_req;
          bus_wr_data <= stack_wr_value;
-         store_complete <= stack_wr_req & (stack_op_next == NEXT_IDLE);
+         store_complete <= stack_wr_req & stack_finish_on_push;
       end else if (load_store == DO_STORE) begin
          bus_addr    <= data_addr;
          bus_wr_data <= reg_write;
@@ -548,33 +812,18 @@ module m6502_cpu (
    localparam MODE_IND_X    = 12;
    localparam MODE_IND_Y    = 13;
    localparam MODE_IND_ABS  = 14;
+   localparam MODE_BRK      = 15;
    
    localparam NEXT_IDLE     = 0;
    localparam NEXT_RESET1   = 1;
    localparam NEXT_RESET2   = 2;
    localparam NEXT_READ_M   = 3;
-   localparam NEXT_Z        = 4;
-   localparam NEXT_ABS1     = 5;
-   localparam NEXT_ABS2     = 6;
-   localparam NEXT_IND_ABS1 = 7;
-   localparam NEXT_IND_ABS2 = 8;
-   localparam NEXT_IND_ABS3 = 9;
-   localparam NEXT_IND_ABS4 = 10;
-   localparam NEXT_IND_Z1   = 11;
-   localparam NEXT_IND_Z2   = 12;
-   localparam NEXT_IND_Z3   = 13;
-   localparam NEXT_JSR1     = 14;
-   localparam NEXT_JSR2     = 15;
-   localparam NEXT_JSR3     = 16;
-   localparam NEXT_RTI      = 17;
-   localparam NEXT_RTS1     = 18;
-   localparam NEXT_RTS2     = 19;
-   localparam NEXT_PLA      = 20;
-   localparam NEXT_PLP      = 21;
-   localparam NEXT_BRK1     = 22;
-   localparam NEXT_BRK2     = 23;
-   localparam NEXT_BRK3     = 24;
-   localparam NEXT_BRK4     = 25;
+   localparam NEXT_ABS      = 4;
+   localparam NEXT_IND_ABS1 = 5;
+   localparam NEXT_IND_ABS2 = 6;
+   localparam NEXT_IND_ABS_DONE = 7;
+   localparam NEXT_IND_Z1   = 8;
+   localparam NEXT_IND_Z2   = 9;
 
    reg[4:0] address_mode;
    reg[4:0] address_mode_prepare;
@@ -630,295 +879,107 @@ module m6502_cpu (
    localparam CPU_OP_PLA    = 47;
    localparam CPU_OP_JMP    = 48;
    
+   wire cpu_exec = ready && !bus_rd_req && cpu_fetch_state == CPU_EXECUTE_WAIT;
+   
    reg[15:0] jmp_addr;
-   reg[4:0]  stack_op_back;
-   reg[4:0]  stack_op_next;
+   reg[7:0]  tmp_addr;
+   reg[2:0]  stack_state;
    reg[7:0]  stack_rd_value;
    reg[7:0]  stack_wr_value;
    reg[5:0]  cpu_op;
+   reg[4:0]  next_addr_op;
    reg       do_branch;
 
    always @ (posedge clk) begin : cpu_load_store_decode
-      reg[4:0] next_addr_op;
-      reg[7:0] tmp_addr;
-      reg cpu_op_finish;
-      reg use_a;
       reg alu_wait;
       reg[1:0] push_state;
       reg[1:0] pop_state;
-      reg[15:0] ret_addr;
       
-      use_a <= 0;
       alu_proceed <= 0;
       alu_wait <= 0;
       write_from_alu <= 0;
       do_branch <= 0;
-      
-      reg_sp_update      <= 0;
-      stack_do_pop       <= 0;
-      stack_do_push      <= 0;
-      stack_do_push_back <= 0;
-      
-      flag_n_set <= ALU_FLAG_KEEP;
-      flag_v_set <= ALU_FLAG_KEEP;
-      flag_d_set <= ALU_FLAG_KEEP;
-      flag_z_set <= ALU_FLAG_KEEP;
-      flag_c_set <= ALU_FLAG_KEEP;
       
       load_store <= DO_NOTHING;
       if (!reset_n) begin
          pop_state <= 0;
          push_state <= 0;
          next_addr_op <= NEXT_IDLE;
-         stack_op_back <= NEXT_IDLE;
          load_complete <= 0;
-      end else if (ready && !bus_rd_req && cpu_fetch_state == CPU_EXECUTE_WAIT) begin
+      end else if (cpu_exec) begin
          load_complete <= 0;
-         cpu_op_finish <= 0;
+         cpu_op_finish_b <= 0;
          next_addr_op <= NEXT_IDLE;
          
          case(address_mode)
-            MODE_SINGLE:
-            if (cpu_op == CPU_OP_RTS) begin
-               stack_do_pop <= 1;
-               stack_op_back <= NEXT_RTS1;
-            end else if (cpu_op == CPU_OP_RTI) begin
-               stack_do_pop <= 1;
-               stack_op_back <= NEXT_RTI;
-            end else if (cpu_op == CPU_OP_PHA) begin
-               stack_wr_value <= reg_a;
-               stack_do_push  <= 1;
-            end else if (cpu_op == CPU_OP_PLA) begin
-               stack_do_pop <= 1;
-               stack_op_back <= NEXT_PLA;
-            end else if (cpu_op == CPU_OP_PHP) begin
-               stack_wr_value <= reg_sr | 8'b00010000; // BREAK flag is always 1 on PHP and BRK
-               stack_do_push  <= 1;
-            end else if (cpu_op == CPU_OP_PLP) begin
-               stack_do_pop <= 1;
-               stack_op_back <= NEXT_PLP;
-            end else if (cpu_op == CPU_OP_BRK) begin
-               data_addr <= cpu_nmi ? NMI_VECTOR : IRQ_VECTOR;
-               load_store <= DO_LOAD;
-               ret_addr   <= pc + ((cpu_irq | cpu_nmi) ? 0 : 2);
-               next_addr_op <= NEXT_BRK1;
-            end else begin
-               cpu_op_finish <= 1;
-               if (cpu_inst_single) load_complete <= 1;
-            end
-            MODE_A:      /* A */
-            begin
-               use_a <= 1;
-               cpu_op_finish <= 1;
-            end
-            MODE_IMM:    /* IMM */
-            begin
-               data_addr <= pc_op;
-               load_store <= DO_LOAD;
-               cpu_op_finish <= 1;
-            end
             MODE_Z:
             begin
-               data_addr <= pc_op;
-               load_store <= DO_LOAD;
-               next_addr_op <= NEXT_Z;
+               data_addr   <= {8'd0, bus_rd_data} + reg_ndx;
+               load_store  <= do_load_store;
+               cpu_op_finish_b <= 1;
             end
             MODE_ABS:  /* ABS */
             begin
-               data_addr <= pc_op;
-               load_store <= DO_LOAD;
-               next_addr_op <= NEXT_ABS1;
+               tmp_addr     <= bus_rd_data;
+               data_addr    <= pc_op + 1;
+               load_store   <= DO_LOAD;
+               next_addr_op <= NEXT_ABS;
             end
             MODE_IND_ABS: // JMP (IND)
             begin
-               data_addr <= pc_op;
-               load_store <= DO_LOAD;
-               next_addr_op <= NEXT_IND_ABS1; 
+               tmp_addr     <= bus_rd_data;
+               data_addr    <= pc_op + 1;
+               load_store   <= DO_LOAD;
+               next_addr_op <= NEXT_IND_ABS1;
             end
             MODE_IND_Z:
             begin
-               data_addr <= pc_op;
+               data_addr <= {8'd0, bus_rd_data} + reg_ndx_pre;
                load_store <= DO_LOAD;
                next_addr_op <= NEXT_IND_Z1;
             end
-            MODE_RESET:
-            begin
-               data_addr <= RST_VECTOR;
-               load_store <= DO_LOAD;
-               next_addr_op <= NEXT_RESET1;
-            end
          endcase
          
-         case (cpu_op)
-            CPU_OP_CLC : flag_c_set <= ALU_FLAG_RESET;
-            CPU_OP_SEC : flag_c_set <= ALU_FLAG_SET;
-            CPU_OP_CLD : flag_d_set <= ALU_FLAG_RESET;
-            CPU_OP_SED : flag_d_set <= ALU_FLAG_SET;
-            CPU_OP_CLI : flag_i <= 0;
-            CPU_OP_SEI : flag_i <= 1;
-            CPU_OP_CLV : flag_v_set <= ALU_FLAG_RESET;
-         endcase
 
          case (next_addr_op)
-            NEXT_Z:
-            begin
-               data_addr   <= {8'd0, bus_rd_data} + reg_ndx;
-               load_store <= do_load_store;
-               cpu_op_finish <= 1;
-            end
-            NEXT_ABS1:
-            begin
-               tmp_addr <= bus_rd_data;
-               data_addr <= pc_op + 1;
-               load_store <= DO_LOAD;
-               next_addr_op <= NEXT_ABS2;
-            end
-            NEXT_ABS2:
-            if (cpu_op == CPU_OP_JSR) begin
-               jmp_addr <= {bus_rd_data, tmp_addr};
-               ret_addr <= pc + 3;
-               next_addr_op <= NEXT_JSR1;
-            end else if (cpu_op == CPU_OP_JMP) begin
-               jmp_addr <= {bus_rd_data, tmp_addr};
-               load_complete <= 1;
-            end else begin
+            NEXT_ABS:
+            // this state is also used for JSR/JMP in exec_misc_ops
+            if (do_load_store != DO_NOTHING) begin
                data_addr   <= {bus_rd_data, tmp_addr} + reg_ndx;
-               load_store <= do_load_store;
-               cpu_op_finish <= 1;
+               load_store  <= do_load_store;
+               cpu_op_finish_b <= 1;
             end
             NEXT_IND_ABS1:
             begin
-               tmp_addr <= bus_rd_data;
-               data_addr <= pc + 2;
+               data_addr <= {bus_rd_data, tmp_addr};
                load_store <= DO_LOAD;
                next_addr_op <= NEXT_IND_ABS2;
             end
             NEXT_IND_ABS2:
             begin
-               data_addr <= {bus_rd_data, tmp_addr};
-               load_store <= DO_LOAD;
-               next_addr_op <= NEXT_IND_ABS3;
-            end
-            NEXT_IND_ABS3:
-            begin
                tmp_addr <= bus_rd_data;
                data_addr <= data_addr + 1;
                load_store <= DO_LOAD;
-               next_addr_op <= NEXT_IND_ABS4;
-            end
-            NEXT_IND_ABS4:
-            begin
-               jmp_addr <= {bus_rd_data, tmp_addr};
-               load_complete <= 1;
+               next_addr_op <= NEXT_IND_ABS_DONE;
             end
             NEXT_IND_Z1:
             begin
-               data_addr <= {8'd0, bus_rd_data} + reg_ndx_pre;
+               tmp_addr <= bus_rd_data;
+               data_addr <= data_addr + 1;
                load_store <= DO_LOAD;
                next_addr_op <= NEXT_IND_Z2;
             end
             NEXT_IND_Z2:
             begin
-               tmp_addr <= bus_rd_data;
-               data_addr <= data_addr + 1;
-               load_store <= DO_LOAD;
-               next_addr_op <= NEXT_IND_Z3;
-            end
-            NEXT_IND_Z3:
-            begin
                data_addr <= {bus_rd_data, tmp_addr} + reg_ndx_post;
                load_store <= do_load_store;
-               cpu_op_finish <= 1;
-            end
-            NEXT_RESET1:
-            begin
-               tmp_addr <= bus_rd_data;
-               data_addr <= RST_VECTOR + 1;
-               load_store <= DO_LOAD;
-               next_addr_op <= NEXT_RESET2;
-            end
-            NEXT_RESET2:
-            begin
-               reg_word <= {bus_rd_data, tmp_addr};
-               load_complete <= 1;
+               cpu_op_finish_b <= 1;
             end
          endcase
          
-         case (next_addr_op)
-            NEXT_BRK1:
-            begin
-               tmp_addr <= bus_rd_data;
-               data_addr <= (cpu_nmi ? NMI_VECTOR : IRQ_VECTOR) + 1;
-               load_store <= DO_LOAD;
-               next_addr_op <= NEXT_BRK2;
-            end
-            NEXT_BRK2:
-            begin
-               jmp_addr <= {bus_rd_data, tmp_addr};
-               stack_do_push_back <= 1;
-               stack_wr_value     <= ret_addr[15:8];
-               stack_op_back      <= NEXT_BRK3;
-            end
-            NEXT_BRK3:
-            begin
-               stack_do_push_back <= 1;
-               stack_wr_value <= ret_addr[7:0];
-               stack_op_back  <= NEXT_BRK4;
-            end
-            NEXT_BRK4:
-            begin
-               flag_d_set  <= ALU_FLAG_RESET;
-               flag_i <= 1;
-               stack_wr_value <= reg_sr | ((cpu_irq | cpu_nmi) ? 0 : 8'b00010000);
-               stack_do_push  <= 1;
-            end
-            
-            NEXT_JSR1:
-            begin
-               stack_wr_value <= ret_addr[15:8];
-               stack_do_push_back  <= 1;
-               stack_op_back <= NEXT_JSR2;
-            end
-            NEXT_JSR2:
-            begin
-               stack_wr_value <= ret_addr[7:0];
-               stack_do_push  <= 1;
-            end
-            NEXT_RTS1:
-            begin
-               jmp_addr[7:0] <= stack_rd_value;
-               stack_do_pop <=1;
-               stack_op_back <= NEXT_RTS2;
-            end
-            NEXT_RTS2:
-            begin
-               jmp_addr[15:8] <= stack_rd_value;
-               load_complete <= 1;
-            end
-            NEXT_PLA:
-            begin
-               alu_in_a <= stack_rd_value;
-               alu_proceed <= 1;
-            end
-            NEXT_RTI, NEXT_PLP:
-            begin
-               flag_n_set   <=  {1'b1, stack_rd_value[7]};
-               flag_v_set   <=  {1'b1, stack_rd_value[6]};
-               flag_d_set   <=  {1'b1, stack_rd_value[3]};
-               flag_i       <=  stack_rd_value[2];
-               flag_z_set   <=  {1'b1, stack_rd_value[1]};
-               flag_c_set   <=  {1'b1, stack_rd_value[0]};
-               if (next_addr_op == NEXT_RTI) begin
-                  stack_do_pop <= 1;
-                  stack_op_back <= NEXT_RTS1;
-               end else begin
-                  load_complete <= 1;
-               end
-            end
-         endcase
-         
-         if (stack_op_done) begin
-            next_addr_op <= stack_op_next;
+         if (stack_state == STACK_PLA) begin
+            alu_in_a <= stack_rd_value;
+            alu_proceed <= 1;
          end
          
          if (alu_proceed & !alu_wait) begin
@@ -1039,7 +1100,7 @@ module m6502_cpu (
                   load_complete <= 1;
                end
             endcase
-            
+
             case(cpu_op)
                CPU_OP_TXA,
                CPU_OP_TYA,
@@ -1058,11 +1119,6 @@ module m6502_cpu (
                CPU_OP_TAY,
                CPU_OP_TAX: alu_in_a <= reg_a;
                CPU_OP_TSX: alu_in_a <= reg_sp;
-               CPU_OP_TXS: begin
-                  reg_sp_next   <= reg_x;
-                  reg_sp_update <= 1;
-                  load_complete <= 1;
-               end
             endcase
 
             case(cpu_op)
@@ -1093,12 +1149,18 @@ module m6502_cpu (
       end
    end
    
+   reg[15:0] misc_addr;
+   reg       misc_rd_req;
+   reg[15:0] op_addr;
+   reg       op_rd_req;
+   
    reg stack_do_pop;
    reg stack_do_push;
    reg stack_do_push_back;
    reg stack_op_done;
    reg stack_rd_req;
    reg stack_wr_req;
+   reg stack_finish_on_push;
    reg[7:0] stack_addr;
    reg[7:0] reg_sp_next;
    reg      reg_sp_update;
@@ -1106,7 +1168,7 @@ module m6502_cpu (
    always @ (posedge clk) begin : stack_ops
       reg pop_wait;
       reg push_wait;
-      
+
       stack_op_done <= 0;
       stack_rd_req  <= 0;
       stack_wr_req  <= 0;
@@ -1115,29 +1177,27 @@ module m6502_cpu (
          pop_wait  <= 0;
          push_wait <= 0;
          reg_sp    <= 8'hff;
-         stack_op_next <= NEXT_IDLE;
-      end else if (ready & !bus_rd_req) begin
+      end else if (cpu_exec) begin
          pop_wait  <= 0;
          push_wait <= 0;
-         if (stack_do_pop) begin
+         if (pop_wait) begin
+            stack_rd_value <= bus_rd_data;
+            stack_op_done  <= 1;
+         end else if (stack_do_pop) begin
             stack_rd_req <= 1;
             stack_addr   <= reg_sp + 1'b1;
             reg_sp       <= reg_sp + 1'b1;
             pop_wait     <= 1;
-            stack_op_next <= stack_op_back;
-         end else if (pop_wait) begin
-            stack_rd_value <= bus_rd_data;
-            stack_op_done  <= 1;
-         end
-         if (stack_do_push | stack_do_push_back) begin
+         end 
+         if (push_wait) begin
+            stack_op_done <= 1;
+         end else if (stack_do_push | stack_do_push_back) begin
             stack_wr_req <= 1;
             stack_addr   <= reg_sp;
             reg_sp       <= reg_sp - 1'b1;
             push_wait    <= 1;
-            stack_op_next <= stack_do_push_back ? stack_op_back : NEXT_IDLE;
-         end else if (push_wait) begin
-            stack_op_done <= 1;
-         end
+            stack_finish_on_push <= stack_do_push;
+         end 
          if (reg_sp_update) begin
             reg_sp <= reg_sp_next;
          end
