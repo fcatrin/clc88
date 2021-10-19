@@ -119,7 +119,7 @@ module m6502_cpu (
             CPU_FETCH:
             begin
                hold_fetch_addr <= 1;
-               if (ready && !fetch_rd_req) begin
+               if (ready & !pending_rd_req) begin
                   reg_i <= bus_rd_data;
                   cpu_fetch_state <= CPU_EXECUTE;
                end
@@ -879,7 +879,9 @@ module m6502_cpu (
    localparam CPU_OP_PLA    = 47;
    localparam CPU_OP_JMP    = 48;
    
-   wire cpu_exec = ready && !bus_rd_req && cpu_fetch_state == CPU_EXECUTE_WAIT;
+   // todo check if rd_req can be moved to negedge 
+   wire pending_rd_req = bus_rd_req | fetch_rd_req | misc_rd_req | op_rd_req | stack_rd_req;
+   wire cpu_exec = ready && !pending_rd_req && cpu_fetch_state == CPU_EXECUTE_WAIT;
    
    reg[15:0] jmp_addr;
    reg[7:0]  tmp_addr;
