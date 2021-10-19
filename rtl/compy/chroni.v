@@ -441,7 +441,7 @@ module chroni (
          render_state  <= 15;
       end else begin
          vga_scanline_start_prev <= vga_scanline_start;
-         if (!vga_scanline_start_prev && vga_scanline_start) begin
+         if (vga_render_start | (!vga_scanline_start_prev & vga_scanline_start)) begin
             if (vga_render_start) begin
                render_state  <= 0;
                render_flag   <= 1;

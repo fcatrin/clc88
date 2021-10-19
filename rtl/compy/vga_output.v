@@ -177,8 +177,7 @@ module vga_output (
       if (vga_scanline_end) begin
          if (!render_start_busy && y_cnt == v_pf_start - 2) begin
             render_start_req <= 1;
-         end
-         if (!scanline_start_busy) begin
+         end else if (!scanline_start_busy) begin
             scanline_start_req <= 1;
          end
          double_pixel_active <= double_pixel;
