@@ -762,38 +762,27 @@ module m6502_cpu (
    reg misc_ops_complete;
    wire load_store_complete = load_complete | store_complete | misc_ops_complete;
    
-   always @ (negedge clk) begin : cpu_load_store
-      store_complete <= 0;
-      bus_rd_req <= 0;
-      bus_wr_en  <= 0;
+   always @ (negedge clk) begin : bus_access
+      bus_rd_req <= fetch_rd_req | misc_rd_req | op_rd_req | stack_rd_req | load_store == DO_LOAD; 
+      bus_wr_en  <= stack_wr_req | write_from_alu | load_store == DO_STORE;
+      store_complete <= (stack_wr_req & stack_finish_on_push) | write_from_alu | load_store == DO_STORE;
       if (hold_fetch_addr) begin
          bus_addr   <= fetch_rd_addr;
-         bus_rd_req <= fetch_rd_req;
       end else if (misc_rd_req) begin
          bus_addr   <= misc_addr;
-         bus_rd_req <= 1;
       end else if (op_rd_req) begin
          bus_addr   <= op_addr;
-         bus_rd_req <= 1;
       end else if (load_store == DO_LOAD) begin
          bus_addr   <= data_addr; 
-         bus_rd_req <= 1;
       end else if (stack_rd_req | stack_wr_req) begin
          bus_addr <= {8'd1, stack_addr};
-         bus_rd_req <= stack_rd_req;
-         bus_wr_en  <= stack_wr_req;
          bus_wr_data <= stack_wr_value;
-         store_complete <= stack_wr_req & stack_finish_on_push;
       end else if (load_store == DO_STORE) begin
          bus_addr    <= data_addr;
          bus_wr_data <= reg_write;
-         bus_wr_en   <= 1;
-         store_complete <= 1;
       end else if (write_from_alu) begin
          bus_addr    <= data_addr;
          bus_wr_data <= alu_out;
-         bus_wr_en   <= 1;
-         store_complete <= 1;
       end
    end
    
