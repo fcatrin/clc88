@@ -153,8 +153,8 @@ module m6502_cpu (
       end
    end
    
+   reg wait_for_reset;
    always @ (posedge clk) begin : cpu_decode
-      reg wait_for_reset;
       
       address_mode_prepare <= MODE_IDLE;
       cpu_inst_done <= 0;
@@ -530,12 +530,6 @@ module m6502_cpu (
       end
    end
    
-   localparam INT_IDLE       = 0;
-   localparam INT_GET_VECTOR = 1;
-   localparam INT_PUSH_ADDRH = 2;
-   localparam INT_PUSH_ADDRL = 3;
-   localparam INT_PUSH_SR    = 4;
-   
    localparam JSR_IDLE       = 0;
    localparam JSR_PUSH_ADDRH = 1;
    localparam JSR_PUSH_ADDRL = 2;
@@ -547,23 +541,21 @@ module m6502_cpu (
    localparam STACK_PLA  = 4;
    localparam STACK_PLP  = 5;
    
-   localparam RESET_IDLE       = 0;
-   localparam RESET_GET_VECTOR = 1;
-   localparam RESET_FINISH     = 2;
-   
    localparam PUSH_IDLE  = 0;
    localparam PUSH_ADDRL = 1;
    localparam PUSH_SR    = 2;
    
+   localparam VECTOR_IDLE = 0;
+   localparam VECTOR_L    = 1;
+   localparam VECTOR_H    = 2;
+   
    always @ (posedge clk) begin : exec_misc_ops
       reg[15:0] ret_addr;
 
-      reg[2:0] int_state;
       reg[2:0] jsr_state;
-      reg[2:0] int_state_next;
       reg[2:0] jsr_state_next;
       reg[2:0] stack_state_next;
-      reg[2:0] reset_state;
+      reg[2:0] vector_state;
       reg[1:0] push_addr_state;
       reg[1:0] push_addr_state_next;
 
@@ -582,19 +574,15 @@ module m6502_cpu (
       misc_rd_req <= 0;
 
       if (~reset_n) begin
-         int_state <= INT_IDLE;
          jsr_state <= JSR_IDLE;
          stack_state <= STACK_IDLE;
-         int_state_next <= INT_IDLE;
          jsr_state_next <= JSR_IDLE;
          stack_state_next <= STACK_IDLE;
-         reset_state <= RESET_IDLE;
+         vector_state <= VECTOR_IDLE;
          push_addr_state <= PUSH_IDLE;
          push_addr_state_next <= PUSH_IDLE;
 
       end else if (cpu_exec) begin
-         
-         int_state <= INT_IDLE;
          jsr_state <= JSR_IDLE;
          stack_state <= STACK_IDLE;
          push_addr_state <= PUSH_IDLE;
@@ -625,31 +613,19 @@ module m6502_cpu (
                endcase
                misc_ops_complete <= cpu_op == CPU_OP_TXS | cpu_inst_single;
             end
-            MODE_RESET: reset_state <= RESET_GET_VECTOR;
-            MODE_BRK:
-            begin
-               ret_addr  <= pc + ((cpu_irq | cpu_nmi) ? 0 : 2);
-               int_state <= INT_GET_VECTOR;
-            end
+            MODE_BRK,
+            MODE_RESET: vector_state <= VECTOR_H;
          endcase
 
          if (cpu_op == CPU_OP_JSR) begin
             ret_addr <= pc + 3;
+         end else if (address_mode_prepare == MODE_BRK) begin
+            ret_addr  <= pc + ((cpu_irq | cpu_nmi) ? 0 : 2);
          end
 
-         case (int_state)
-            INT_GET_VECTOR:
-            begin
-               jmp_addr[7:0] <= bus_rd_data;
-               misc_addr <= (cpu_nmi ? NMI_VECTOR : IRQ_VECTOR) + 1;
-               misc_rd_req <= 1;
-               int_state <= INT_PUSH_ADDRH;
-            end
-            INT_PUSH_ADDRH: 
-               jmp_addr[15:8] <= bus_rd_data;
-         endcase
-         
-         if ((cpu_op == CPU_OP_JSR & next_addr_op == NEXT_ABS) | int_state == INT_PUSH_ADDRH) begin
+         // push ret_addr then push status if needed (Interrupts)
+         if ((cpu_op == CPU_OP_JSR & next_addr_op == NEXT_ABS) | 
+             (!wait_for_reset & vector_state == VECTOR_L)) begin
             stack_wr_value <= ret_addr[15:8];
             stack_do_push_back  <= 1;
             push_addr_state_next <= PUSH_ADDRL;
@@ -670,13 +646,14 @@ module m6502_cpu (
             end
          endcase
          
-         
+         // read MSB part of abs jump address
          if ((cpu_op == CPU_OP_JSR || cpu_op == CPU_OP_JMP) &
              (next_addr_op == NEXT_ABS || next_addr_op == NEXT_IND_ABS_DONE)) begin
             jmp_addr <= {bus_rd_data, tmp_addr};
             misc_ops_complete <= cpu_op == CPU_OP_JMP;
          end
          
+         // RTS/RTI pop address and stack if needed. Shared with PLP
          case (stack_state)
             STACK_RTS1:
             begin
@@ -705,20 +682,21 @@ module m6502_cpu (
                end
             end
          endcase
-         
-         case (reset_state)
-            RESET_GET_VECTOR:
+
+         // get vector address from RESET, NMI or IRQ
+         case (vector_state)
+            VECTOR_H:
             begin
                jmp_addr[7:0] <= bus_rd_data;
-               misc_addr <= RST_VECTOR + 1;
+               misc_addr <= (wait_for_reset ? RST_VECTOR : (cpu_nmi ? NMI_VECTOR : IRQ_VECTOR)) + 1'b1;
                misc_rd_req <= 1;
-               reset_state <= RESET_FINISH;
+               vector_state <= VECTOR_L;
             end
-            RESET_FINISH:
+            VECTOR_L:
             begin
                jmp_addr[15:8] <= bus_rd_data;
-               misc_ops_complete <= 1;
-               reset_state <= RESET_IDLE;
+               misc_ops_complete <= wait_for_reset;
+               vector_state <= VECTOR_IDLE;
             end
          endcase
          
@@ -734,11 +712,9 @@ module m6502_cpu (
 
          if (stack_op_done) begin
             jsr_state        <= jsr_state_next;
-            int_state        <= int_state_next;
             stack_state      <= stack_state_next;
             push_addr_state  <= push_addr_state_next;
             
-            int_state_next   <= INT_IDLE;
             jsr_state_next   <= JSR_IDLE;
             stack_state_next <= STACK_IDLE;
             push_addr_state_next  <= PUSH_IDLE;
