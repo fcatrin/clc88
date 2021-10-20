@@ -12,11 +12,11 @@
 module m6502_cpu (
       input clk,
       input reset_n,
-      output reg [15:0] bus_addr,
-      input       [7:0] bus_rd_data,
-      output reg  [7:0] bus_wr_data,
-      output reg bus_wr_en,
-      output reg bus_rd_req,
+      output [15:0] bus_addr,
+      input  [7:0]  bus_rd_data,
+      output [7:0]  bus_wr_data,
+      output bus_wr_en,
+      output bus_rd_req,
       input  irq_n,
       input  nmi_n,
       input  ready
@@ -730,33 +730,21 @@ module m6502_cpu (
    reg[1:0] do_load_store = DO_NOTHING;
    
    reg load_complete;
-   reg store_complete;
+   wire store_complete;
    reg misc_ops_complete;
    wire load_store_complete = load_complete | store_complete | misc_ops_complete;
    
-   always @ (negedge clk) begin : bus_access
-      bus_rd_req <= fetch_rd_req | misc_rd_req | op_rd_req | stack_rd_req | load_store == DO_LOAD; 
-      bus_wr_en  <= stack_wr_req | write_from_alu | load_store == DO_STORE;
-      store_complete <= (stack_wr_req & stack_finish_on_push) | write_from_alu | load_store == DO_STORE;
-      if (hold_fetch_addr) begin
-         bus_addr   <= fetch_rd_addr;
-      end else if (misc_rd_req) begin
-         bus_addr   <= misc_addr;
-      end else if (op_rd_req) begin
-         bus_addr   <= op_addr;
-      end else if (load_store == DO_LOAD) begin
-         bus_addr   <= data_addr; 
-      end else if (stack_rd_req | stack_wr_req) begin
-         bus_addr <= {8'd1, stack_addr};
-         bus_wr_data <= stack_wr_value;
-      end else if (load_store == DO_STORE) begin
-         bus_addr    <= data_addr;
-         bus_wr_data <= reg_write;
-      end else if (write_from_alu) begin
-         bus_addr    <= data_addr;
-         bus_wr_data <= alu_out;
-      end
-   end
+   assign bus_rd_req = fetch_rd_req | misc_rd_req | op_rd_req | stack_rd_req | load_store == DO_LOAD;
+   assign bus_wr_en  = stack_wr_req | write_from_alu | load_store == DO_STORE;
+   assign bus_wr_data = (stack_rd_req | stack_wr_req) ? stack_wr_value:
+      (write_from_alu ? alu_out : reg_write);
+      
+   assign store_complete = (stack_wr_req & stack_finish_on_push) | write_from_alu | load_store == DO_STORE;
+   assign bus_addr = 
+      hold_fetch_addr ? fetch_rd_addr :
+      misc_rd_req ? misc_addr :
+      op_rd_req ? op_addr :
+      (stack_rd_req | stack_wr_req) ? {8'd1, stack_addr} : data_addr; 
    
    localparam MODE_IDLE     = 0;
    localparam MODE_RESET    = 1;

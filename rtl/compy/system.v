@@ -19,10 +19,15 @@ module system (
    
    // global bus
    wire[7:0]  data = chroni_cs ? chroni_rd_data : (ram_cs ? ram_rd_data : (io_cs ? io_rd_data : rom_rd_data));
-   wire rom_cs    = cpu_addr[15:14] == 2'b11;  // 0xc000 and above
-   wire ram_cs    = cpu_addr[15:12] == 4'b1000 || !cpu_addr[15]; // 0x0000 -> 0x8fff
-   wire io_cs     = cpu_addr[15:8]  == 8'b10010010; // 0x92XX
-   wire chroni_cs = cpu_addr[15:7] == 9'b100100000;
+   wire rom_s    = cpu_addr[15:14] == 2'b11;  // 0xc000 and above
+   wire ram_s    = cpu_addr[15:12] == 4'b1000 || !cpu_addr[15]; // 0x0000 -> 0x8fff
+   wire io_s     = cpu_addr[15:8]  == 8'b10010010; // 0x92XX
+   wire chroni_s = cpu_addr[15:7] == 9'b100100000;
+   
+   reg rom_cs;
+   reg ram_cs;
+   reg io_cs;
+   reg chroni_cs;
    
    wire[15:0] cpu_addr;
    wire       cpu_rd_req;
@@ -38,10 +43,20 @@ module system (
       cpu_ready <= 1;
       if (~reset_n) begin
          bus_state  <= BUS_IDLE;
+         rom_cs <= 0;
+         ram_cs <= 0;
+         io_cs  <= 0;
+         chroni_cs <= 0;
       end else begin
-         if (cpu_rd_req) begin
-            bus_state  <= BUS_READ;
-            cpu_ready  <= 0;
+         if (cpu_rd_req | cpu_wr_en) begin
+            if (cpu_rd_req) begin
+               bus_state  <= BUS_READ;
+               cpu_ready  <= 0;
+            end
+            rom_cs    <= rom_s;
+            ram_cs    <= ram_s;
+            io_cs     <= io_s;
+            chroni_cs <= chroni_s;
          end else case (bus_state)
             BUS_IDLE: 
                bus_state <= bus_state;
@@ -72,7 +87,7 @@ module system (
          .address(ram_addr),
          .clock(sys_clk),
          .data(ram_wr_data),
-         .wren(ram_wr_en && ram_cs),
+         .wren(ram_wr_en && ram_s),
          .q(ram_rd_data)
       );
          
@@ -145,7 +160,7 @@ module system (
       .vga_b(vga_b),
       .cpu_rd_data(chroni_rd_data),
       .cpu_wr_data(cpu_wr_data),
-      .cpu_wr_en(cpu_wr_en & chroni_cs),
+      .cpu_wr_en(cpu_wr_en & chroni_s),
       .cpu_addr(cpu_addr)
    );
    
