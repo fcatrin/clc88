@@ -551,6 +551,10 @@ module m6502_cpu (
    localparam RESET_GET_VECTOR = 1;
    localparam RESET_FINISH     = 2;
    
+   localparam PUSH_IDLE  = 0;
+   localparam PUSH_ADDRL = 1;
+   localparam PUSH_SR    = 2;
+   
    always @ (posedge clk) begin : exec_misc_ops
       reg[15:0] ret_addr;
 
@@ -560,6 +564,8 @@ module m6502_cpu (
       reg[2:0] jsr_state_next;
       reg[2:0] stack_state_next;
       reg[2:0] reset_state;
+      reg[1:0] push_addr_state;
+      reg[1:0] push_addr_state_next;
 
       flag_n_set <= ALU_FLAG_KEEP;
       flag_v_set <= ALU_FLAG_KEEP;
@@ -583,11 +589,15 @@ module m6502_cpu (
          jsr_state_next <= JSR_IDLE;
          stack_state_next <= STACK_IDLE;
          reset_state <= RESET_IDLE;
+         push_addr_state <= PUSH_IDLE;
+         push_addr_state_next <= PUSH_IDLE;
+
       end else if (cpu_exec) begin
          
          int_state <= INT_IDLE;
          jsr_state <= JSR_IDLE;
          stack_state <= STACK_IDLE;
+         push_addr_state <= PUSH_IDLE;
          
          case (address_mode_prepare)
             MODE_SINGLE:
@@ -622,7 +632,11 @@ module m6502_cpu (
                int_state <= INT_GET_VECTOR;
             end
          endcase
-         
+
+         if (cpu_op == CPU_OP_JSR) begin
+            ret_addr <= pc + 3;
+         end
+
          case (int_state)
             INT_GET_VECTOR:
             begin
@@ -631,20 +645,23 @@ module m6502_cpu (
                misc_rd_req <= 1;
                int_state <= INT_PUSH_ADDRH;
             end
-            INT_PUSH_ADDRH:
-            begin
+            INT_PUSH_ADDRH: 
                jmp_addr[15:8] <= bus_rd_data;
-               stack_do_push_back <= 1;
-               stack_wr_value     <= ret_addr[15:8];
-               int_state_next     <= INT_PUSH_ADDRL;
-            end
-            INT_PUSH_ADDRL:
+         endcase
+         
+         if ((cpu_op == CPU_OP_JSR & next_addr_op == NEXT_ABS) | int_state == INT_PUSH_ADDRH) begin
+            stack_wr_value <= ret_addr[15:8];
+            stack_do_push_back  <= 1;
+            push_addr_state_next <= PUSH_ADDRL;
+         end else case (push_addr_state)
+            PUSH_ADDRL:
             begin
-               stack_do_push_back <= 1;
                stack_wr_value <= ret_addr[7:0];
-               int_state_next  <= INT_PUSH_SR;
+               stack_do_push  <= cpu_op == CPU_OP_JSR;
+               stack_do_push_back <= cpu_op != CPU_OP_JSR;
+               push_addr_state_next  <= cpu_op != CPU_OP_JSR ? PUSH_SR : PUSH_IDLE;
             end
-            INT_PUSH_SR:
+            PUSH_SR:
             begin
                flag_d_set  <= ALU_FLAG_RESET;
                flag_i <= 1;
@@ -653,35 +670,11 @@ module m6502_cpu (
             end
          endcase
          
-         if (cpu_op == CPU_OP_JSR || cpu_op == CPU_OP_JMP) begin
-            if (next_addr_op == NEXT_ABS) begin
-               jmp_addr <= {bus_rd_data, tmp_addr};
-               if (cpu_op == CPU_OP_JSR) begin
-                  ret_addr <= pc + 3;
-                  jsr_state <= JSR_PUSH_ADDRH;
-               end else begin
-                  misc_ops_complete <= 1;
-               end
-            end
-
-            if (next_addr_op == NEXT_IND_ABS_DONE) begin // TODO unify with jump above
-               jmp_addr <= {bus_rd_data, tmp_addr};
-               misc_ops_complete <= 1;
-            end
-            
-            case(jsr_state)
-               JSR_PUSH_ADDRH:
-               begin
-                  stack_wr_value <= ret_addr[15:8];
-                  stack_do_push_back  <= 1;
-                  jsr_state_next <= JSR_PUSH_ADDRL;
-               end
-               JSR_PUSH_ADDRL:
-               begin
-                  stack_wr_value <= ret_addr[7:0];
-                  stack_do_push  <= 1;
-               end
-            endcase
+         
+         if ((cpu_op == CPU_OP_JSR || cpu_op == CPU_OP_JMP) &
+             (next_addr_op == NEXT_ABS || next_addr_op == NEXT_IND_ABS_DONE)) begin
+            jmp_addr <= {bus_rd_data, tmp_addr};
+            misc_ops_complete <= cpu_op == CPU_OP_JMP;
          end
          
          case (stack_state)
@@ -740,13 +733,15 @@ module m6502_cpu (
          endcase
 
          if (stack_op_done) begin
-            jsr_state   <= jsr_state_next;
-            int_state   <= int_state_next;
-            stack_state <= stack_state_next;
+            jsr_state        <= jsr_state_next;
+            int_state        <= int_state_next;
+            stack_state      <= stack_state_next;
+            push_addr_state  <= push_addr_state_next;
             
             int_state_next   <= INT_IDLE;
             jsr_state_next   <= JSR_IDLE;
             stack_state_next <= STACK_IDLE;
+            push_addr_state_next  <= PUSH_IDLE;
          end
       end
    end
