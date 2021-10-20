@@ -589,35 +589,39 @@ module m6502_cpu (
          jsr_state <= JSR_IDLE;
          stack_state <= STACK_IDLE;
          
-         if (address_mode_prepare == MODE_SINGLE) begin
-            case(cpu_op)
-               CPU_OP_RTS,
-               CPU_OP_RTI,
-               CPU_OP_PLA,
-               CPU_OP_PLP: stack_do_pop <= 1;
-               CPU_OP_PHA,
-               CPU_OP_PHP: stack_do_push <= 1;
-            endcase
-            case(cpu_op)
-               CPU_OP_RTS: stack_state_next <= STACK_RTS1;
-               CPU_OP_RTI: stack_state_next <= STACK_RTI;
-               CPU_OP_PHA: stack_wr_value <= reg_a;
-               CPU_OP_PLA: stack_state_next <= STACK_PLA;
-               CPU_OP_PHP: stack_wr_value <= reg_sr | 8'b00010000; // BREAK flag is always 1 on PHP and BRK
-               CPU_OP_PLP: stack_state_next <= STACK_PLP;
-               CPU_OP_TXS:
-               begin
-                  reg_sp_next   <= reg_x;
-                  reg_sp_update <= 1;
-               end
-            endcase
-            misc_ops_complete <= cpu_op == CPU_OP_TXS | cpu_inst_single;
-         end else if (address_mode_prepare == MODE_RESET) begin
-            reset_state <= RESET_GET_VECTOR;
-         end else if (address_mode_prepare == MODE_BRK) begin
-            ret_addr  <= pc + ((cpu_irq | cpu_nmi) ? 0 : 2);
-            int_state <= INT_GET_VECTOR;
-         end
+         case (address_mode_prepare)
+            MODE_SINGLE:
+            begin
+               case(cpu_op)
+                  CPU_OP_RTS,
+                  CPU_OP_RTI,
+                  CPU_OP_PLA,
+                  CPU_OP_PLP: stack_do_pop <= 1;
+                  CPU_OP_PHA,
+                  CPU_OP_PHP: stack_do_push <= 1;
+               endcase
+               case(cpu_op)
+                  CPU_OP_RTS: stack_state_next <= STACK_RTS1;
+                  CPU_OP_RTI: stack_state_next <= STACK_RTI;
+                  CPU_OP_PHA: stack_wr_value <= reg_a;
+                  CPU_OP_PLA: stack_state_next <= STACK_PLA;
+                  CPU_OP_PHP: stack_wr_value <= reg_sr | 8'b00010000; // BREAK flag is always 1 on PHP and BRK
+                  CPU_OP_PLP: stack_state_next <= STACK_PLP;
+                  CPU_OP_TXS:
+                  begin
+                     reg_sp_next   <= reg_x;
+                     reg_sp_update <= 1;
+                  end
+               endcase
+               misc_ops_complete <= cpu_op == CPU_OP_TXS | cpu_inst_single;
+            end
+            MODE_RESET: reset_state <= RESET_GET_VECTOR;
+            MODE_BRK:
+            begin
+               ret_addr  <= pc + ((cpu_irq | cpu_nmi) ? 0 : 2);
+               int_state <= INT_GET_VECTOR;
+            end
+         endcase
          
          case (int_state)
             INT_GET_VECTOR:
