@@ -1,11 +1,29 @@
 /*
- * MOS 6502 (based con cornet_cpu draft) 
+ * MOS 6502 (based con cornet_cpu draft)
+ * Is supports 100Mhz+, although that freq is not realistic
+ * for the purposes of Compy 
  * 
  * Instruction reference and decoding tips
  * https://www.masswerk.at/6502/6502_instruction_set.html
  * 
  * Also got some ideas from 
  * https://github.com/dmsc/my6502/blob/master/rtl/cpu.v
+ * 
+ * This design is not based on the original 6502, it's a 
+ * high level implementation to make it easier to modify.
+ * The plan is to add a few additional instructions just for
+ * convenience when coding.
+ * 
+ * New instructions are (not implemented yet):
+ * INW: Increment a word in memory (z, abs)
+ * DEW: Decrement a word in memory (z, abs)
+ * ADW: Add a word (imm, z, abs)
+ * SBW: Subsctract a word (imm, z, abs)
+ * MWA: Load/Store a word (imm, z, abs)
+ * JSR: Adding ind, ind_x, ind_z addressing
+ * JMP: Adding ind_x, ind_z addressing
+ * PHR: Push all registers
+ * PLR: Pull all registers
  * 
  */
 
