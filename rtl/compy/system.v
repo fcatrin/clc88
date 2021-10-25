@@ -38,10 +38,9 @@ module system (
    localparam BUS_IDLE = 4'd0;
    localparam BUS_READ = 4'd1;
    localparam BUS_DONE = 4'd2;
-
+   
    always @ (posedge sys_clk) begin
       reg[3:0] bus_state;
-      reg cpu_rd_req_prev;
 
       cpu_ready <= 1;
       if (~reset_n) begin
@@ -52,9 +51,8 @@ module system (
          chroni_cs <= 0;
          sys_cs <= 0;
       end else begin
-         cpu_rd_req_prev <= cpu_rd_req;
-         if ((!cpu_rd_req_prev & cpu_rd_req) | cpu_wr_en) begin
-            if ((!cpu_rd_req_prev & cpu_rd_req)) begin
+         if (cpu_rd_req_rising | cpu_wr_en) begin
+            if (cpu_rd_req_rising) begin
                bus_state  <= BUS_READ;
                cpu_ready  <= 0;
             end
@@ -131,15 +129,11 @@ module system (
       (vga_mode == VGA_MODE_800x600 ? CLK_OUT2 : CLK_OUT3);
    
    always @ (posedge sys_clk) begin
-      reg key_mode_prev;
-      reg key_mode_current;
 
       if (!vga_mode)
          vga_mode <= VGA_MODE_1920x1080;
       else begin
-         key_mode_current <= key_mode;
-         key_mode_prev    <= key_mode_current;
-         if (key_mode_prev & ~key_mode_current) begin
+         if (key_mode_falling) begin
             case (vga_mode)
                VGA_MODE_640x480:
                   vga_mode <= VGA_MODE_800x600;
@@ -154,7 +148,6 @@ module system (
    
    always @ (posedge sys_clk) begin : sys_ctl
       reg [2:0] cpu_speed;
-      reg cpu_clk_en_signal_prev;
       
       if (cpu_wr_en & sys_s) begin
          case(cpu_addr[7:0])
@@ -178,8 +171,7 @@ module system (
          default : cpu_clk_3  <= 1;
       endcase
       
-      cpu_clk_en_signal_prev <= cpu_clk_en_signal;
-      cpu_clk_en <= cpu_clk_100 | (!cpu_clk_en_signal_prev & cpu_clk_en_signal);
+      cpu_clk_en <= cpu_clk_100 | cpu_clk_en_signal_rising;
 
    end
 
@@ -270,5 +262,30 @@ module system (
          .wr_en(io_wr_en && io_cs),
          .buttons(buttons)
    );
+   
+   wire cpu_rd_req_rising;
+   edge_detector edge_cpu_rd_req (
+         .clk(sys_clk),
+         .reset_n(reset_n),
+         .in(cpu_rd_req),
+         .rising(cpu_rd_req_rising)
+   );
+
+   wire key_mode_falling;
+   edge_detector #(1) edge_key_mode (
+         .clk(sys_clk),
+         .reset_n(reset_n),
+         .in(key_mode),
+         .falling(key_mode_falling)
+   );
+   
+   wire cpu_clk_en_signal_rising;
+   edge_detector edge_cpu_clk_en_signal (
+         .clk(sys_clk),
+         .reset_n(reset_n),
+         .in(cpu_clk_en_signal),
+         .rising(cpu_clk_en_signal_rising)
+   );
+
 endmodule
 
