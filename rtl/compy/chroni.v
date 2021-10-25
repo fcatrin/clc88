@@ -31,11 +31,14 @@ module chroni (
       reg[1:0]  palette_write_state = PAL_WRITE_IDLE;
       reg[7:0]  palette_write_index;
       reg[15:0] palette_write_value;
+      reg cpu_wr_en_prev;
       
       palette_wr_en <= 0;
       cpu_port_cs <= 0;
       cpu_port_wr_en <= 0;
-      if (register_cs && cpu_wr_en) begin
+      cpu_wr_en_prev <= cpu_wr_en;
+      
+      if (register_cs & (!cpu_wr_en_prev & cpu_wr_en)) begin
          case (cpu_addr[6:0])
             7'h00:
                display_list_addr[8:1]  <= cpu_wr_data;
