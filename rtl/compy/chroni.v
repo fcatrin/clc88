@@ -31,14 +31,12 @@ module chroni (
       reg[1:0]  palette_write_state = PAL_WRITE_IDLE;
       reg[7:0]  palette_write_index;
       reg[15:0] palette_write_value;
-      reg cpu_wr_en_prev;
       
       palette_wr_en <= 0;
       cpu_port_cs <= 0;
       cpu_port_wr_en <= 0;
-      cpu_wr_en_prev <= cpu_wr_en;
       
-      if (register_cs & (!cpu_wr_en_prev & cpu_wr_en)) begin
+      if (register_cs & cpu_wr_en_rising) begin
          case (cpu_addr[6:0])
             7'h00:
                display_list_addr[8:1]  <= cpu_wr_data;
@@ -172,7 +170,6 @@ module chroni (
       reg[16:0] load_memory_addr;
       reg[16:0] load_attr_addr;
       reg[7:0]  text_attr;
-      reg       vram_render_trigger_prev;
       reg[2:0]  font_scan;
       reg[6:0]  text_buffer_index;
       reg[6:0]  attr_buffer_index;
@@ -183,13 +180,11 @@ module chroni (
       wr_en <= 0;
       if (!reset_n || vga_mode_changed || vga_frame_start) begin
          font_decode_state <= FD_IDLE;
-         vram_render_trigger_prev <= 0;
          font_scan <= 0;
          pixel_buffer_index_in <= 0;
          wr_bitmap_bits <= 0;
       end else begin
-         vram_render_trigger_prev <= vram_render_trigger;
-         if (~vram_render_trigger_prev && vram_render_trigger) begin
+         if (vram_render_trigger_rising) begin
             text_buffer_index <= 0;
             attr_buffer_index <= 0;
             pixel_buffer_index_in <= render_buffer ? 11'd640 : 11'd0;
@@ -326,23 +321,20 @@ module chroni (
    always @ (posedge sys_clk) begin : dlproc
       reg report_lms_changed;
       reg[16:0] display_list_ptr;
-      reg      render_flag_prev;
       reg[1:0] mem_wait;
       reg[2:0] addr_part;
       reg[3:0] scanlines;
       
-      render_flag_prev <= render_flag;
       vram_render_trigger <= 0;
       lms_changed <= 0;
       if (!reset_n || vga_mode_changed || vga_frame_start) begin
          display_list_ptr <= display_list_addr;
-         render_flag_prev <= 0;
          vram_read_dl <= 0;
          dlproc_state <= DL_IDLE;
          dl_inst <= 0;
          scanlines <= 0;
          double_pixel <= 0;
-      end else if (~render_flag_prev & render_flag) begin
+      end else if (render_flag_rising) begin
          report_lms_changed <= 0;
          blank_scanline <= 1;
          if (scanlines == 0) begin
@@ -437,14 +429,12 @@ module chroni (
    
    always @ (posedge sys_clk) begin : render_block
       reg[3:0] render_state;
-      reg vga_scanline_start_prev;
       if (!reset_n || vga_mode_changed || vga_frame_start) begin
          render_buffer <= 0;
          render_flag   <= 0;
          render_state  <= 15;
       end else begin
-         vga_scanline_start_prev <= vga_scanline_start;
-         if (vga_render_start | (!vga_scanline_start_prev & vga_scanline_start)) begin
+         if (vga_render_start | vga_scanline_start_rising) begin
             if (vga_render_start) begin
                render_state  <= 0;
                render_flag   <= 1;
@@ -610,4 +600,36 @@ module chroni (
          .double_pixel(double_pixel)
       );
 
+   wire cpu_wr_en_rising;
+   edge_detector edge_cpu_wr_en (
+         .clk(sys_clk),
+         .reset_n(reset_n),
+         .in(cpu_wr_en),
+         .rising(cpu_wr_en_rising)
+      );
+
+   wire vram_render_trigger_rising;
+   edge_detector edge_vram_render_trigge (
+         .clk(sys_clk),
+         .reset_n(reset_n),
+         .in(vram_render_trigger),
+         .rising(vram_render_trigger_rising)
+      );
+   
+   wire render_flag_rising;
+   edge_detector edge_render_flag (
+         .clk(sys_clk),
+         .reset_n(reset_n),
+         .in(render_flag),
+         .rising(render_flag_rising)
+      );
+   
+   wire vga_scanline_start_rising;
+   edge_detector edge_vga_scanline_start (
+         .clk(sys_clk),
+         .reset_n(reset_n),
+         .in(vga_scanline_start),
+         .rising(vga_scanline_start_rising)
+      );
+   
 endmodule

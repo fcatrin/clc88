@@ -95,24 +95,22 @@ module m6502_cpu (
    reg cpu_irq;
    reg cpu_nmi;
    
+   wire irq_falling;
+   wire nmi_falling;
+
    always @ (posedge clk) begin : cpu_interrupts
-      reg irq_n_prev;
-      reg nmi_n_prev;
-      
       if (~reset_n) begin
-         irq_n_prev = 1'b1;
-         nmi_n_prev = 1'b1;
+         pending_irq <= 0;
+         pending_nmi <= 0;
       end else begin
-         irq_n_prev <= irq_n;
-         nmi_n_prev <= nmi_n;
          if (pending_irq_ack) begin
             pending_irq <= 0;
-         end else if (irq_n_prev & ~irq_n) begin
+         end else if (irq_falling) begin
             pending_irq <= 1;
          end
          if (pending_nmi_ack) begin
             pending_nmi <= 0;
-         end else if (nmi_n_prev & ~nmi_n) begin
+         end else if (nmi_falling) begin
             pending_nmi <= 1;
          end
       end
@@ -1233,4 +1231,19 @@ module m6502_cpu (
          .flag_n(flag_n),
          .flag_d(flag_d)
       );
+   
+   edge_detector #(1) edge_detector_irq (
+         .clk(clk),
+         .reset_n(reset_n),
+         .in(irq_n),
+         .falling(irq_falling)
+      );
+
+   edge_detector #(1) edge_detector_nmi (
+         .clk(clk),
+         .reset_n(reset_n),
+         .in(nmi_n),
+         .falling(nmi_falling)
+      );
+   
 endmodule
