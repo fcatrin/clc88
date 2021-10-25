@@ -162,22 +162,24 @@ module system (
          endcase
       end
       
-      cpu_clk_50 <= 0;
-      cpu_clk_25 <= 0;
-      cpu_clk_12 <= 0;
-      cpu_clk_6  <= 0;
-      cpu_clk_3  <= 0;
+      cpu_clk_100 <= 0;
+      cpu_clk_50  <= 0;
+      cpu_clk_25  <= 0;
+      cpu_clk_12  <= 0;
+      cpu_clk_6   <= 0;
+      cpu_clk_3   <= 0;
       
       case(cpu_speed)
-         3'd0 : cpu_clk_50 <= 1;
-         3'd1 : cpu_clk_25 <= 1;
-         3'd2 : cpu_clk_12 <= 1;
-         3'd3 : cpu_clk_6  <= 1;
+         3'd0 : cpu_clk_100 <= 1;
+         3'd1 : cpu_clk_50 <= 1;
+         3'd2 : cpu_clk_25 <= 1;
+         3'd3 : cpu_clk_12 <= 1;
+         3'd4 : cpu_clk_6  <= 1;
          default : cpu_clk_3  <= 1;
       endcase
       
       cpu_clk_en_signal_prev <= cpu_clk_en_signal;
-      cpu_clk_en <= !cpu_clk_en_signal_prev & cpu_clk_en_signal;
+      cpu_clk_en <= cpu_clk_100 | (!cpu_clk_en_signal_prev & cpu_clk_en_signal);
 
    end
 
@@ -202,17 +204,20 @@ module system (
    wire      cpu_wr_en;
    
    reg cpu_clk_en;
-   wire cpu_clk_en_signal = 
+   wire cpu_clk_en_signal =
+      cpu_clk_100 ? cpu_clk_en_100 :
       cpu_clk_50 ? cpu_clk_en_50 :
       cpu_clk_25 ? cpu_clk_en_25 :
       cpu_clk_12 ? cpu_clk_en_12 :
       cpu_clk_6  ? cpu_clk_en_6  : cpu_clk_en_3;
-      
+   
+   reg  cpu_clk_en_100;
    reg  cpu_clk_en_50;
    reg  cpu_clk_en_25;
    reg  cpu_clk_en_12;
    reg  cpu_clk_en_6;
    reg  cpu_clk_en_3;
+   reg  cpu_clk_100;
    reg  cpu_clk_50;
    reg  cpu_clk_25;
    reg  cpu_clk_12;

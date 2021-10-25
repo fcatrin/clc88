@@ -861,9 +861,8 @@ module m6502_cpu (
    localparam CPU_OP_PHA    = 46;
    localparam CPU_OP_PLA    = 47;
    localparam CPU_OP_JMP    = 48;
-   
-   // todo check if rd_req can be moved to negedge 
-   wire pending_rd_req = bus_rd_req | fetch_rd_req | misc_rd_req | op_rd_req | stack_rd_req;
+
+   wire pending_rd_req = bus_rd_req | fetch_rd_req | misc_rd_req | op_rd_req | stack_rd_req | load_store != DO_NOTHING;
    wire cpu_exec = ready && !pending_rd_req && cpu_fetch_state == CPU_EXECUTE_WAIT;
    
    reg[15:0] jmp_addr;
