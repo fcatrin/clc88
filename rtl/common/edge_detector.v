@@ -1,8 +1,8 @@
 module edge_detector
-      #(parameter on_reset = 0)
+      #(parameter on_reset = 1'b0)
        (input clk, input reset_n, input in, output rising, output falling);
 
-   reg in_prev;
+   reg in_prev = on_reset;
 
    assign rising  = !in_prev &  in;
    assign falling =  in_prev & !in;
