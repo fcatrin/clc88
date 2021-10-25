@@ -161,7 +161,7 @@ module m6502_cpu (
                end else begin
                   fetch_rd_addr <= pc;
                   fetch_rd_req  <= 1;
-                  pc_op <= pc + 1;
+                  pc_op <= pc + 1'b1;
                   cpu_fetch_state <= CPU_FETCH;
                   hold_fetch_addr <= 1;
                end
@@ -441,7 +441,7 @@ module m6502_cpu (
                      CPU_OP_INY,
                      CPU_OP_DEY,
                      CPU_OP_TAY:    reg_y <= alu_out;
-                     CPU_OP_BRANCH: pc <= pc + 2 + (do_branch ? $signed(reg_m) : 0);
+                     CPU_OP_BRANCH: pc <= pc + 2'd2 + (do_branch ? $signed(reg_m) : 1'b0);
                      CPU_OP_BRK,
                      CPU_OP_JMP,
                      CPU_OP_JSR,
@@ -574,8 +574,6 @@ module m6502_cpu (
    always @ (posedge clk) begin : exec_misc_ops
       reg[15:0] ret_addr;
 
-      reg[2:0] jsr_state;
-      reg[2:0] jsr_state_next;
       reg[2:0] stack_state_next;
       reg[2:0] vector_state;
       reg[1:0] push_addr_state;
@@ -597,16 +595,13 @@ module m6502_cpu (
          misc_rd_req <= 0;
    
          if (~reset_n) begin
-            jsr_state <= JSR_IDLE;
             stack_state <= STACK_IDLE;
-            jsr_state_next <= JSR_IDLE;
             stack_state_next <= STACK_IDLE;
             vector_state <= VECTOR_IDLE;
             push_addr_state <= PUSH_IDLE;
             push_addr_state_next <= PUSH_IDLE;
    
          end else if (cpu_exec) begin
-            jsr_state <= JSR_IDLE;
             stack_state <= STACK_IDLE;
             push_addr_state <= PUSH_IDLE;
             
@@ -641,9 +636,9 @@ module m6502_cpu (
             endcase
    
             if (cpu_op == CPU_OP_JSR) begin
-               ret_addr <= pc + 3;
+               ret_addr <= pc + 2'd3;
             end else if (address_mode_prepare == MODE_BRK) begin
-               ret_addr  <= pc + ((cpu_irq | cpu_nmi) ? 0 : 2);
+               ret_addr  <= pc + ((cpu_irq | cpu_nmi) ? 1'b0 : 2'd2);
             end
    
             // push ret_addr then push status if needed (Interrupts)
@@ -664,7 +659,7 @@ module m6502_cpu (
                begin
                   flag_d_set  <= ALU_FLAG_RESET;
                   flag_i <= 1;
-                  stack_wr_value <= reg_sr | ((cpu_irq | cpu_nmi) ? 0 : 8'b00010000);
+                  stack_wr_value <= reg_sr | ((cpu_irq | cpu_nmi) ? 1'b0 : 8'b00010000);
                   stack_do_push  <= 1;
                end
             endcase
@@ -734,11 +729,9 @@ module m6502_cpu (
             endcase
    
             if (stack_op_done) begin
-               jsr_state        <= jsr_state_next;
                stack_state      <= stack_state_next;
                push_addr_state  <= push_addr_state_next;
                
-               jsr_state_next   <= JSR_IDLE;
                stack_state_next <= STACK_IDLE;
                push_addr_state_next  <= PUSH_IDLE;
             end
@@ -874,8 +867,6 @@ module m6502_cpu (
 
    always @ (posedge clk) begin : cpu_load_store_decode
       reg alu_wait;
-      reg[1:0] push_state;
-      reg[1:0] pop_state;
       
       if (clk_en) begin
          alu_proceed <= 0;
@@ -885,8 +876,6 @@ module m6502_cpu (
          
          load_store <= DO_NOTHING;
          if (!reset_n) begin
-            pop_state <= 0;
-            push_state <= 0;
             next_addr_op <= NEXT_IDLE;
             load_complete <= 0;
          end else if (cpu_exec) begin
@@ -904,14 +893,14 @@ module m6502_cpu (
                MODE_ABS:  /* ABS */
                begin
                   tmp_addr     <= bus_rd_data;
-                  data_addr    <= pc_op + 1;
+                  data_addr    <= pc_op + 1'b1;
                   load_store   <= DO_LOAD;
                   next_addr_op <= NEXT_ABS;
                end
                MODE_IND_ABS: // JMP (IND)
                begin
                   tmp_addr     <= bus_rd_data;
-                  data_addr    <= pc_op + 1;
+                  data_addr    <= pc_op + 1'b1;
                   load_store   <= DO_LOAD;
                   next_addr_op <= NEXT_IND_ABS1;
                end
@@ -941,14 +930,14 @@ module m6502_cpu (
                NEXT_IND_ABS2:
                begin
                   tmp_addr <= bus_rd_data;
-                  data_addr <= data_addr + 1;
+                  data_addr <= data_addr + 1'b1;
                   load_store <= DO_LOAD;
                   next_addr_op <= NEXT_IND_ABS_DONE;
                end
                NEXT_IND_Z1:
                begin
                   tmp_addr <= bus_rd_data;
-                  data_addr <= data_addr + 1;
+                  data_addr <= data_addr + 1'b1;
                   load_store <= DO_LOAD;
                   next_addr_op <= NEXT_IND_Z2;
                end
@@ -1232,14 +1221,14 @@ module m6502_cpu (
          .flag_d(flag_d)
       );
    
-   edge_detector #(1) edge_detector_irq (
+   edge_detector #(1'b1) edge_detector_irq (
          .clk(clk),
          .reset_n(reset_n),
          .in(irq_n),
          .falling(irq_falling)
       );
 
-   edge_detector #(1) edge_detector_nmi (
+   edge_detector #(1'b1) edge_detector_nmi (
          .clk(clk),
          .reset_n(reset_n),
          .in(nmi_n),

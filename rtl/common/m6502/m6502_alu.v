@@ -38,8 +38,8 @@ module m6502_alu (
             OP_AND:    result <= in_a & in_b;
             OP_OR:     result <= in_a | in_b;
             OP_EOR:    result <= in_a ^ in_b;
-            OP_INC:    result <= in_a + 1;
-            OP_DEC:    result <= in_a - 1;
+            OP_INC:    result <= in_a + 1'b1;
+            OP_DEC:    result <= in_a - 1'b1;
             OP_CMP:    result <= in_a - in_b;
             OP_ADC:
             begin
