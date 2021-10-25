@@ -19,7 +19,8 @@ irq:
 	
 boot:
    jmp demo
+   icl 'demos/cpu_speed.asm'
    // icl 'demos/text_mode_attrib.asm'
    // icl 'demos/video_modes.asm'
-   icl 'demos/m6502_test.asm'
+   // icl 'demos/m6502_test.asm'
    
