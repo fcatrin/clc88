@@ -43,7 +43,15 @@ VADDRW     = $9026
 VADDRW_AUX = $9028
 VAUTOINC   = $902a
 
-SYS_CPU_CLK = $9300
+SYS_CPU_CLK   = $9300
+SYS_TIMER_NDX = $9301
+SYS_TIMER_VL  = $9302 ; write = set ticks / read = get current ticks
+SYS_TIMER_VH  = $9303
+SYS_TIMER_VM  = $9304
+SYS_TIMER_WR_EN  = $9305
+SYS_TIMER_EN  = $9306
+SYS_TIMER_ACK = $9307 ; write 1 to clear IRQ state on selected timer
+SYS_TIMER_IRQ = $9307 ; read all 8 timers irq flags
 
 VSTATUS_VSYNC      = $80
 VSTATUS_HSYNC      = $40
