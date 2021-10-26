@@ -114,12 +114,12 @@ test_string:
    .byte $F0, $03
    .byte 'another color '
    .byte $F0, $01
-   .byte 'and back to normal', 0
+   .byte 'and back to normal. Font by Ascrnet.', 0
    
    icl '../graphics.asm'
    icl '../text.asm'
    icl '../stdlib.asm'
    
-   org FONT_ROM_ADDR
-   ins '../../../res/fonts/charset_atari.bin'
+   // org FONT_ROM_ADDR
+   // ins '../../../res/fonts/charset_atari.bin'
    

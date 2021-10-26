@@ -28,7 +28,7 @@ static void load_bin(char *filename, int addr, int dups) {
 		fprintf(stderr, "Error opening %s: %s\n", filename, strerror(errno));
 		return;
 	}
-
+	printf("Load bin %s at %04X\n", filename, addr);
 	load(f, addr, MEM_SIZE, dups);
 	fclose(f);
 }
@@ -107,12 +107,35 @@ static void create_mif(char *filename, int base_addr) {
 
 }
 
+void atascii_copy(int src_addr, int dst_addr) {
+	for(int i=0; i<0x100; i++) {
+		rom[dst_addr + i] = rom[src_addr + i];
+	}
+}
+
+void atascii2ascii(int src_addr, int dst_addr) {
+	// ascii font is
+	// SPC, symbols at 000
+	// SPC, ! " etc at 100
+	// @ A B C  etc at 200
+	// (c) a b  etc at 300
+	atascii_copy(src_addr + 0x000, dst_addr + 0x100);
+	atascii_copy(src_addr + 0x100, dst_addr + 0x200);
+	atascii_copy(src_addr + 0x200, dst_addr + 0x000);
+	atascii_copy(src_addr + 0x300, dst_addr + 0x300);
+	for(int i=0; i<8; i++) rom[dst_addr + i] = 0;
+}
+
 int main(int argc, char *argv[]) {
 	load_bin("../res/fonts/charset_atari.bin",            0xE000, 0);
+	load_bin("../res/fonts/charset_ascrnet.bin",          0xD000, 0);
 	load_bin("../res/fonts/charset_topaz_a500.bin",       0xE400, 1);
 	load_bin("../res/fonts/charset_topaz_a1200.bin",      0xE800, 1);
 	load_bin("../res/fonts/charset_topaz_plus_a500.bin",  0xEC00, 1);
 	// load_bin("../res/fonts/charset_topaz_plus_a1200.bin", 0xEC00, 1);
+
+	atascii2ascii(0xD000, 0xE000);
+
 	load_xex("../asm/fpga/rom.xex");
 
 	create_mif("../rtl/compy/rom.mif", 0xE000);
