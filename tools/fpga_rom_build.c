@@ -128,12 +128,12 @@ void atascii2ascii(int src_addr, int dst_addr) {
 
 int main(int argc, char *argv[]) {
 	load_bin("../res/fonts/charset_atari.bin",            0xE000, 0);
-	load_bin("../res/fonts/charset_ascrnet.bin",          0xD000, 0);
 	load_bin("../res/fonts/charset_topaz_a500.bin",       0xE400, 1);
 	load_bin("../res/fonts/charset_topaz_a1200.bin",      0xE800, 1);
 	load_bin("../res/fonts/charset_topaz_plus_a500.bin",  0xEC00, 1);
 	// load_bin("../res/fonts/charset_topaz_plus_a1200.bin", 0xEC00, 1);
 
+	load_bin("../res/fonts/charset_ascrnet.bin",          0xD000, 0);
 	atascii2ascii(0xD000, 0xE000);
 
 	load_xex("../asm/fpga/rom.xex");
