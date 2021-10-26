@@ -18,7 +18,12 @@ module system (
    wire sys_clk;
    
    // global bus
-   wire[7:0]  data = chroni_cs ? chroni_rd_data : (ram_cs ? ram_rd_data : (io_cs ? io_rd_data : rom_rd_data));
+   wire[7:0]  data = 
+      chroni_cs ? chroni_rd_data : 
+      ram_cs    ? ram_rd_data : 
+      io_cs     ? io_rd_data :
+      sys_cs    ? sys_rd_data : rom_rd_data;
+   
    wire rom_s    = cpu_addr[15:14] == 2'b11;  // 0xc000 and above
    wire ram_s    = cpu_addr[15:12] == 4'b1000 || !cpu_addr[15]; // 0x0000 -> 0x8fff
    wire io_s     = cpu_addr[15:8]  == 8'b10010010;  // 0x92XX
@@ -146,13 +151,48 @@ module system (
       end
    end
    
+   reg[7:0] sys_rd_data;
+   reg[2:0] sys_timer_index;
+   
    always @ (posedge sys_clk) begin : sys_ctl
+      integer i;
       reg [2:0] cpu_speed;
+      reg [2:0] timer_index;
       
-      if (cpu_wr_en & sys_s) begin
-         case(cpu_addr[7:0])
-            7'h00 : cpu_speed <= cpu_wr_data[2:0];
-         endcase
+      if (~reset_n) begin
+         for (i=0; i<8; i=i+1) begin
+            sys_timer_irq_ack[i] <= 0;
+            sys_timer_enable[i]  <= 0;
+            sys_timer_wr_en[i]   <= 0;
+            sys_timer_ticks[i]   <= 0;
+         end
+      end else begin
+         sys_timer_wr_en[sys_timer_index] <= 0;
+         sys_timer_irq_ack[sys_timer_index] <= 0;
+         if (sys_s) begin
+            if (cpu_wr_en) begin
+               case(cpu_addr[7:0])
+                  7'h00 : cpu_speed <= cpu_wr_data[2:0];
+                  7'h01 : sys_timer_index <= cpu_wr_data[2:0];
+                  7'h02 : sys_timer_ticks[sys_timer_index][7:0]   <= cpu_wr_data;
+                  7'h03 : sys_timer_ticks[sys_timer_index][15:8]  <= cpu_wr_data;
+                  7'h04 : sys_timer_ticks[sys_timer_index][19:16] <= cpu_wr_data[3:0];
+                  7'h05 : sys_timer_wr_en[sys_timer_index]   <= 1;
+                  7'h06 : sys_timer_enable[sys_timer_index]  <= cpu_wr_data[0];
+                  7'h07 : sys_timer_irq_ack[sys_timer_index] <= 1;
+               endcase
+            end 
+            
+            case(cpu_addr[7:0])
+               7'h00 : sys_rd_data <= cpu_speed;
+               7'h01 : sys_rd_data <= sys_timer_index;
+               7'h02 : sys_rd_data <= sys_timer_value[sys_timer_index][7:0];
+               7'h03 : sys_rd_data <= sys_timer_value[sys_timer_index][15:8];
+               7'h04 : sys_rd_data <= {4'b0, sys_timer_value[sys_timer_index][19:16]};
+               7'h06 : sys_rd_data <= {6'b0, sys_timer_enable[sys_timer_index]};
+               7'h07 : sys_rd_data <= sys_timer_irq_all;
+            endcase
+         end
       end
       
       cpu_clk_100 <= 0;
@@ -240,7 +280,7 @@ module system (
          .bus_rd_req(cpu_rd_req),
          .ready(cpu_ready),
          .nmi_n(1'b1),
-         .irq_n(1'b1)
+         .irq_n(!sys_timer_irq_all)
       );
       
 
@@ -258,6 +298,40 @@ module system (
          .wr_en(io_wr_en && io_cs),
          .buttons(buttons)
    );
+   
+   wire[7:0] sys_timer_irq_all = { 
+      sys_timer_irq[7], 
+      sys_timer_irq[6], 
+      sys_timer_irq[5], 
+      sys_timer_irq[4], 
+      sys_timer_irq[3], 
+      sys_timer_irq[2], 
+      sys_timer_irq[1], 
+      sys_timer_irq[0]};
+   
+   reg  sys_timer_enable[0:7];
+   reg  sys_timer_wr_en[0:7];
+   reg  sys_timer_irq_ack[0:7];
+   wire sys_timer_irq[0:7];
+   reg [19:0] sys_timer_ticks[0:7];
+   wire[19:0] sys_timer_value[0:7];
+   
+   genvar i;
+   generate
+      for (i=0; i<8; i=i+1) begin : generate_timers
+         timer sys_timer (
+               .clk(sys_clk),
+               .reset_n(reset_n),
+               .enable(sys_timer_enable[i]),
+               .wr_en(sys_timer_wr_en[i]),
+               .irq_ack(sys_timer_irq_ack[i]),
+               .irq(sys_timer_irq[i]),
+               .max_ticks(sys_timer_ticks[i]),
+               .value(sys_timer_value[i])
+         );
+      end
+  endgenerate
+   
    
    wire cpu_rd_req_rising;
    edge_detector edge_cpu_rd_req (
