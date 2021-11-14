@@ -121,5 +121,5 @@ test_string:
    icl '../stdlib.asm'
    
    org FONT_ROM_ADDR
-   ins '../../../res/fonts/charset_atari.bin'
+   ins '../../../res/fonts/charset_topaz_a500.bin'
    
