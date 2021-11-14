@@ -120,6 +120,6 @@ test_string:
    icl '../text.asm'
    icl '../stdlib.asm'
    
-   // org FONT_ROM_ADDR
-   // ins '../../../res/fonts/charset_atari.bin'
+   org FONT_ROM_ADDR
+   ins '../../../res/fonts/charset_atari.bin'
    
