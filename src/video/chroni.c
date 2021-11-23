@@ -13,10 +13,6 @@
 #endif
 #include "trace.h"
 
-#define CPU_RUN(X) for(int nx=0; nx<X; nx++) CPU_GO(clock_multiplier)
-#define CPU_SCANLINE() CPU_RUN(144-8);CPU_RESUME();CPU_RUN(8)
-#define CPU_XPOS() if ((xpos++ & 3) == 0) CPU_GO(clock_multiplier)
-
 #define VRAM_WORD(addr) (WORD(VRAM_DATA(addr), VRAM_DATA(addr+1)))
 #define VRAM_PTR(addr) (VRAM_WORD(addr) << 1)
 #define VRAM_PTR_LONG(addr) (VRAM_WORD(addr) + ((vram[addr+2] & 1) << 16))
@@ -44,6 +40,13 @@ static UINT32 dl;
 static UINT16 lms = 0;
 static UINT16 attribs = 0;
 static UINT16 ypos, xpos, memscan;
+
+int dl_pos;
+int dl_scanlines;
+int dl_pitch;
+UINT8 dl_instruction;
+UINT8 dl_mode;
+UINT8 dl_line;
 
 static UINT16 border_color;
 static UINT32 subpals;
@@ -88,6 +91,8 @@ static UINT8 clock_multiplier;
 static UINT8 clock_multipliers[] = {1, 2, 4, 8};
 
 void (*scan_callback)(unsigned scanline) = NULL;
+
+static void do_scanline();
 
 void chroni_reset() {
 	status = 0;
@@ -333,15 +338,6 @@ static inline void set_pixel_color(UINT8 color) {
 static UINT8 sprite_scanlines[SPRITES_MAX];
 
 static void do_scan_start() {
-	status |= STATUS_HBLANK;
-	if ((scanline_interrupt == ypos + 1) && (status & STATUS_ENABLE_INTS)) {
-		LOGV(LOGTAG, "do_scan_start fire DLI");
-		cpuexec_nmi(1);
-	}
-
-	CPU_RUN(22);
-	status &= (255 - STATUS_HBLANK);
-	cpuexec_nmi(0);
 
 	/*
 	 * check all sprites and write the scan to be drawn
@@ -363,8 +359,6 @@ static void do_scan_start() {
 }
 
 static void do_scan_end() {
-	CPU_RESUME();
-	CPU_RUN(8);
 	if (scan_callback) scan_callback(ypos);
 }
 
@@ -414,7 +408,7 @@ static void inline put_pixel(int offset, UINT8 color) {
 	screen[offset + xpos*3 + 0] = pixel_color_r;
 	screen[offset + xpos*3 + 1] = pixel_color_g;
 	screen[offset + xpos*3 + 2] = pixel_color_b;
-	CPU_XPOS();
+	xpos++;
 }
 
 static void inline put_pixel_rgb(int offset, UINT16 rgb_color) {
@@ -427,46 +421,13 @@ static void inline put_pixel_rgb(int offset, UINT16 rgb_color) {
 	screen[offset + xpos*3 + 0] = pixel_color_r;
 	screen[offset + xpos*3 + 1] = pixel_color_g;
 	screen[offset + xpos*3 + 2] = pixel_color_b;
-	CPU_XPOS();
+	xpos++;
 }
 
 static void inline do_border(int offset, int size) {
+	UINT16 color = (status & STATUS_ENABLE_CHRONI) ? border_color : 0;
 	for(int i=0; i<size; i++) {
-		put_pixel_rgb(offset, border_color);
-	}
-}
-
-static void inline do_scan_off(int offset, int size) {
-	for(int i=0; i<size; i++) {
-		screen[offset + xpos*3 + 0] = 0;
-		screen[offset + xpos*3 + 1] = 0;
-		screen[offset + xpos*3 + 2] = 0;
-		CPU_XPOS();
-	}
-	if (scan_callback) scan_callback(ypos);
-}
-
-static void do_scan_blank() {
-	int offset = memscan * screen_pitch;
-	xpos = 0;
-
-	if (status & STATUS_ENABLE_CHRONI) {
-		do_scan_start();
-		do_border(offset, screen_width);
-		do_scan_end();
-	} else {
-		do_scan_off(offset, screen_width);
-	}
-}
-
-static void do_scan_border() {
-	int offset = memscan * screen_pitch;
-	xpos = 0;
-
-	if (status & STATUS_ENABLE_CHRONI) {
-		do_border(offset, screen_width);
-	} else {
-		do_scan_off(offset, screen_width);
+		put_pixel_rgb(offset, color);
 	}
 }
 
@@ -805,14 +766,6 @@ static UINT8 bytes_per_scan[] = {
 		160, 40, 10, 20
 };
 
-static UINT8 bytes_per_scan_scroll[] = {
-		0, 0, 88, 48,
-		20, 20, 40, 40,
-		80, 80, 40, 80,
-		160, 40, 10, 20
-};
-
-
 static UINT8 lines_per_mode[] = {
 		0, 0, 8, 8,
 		8, 16, 1, 2,
@@ -821,107 +774,154 @@ static UINT8 lines_per_mode[] = {
 };
 
 
-static void do_screen() {
-	/* emulate some scanlines running only cpu code because of blanking */
-	for(int i=0; i<8; i++) {
-		CPU_SCANLINE();
-	}
-	cpuexec_nmi(0);
-	LOGV(LOGTAG, "set status %02X enabled:%s", status, (status & STATUS_ENABLE_CHRONI) ? "true":"false");
-	status &= (255 - STATUS_VBLANK);
-	LOGV(LOGTAG, "set status %02X enabled:%s", status, (status & STATUS_ENABLE_CHRONI) ? "true":"false");
+// scanlines are drawn as follows:
+// 11 - SCREEN_YBORDER skipped
+// SCREEN_YBORDER drawn as full border
+// 240 lines max drawn normally
+// SCREEN_YBORDER drawn as full border
+// 11 - SCREEN_YBORDER skipped
 
-	int frame_height = screen_height - 2*SCREEN_YBORDER;
-	ypos = 0;
+#define SCANLINES_TOTAL 262
+#define SCANLINES_DISPLAY 240
+#define SCANLINES_BLANK ((SCANLINES_TOTAL - SCANLINES_DISPLAY) / 2)
+#define SCANLINES_BLANK_TOP (SCANLINES_BLANK - SCREEN_YBORDER)
+
+int output_scanline;
+
+void chroni_frame_start() {
+	status |= STATUS_VBLANK; // make sure to start first frame with vblank flag on
+	output_scanline = 0;
 	memscan = 0;
-	for(int i=0; i<SCREEN_YBORDER; i++) {
-		do_scan_border();
+	ypos = 0;
+
+	dl_pos = 0;
+	dl_scanlines = 0;
+}
+
+void chroni_frame_end() {
+}
+
+bool chroni_frame_is_complete() {
+	return output_scanline == SCANLINES_TOTAL;
+}
+
+bool is_output_scanline_visible() {
+	return output_scanline >= SCANLINES_BLANK_TOP && output_scanline < (SCANLINES_TOTAL - SCANLINES_BLANK_TOP);
+}
+
+bool is_output_scanline_border() {
+	return output_scanline < SCANLINES_BLANK || output_scanline > (SCANLINES_TOTAL - SCANLINES_BLANK);
+}
+
+void chroni_scanline_back_porch() {
+	do_scan_start();
+
+	status |= STATUS_HBLANK; // make sure to start first scanline with hblank flag on
+
+	offset = memscan * screen_pitch;
+	xpos = 0;
+	if (is_output_scanline_visible()) {
+		do_border(offset, SCREEN_XBORDER);
+	}
+}
+
+void chroni_scanline_display() {
+	status &= (255 - STATUS_HBLANK);
+	cpuexec_nmi(0);
+
+	if (is_output_scanline_visible()) {
+		if (is_output_scanline_border()) {
+			do_border(offset, SCREEN_XRES);
+		} else {
+			do_scanline();
+		}
+	}
+}
+
+void chroni_scanline_front_porch() {
+	status |= STATUS_HBLANK;
+
+	bool is_vblank_start = output_scanline == (SCANLINES_BLANK + SCANLINES_TOTAL);
+	if (is_vblank_start) status |= STATUS_VBLANK;
+
+	CPU_RESUME();
+	if ((scanline_interrupt == ypos + 1 || is_vblank_start) && (status & STATUS_ENABLE_INTS)) {
+		LOGV(LOGTAG, "do_scan_start fire DLI");
+		cpuexec_nmi(1);
+	}
+	if (is_output_scanline_visible()) {
+		do_border(offset, SCREEN_XBORDER);
+
+		if (!is_output_scanline_border()) ypos++;
 		memscan++;
 	}
 
-	UINT8 instruction;
-	UINT8 use_hscroll = 0;
-	UINT8 use_vscroll = 0;
-	int dlpos = 0;
-	while(ypos < frame_height && (status & STATUS_ENABLE_CHRONI)) {
-		instruction = VRAM_DATA(dl + dlpos);
-		LOGV(LOGTAG, "DL instruction %05X = %02X", dl + dlpos, instruction);
-		dlpos++;
-		UINT8 mode = instruction & 0x0F;
-		if (instruction == 0x41) {
-			break;
-		} else if (mode == 0) { // blank lines
-			UINT8 lines = 1 + ((instruction & 0x70) >> 4);
-			LOGV(LOGTAG, "DL do_scan_blank lines %d", lines);
-			for(int line=0; line<lines; line++) {
-				do_scan_blank();
-				ypos++;
-				memscan++;
-				if (ypos == frame_height) break;
-			}
-		} else {
-			if (instruction & 64) {
-				use_hscroll = instruction & 16;
-				use_vscroll = instruction & 32;
+	do_scan_end();
 
-				lms     = VRAM_PTR(dl + dlpos);
-				dlpos+=2;
-				attribs = VRAM_PTR(dl + dlpos);
-				dlpos+=2;
+	output_scanline++;
+}
+
+static void process_dl() {
+	if (dl_scanlines > 0) {
+		dl_scanlines--;
+	} else {
+		dl_instruction = VRAM_DATA(dl + dl_pos);
+		dl_pos++;
+		if (dl_instruction == 0x41) {
+			dl_pos--;
+		} else {
+			dl_mode = dl_instruction & 0x0F;
+			if (dl_mode == 0) {
+				dl_scanlines = 1 + ((dl_instruction & 0x70) >> 4);
+				LOGV(LOGTAG, "DL do_scan_blank lines %d", dl_scanlines);
+			} else if (dl_instruction & 64) {
+				lms     = VRAM_PTR(dl + dl_pos);
+				dl_pos+=2;
+				attribs = VRAM_PTR(dl + dl_pos);
+				dl_pos+=2;
 				LOGV(LOGTAG, "DL LMS %04X ATTR %04X HS:%s VS:%s", lms, attribs,
 						use_hscroll? "true":"false",
 						use_vscroll? "true":"false");
+
+				dl_scanlines = lines_per_mode[dl_mode] - 1;
+				dl_pitch = bytes_per_scan[dl_mode];
+				dl_line = 0;
+			} else {
+				dl_scanlines = lines_per_mode[dl_mode] - 1;
+				lms += dl_pitch;
+				attribs += dl_pitch;
 			}
-			int lines = lines_per_mode[mode];
-			UINT8 pitch = use_hscroll ? bytes_per_scan_scroll[mode] : bytes_per_scan[mode];
-
-			for(int line=0; line<lines; line++) {
-
-				do_scan_start();
-
-				offset = memscan * screen_pitch;
-				xpos = 0;
-				do_border(offset, SCREEN_XBORDER);
-
-				switch(mode) {
-				case 0x2: do_scan_text_attribs(use_hscroll, use_vscroll, pitch, line, TRUE); break;
-				case 0x3: do_scan_text_attribs(use_hscroll, use_vscroll, pitch, line, FALSE); break;
-				case 0x4: do_scan_text_attribs_double(line); break;
-				case 0x5: do_scan_text_attribs_double(line >> 1); break;
-				case 0x6: do_scan_pixels_wide_2bpp(); break;
-				case 0x7: do_scan_pixels_wide_2bpp(); break;
-				case 0x8: do_scan_pixels_wide_4bpp(); break;
-				case 0x9: do_scan_pixels_wide_4bpp(); break;
-				case 0xA: do_scan_pixels_1bpp(); break;
-				case 0xB: do_scan_pixels_2bpp(); break;
-				case 0xC: do_scan_pixels_4bpp(); break;
-				case 0xD: do_scan_tile_wide_2bpp(line); break;
-				case 0xE: do_scan_tile_wide_4bpp(line); break;
-				case 0xF: do_scan_tile_4bpp(line); break;
-				}
-
-				do_border(offset, SCREEN_XBORDER);
-				do_scan_end();
-
-				ypos++;
-				memscan++;
-				if (ypos == frame_height) break;
-
-			}
-
-			lms += pitch;
-			attribs += pitch;
 		}
 	}
+}
 
-	for(;ypos < frame_height; ypos++) {
-		do_scan_blank();
-		memscan++;
-	}
 
-	for(int i=0; i<SCREEN_YBORDER; i++) {
-		do_scan_border();
-		memscan++;
+static void do_scanline() {
+	if (!(status & STATUS_ENABLE_CHRONI)) return;
+
+	process_dl();
+
+	if (dl_instruction == 0x41 || dl_mode == 0) {
+		do_border(offset, SCREEN_XRES);
+	} else {
+		switch(dl_mode) {
+			case 0x2: do_scan_text_attribs(FALSE, FALSE, dl_pitch, dl_line, TRUE); break;
+			case 0x3: do_scan_text_attribs(FALSE, FALSE, dl_pitch, dl_line, FALSE); break;
+			case 0x4: do_scan_text_attribs_double(dl_line); break;
+			case 0x5: do_scan_text_attribs_double(dl_line >> 1); break;
+			case 0x6: do_scan_pixels_wide_2bpp(); break;
+			case 0x7: do_scan_pixels_wide_2bpp(); break;
+			case 0x8: do_scan_pixels_wide_4bpp(); break;
+			case 0x9: do_scan_pixels_wide_4bpp(); break;
+			case 0xA: do_scan_pixels_1bpp(); break;
+			case 0xB: do_scan_pixels_2bpp(); break;
+			case 0xC: do_scan_pixels_4bpp(); break;
+			case 0xD: do_scan_tile_wide_2bpp(dl_line); break;
+			case 0xE: do_scan_tile_wide_4bpp(dl_line); break;
+			case 0xF: do_scan_tile_4bpp(dl_line); break;
+		}
+
+		dl_line++;
 	}
 
 }
@@ -942,13 +942,6 @@ void chroni_init() {
 	trace_enabled = TRUE;
 	init_rgb565_table();
 	chroni_reset();
-}
-
-void chroni_run_frame() {
-	do_screen();
-
-	status |= STATUS_VBLANK;
-	if (status & STATUS_ENABLE_INTS) cpuexec_nmi(1);
 }
 
 void chroni_set_scan_callback(void (*callback)(unsigned scanline)) {

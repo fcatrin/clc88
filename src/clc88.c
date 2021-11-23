@@ -87,10 +87,54 @@ void compy_init(int argc, char *argv[]) {
 	chroni_init();
 
 	chroni_set_scan_callback(scan_callback);
+
+}
+
+/*
+ cpu base frequency = 3125000 (3.125Mhz)
+ multipliers for 6.25Mhz, 12.5Mhz, 25Mhz, 50Mhz and 100Mhz
+
+ Pixel clock vs CPU clock using the cpu base frequency follows:
+
+ Using rtl/compy/chroni_vga_mode.vh as a reference for 320x240 resolution:
+ Horizontal: 400 pixel clocks, 80 blank and 320 display
+ Vertical:   262 scanlines, 22 blank 240 display
+
+ CPU Clocks:
+ 262 real scanlines @ 60Hz ~ 200 cycles per scanline
+
+ On each scanline: 80 blank + 320 display pixel clocks => 0.5 cycles per pixel clock =>
+ 40 cycles on blank, 160 cycles on display
+
+ blank cycles are distributed evenly on front and back porch for simplicity
+
+*/
+
+
+int cpu_cycles_multiplier = 1;
+int cpu_cycles_front_porch = 20;
+int cpu_cycles_back_porch = 20;
+int cpu_cycles_display = 160;
+
+void compy_run_frame() {
+	chroni_frame_start();
+	do {
+		int cpu_cycles;
+		chroni_scanline_back_porch();
+		cpu_cycles = cpu_cycles_multiplier * cpu_cycles_front_porch;
+		CPU_GO(cpu_cycles);
+		chroni_scanline_display();
+		cpu_cycles = cpu_cycles_multiplier * cpu_cycles_display;
+		CPU_GO(cpu_cycles);
+		chroni_scanline_front_porch();
+		cpu_cycles = cpu_cycles_multiplier * cpu_cycles_back_porch;
+		CPU_GO(cpu_cycles);
+	} while (!chroni_frame_is_complete());
+	chroni_frame_end();
 }
 
 void compy_run() {
-	chroni_run_frame();
+	compy_run_frame();
 	screen_update();
 }
 

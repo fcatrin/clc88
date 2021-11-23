@@ -9,7 +9,14 @@ UINT8 chroni_vram_read(UINT16 index);
 UINT8 chroni_vram_read_linear(UINT32 index); // used by monitor
 
 void  chroni_init();
-void  chroni_run_frame();
+void  chroni_frame_start();
+void  chroni_frame_end();
+void  chroni_frame_start();
+bool  chroni_frame_is_complete();
+
+void  chroni_scanline_back_porch();
+void  chroni_scanline_front_porch();
+void  chroni_scanline_display();
 
 void  chroni_set_scan_callback(void (*scan_callback)(unsigned scanline));
 
