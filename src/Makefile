@@ -127,4 +127,7 @@ samples: $(XEX)
 
 clean:
 	rm -f $(TARGET) $(OBJS) $(XEX)
+	find ../asm -name "*.xex" -exec rm {} \;
+	find ../asm -name "*.lst" -exec rm {} \;
+	find ../asm -name "*.lab" -exec rm {} \;
 	
