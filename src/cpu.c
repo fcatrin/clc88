@@ -88,6 +88,14 @@ static bool cpu_6502_is_ret_frame() {
 	return cpu_6502_frame == m6502_get_reg(M6502_S);
 }
 
+static void cpu_6502_halt(bool halted) {
+	m6502_halt(halted);
+}
+
+static bool cpu_6502_is_halted() {
+	return m6502_is_halted();
+}
+
 static void cpu_z80_reset() {
 	z80_reset(NULL);
 }
@@ -109,12 +117,16 @@ v_cpu v_6502 = {
 		cpu_6502_is_ret_op,
 		cpu_6502_set_ret_frame,
 		cpu_6502_is_ret_frame,
+		cpu_6502_halt,
+		cpu_6502_is_halted
 };
 
 v_cpu v_z80 = {
 		CPU_Z80,
 		cpu_z80_reset,
 		cpu_z80_run,
+		NULL,
+		NULL,
 		NULL,
 		NULL,
 		NULL,

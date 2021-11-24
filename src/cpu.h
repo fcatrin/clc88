@@ -18,6 +18,8 @@ typedef struct {
 	bool (*is_ret_op)(unsigned addr);
 	void (*set_ret_frame)();
 	bool (*is_ret_frame)();
+	void (*halt)(bool halted);
+	bool (*is_halted)();
 	bool exec_break;
 } v_cpu;
 

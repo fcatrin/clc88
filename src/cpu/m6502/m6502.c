@@ -128,6 +128,7 @@ typedef struct
 	UINT8	irq_state;
 	UINT8   so_state;
 	int 	(*irq_callback)(int irqline);	/* IRQ callback */
+	bool    halted;        /* cpu is halted by an external signal */
 }	m6502_Regs;
 
 int m6502_ICount = 0;
@@ -292,6 +293,14 @@ void m6502_set_reg (int regnum, unsigned val)
 	}
 }
 
+void m6502_halt(int halted) {
+	m6502.halted = halted;
+}
+
+int  m6502_is_halted() {
+	return m6502.halted;
+}
+
 static INLINE void m6502_take_irq(void)
 {
 	if( !(P & F_I) )
@@ -363,7 +372,7 @@ int m6502_execute(int cycles)
 		if( m6502.pending_irq )
 			m6502_take_irq();
 
-	} while (m6502_ICount > 0);
+	} while (m6502_ICount > 0 && !m6502.halted);
 
 	return cycles - m6502_ICount;
 }

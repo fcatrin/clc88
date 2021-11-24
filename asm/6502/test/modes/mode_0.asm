@@ -43,15 +43,15 @@ rainbow:
 dli:
    pha
    lda #$66
-   sta WSYNC
-   sta VBORDER
+   ; sta WSYNC
+   ; sta VBORDER
    pla
    rts
 
 vblank:
    pha
    lda #$BF
-   sta VBORDER
+   ; sta VBORDER
    pla
    rts
 	

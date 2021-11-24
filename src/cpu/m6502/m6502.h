@@ -79,6 +79,8 @@ extern void m6502_set_irq_line(int irqline, int state);
 extern void m6502_set_irq_callback(int (*callback)(int irqline));
 extern const char *m6502_info(void *context, int regnum);
 extern unsigned m6502_dasm(char *buffer, unsigned pc);
+extern void m6502_halt(int halted);
+extern int  m6502_is_halted();
 
 /****************************************************************************
  * The 6510

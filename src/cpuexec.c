@@ -1,10 +1,13 @@
 #include <stdio.h>
 #include "emu.h"
 #include "cpu.h"
-#include "trace.h"
 #include "frontend/frontend.h"
 
 #define LOGTAG "CPUEXEC"
+#ifdef TRACE_CPUEXEC
+#define TRACE
+#endif
+#include "trace.h"
 
 #define MIN_CYCLES 4
 
@@ -25,7 +28,12 @@ void cpuexec_init(v_cpu *vcpu) {
 }
 
 void cpuexec_run(int cycles_to_add) {
-	if (halt || !frontend_running()) return;
+	LOGV(LOGTAG, "cpuexec_run cycles_to_add:%d halted:%s", cycles_to_add, (cpu->is_halted() ? "true" : "false"));
+	if (cpu->is_halted() || !frontend_running()) {
+		cycles_acum   = 0;
+		cycles_stolen = 0;
+		return;
+	}
 
 	cycles_acum += cycles_to_add;
 
@@ -33,13 +41,18 @@ void cpuexec_run(int cycles_to_add) {
 	if (cycles_to_run < MIN_CYCLES) return;
 
 	int cycles_ran = cpu->run(cycles_to_run);
+	LOGV(LOGTAG, "cpuexec_run cycles_to_run: %d cycles_ran:%d halted:%s", cycles_to_run, cycles_ran, (cpu->is_halted() ? "true" : "false"));
+
+	if (cpu->is_halted()) cycles_ran = cycles_to_run;
+
 	cycles += cycles_ran;
 	cycles_stolen = cycles_ran - cycles_to_run;
 	cycles_acum = 0;
 }
 
 void cpuexec_halt(int halted) {
-	halt = halted;
+	LOGV(LOGTAG, "cpuexec_halt: %s", (halted ? "true": "false"));
+	cpu->halt(halted);
 }
 
 void cpuexec_irq(int do_interrupt) {
