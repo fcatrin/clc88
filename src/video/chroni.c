@@ -839,21 +839,30 @@ void chroni_scanline_display() {
 }
 
 void chroni_scanline_front_porch() {
-	status |= STATUS_HBLANK;
-
-	bool is_vblank_start = output_scanline == (SCANLINES_BLANK + SCANLINES_TOTAL);
-	if (is_vblank_start) status |= STATUS_VBLANK;
-
-	CPU_RESUME();
-	if ((scanline_interrupt == ypos + 1 || is_vblank_start) && (status & STATUS_ENABLE_INTS)) {
-		LOGV(LOGTAG, "do_scan_start fire DLI");
-		cpuexec_nmi(1);
-	}
 	if (is_output_scanline_visible()) {
 		do_border(offset, SCREEN_XBORDER);
 
 		if (!is_output_scanline_border()) ypos++;
 		memscan++;
+	}
+
+	bool is_vblank_start = output_scanline == (SCANLINES_BLANK + SCANLINES_DISPLAY);
+	if (is_vblank_start) {
+		status |= STATUS_VBLANK;
+	} else {
+		status |= STATUS_HBLANK;
+	}
+
+	bool is_hblank_interrupt = output_scanline == (SCANLINES_BLANK + scanline_interrupt);
+
+	CPU_RESUME();
+	if ((is_hblank_interrupt || is_vblank_start) && (status & STATUS_ENABLE_INTS)) {
+		if (is_vblank_start) {
+			LOGV(LOGTAG, "fire VBI at output_scanline:%d ypos:%d", output_scanline, ypos);
+		} else {
+			LOGV(LOGTAG, "fire DLI at output_scanline:%d ypos:%d", output_scanline, ypos);
+		}
+		cpuexec_nmi(1);
 	}
 
 	do_scan_end();
@@ -879,9 +888,7 @@ static void process_dl() {
 				dl_pos+=2;
 				attribs = VRAM_PTR(dl + dl_pos);
 				dl_pos+=2;
-				LOGV(LOGTAG, "DL LMS %04X ATTR %04X HS:%s VS:%s", lms, attribs,
-						use_hscroll? "true":"false",
-						use_vscroll? "true":"false");
+				LOGV(LOGTAG, "DL LMS %04X ATTR %04X", lms, attribs);
 
 				dl_scanlines = lines_per_mode[dl_mode] - 1;
 				dl_pitch = bytes_per_scan[dl_mode];
