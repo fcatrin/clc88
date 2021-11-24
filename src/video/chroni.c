@@ -447,6 +447,8 @@ static void do_scan_text_attribs(bool use_hscroll, bool use_vscroll, UINT8 pitch
 
 	for(int i=0; i<width; i++) {
 		if (i  == 0 || (pixel_offset & 7) == 0) {
+			LOGV(LOGTAG, "do_scan_text_attribs char_offset: %d", char_offset);
+
 			UINT8 attrib = VRAM_DATA(attribs + char_offset);
 			background = (attrib & 0xF0) >> 4;
 			foreground = attrib & 0x0F;
@@ -899,8 +901,6 @@ static void process_dl() {
 				dl_line = 0;
 			} else {
 				dl_scanlines = lines_per_mode[dl_mode] - 1;
-				lms += dl_pitch;
-				attribs += dl_pitch;
 			}
 		}
 	}
