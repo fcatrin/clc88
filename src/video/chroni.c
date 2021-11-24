@@ -823,6 +823,7 @@ void chroni_scanline_back_porch() {
 	if (is_output_scanline_visible()) {
 		do_border(offset, SCREEN_XBORDER);
 	}
+	LOGV(LOGTAG, "chroni_scanline_back_porch complete output_scanline:%d ypos:%d", output_scanline, ypos);
 }
 
 void chroni_scanline_display() {
@@ -836,6 +837,7 @@ void chroni_scanline_display() {
 			do_scanline();
 		}
 	}
+	LOGV(LOGTAG, "chroni_scanline_display complete output_scanline:%d ypos:%d", output_scanline, ypos);
 }
 
 void chroni_scanline_front_porch() {
@@ -866,6 +868,8 @@ void chroni_scanline_front_porch() {
 	}
 
 	do_scan_end();
+
+	LOGV(LOGTAG, "chroni_scanline_front_porch complete output_scanline:%d ypos:%d", output_scanline, ypos);
 
 	output_scanline++;
 }
