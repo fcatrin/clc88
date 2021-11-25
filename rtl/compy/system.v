@@ -299,15 +299,16 @@ module system (
          .buttons(buttons)
    );
    
+   // bit order from 0-7 to make it easier to check using the 6502 bit instruction
    wire[7:0] sys_timer_irq_all = { 
-      sys_timer_irq[7], 
-      sys_timer_irq[6], 
-      sys_timer_irq[5], 
-      sys_timer_irq[4], 
-      sys_timer_irq[3], 
-      sys_timer_irq[2], 
+      sys_timer_irq[0], 
       sys_timer_irq[1], 
-      sys_timer_irq[0]};
+      sys_timer_irq[2], 
+      sys_timer_irq[3], 
+      sys_timer_irq[4], 
+      sys_timer_irq[5], 
+      sys_timer_irq[6], 
+      sys_timer_irq[7]};
    
    reg  sys_timer_enable[0:7];
    reg  sys_timer_wr_en[0:7];

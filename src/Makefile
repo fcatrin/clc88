@@ -41,6 +41,7 @@ OBJS = $(addprefix $(OBJDIR)/, \
 	trace.o \
 	keyb.o \
 	sys_timer.o \
+	system.o \
 	mame_timer.o \
 	sound.o \
 	sound/filter.o \
