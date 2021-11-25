@@ -33,7 +33,7 @@ OBJS = $(addprefix $(OBJDIR)/, \
 	bus.o \
 	memory.o \
 	machine.o \
-	timer.o \
+	mame_timer.o \
 	utils.o \
 	cpuexec.o \
 	storage.o \

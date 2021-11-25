@@ -1,5 +1,5 @@
-#include "../timer.h"
 #include "sound_interface.h"
+#include "../mame_timer.h"
 
 static void *sound_update_timer;
 static double refresh_period_inv;

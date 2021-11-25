@@ -30,8 +30,9 @@
 
 ***************************************************************************/
 
+#include "mame_timer.h"
+
 #include "driver.h"
-#include "timer.h"
 #include "cpu/cpu_interface.h"
 
 
