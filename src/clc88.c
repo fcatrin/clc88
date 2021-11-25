@@ -43,12 +43,6 @@ static void emulator_load(char *filename) {
 	monitor_source_read_file(buffer);
 }
 
-static void scan_callback(unsigned scanline) {
-	if ((scanline % 48) == 0) {
-		sound_process();
-	}
-}
-
 void compy_init(int argc, char *argv[]) {
 
 	emulator_init(argc, argv);
@@ -87,8 +81,6 @@ void compy_init(int argc, char *argv[]) {
 
 	chroni_init();
 
-	chroni_set_scan_callback(scan_callback);
-
 }
 
 /*
@@ -109,9 +101,12 @@ void compy_init(int argc, char *argv[]) {
 
  blank cycles are distributed evenly on front and back porch for simplicity
 
+ As for sound samples: 44100 samples per second / 60 frames per second = 735 samples per frame
+ samples per scanline = 735/262
+
 */
 
-
+float samples_per_scanline = 735.0f / 262;
 int cpu_cycles_multiplier = 1;
 int cpu_cycles_front_porch = 20;
 int cpu_cycles_back_porch = 20;
@@ -130,6 +125,8 @@ void compy_run_frame() {
 		chroni_scanline_front_porch();
 		cpu_cycles = cpu_cycles_multiplier * cpu_cycles_back_porch;
 		CPU_GO(cpu_cycles);
+
+		sound_process(samples_per_scanline);
 	} while (!chroni_frame_is_complete());
 	chroni_frame_end();
 }

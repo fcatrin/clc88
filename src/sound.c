@@ -24,8 +24,11 @@ unsigned buffer_write_index[2];
 
 unsigned active_sound_buffer = 0;
 
+float samples_to_process;
+
 void sound_init() {
 	pokey_sound_init(FREQ_17_APPROX, 44100, POKEY_CHIPS);
+	samples_to_process = 0;
 }
 
 void sound_register_write(uint16 addr, uint8 val) {
@@ -35,7 +38,12 @@ void sound_register_write(uint16 addr, uint8 val) {
 }
 
 static bool updating_buffer = FALSE;
-void sound_process() {
+void sound_process(float samples) {
+	samples_to_process += samples * 2;
+	if (samples_to_process < POKEY_BUFFER_SIZE) return;
+
+	samples_to_process -= POKEY_BUFFER_SIZE;
+
 	while (updating_buffer);
 
 	pokey_process (pokey_buffer_0, POKEY_BUFFER_SIZE, 0);

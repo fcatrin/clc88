@@ -18,6 +18,4 @@ void  chroni_scanline_back_porch();
 void  chroni_scanline_front_porch();
 void  chroni_scanline_display();
 
-void  chroni_set_scan_callback(void (*scan_callback)(unsigned scanline));
-
 #endif

@@ -90,8 +90,6 @@ static UINT8 hscroll;
 static UINT8 clock_multiplier;
 static UINT8 clock_multipliers[] = {1, 2, 4, 8};
 
-void (*scan_callback)(unsigned scanline) = NULL;
-
 static void do_scanline();
 
 void chroni_reset() {
@@ -358,9 +356,7 @@ static void do_scan_start() {
 	}
 }
 
-static void do_scan_end() {
-	if (scan_callback) scan_callback(ypos);
-}
+static void do_scan_end() {}
 
 static inline PAIR do_sprites() {
 	UINT8 dot_color   = 0;
@@ -955,6 +951,3 @@ void chroni_init() {
 	chroni_reset();
 }
 
-void chroni_set_scan_callback(void (*callback)(unsigned scanline)) {
-	scan_callback = callback;
-}
