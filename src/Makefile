@@ -33,7 +33,6 @@ OBJS = $(addprefix $(OBJDIR)/, \
 	bus.o \
 	memory.o \
 	machine.o \
-	mame_timer.o \
 	utils.o \
 	cpuexec.o \
 	storage.o \
@@ -41,6 +40,8 @@ OBJS = $(addprefix $(OBJDIR)/, \
 	debug.o \
 	trace.o \
 	keyb.o \
+	sys_timer.o \
+	mame_timer.o \
 	sound.o \
 	sound/filter.o \
 	sound/mixer.o \
