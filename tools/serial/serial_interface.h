@@ -4,10 +4,10 @@
 #include <stdint.h>
 
 struct serial_interface {
-	void    (*open)();
-	void    (*close)();
-	uint8_t (*receive)(uint16_t size);
-	void    (*send)(uint8_t data);
+	int     (*open)    ();
+	void    (*close)   ();
+	int     (*receive) (uint8_t *buffer, uint16_t size);
+	void    (*send)    (uint8_t* buffer, uint16_t size);
 };
 
 #endif

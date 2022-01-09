@@ -45,24 +45,20 @@ static long file_size(FILE *f) {
 	return size;
 }
 
-static void wait_for_request() {
-	serial_interface->receive(1);
-}
-
 static void upload_buffer() {
-	wait_for_request();
+	// wait for request
+	serial_interface->receive(buffer, 1);
 
-	for(int i=0; i<BUFFER_SIZE; i++) {
-		serial_interface->send(buffer[i]);
-	}
+	serial_interface->send(buffer, BUFFER_SIZE);
 }
 
 int main(int argc, char *argv[]) {
 
 	serial_interface = &serial_emu;
 
-	serial_interface->open();
-	upload("/home/fcatrin/tmp/testbin.xex");
-	serial_interface->close();
+	if (serial_interface->open()) {
+		upload("/home/fcatrin/tmp/testbin.xex");
+		serial_interface->close();
+	}
 
 }
