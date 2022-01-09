@@ -11,6 +11,9 @@ uint8_t buffer[BUFFER_SIZE];
 
 struct serial_interface *serial_interface;
 
+static long file_size(FILE *f);
+static void upload_buffer();
+
 static void upload(const char *filename) {
 	FILE *f = fopen(filename, "rb");
 	if (!f) {
@@ -19,7 +22,7 @@ static void upload(const char *filename) {
 	}
 
 
-	long size = file_size();
+	long size = file_size(f);
 	int block_size = BUFFER_SIZE-2;
 
 	do {
@@ -56,10 +59,10 @@ static void upload_buffer() {
 
 int main(int argc, char *argv[]) {
 
-	serial_interface = serial_emu;
+	serial_interface = &serial_emu;
 
 	serial_interface->open();
-	upload('/home/fcatrin/tmp/testbin.xex');
+	upload("/home/fcatrin/tmp/testbin.xex");
 	serial_interface->close();
 
 }

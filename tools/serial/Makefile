@@ -6,7 +6,6 @@ LIBS =
 
 TARGET = upload
 
-
 HEADERS = serial_interface.h serial_emulator.h
 
 OBJDIR= obj
@@ -14,7 +13,6 @@ OBJS += $(addprefix $(OBJDIR)/, \
 	upload.o \
 	serial_emulator.o \
 	)
-
 
 ALL: $(TARGET)
 
@@ -28,4 +26,4 @@ $(TARGET): $(HEADERS) $(OBJS)
 
 
 clean:
-	rm -f $(TARGET) $(OBJDIR)
+	rm -rf $(TARGET) $(OBJDIR)
