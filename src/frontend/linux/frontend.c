@@ -8,6 +8,7 @@
 #include "../../sound.h"
 #include "../frontend.h"
 #include "keyboard.h"
+#include "serial.h"
 
 static SDL_Window *window;
 static SDL_Renderer *renderer;
@@ -194,6 +195,7 @@ int frontend_init(int argc, char *argv[]) {
 
 	keyb_init();
 	frontend_start_audio_stream(1);
+	frontend_serial_open();
 
 	return 0;
 }
@@ -211,12 +213,31 @@ void frontend_done() {
 		free(screen_buffers[i]);
 	}
 
+	frontend_serial_close();
 	keyb_done();
 	frontend_stop_audio_stream();
 }
 
 int frontend_running() {
 	return !closed;
+}
+
+void  frontend_serial_open() {
+	semu_open();
+}
+
+UINT8 frontend_serial_read() {
+	return semu_receive();
+}
+void  frontend_serial_write(UINT8 data) {
+	semu_send(data);
+}
+void  frontend_serial_close() {
+	semu_close();
+}
+
+int frontend_serial_has_data() {
+	return semu_has_data();
 }
 
 static int runEmulatorThread(void *ptr){

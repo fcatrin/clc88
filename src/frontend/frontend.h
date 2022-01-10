@@ -21,4 +21,10 @@ void frontend_trace_err(char *tag, ...);
 
 UINT8 frontend_keyb_reg_read(UINT8 index);
 
+void  frontend_serial_open();
+UINT8 frontend_serial_read();
+void  frontend_serial_write(UINT8 data);
+void  frontend_serial_close();
+int   frontend_serial_has_data();
+
 #endif
