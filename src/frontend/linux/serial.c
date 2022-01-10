@@ -33,8 +33,12 @@ static int receive_thread(void *ptr) {
 
 	UINT8 c;
 	while(running) {
-		read(fifo, &c, 1);
-		buffer[buffer_pos_in++] = c;
+		int n = read(fifo, &c, 1);
+		if (n == 1) {
+			buffer[buffer_pos_in++] = c;
+		} else {
+			usleep(1000000);
+		}
 	}
 	return 0;
 }
@@ -42,7 +46,7 @@ static int receive_thread(void *ptr) {
 int semu_open() {
 	mkfifo(fifo_path, 0666);
 
-	fifo = open(fifo_path, O_SYNC);
+	fifo = open(fifo_path, O_NONBLOCK);
 	if (fifo < 0) {
 		fprintf(stderr, "Error opening fifo: %s - %s\n", fifo_path, strerror(errno));
 		return 0;
