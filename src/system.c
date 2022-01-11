@@ -25,7 +25,7 @@ void system_register_write(UINT8 index, UINT8 value) {
 
 	sys_timer *timer = &timers[timer_index];
 
-	switch(index & 0x07) {
+	switch(index & 0x0f) {
 	case 0 : sys_cpu_speed = value & 0x3; break;
 	case 1 : timer_index = value & 0x3; break;
 	case 2 : timeout = (timeout & 0xFFF00) | value      ; break;
@@ -44,7 +44,7 @@ UINT8 system_register_read(UINT8 index) {
 
 	sys_timer *timer = &timers[timer_index];
 
-	switch(index & 0x07) {
+	switch(index & 0x0f) {
 	case 0 : return sys_cpu_speed;
 	case 1 : return timer_index;
 	case 2 : return sys_timer_elapsed(timer) & 0x000FF;
