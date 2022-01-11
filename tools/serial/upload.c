@@ -24,12 +24,13 @@ static void upload(const char *filename) {
 
 	long size = file_size(f);
 	int block_size = BUFFER_SIZE-2;
+	int blocks = (size+block_size-1) / block_size;
 
-	printf("upload %s size:%ld blocks:%d\n", filename, size, block_size);
+	printf("upload %s size:%ld block_size:%d blocks:%d\n", filename, size, block_size, blocks);
 
 	int block_number = 1;
 	do {
-		int n = fread(buffer+1, block_size, 1, f);
+		int n = fread(buffer+1, 1, block_size, f);
 		buffer[0] = size > block_size ? 0x00 : 0x01;
 		buffer[BUFFER_SIZE-1] = n;
 
