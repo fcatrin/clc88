@@ -10,8 +10,10 @@ block_end     = $CA ; ROS2
 next_block:   
    jsr xex_get_byte
    sta block_start
+   sta EXECADDR        ; use block start as default exec address
    jsr xex_get_byte
    sta block_start+1
+   sta EXECADDR+1
    and block_start
    cmp #$ff
    beq next_block
@@ -41,10 +43,7 @@ block_complete:
    
 .proc xex_get_byte
    jsr serial_get
-   bpl no_eof
-   pla
-   pla
-no_eof:   
+   bmi xex_exec
    rts
 .endp
 

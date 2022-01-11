@@ -216,12 +216,12 @@ POKEY1_AUDCTL = $9118
 POKEY1_PANCTL = $911C
 
 ; serial buffer from $400 up to $4fe
-; block type | data[$fc] | block_size
+; data | block_type | block_size
 ; block type : 00 = Normal. 01 = EOF
 ; valid data size in $4FE
 
 SERIAL_BUFFER     = $400
-SERIAL_BLOCK_TYPE = $400
+SERIAL_BLOCK_TYPE = $4FD
 SERIAL_BLOCK_SIZE = $4FE
 SERIAL_BLOCK_NDX  = $4FF
 SERIAL_BLOCK_LAST = $FF

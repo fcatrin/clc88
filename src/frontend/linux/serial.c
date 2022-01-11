@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
+#include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -22,14 +23,18 @@ static char *fifo_path = "/tmp/semu_fifo";
 static int fifo;
 
 static UINT8 buffer[BUFFER_SIZE];
+static UINT8 write_data;
 
 // let's assume there will never be more than INT_MAX data being transferred
 static int buffer_pos_in = 0;
 static int buffer_pos_out = 0;
 
 static int running = 0;
+static int can_write_data;
 
 static SDL_Thread *serial_thread;
+
+static void wait_for_other_end();
 
 static int is_fifo_alive() {
 	int alive = fifo >= 0;
@@ -42,23 +47,33 @@ static int receive_thread(void *ptr) {
 
 	UINT8 c;
 	while(running) {
+		if (can_write_data) {
+			LOGV(LOGTAG, "write data %02X", write_data);
+			int result = write(fifo, &write_data, 1);
+			if (result < 0) {
+				perror("cannot write");
+			}
+			wait_for_other_end();
+			can_write_data = 0;
+		}
+
 		int n = read(fifo, &c, 1);
 		if (n == 1) {
-			LOGV(LOGTAG, "received data %02X", c);
-			buffer[buffer_pos_in++] = c;
+			LOGV(LOGTAG, "received buffer[%d]=%02X out:%d", buffer_pos_in, c, buffer_pos_out);
+			buffer[buffer_pos_in % BUFFER_SIZE] = c;
+			buffer_pos_in++;
 		} else {
-			usleep(1000000);
+			usleep(1000);
 		}
-		LOGV(LOGTAG, "receive thread in:%d out:%d", buffer_pos_in, buffer_pos_out);
 	}
 	return 0;
 }
 
 int semu_open() {
-	mkfifo(fifo_path, 0600);
+	mkfifo(fifo_path,  0600);
 
 	LOGV(LOGTAG, "open fifo %s", fifo_path);
-	fifo = open(fifo_path, O_NONBLOCK | O_RDWR | O_SYNC);
+	fifo = open(fifo_path, O_NONBLOCK | O_RDWR);
 	if (fifo < 0) {
 		fprintf(stderr, "Error opening fifo: %s - %s\n", fifo_path, strerror(errno));
 		return 0;
@@ -97,12 +112,24 @@ UINT8 semu_receive() {
 	return 0;
 }
 
-void semu_send(UINT8 data) {
-	LOGV(LOGTAG, "send data %02X on fifo %d", data, fifo);
-	if (!is_fifo_alive()) return;
+static void wait_for_other_end() {
+	int n;
+	do {
+		int err = ioctl(fifo, FIONREAD, &n);
+		if (err < 0) {
+			perror("ioctl failed");
+		}
+		LOGV(LOGTAG, "wait for reading %d bytes", n);
+		usleep(1000);
+	} while (n == 1);
+}
 
-	int result = write(fifo, &data, 1);
-	if (result < 0) {
-		perror("cannot write");
+void semu_send(UINT8 data) {
+	write_data = data;
+	can_write_data = 1;
+	LOGV(LOGTAG, "Wait can_write_data");
+	while (can_write_data) {
+		usleep(1000);
 	}
+	LOGV(LOGTAG, "Done can_write_data");
 }

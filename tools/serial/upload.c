@@ -3,10 +3,11 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
+#include <unistd.h>
 #include <serial_interface.h>
 #include <serial_emulator.h>
 
-#define BUFFER_SIZE 0x0fe
+#define BUFFER_SIZE 0x0ff
 uint8_t buffer[BUFFER_SIZE];
 
 struct serial_interface *serial_interface;
@@ -21,7 +22,6 @@ static void upload(const char *filename) {
 		return;
 	}
 
-
 	long size = file_size(f);
 	int block_size = BUFFER_SIZE-2;
 	int blocks = (size+block_size-1) / block_size;
@@ -30,8 +30,9 @@ static void upload(const char *filename) {
 
 	int block_number = 1;
 	do {
-		int n = fread(buffer+1, 1, block_size, f);
-		buffer[0] = size > block_size ? 0x00 : 0x01;
+		memset(buffer, 0x55, BUFFER_SIZE);
+		int n = fread(buffer, 1, block_size, f);
+		buffer[BUFFER_SIZE-2] = size > block_size ? 0x00 : 0x01;
 		buffer[BUFFER_SIZE-1] = n;
 
 		printf("send block %d size:%d eof:%s\n", block_number, n, (buffer[0] ? "true":"false"));
@@ -57,8 +58,10 @@ static long file_size(FILE *f) {
 static void upload_buffer() {
 	// wait for request
 	printf("wait for destination ready\n");
-	serial_interface->receive(buffer, 1);
+	uint8_t ready;
+	serial_interface->receive(&ready, 1);
 
+	usleep(1000000);
 	printf("send block\n");
 	serial_interface->send(buffer, BUFFER_SIZE);
 }

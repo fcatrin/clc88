@@ -1,6 +1,7 @@
 .proc serial_init
-   lda #0
+   lda #$ff
    sta SERIAL_BLOCK_NDX
+   lda #$00
    sta SERIAL_BLOCK_TYPE
    sta SERIAL_BLOCK_SIZE
    rts
@@ -12,8 +13,8 @@
 ; n flag = 1 on EOF
 
 .proc serial_get
-   ldx SERIAL_BLOCK_NDX
    inc SERIAL_BLOCK_NDX
+   ldx SERIAL_BLOCK_NDX
    cpx SERIAL_BLOCK_SIZE
    bne get_byte
    lda SERIAL_BLOCK_TYPE     ; Get next block, if any
@@ -48,7 +49,7 @@ wait:
    cpx #SERIAL_BLOCK_LAST
    bne wait
    
-   lda #1
+   lda #$ff
    sta SERIAL_BLOCK_NDX
    rts
 .endp
