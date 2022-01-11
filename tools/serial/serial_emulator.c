@@ -10,22 +10,37 @@
 static char *fifo_path = "/tmp/semu_fifo";
 
 int fifo;
+int running;
 
 int semu_open() {
-	fifo = open(fifo_path, O_SYNC);
+	fifo = open(fifo_path, O_NONBLOCK);
 	if (fifo < 0) {
 		fprintf(stderr, "Error opening fifo: %s - %s\n", fifo_path, strerror(errno));
 		return 0;
 	}
+	running = 1;
 	return 1;
 }
 
 void semu_close() {
+	running = 0;
 	close(fifo);
 }
 
 int semu_receive(uint8_t* buffer, uint16_t size) {
-	return read(fifo, buffer, size);
+	printf("wait for %d bytes\n", size);
+	while(running) {
+		int n = read(fifo, buffer, size);
+		if (n == 0) {
+			printf("wait\n");
+			usleep(1000000);
+		} else {
+			printf("received %d bytes\n", n);
+			return n;
+		}
+	}
+	printf("closing receive channel\n");
+	return 0;
 }
 
 void semu_send(uint8_t *buffer, uint16_t size) {
