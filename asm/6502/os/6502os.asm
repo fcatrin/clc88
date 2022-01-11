@@ -223,7 +223,6 @@ irq:
 
    icl 'graphics.asm'
    icl 'storage.asm'
-   icl 'serial.asm'
    
 charset:
 	ins '../../../res/fonts/charset_atari.bin'
