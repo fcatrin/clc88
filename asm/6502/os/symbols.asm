@@ -123,6 +123,20 @@ VADDRW     = $9026
 VADDRW_AUX = $9028
 VAUTOINC   = $902a
 
+SYS_CPU_CLK   = $9300
+SYS_TIMER_NDX = $9301
+SYS_TIMER_VL  = $9302 ; write = set ticks / read = get current ticks
+SYS_TIMER_VH  = $9303
+SYS_TIMER_VM  = $9304
+SYS_TIMER_WR_EN  = $9305
+SYS_TIMER_EN  = $9306
+SYS_TIMER_ACK = $9307 ; write 1 to clear IRQ state on selected timer
+SYS_TIMER_IRQ = $9307 ; read all 8 timers irq flags
+
+SYS_SERIAL_READY = $9308
+SYS_SERIAL_IN    = $9309
+SYS_SERIAL_OUT   = $9309
+
 VSTATUS_VSYNC      = $80
 VSTATUS_HSYNC      = $40
 VSTATUS_EMULATOR   = $20
@@ -201,6 +215,17 @@ POKEY1_AUDC4  = $9117
 POKEY1_AUDCTL = $9118
 POKEY1_PANCTL = $911C
 
+; serial buffer from $400 up to $4fe
+; block type | data[$fc] | block_size
+; block type : 00 = Normal. 01 = EOF
+; valid data size in $4FE
+
+SERIAL_BUFFER     = $400
+SERIAL_BLOCK_TYPE = $400
+SERIAL_BLOCK_SIZE = $4FE
+SERIAL_BLOCK_NDX  = $4FF
+SERIAL_BLOCK_LAST = $FF
+SERIAL_EOF_MARK   = $01
 
 BOOTADDR = $2000
 

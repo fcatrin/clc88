@@ -53,6 +53,10 @@ SYS_TIMER_EN  = $9306
 SYS_TIMER_ACK = $9307 ; write 1 to clear IRQ state on selected timer
 SYS_TIMER_IRQ = $9307 ; read all 8 timers irq flags
 
+SYS_SERIAL_READY = $9308
+SYS_SERIAL_IN    = $9309
+SYS_SERIAL_OUT   = $9309
+
 VSTATUS_VSYNC      = $80
 VSTATUS_HSYNC      = $40
 VSTATUS_EMULATOR   = $20
