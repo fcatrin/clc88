@@ -34,6 +34,8 @@ int semu_receive(uint8_t* buffer, uint16_t size) {
 		if (n == 0) {
 			printf("wait\n");
 			usleep(1000000);
+		} else if (n < 0) {
+			perror("cannot read");
 		} else {
 			printf("received %d bytes\n", n);
 			return n;

@@ -57,7 +57,7 @@ int semu_open() {
 	mkfifo(fifo_path, 0666);
 
 	LOGV(LOGTAG, "open fifo %s", fifo_path);
-	fifo = open(fifo_path, O_NONBLOCK | O_SYNC);
+	fifo = open(fifo_path, O_NONBLOCK);
 	if (fifo < 0) {
 		fprintf(stderr, "Error opening fifo: %s - %s\n", fifo_path, strerror(errno));
 		return 0;
