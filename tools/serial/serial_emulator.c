@@ -13,7 +13,8 @@ int fifo;
 int running;
 
 int semu_open() {
-	fifo = open(fifo_path, O_NONBLOCK);
+	mkfifo(fifo_path, 0600);
+	fifo = open(fifo_path, O_NONBLOCK | O_RDWR | O_SYNC);
 	if (fifo < 0) {
 		fprintf(stderr, "Error opening fifo: %s - %s\n", fifo_path, strerror(errno));
 		return 0;
@@ -31,11 +32,9 @@ int semu_receive(uint8_t* buffer, uint16_t size) {
 	printf("wait for %d bytes\n", size);
 	while(running) {
 		int n = read(fifo, buffer, size);
-		if (n == 0) {
+		if (n <= 0) {
 			printf("wait\n");
 			usleep(1000000);
-		} else if (n < 0) {
-			perror("cannot read");
 		} else {
 			printf("received %d bytes\n", n);
 			return n;

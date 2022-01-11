@@ -44,20 +44,21 @@ static int receive_thread(void *ptr) {
 	while(running) {
 		int n = read(fifo, &c, 1);
 		if (n == 1) {
-			buffer[buffer_pos_in++] = c;
 			LOGV(LOGTAG, "received data %02X", c);
+			buffer[buffer_pos_in++] = c;
 		} else {
 			usleep(1000000);
 		}
+		LOGV(LOGTAG, "receive thread in:%d out:%d", buffer_pos_in, buffer_pos_out);
 	}
 	return 0;
 }
 
 int semu_open() {
-	mkfifo(fifo_path, 0666);
+	mkfifo(fifo_path, 0600);
 
 	LOGV(LOGTAG, "open fifo %s", fifo_path);
-	fifo = open(fifo_path, O_NONBLOCK);
+	fifo = open(fifo_path, O_NONBLOCK | O_RDWR | O_SYNC);
 	if (fifo < 0) {
 		fprintf(stderr, "Error opening fifo: %s - %s\n", fifo_path, strerror(errno));
 		return 0;
@@ -79,6 +80,7 @@ void semu_close() {
 }
 
 int semu_has_data() {
+	LOGV(LOGTAG, "has data in:%d out:%d", buffer_pos_in, buffer_pos_out);
 	return buffer_pos_in != buffer_pos_out && is_fifo_alive() ;
 }
 

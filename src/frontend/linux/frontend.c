@@ -255,8 +255,9 @@ void frontend_trace_msg(char *tag, ...) {
 	fprintf(stdout, "[%s] ", tag);
 	vfprintf(stdout, format, args);
 	fprintf(stdout, "\n");
-
 	va_end(args);
+
+	fflush(stdout);
 }
 
 void frontend_trace_err(char *tag, ...) {
@@ -268,8 +269,9 @@ void frontend_trace_err(char *tag, ...) {
 	fprintf(stderr, "[%s] ", tag);
 	vfprintf(stderr, format, args);
 	fprintf(stderr, "\n");
-
 	va_end(args);
+
+	fflush(stderr);
 }
 
 int main(int argc, char *argv[]) {
