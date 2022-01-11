@@ -21,13 +21,13 @@
 #include "trace.h"
 
 static bool arg_monitor_enabled = FALSE;
-static bool arg_monitor_stop_on_xex = FALSE;
+static bool arg_monitor_stop_on_boot = FALSE;
 static char xexfile[1000] = "";
 
 static void emulator_init(int argc, char *argv[]) {
 	for(int i=1; i<argc; i++) {
 		if (!strcmp(argv[i], "-M")) arg_monitor_enabled = TRUE;
-		else if (!strcmp(argv[i], "-m")) arg_monitor_stop_on_xex = TRUE;
+		else if (!strcmp(argv[i], "-m")) arg_monitor_stop_on_boot = TRUE;
 		else if (argv[i][0] == '-') i++;
 		else {
 			strcpy(xexfile, argv[i]);
@@ -73,8 +73,8 @@ void compy_init(int argc, char *argv[]) {
 		monitor_enable();
 	}
 
-	if (arg_monitor_stop_on_xex) {
-		monitor_breakpoint_set(0x2000);
+	if (arg_monitor_stop_on_boot) {
+		monitor_breakpoint_set(0x700);
 	}
 
 	cpuexec_init(cpu);
