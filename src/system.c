@@ -1,9 +1,14 @@
-#include "system.h"
-
 #include <stdio.h>
 #include "emu.h"
 #include "sys_timer.h"
 #include "frontend/frontend.h"
+#include "system.h"
+
+#define LOGTAG "SYSTEM"
+#ifdef TRACE_SYSTEM
+#define TRACE
+#endif
+#include "trace.h"
 
 #define MAX_TIMERS 8
 
@@ -16,6 +21,7 @@ UINT32 timeout;
 UINT8 sys_timer_irq;
 
 void system_register_write(UINT8 index, UINT8 value) {
+	LOGV(LOGTAG, "write %02X = %02X", index, value);
 
 	sys_timer *timer = &timers[timer_index];
 
@@ -34,6 +40,8 @@ void system_register_write(UINT8 index, UINT8 value) {
 }
 
 UINT8 system_register_read(UINT8 index) {
+	LOGV(LOGTAG, "read %02X", index);
+
 	sys_timer *timer = &timers[timer_index];
 
 	switch(index & 0x07) {

@@ -38,6 +38,8 @@ UINT8 bus_read16(UINT16 addr) {
 		retvalue = storage_register_read(addr - STORAGE_START);
 	} else if (addr >= KEYB_START && addr <= KEYB_END) {
 		retvalue = keyb_register_read(addr - KEYB_START);
+	} else if (addr >= SYS_START && addr <= SYS_END) {
+		retvalue = system_register_read(addr - SYS_START);
 	} else {
 		retvalue = mem_readmem16(addr);
 	}
@@ -56,6 +58,8 @@ void  bus_write16(UINT16 addr, UINT8 value) {
 		storage_register_write(addr - STORAGE_START, value);
 	} else if (addr >= SOUND_POKEY_START && addr <= SOUND_POKEY_END) {
 		sound_register_write(addr - SOUND_POKEY_START, value);
+	} else if (addr >= SYS_START && addr <= SYS_END) {
+		system_register_write(addr - SYS_START, value);
 	} else {
 		mem_writemem16(addr, value);
 	}

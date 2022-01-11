@@ -16,6 +16,9 @@
 #define CHRONI_MEM_START 0xA000
 #define CHRONI_MEM_END   0xDFFF
 
+#define SYS_START 0x9300
+#define SYS_END   0x930F
+
 UINT8 bus_read16(UINT16 addr);
 void  bus_write16(UINT16 addr, UINT8 value);
 void  bus_write(UINT16 addr, UINT8 *values, UINT16 size);
