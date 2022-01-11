@@ -1,7 +1,8 @@
 	icl '../../os/symbols.asm'
 	
-	org BOOTADDR
+	org USERADDR
 
+start:
    lda #1
    sta ROS7
    lda #0
@@ -64,3 +65,6 @@ attribs:
    .byte $00
 
    icl '../../os/stdlib.asm'
+   
+   org EXECADDR
+   .word start 

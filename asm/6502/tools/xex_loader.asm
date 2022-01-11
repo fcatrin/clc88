@@ -2,7 +2,6 @@
 
 block_start   = $C8 ; ROS0
 block_end     = $CA ; ROS2
-xex_exec_addr = $3FE
 
    org BOOTADDR
 
@@ -34,7 +33,7 @@ next_byte:
    jmp next_byte
    
 block_complete:
-   cpw #xex_exec_addr+1 block_end
+   cpw #EXECADDR+1 block_end
    bne next_block
    jsr xex_exec
    jmp next_block
@@ -50,6 +49,7 @@ no_eof:
 .endp
 
 .proc xex_exec
-   jmp (xex_exec_addr)
+   jmp (EXECADDR)
 .endp
+
    icl '../os/serial.asm'
