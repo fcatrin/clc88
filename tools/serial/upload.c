@@ -6,7 +6,7 @@
 #include <serial_interface.h>
 #include <serial_emulator.h>
 
-#define BUFFER_SIZE 0x100
+#define BUFFER_SIZE 0x0fe
 uint8_t buffer[BUFFER_SIZE];
 
 struct serial_interface *serial_interface;
@@ -26,9 +26,9 @@ static void upload(const char *filename) {
 	int block_size = BUFFER_SIZE-2;
 
 	do {
-		int n = fread(buffer+2, block_size, 1, f);
-		buffer[0] = size > block_size ? 0xff : 0xfe;
-		buffer[1] = n;
+		int n = fread(buffer+1, block_size, 1, f);
+		buffer[0] = size > block_size ? 0x00 : 0x01;
+		buffer[BUFFER_SIZE-1] = n;
 
 		upload_buffer();
 
