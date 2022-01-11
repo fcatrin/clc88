@@ -25,15 +25,23 @@ static void upload(const char *filename) {
 	long size = file_size(f);
 	int block_size = BUFFER_SIZE-2;
 
+	printf("upload %s size:%ld blocks:%d\n", filename, size, block_size);
+
+	int block_number = 1;
 	do {
 		int n = fread(buffer+1, block_size, 1, f);
 		buffer[0] = size > block_size ? 0x00 : 0x01;
 		buffer[BUFFER_SIZE-1] = n;
 
+		printf("send block %d size:%d eof:%s\n", block_number, n, (buffer[0] ? "true":"false"));
+
 		upload_buffer();
+		block_number++;
 
 		size -= block_size;
 	} while (size > 0);
+
+	printf("upload complete\n");
 
 	fclose(f);
 }
@@ -47,18 +55,28 @@ static long file_size(FILE *f) {
 
 static void upload_buffer() {
 	// wait for request
+	printf("wait for destination ready\n");
 	serial_interface->receive(buffer, 1);
 
+	printf("send block\n");
 	serial_interface->send(buffer, BUFFER_SIZE);
 }
 
 int main(int argc, char *argv[]) {
+	if (argc != 2) {
+		printf("usage %s file.xex\n", argv[0]);
+		return 0;
+	}
+
+	char *xex_filename = argv[1];
 
 	serial_interface = &serial_emu;
 
+	printf("open serial interface\n");
 	if (serial_interface->open()) {
-		upload("/home/fcatrin/tmp/testbin.xex");
+		upload(xex_filename);
+		printf("close serial interface\n");
 		serial_interface->close();
 	}
-
+	printf("done\n");
 }
