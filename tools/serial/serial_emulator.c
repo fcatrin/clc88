@@ -36,13 +36,13 @@ void semu_close() {
 }
 
 int semu_receive(uint8_t* buffer, uint16_t size) {
-	LOGV(LOGTAG, "wait for %d bytes%d", size);
+	LOGV(LOGTAG, "wait for %d bytes", size);
 	while(running) {
 		int n = read(fifo, buffer, size);
 		if (n < 0) {
 			if (errno != EAGAIN) LOGE(LOGTAG, "cannot read %s", strerror(errno));
 		} else if (n == 0) {
-			usleep(10000);
+			usleep(100);
 		} else {
 			LOGV(LOGTAG, "received %d bytes", n);
 			return n;
@@ -59,7 +59,7 @@ static void wait_for_other_end() {
 		if (err < 0) {
 			LOGE(LOGTAG, "ioctl failed %s", strerror(errno));
 		}
-		usleep(1000);
+		usleep(100);
 	} while (n != 0);
 }
 

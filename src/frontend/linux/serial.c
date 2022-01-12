@@ -63,7 +63,7 @@ static int receive_thread(void *ptr) {
 			buffer[buffer_pos_in % BUFFER_SIZE] = c;
 			buffer_pos_in++;
 		} else {
-			usleep(1000);
+			usleep(10);
 		}
 	}
 	return 0;
@@ -129,7 +129,7 @@ void semu_send(UINT8 data) {
 	can_write_data = 1;
 	LOGV(LOGTAG, "Wait can_write_data");
 	while (can_write_data) {
-		usleep(1000);
+		usleep(100);
 	}
 	LOGV(LOGTAG, "Done can_write_data");
 }
