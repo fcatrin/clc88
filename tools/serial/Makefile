@@ -1,7 +1,7 @@
 
 CC = gcc
-CFLAGS = -g -Wall
-DEFS = 
+CFLAGS = -g -Wall -I../include
+DEFS = -DTRACE_SERIAL
 LIBS = 
 
 TARGET = upload
@@ -10,6 +10,7 @@ HEADERS = serial_interface.h serial_emulator.h
 
 OBJDIR= obj
 OBJS += $(addprefix $(OBJDIR)/, \
+	../lib/trace.o \
 	upload.o \
 	serial_emulator.o \
 	)

@@ -8,6 +8,12 @@
 #include <errno.h>
 #include "serial_interface.h"
 
+#define LOGTAG "SERIAL"
+#ifdef TRACE_SERIAL
+#define TRACE
+#endif
+#include "trace.h"
+
 static char *fifo_path  = "/tmp/semu_fifo";
 
 int fifo;
@@ -17,7 +23,7 @@ int semu_open() {
 	mkfifo(fifo_path, 0600);
 	fifo = open(fifo_path, O_RDWR | O_NONBLOCK);
 	if (fifo < 0) {
-		fprintf(stderr, "Error opening fifo: %s - %s\n", fifo_path, strerror(errno));
+		LOGE(LOGTAG, "Error opening fifo: %s - %s", fifo_path, strerror(errno));
 		return 0;
 	}
 	running = 1;
@@ -30,20 +36,19 @@ void semu_close() {
 }
 
 int semu_receive(uint8_t* buffer, uint16_t size) {
-	printf("wait for %d bytes on fifo %d\n", size, fifo);
+	LOGV(LOGTAG, "wait for %d bytes%d", size);
 	while(running) {
 		int n = read(fifo, buffer, size);
-		if (n <= 0) {
-			//perror("wait");
-			printf(".");
-			fflush(stdout);
+		if (n < 0) {
+			if (errno != EAGAIN) LOGE(LOGTAG, "cannot read %s", strerror(errno));
+		} else if (n == 0) {
 			usleep(10000);
 		} else {
-			printf("\nreceived %d bytes\n", n);
+			LOGV(LOGTAG, "received %d bytes", n);
 			return n;
 		}
 	}
-	printf("closing receive channel\n");
+	LOGV(LOGTAG, "closing receive channel");
 	return 0;
 }
 
@@ -52,22 +57,25 @@ static void wait_for_other_end() {
 	do {
 		int err = ioctl(fifo, FIONREAD, &n);
 		if (err < 0) {
-			perror("ioctl failed");
+			LOGE(LOGTAG, "ioctl failed %s", strerror(errno));
 		}
 		usleep(1000);
 	} while (n != 0);
 }
 
 void hex_dump(uint8_t *buffer, uint16_t size) {
-	printf("data[%d]: ", size);
+	char text[3*65536];
+	sprintf(text, "data[%d]: ", size);
 	for(int i=0; i<size; i++) {
-		printf("%02X ", buffer[i]);
+		char hexbuf[200];
+		sprintf(hexbuf, "%02X ", buffer[i]);
+		strcat(text, hexbuf);
 	}
-	printf("\n");
+	LOGV(LOGTAG, text);
 }
 
 void semu_send(uint8_t *buffer, uint16_t size) {
-	printf("send %d bytes on fifo %d\n", size, fifo);
+	LOGV(LOGTAG, "send %d bytes", size);
 
 	hex_dump(buffer, size);
 	write(fifo, buffer, size);
