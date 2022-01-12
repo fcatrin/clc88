@@ -95,7 +95,7 @@ void semu_close() {
 }
 
 int semu_has_data() {
-	LOGV(LOGTAG, "has data in:%d out:%d", buffer_pos_in, buffer_pos_out);
+	// LOGV(LOGTAG, "has data in:%d out:%d", buffer_pos_in, buffer_pos_out);
 	return buffer_pos_in != buffer_pos_out && is_fifo_alive() ;
 }
 
@@ -119,8 +119,8 @@ static void wait_for_other_end() {
 		if (err < 0) {
 			perror("ioctl failed");
 		}
-		LOGV(LOGTAG, "wait for reading %d bytes", n);
-		usleep(1000);
+		// LOGV(LOGTAG, "wait for reading %d bytes", n);
+		usleep(10);
 	} while (n == 1);
 }
 

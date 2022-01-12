@@ -61,7 +61,7 @@ static void upload_buffer() {
 	uint8_t ready;
 	serial_interface->receive(&ready, 1);
 
-	usleep(1000000);
+	usleep(100);
 	printf("send block\n");
 	serial_interface->send(buffer, BUFFER_SIZE);
 }

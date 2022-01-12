@@ -1,6 +1,7 @@
 #include <SDL.h>
 #include <unistd.h>
 #include <stdarg.h>
+#include <time.h>
 #include "../../compy.h"
 #include "../../emu.h"
 #include "../../cpu.h"
@@ -253,6 +254,16 @@ void frontend_trace_msg(char *tag, ...) {
 	char *format = va_arg(args, char *);
 
 	fprintf(stdout, "[%s] ", tag);
+
+#ifdef TRACE_TIME
+	char buffer[26];
+	time_t timer;
+	struct tm* tm_info;
+	timer = time(NULL);
+	tm_info = localtime(&timer);
+	strftime(buffer, 26, "%Y-%m-%d %H:%M:%S", tm_info);
+	fprintf(stdout, "[%s] ", buffer);
+#endif
 	vfprintf(stdout, format, args);
 	fprintf(stdout, "\n");
 	va_end(args);
