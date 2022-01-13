@@ -360,11 +360,21 @@ module system (
          .rising(cpu_clk_en_signal_rising)
    );
 
+   reg       uart_rd_req = 0;
+   wire      uart_rd_rdy;
+   wire[7:0] uart_rd_data;
+   wire      uart_rd_avail;
+   
    uart uart_usb (
          .clk50(clk),
          .reset_n(reset_n),
          .uart_rx(uart_rx),
-         .uart_tx(uart_tx)
+         .uart_tx(uart_tx),
+         .rd_avail(uart_rd_avail),
+         .rd_req(uart_rd_req),
+         .rd_rdy(uart_rd_rdy),
+         .rd_data(uart_rd_data)
       );
+
 endmodule
 
