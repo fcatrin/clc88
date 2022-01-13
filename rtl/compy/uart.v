@@ -9,7 +9,11 @@ module uart (
       output       rd_avail,
       input        rd_req,
       output reg   rd_rdy,
-      output [7:0] rd_data
+      output [7:0] rd_data,
+      
+      input  [7:0] wr_data,
+      input        wr_en,
+      output       wr_busy
       );
 
    always @ (posedge clk50) begin : recv_data_in
@@ -68,11 +72,11 @@ module uart (
 
    uart_tx_path uart_tx_path_u (
          .clk_i(clk50), 
-         .uart_tx_data_i(uart_rx_data_o), 
-         .uart_tx_en_i(uart_rx_done), 
-         .uart_tx_o(uart_tx)
+         .uart_tx_data_i(wr_data), 
+         .uart_tx_en_i(uart_wr_en), 
+         .uart_tx_o(uart_tx),
+         .busy(uart_wr_busy)
       );
-   
    
    reg[8:0]  recv_buffer_addr_wr;
    reg[8:0]  recv_buffer_addr_in;
@@ -92,6 +96,20 @@ module uart (
          .wrclock (clk50),
          .data (recv_buffer_data_wr)
       );
+   
+   wire uart_wr_en;
+   crossclock_signal send_signal (
+      .dst_clk(clk50),
+      .src_req(wr_en),
+      .signal(uart_wr_en)
+   );
+      
+   wire uart_wr_busy;
+   crossclock_signal send_busy (
+         .dst_clk(sys_clk),
+         .src_req(uart_wr_busy),
+         .signal(wr_busy)
+   );
    
 
 endmodule

@@ -365,6 +365,10 @@ module system (
    wire[7:0] uart_rd_data;
    wire      uart_rd_avail;
    
+   reg[7:0]  uart_wr_data;
+   reg       uart_wr_en;
+   wire      uart_wr_busy;
+   
    uart uart_usb (
          .clk50(clk),
          .reset_n(reset_n),
@@ -373,8 +377,12 @@ module system (
          .rd_avail(uart_rd_avail),
          .rd_req(uart_rd_req),
          .rd_rdy(uart_rd_rdy),
-         .rd_data(uart_rd_data)
-      );
+         .rd_data(uart_rd_data),
+         .wr_data(uart_wr_data),
+         .wr_en(uart_wr_en),
+         .wr_busy(uart_wr_busy)
+   );
 
+   
 endmodule
 

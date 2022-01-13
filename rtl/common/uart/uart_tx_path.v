@@ -6,18 +6,21 @@ module uart_tx_path(
 	input [7:0] uart_tx_data_i,
 	input uart_tx_en_i,
 	
-	output uart_tx_o
+	output uart_tx_o,
+   output busy
 );
 
-parameter BAUD_DIV     = 13'd5208;      //50Mhz/9600=5208
-parameter BAUD_DIV_CAP = 13'd2604;      //50Mhz/9600/2=2604
+parameter BAUD_DIV     = 13'd5208;      // 50Mhz/9600=5208
+parameter BAUD_DIV_CAP = 13'd2604;      // 50Mhz/9600/2=2604
 
 reg [12:0] baud_div=0;
 reg baud_bps=0;
-(* MARKDEBUG = "TRUE" *)reg [9:0] send_data=10'b1111111111;     // 1bit + 8bit +1bit
-(* MARKDEBUG = "TRUE" *)reg [3:0] bit_num=0;
+reg [9:0] send_data=10'b1111111111;     // 1bit + 8bit +1bit
+reg [3:0] bit_num=0;
 reg uart_send_flag=0;
 reg uart_tx_o_r=1;
+
+assign busy = uart_send_flag;
 
 always@(posedge clk_i)
 begin
@@ -64,8 +67,9 @@ begin
 							bit_num<=bit_num+1'b1;
 						end
 				end
-			else if(bit_num==4'd10)
+			else if(bit_num==4'd10) begin
 				bit_num<=4'd0;
+         end
 		end
 	else
 		begin
