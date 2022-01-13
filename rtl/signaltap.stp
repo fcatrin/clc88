@@ -1,4 +1,4 @@
-<session jtag_chain="USB-Blaster [1-2.4.1]" jtag_device="@1: 10CL055(Y|Z)/EP3C55/EP4CE55 (0x020F50DD)" sof_file="output_files/compy.sof">
+<session jtag_chain="" jtag_device="" sof_file="output_files/compy.sof">
   <display_tree gui_logging_enabled="0">
     <display_branch instance="chroni_char_decoder" log="USE_GLOBAL_TEMP" signal_set="USE_GLOBAL_TEMP" trigger="USE_GLOBAL_TEMP"/>
     <display_branch instance="chroni_vram" signal_set="USE_GLOBAL_TEMP" trigger="USE_GLOBAL_TEMP"/>
@@ -3637,6 +3637,7 @@ z/z/h8ZhJQ==
     
     
     
+    
     </embedded_sof_file>
     <embedded_sof_file id_crc_pairs="|30006E00,8B72EADA" name="compy.sof" size="1848612">eJzsnQdc08wbx9MCFREVFRUVNW7cuHFHceBCBHHgqgooioqAe8W9t75uxb0V
 91bcey9cr7j1/7r3Qv+NQKXQXI5e0pT2+b4f+0KSu+d3SWnud8/l6tO0HsVh
@@ -5328,6 +5329,7 @@ ZQ==
     
     
     
+    
     </embedded_sof_file>
   </embedded_sof_files>
   <instance enabled="false" entity_name="sld_signaltap" is_auto_node="yes" is_expanded="true" name="chroni_char_decoder" source_file="sld_signaltap.vhd">
@@ -6284,7 +6286,7 @@ ZQ==
         <trigger_in_editor/>
         <trigger_out_editor/>
       </presentation>
-      <trigger CRC="F8103989" attribute_mem_mode="false" gap_record="true" global_temp="1" is_expanded="true" name="trigger: 2021/10/20 17:45:35  #0" position="pre" power_up_trigger_mode="false" record_data_gap="true" segment_size="64" storage_mode="off" storage_qualifier_disabled="no" storage_qualifier_port_is_pin="false" storage_qualifier_port_name="auto_stp_external_storage_qualifier" storage_qualifier_port_tap_mode="classic" trigger_type="circular">
+      <trigger CRC="F8103989" attribute_mem_mode="false" gap_record="true" global_temp="1" is_expanded="true" name="trigger: 2021/10/20 17:45:35  #0" position="pre" power_up_trigger_mode="false" record_data_gap="true" segment_size="64" storage_mode="off" storage_qualifier_disabled="no" storage_qualifier_port_is_pin="true" storage_qualifier_port_name="auto_stp_external_storage_qualifier" storage_qualifier_port_tap_mode="classic" trigger_type="circular">
         <power_up_trigger position="pre" storage_qualifier_disabled="no"/>
         <events use_custom_flow_control="no">
           <level enabled="yes" name="condition1" type="basic">'system:system_inst|chroni:chroni_inst|dpram_ab:vram|address_b[0]' == high &amp;&amp; 'system:system_inst|chroni:chroni_inst|dpram_ab:vram|address_b[10]' == high &amp;&amp; 'system:system_inst|chroni:chroni_inst|dpram_ab:vram|address_b[11]' == low &amp;&amp; 'system:system_inst|chroni:chroni_inst|dpram_ab:vram|address_b[12]' == low &amp;&amp; 'system:system_inst|chroni:chroni_inst|dpram_ab:vram|address_b[13]' == low &amp;&amp; 'system:system_inst|chroni:chroni_inst|dpram_ab:vram|address_b[14]' == low &amp;&amp; 'system:system_inst|chroni:chroni_inst|dpram_ab:vram|address_b[15]' == low &amp;&amp; 'system:system_inst|chroni:chroni_inst|dpram_ab:vram|address_b[16]' == low &amp;&amp; 'system:system_inst|chroni:chroni_inst|dpram_ab:vram|address_b[1]' == low &amp;&amp; 'system:system_inst|chroni:chroni_inst|dpram_ab:vram|address_b[2]' == low &amp;&amp; 'system:system_inst|chroni:chroni_inst|dpram_ab:vram|address_b[3]' == low &amp;&amp; 'system:system_inst|chroni:chroni_inst|dpram_ab:vram|address_b[4]' == low &amp;&amp; 'system:system_inst|chroni:chroni_inst|dpram_ab:vram|address_b[5]' == low &amp;&amp; 'system:system_inst|chroni:chroni_inst|dpram_ab:vram|address_b[6]' == low &amp;&amp; 'system:system_inst|chroni:chroni_inst|dpram_ab:vram|address_b[7]' == low &amp;&amp; 'system:system_inst|chroni:chroni_inst|dpram_ab:vram|address_b[8]' == low &amp;&amp; 'system:system_inst|chroni:chroni_inst|dpram_ab:vram|address_b[9]' == low
@@ -7716,7 +7718,7 @@ ZQ==
         <trigger_in_editor/>
         <trigger_out_editor/>
       </presentation>
-      <trigger CRC="7154A534" attribute_mem_mode="false" gap_record="true" global_temp="1" is_expanded="true" name="trigger: 2021/10/25 00:08:23  #1" position="pre" power_up_trigger_mode="false" record_data_gap="true" segment_size="512" storage_mode="off" storage_qualifier_disabled="no" storage_qualifier_port_is_pin="false" storage_qualifier_port_name="auto_stp_external_storage_qualifier" storage_qualifier_port_tap_mode="classic" trigger_type="circular">
+      <trigger CRC="7154A534" attribute_mem_mode="false" gap_record="true" global_temp="1" is_expanded="true" name="trigger: 2021/10/25 00:08:23  #1" position="pre" power_up_trigger_mode="false" record_data_gap="true" segment_size="512" storage_mode="off" storage_qualifier_disabled="no" storage_qualifier_port_is_pin="true" storage_qualifier_port_name="auto_stp_external_storage_qualifier" storage_qualifier_port_tap_mode="classic" trigger_type="circular">
         <power_up_trigger position="pre" storage_qualifier_disabled="no"/>
         <events use_custom_flow_control="no">
           <level enabled="yes" name="condition1" type="basic">'system:system_inst|chroni:chroni_inst|cpu_wr_en' == rising edge
@@ -8573,7 +8575,7 @@ ZQ==
         <trigger_in_editor/>
         <trigger_out_editor/>
       </presentation>
-      <trigger CRC="EFA44018" attribute_mem_mode="false" gap_record="true" global_temp="1" is_expanded="true" name="trigger: 2021/10/19 19:59:42  #0" position="pre" power_up_trigger_mode="false" record_data_gap="true" segment_size="512" storage_mode="off" storage_qualifier_disabled="no" storage_qualifier_port_is_pin="true" storage_qualifier_port_name="auto_stp_external_storage_qualifier" storage_qualifier_port_tap_mode="classic" trigger_type="circular">
+      <trigger CRC="EFA44018" attribute_mem_mode="false" gap_record="true" global_temp="1" is_expanded="true" name="trigger: 2021/10/19 19:59:42  #0" position="pre" power_up_trigger_mode="false" record_data_gap="true" segment_size="512" storage_mode="off" storage_qualifier_disabled="no" storage_qualifier_port_is_pin="false" storage_qualifier_port_name="auto_stp_external_storage_qualifier" storage_qualifier_port_tap_mode="classic" trigger_type="circular">
         <power_up_trigger position="pre" storage_qualifier_disabled="no"/>
         <events use_custom_flow_control="no">
           <level enabled="yes" name="condition1" type="basic">'system:system_inst|chroni:chroni_inst|vga_output:vga_output_inst|x_cnt[0]' == low &amp;&amp; 'system:system_inst|chroni:chroni_inst|vga_output:vga_output_inst|x_cnt[10]' == low &amp;&amp; 'system:system_inst|chroni:chroni_inst|vga_output:vga_output_inst|x_cnt[11]' == low &amp;&amp; 'system:system_inst|chroni:chroni_inst|vga_output:vga_output_inst|x_cnt[1]' == low &amp;&amp; 'system:system_inst|chroni:chroni_inst|vga_output:vga_output_inst|x_cnt[2]' == high &amp;&amp; 'system:system_inst|chroni:chroni_inst|vga_output:vga_output_inst|x_cnt[3]' == low &amp;&amp; 'system:system_inst|chroni:chroni_inst|vga_output:vga_output_inst|x_cnt[4]' == low &amp;&amp; 'system:system_inst|chroni:chroni_inst|vga_output:vga_output_inst|x_cnt[5]' == high &amp;&amp; 'system:system_inst|chroni:chroni_inst|vga_output:vga_output_inst|x_cnt[6]' == low &amp;&amp; 'system:system_inst|chroni:chroni_inst|vga_output:vga_output_inst|x_cnt[7]' == low &amp;&amp; 'system:system_inst|chroni:chroni_inst|vga_output:vga_output_inst|x_cnt[8]' == low &amp;&amp; 'system:system_inst|chroni:chroni_inst|vga_output:vga_output_inst|x_cnt[9]' == low &amp;&amp; 'system:system_inst|chroni:chroni_inst|vga_output:vga_output_inst|y_cnt[0]' == low &amp;&amp; 'system:system_inst|chroni:chroni_inst|vga_output:vga_output_inst|y_cnt[10]' == low &amp;&amp; 'system:system_inst|chroni:chroni_inst|vga_output:vga_output_inst|y_cnt[11]' == low &amp;&amp; 'system:system_inst|chroni:chroni_inst|vga_output:vga_output_inst|y_cnt[1]' == low &amp;&amp; 'system:system_inst|chroni:chroni_inst|vga_output:vga_output_inst|y_cnt[2]' == low &amp;&amp; 'system:system_inst|chroni:chroni_inst|vga_output:vga_output_inst|y_cnt[3]' == high &amp;&amp; 'system:system_inst|chroni:chroni_inst|vga_output:vga_output_inst|y_cnt[4]' == low &amp;&amp; 'system:system_inst|chroni:chroni_inst|vga_output:vga_output_inst|y_cnt[5]' == high &amp;&amp; 'system:system_inst|chroni:chroni_inst|vga_output:vga_output_inst|y_cnt[6]' == high &amp;&amp; 'system:system_inst|chroni:chroni_inst|vga_output:vga_output_inst|y_cnt[7]' == low &amp;&amp; 'system:system_inst|chroni:chroni_inst|vga_output:vga_output_inst|y_cnt[8]' == low &amp;&amp; 'system:system_inst|chroni:chroni_inst|vga_output:vga_output_inst|y_cnt[9]' == low
@@ -9207,7 +9209,7 @@ ZQ==
         <trigger_in_editor/>
         <trigger_out_editor/>
       </presentation>
-      <trigger CRC="A61F9C5B" attribute_mem_mode="false" gap_record="true" global_temp="1" is_expanded="true" name="trigger: 2021/10/02 17:06:26  #0" position="pre" power_up_trigger_mode="false" record_data_gap="true" segment_size="1" storage_mode="off" storage_qualifier_disabled="no" storage_qualifier_port_is_pin="false" storage_qualifier_port_name="auto_stp_external_storage_qualifier" storage_qualifier_port_tap_mode="classic" trigger_type="circular">
+      <trigger CRC="A61F9C5B" attribute_mem_mode="false" gap_record="true" global_temp="1" is_expanded="true" name="trigger: 2021/10/02 17:06:26  #0" position="pre" power_up_trigger_mode="false" record_data_gap="true" segment_size="1" storage_mode="off" storage_qualifier_disabled="no" storage_qualifier_port_is_pin="true" storage_qualifier_port_name="auto_stp_external_storage_qualifier" storage_qualifier_port_tap_mode="classic" trigger_type="circular">
         <power_up_trigger position="pre" storage_qualifier_disabled="no"/>
         <events use_custom_flow_control="no">
           <level enabled="yes" name="condition1" type="basic">'system:system_inst|chroni:chroni_inst|dlproc_state.DL_EXEC' == low &amp;&amp; 'system:system_inst|chroni:chroni_inst|dlproc_state.DL_IDLE' == low &amp;&amp; 'system:system_inst|chroni:chroni_inst|dlproc_state.DL_LMS' == low &amp;&amp; 'system:system_inst|chroni:chroni_inst|dlproc_state.DL_LMS_READ' == low &amp;&amp; 'system:system_inst|chroni:chroni_inst|dlproc_state.DL_READ' == high &amp;&amp; 'system:system_inst|chroni:chroni_inst|dlproc_state.DL_READ_WAIT' == low &amp;&amp; 'system:system_inst|chroni:chroni_inst|dlproc_state.DL_WAIT' == low
@@ -9243,7 +9245,7 @@ ZQ==
       <single attribute="setup vertical scroll position" value="0"/>
     </position_info>
   </instance>
-  <instance enabled="true" entity_name="sld_signaltap" is_auto_node="yes" is_expanded="true" name="m6502" source_file="sld_signaltap.vhd">
+  <instance enabled="false" entity_name="sld_signaltap" is_auto_node="yes" is_expanded="true" name="m6502" source_file="sld_signaltap.vhd">
     <node_ip_info instance_id="5" mfg_id="110" node_id="0" version="6"/>
     <signal_set global_temp="1" is_expanded="true" name="signal_set: 2021/10/22 20:04:43  #0">
       <clock name="system:system_inst|chroni:chroni_inst|sys_clk" polarity="posedge" tap_mode="classic"/>
@@ -12081,7 +12083,7 @@ ZQ==
         <trigger_in_editor/>
         <trigger_out_editor/>
       </presentation>
-      <trigger CRC="2275C97" attribute_mem_mode="false" gap_record="true" global_temp="1" is_expanded="true" name="trigger: 2021/10/25 21:13:38  #0" position="pre" power_up_trigger_mode="false" record_data_gap="true" segment_size="512" storage_mode="off" storage_qualifier_disabled="no" storage_qualifier_port_is_pin="true" storage_qualifier_port_name="auto_stp_external_storage_qualifier" storage_qualifier_port_tap_mode="classic" trigger_type="circular">
+      <trigger CRC="2275C97" attribute_mem_mode="false" gap_record="true" global_temp="1" is_expanded="true" name="trigger: 2021/10/25 21:13:38  #0" position="pre" power_up_trigger_mode="false" record_data_gap="true" segment_size="512" storage_mode="off" storage_qualifier_disabled="no" storage_qualifier_port_is_pin="false" storage_qualifier_port_name="auto_stp_external_storage_qualifier" storage_qualifier_port_tap_mode="classic" trigger_type="circular">
         <power_up_trigger position="pre" storage_qualifier_disabled="no"/>
         <events use_custom_flow_control="no">
           <level enabled="yes" name="condition1" type="basic">'system:system_inst|m6502_cpu:cpu_6502_main|irq_n' == falling edge
@@ -12120,7 +12122,7 @@ ZQ==
       <single attribute="data horizontal scroll position" value="38"/>
       <single attribute="data vertical scroll position" value="24"/>
       <single attribute="setup horizontal scroll position" value="0"/>
-      <single attribute="setup vertical scroll position" value="27"/>
+      <single attribute="setup vertical scroll position" value="0"/>
       <single attribute="zoom level denominator" value="1"/>
       <single attribute="zoom level numerator" value="32"/>
       <single attribute="zoom offset denominator" value="1"/>
@@ -13429,7 +13431,7 @@ ZQ==
         <trigger_in_editor/>
         <trigger_out_editor/>
       </presentation>
-      <trigger CRC="98E62FB4" attribute_mem_mode="false" gap_record="true" global_temp="1" is_expanded="true" name="trigger: 2021/10/25 00:41:10  #1" position="pre" power_up_trigger_mode="false" record_data_gap="true" segment_size="64" storage_mode="off" storage_qualifier_disabled="no" storage_qualifier_port_is_pin="false" storage_qualifier_port_name="auto_stp_external_storage_qualifier" storage_qualifier_port_tap_mode="classic" trigger_type="circular">
+      <trigger CRC="98E62FB4" attribute_mem_mode="false" gap_record="true" global_temp="1" is_expanded="true" name="trigger: 2021/10/25 00:41:10  #1" position="pre" power_up_trigger_mode="false" record_data_gap="true" segment_size="64" storage_mode="off" storage_qualifier_disabled="no" storage_qualifier_port_is_pin="true" storage_qualifier_port_name="auto_stp_external_storage_qualifier" storage_qualifier_port_tap_mode="classic" trigger_type="circular">
         <power_up_trigger position="pre" storage_qualifier_disabled="no"/>
         <events use_custom_flow_control="no">
           <level enabled="yes" name="condition1" type="basic">'system:system_inst|m6502_cpu:cpu_6502_main|cpu_fetch_state.CPU_EXECUTE' == low &amp;&amp; 'system:system_inst|m6502_cpu:cpu_6502_main|cpu_fetch_state.CPU_EXECUTE_WAIT' == low &amp;&amp; 'system:system_inst|m6502_cpu:cpu_6502_main|cpu_fetch_state.CPU_FETCH' == low &amp;&amp; 'system:system_inst|m6502_cpu:cpu_6502_main|cpu_fetch_state.CPU_RESET' == high &amp;&amp; 'system:system_inst|m6502_cpu:cpu_6502_main|cpu_fetch_state.CPU_WAIT' == low
@@ -15009,7 +15011,7 @@ ZQ==
         <trigger_in_editor/>
         <trigger_out_editor/>
       </presentation>
-      <trigger CRC="3A146646" attribute_mem_mode="false" gap_record="true" global_temp="1" is_expanded="true" name="trigger: 2021/10/25 23:07:05  #1" position="pre" power_up_trigger_mode="false" record_data_gap="true" segment_size="64" storage_mode="off" storage_qualifier_disabled="no" storage_qualifier_port_is_pin="false" storage_qualifier_port_name="auto_stp_external_storage_qualifier" storage_qualifier_port_tap_mode="classic" trigger_type="circular">
+      <trigger CRC="3A146646" attribute_mem_mode="false" gap_record="true" global_temp="1" is_expanded="true" name="trigger: 2021/10/25 23:07:05  #1" position="pre" power_up_trigger_mode="false" record_data_gap="true" segment_size="64" storage_mode="off" storage_qualifier_disabled="no" storage_qualifier_port_is_pin="true" storage_qualifier_port_name="auto_stp_external_storage_qualifier" storage_qualifier_port_tap_mode="classic" trigger_type="circular">
         <power_up_trigger position="pre" storage_qualifier_disabled="no"/>
         <events use_custom_flow_control="no">
           <level enabled="yes" name="condition1" type="basic">
@@ -15062,6 +15064,6 @@ ZQ==
     <single attribute="lock mode" value="0"/>
     <multi attribute="column width" size="23" value="34,34,760,74,23,78,95,96,98,98,88,88,148,101,101,101,101,101,101,101,101,107,10"/>
     <multi attribute="frame size" size="2" value="1920,1023"/>
-    <multi attribute="jtag widget size" size="2" value="366,291"/>
+    <multi attribute="jtag widget size" size="2" value="366,318"/>
   </global_info>
 </session>
