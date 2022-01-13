@@ -161,6 +161,8 @@ module system (
       reg [2:0] cpu_speed;
       reg [2:0] timer_index;
       
+      uart_wr_en <= 0;
+      
       if (~reset_n) begin
          for (i=0; i<8; i=i+1) begin
             sys_timer_irq_ack[i] <= 0;
@@ -182,6 +184,10 @@ module system (
                   7'h05 : sys_timer_wr_en[sys_timer_index]   <= 1;
                   7'h06 : sys_timer_enable[sys_timer_index]  <= cpu_wr_data[0];
                   7'h07 : sys_timer_irq_ack[sys_timer_index] <= 1;
+                  7'h09 : begin
+                     uart_wr_data <= cpu_wr_data;
+                     uart_wr_en   <= 1;
+                  end
                endcase
             end 
             
@@ -193,6 +199,8 @@ module system (
                7'h04 : sys_rd_data <= {4'b0, sys_timer_value[sys_timer_index][19:16]};
                7'h06 : sys_rd_data <= {6'b0, sys_timer_enable[sys_timer_index]};
                7'h07 : sys_rd_data <= sys_timer_irq_all;
+               7'h08 : sys_rd_data <= {6'b0, uart_wr_busy, uart_rd_avail};
+               7'h09 : sys_rd_data <= uart_rd_data;
             endcase
          end
       end
@@ -371,6 +379,7 @@ module system (
    
    uart uart_usb (
          .clk50(clk),
+         .sys_clk(sys_clk),
          .reset_n(reset_n),
          .uart_rx(uart_rx),
          .uart_tx(uart_tx),
