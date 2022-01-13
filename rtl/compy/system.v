@@ -10,7 +10,9 @@ module system (
    output [5:0] vga_g,
    output [4:0] vga_b,
    output pll_locked,
-   input [4:0] buttons
+   input [4:0] buttons,
+   input  uart_rx,
+   output uart_tx
 );
 
 `include "chroni.vh"
@@ -358,5 +360,11 @@ module system (
          .rising(cpu_clk_en_signal_rising)
    );
 
+   uart uart_usb (
+         .clk50(clk),
+         .reset_n(reset_n),
+         .uart_rx(uart_rx),
+         .uart_tx(uart_tx)
+      );
 endmodule
 
