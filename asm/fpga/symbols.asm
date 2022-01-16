@@ -82,3 +82,19 @@ ROS4          = $CC
 ROS5          = $CD
 ROS6          = $CE
 ROS7          = $CF
+
+; serial buffer from $400 up to $4fe
+; data | block_type | block_size
+; block type : 00 = Normal. 01 = EOF
+; valid data size in $4FE
+
+SERIAL_BUFFER     = $400
+SERIAL_BLOCK_TYPE = $4FD
+SERIAL_BLOCK_SIZE = $4FE
+SERIAL_BLOCK_NDX  = $4FF
+SERIAL_BLOCK_LAST = $FF
+SERIAL_EOF_MARK   = $01
+
+BOOTADDR = $700
+USERADDR = $800
+EXECADDR = $3FE
