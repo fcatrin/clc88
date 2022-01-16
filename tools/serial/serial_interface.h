@@ -8,6 +8,7 @@ struct serial_interface {
 	void    (*close)   ();
 	int     (*receive) (uint8_t *buffer, uint16_t size);
 	void    (*send)    (uint8_t* buffer, uint16_t size);
+	char*   (*get_name)();
 };
 
 #endif

@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <serial_interface.h>
 #include <serial_emulator.h>
+#include <serial_tty.h>
 
 #define BUFFER_SIZE 0x0ff
 uint8_t buffer[BUFFER_SIZE];
@@ -67,16 +68,17 @@ static void upload_buffer() {
 }
 
 int main(int argc, char *argv[]) {
-	if (argc != 2) {
-		printf("usage %s file.xex\n", argv[0]);
+	if (argc != 3) {
+		printf("usage %s [emu|tty] file.xex\n", argv[0]);
 		return 0;
 	}
 
-	char *xex_filename = argv[1];
+	char *device_type  = argv[1];
+	char *xex_filename = argv[2];
 
-	serial_interface = &serial_emu;
+	serial_interface = strncmp(device_type, "emu", 3) == 0 ? &serial_emu : &serial_tty;
 
-	printf("open serial interface\n");
+	printf("open serial interface %s\n", serial_interface->get_name());
 	if (serial_interface->open()) {
 		upload(xex_filename);
 		printf("close serial interface\n");

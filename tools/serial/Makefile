@@ -1,7 +1,9 @@
 
 CC = gcc
 CFLAGS = -g -Wall -I../include
-DEFS = -DTRACE_SERIAL
+DEFS  = 
+DEFS += -DTRACE_PIPE
+DEFS += -DTRACE_TTY
 LIBS = 
 
 TARGET = upload
@@ -13,6 +15,7 @@ OBJS += $(addprefix $(OBJDIR)/, \
 	../lib/trace.o \
 	upload.o \
 	serial_emulator.o \
+	serial_tty.o \
 	)
 
 ALL: $(TARGET)

@@ -8,41 +8,40 @@
 #include <errno.h>
 #include "serial_interface.h"
 
-#define LOGTAG "PIPE"
-#ifdef TRACE_PIPE
+#define LOGTAG "TTY"
+#ifdef TRACE_TTY
 #define TRACE
 #endif
 #include "trace.h"
 
-static char *fifo_path  = "/tmp/semu_fifo";
+static char *tty_path  = "/dev/ttyUSB0";
 
-int fifo;
+int tty;
 int running;
 
-char* semu_get_name() {
-	return "pipe";
+char* tty_get_name() {
+	return "tty";
 }
 
-int semu_open() {
-	mkfifo(fifo_path, 0600);
-	fifo = open(fifo_path, O_RDWR | O_NONBLOCK);
-	if (fifo < 0) {
-		LOGE(LOGTAG, "Error opening fifo: %s - %s", fifo_path, strerror(errno));
+int tty_open() {
+	tty = open(tty_path, O_RDWR | O_NONBLOCK);
+	if (tty < 0) {
+		LOGE(LOGTAG, "Error opening tty: %s - %s", tty_path, strerror(errno));
 		return 0;
 	}
 	running = 1;
 	return 1;
 }
 
-void semu_close() {
+void tty_close() {
 	running = 0;
-	close(fifo);
+	close(tty);
 }
 
-int semu_receive(uint8_t* buffer, uint16_t size) {
+int tty_receive(uint8_t* buffer, uint16_t size) {
 	LOGV(LOGTAG, "wait for %d bytes", size);
 	while(running) {
-		int n = read(fifo, buffer, size);
+		int n = read(tty, buffer, size);
 		if (n < 0) {
 			if (errno != EAGAIN) LOGE(LOGTAG, "cannot read %s", strerror(errno));
 		} else if (n == 0) {
@@ -59,7 +58,7 @@ int semu_receive(uint8_t* buffer, uint16_t size) {
 static void wait_for_other_end() {
 	int n;
 	do {
-		int err = ioctl(fifo, FIONREAD, &n);
+		int err = ioctl(tty, FIONREAD, &n);
 		if (err < 0) {
 			LOGE(LOGTAG, "ioctl failed %s", strerror(errno));
 		}
@@ -78,18 +77,18 @@ void hex_dump(uint8_t *buffer, uint16_t size) {
 	LOGV(LOGTAG, text);
 }
 
-void semu_send(uint8_t *buffer, uint16_t size) {
+void tty_send(uint8_t *buffer, uint16_t size) {
 	LOGV(LOGTAG, "send %d bytes", size);
 
 	hex_dump(buffer, size);
-	write(fifo, buffer, size);
+	write(tty, buffer, size);
 	wait_for_other_end();
 }
 
-struct serial_interface serial_emu = {
-	semu_open,
-	semu_close,
-	semu_receive,
-	semu_send,
-	semu_get_name
+struct serial_interface serial_tty = {
+	tty_open,
+	tty_close,
+	tty_receive,
+	tty_send,
+	tty_get_name
 };
