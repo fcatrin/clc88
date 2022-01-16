@@ -14,6 +14,7 @@ OBJDIR= obj
 OBJS += $(addprefix $(OBJDIR)/, \
 	../lib/trace.o \
 	upload.o \
+	common.o \
 	serial_emulator.o \
 	serial_tty.o \
 	)

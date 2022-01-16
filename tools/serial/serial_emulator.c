@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <errno.h>
+#include "common.h"
 #include "serial_interface.h"
 
 #define LOGTAG "PIPE"
@@ -67,21 +68,10 @@ static void wait_for_other_end() {
 	} while (n != 0);
 }
 
-void hex_dump(uint8_t *buffer, uint16_t size) {
-	char text[3*65536];
-	sprintf(text, "data[%d]: ", size);
-	for(int i=0; i<size; i++) {
-		char hexbuf[200];
-		sprintf(hexbuf, "%02X ", buffer[i]);
-		strcat(text, hexbuf);
-	}
-	LOGV(LOGTAG, text);
-}
-
 void semu_send(uint8_t *buffer, uint16_t size) {
 	LOGV(LOGTAG, "send %d bytes", size);
 
-	hex_dump(buffer, size);
+	LOGV(LOGTAG, "%s", hex_dump(buffer, size));
 	write(fifo, buffer, size);
 	wait_for_other_end();
 }
