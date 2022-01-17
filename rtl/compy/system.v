@@ -378,7 +378,6 @@ module system (
    wire      uart_wr_busy;
    
    uart uart_usb (
-         .clk50(clk),
          .sys_clk(sys_clk),
          .reset_n(reset_n),
          .uart_rx(uart_rx),

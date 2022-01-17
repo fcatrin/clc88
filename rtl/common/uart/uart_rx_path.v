@@ -2,6 +2,7 @@
 
 module uart_rx_path(
 	input clk_i,
+   input reset_n,
 	input uart_rx_i,
 	
 	output [7:0] uart_rx_data_o,
@@ -9,8 +10,8 @@ module uart_rx_path(
 	output baud_bps_tb			//for simulation
     );
     
-parameter [12:0] BAUD_DIV     = 13'd5208;   //50Mhz/9600=5208
-parameter [12:0] BAUD_DIV_CAP = 13'd2604;   //50Mhz/9600/2=2604
+parameter [12:0] BAUD_DIV     = 13'd10416;  // 100Mhz/9600   = 10416
+parameter [12:0] BAUD_DIV_CAP = 13'd5208;   // 100Mhz/9600/2 = 5208
 
 reg [12:0] baud_div=0;
 reg baud_bps=0;

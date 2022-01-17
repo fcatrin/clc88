@@ -1,7 +1,6 @@
 `timescale 1ns / 1ps
 
 module uart (
-      input  clk50,
       input  sys_clk,
       input  reset_n,
       input  uart_rx,
@@ -16,7 +15,7 @@ module uart (
       output       wr_busy
       );
 
-   always @ (posedge clk50) begin : recv_data_in
+   always @ (posedge sys_clk) begin : recv_data_in
       recv_buffer_we <= 0;
       
       if (~reset_n) begin
@@ -37,7 +36,7 @@ module uart (
    
    reg[1:0] rd_state = RD_IDLE;
    
-   always @ (posedge clk50) begin : recv_data_out
+   always @ (posedge sys_clk) begin : recv_data_out
       if (~reset_n) begin
          rd_state = RD_IDLE;
          recv_buffer_addr_out <= 0;
@@ -64,18 +63,20 @@ module uart (
    wire uart_rx_done;
 
    uart_rx_path uart_rx_path_u (
-         .clk_i(clk50), 
+         .clk_i(sys_clk),
+         .reset_n(reset_n),
          .uart_rx_i(uart_rx), 
          .uart_rx_data_o(uart_rx_data_o), 
          .uart_rx_done(uart_rx_done)
       );
 
    uart_tx_path uart_tx_path_u (
-         .clk_i(clk50), 
+         .clk_i(sys_clk),
+         .reset_n(reset_n),
          .uart_tx_data_i(wr_data), 
-         .uart_tx_en_i(uart_wr_en), 
+         .uart_tx_en_i(wr_en), 
          .uart_tx_o(uart_tx),
-         .busy(uart_wr_busy)
+         .busy(wr_busy)
       );
    
    reg[8:0]  recv_buffer_addr_wr;
@@ -93,23 +94,8 @@ module uart (
          .q (rd_data),
          .wraddress (recv_buffer_addr_wr),
          .wren (recv_buffer_we),
-         .wrclock (clk50),
+         .wrclock (sys_clk),
          .data (recv_buffer_data_wr)
       );
    
-   wire uart_wr_en;
-   crossclock_signal send_signal (
-      .dst_clk(clk50),
-      .src_req(wr_en),
-      .signal(uart_wr_en)
-   );
-      
-   wire uart_wr_busy;
-   crossclock_signal send_busy (
-         .dst_clk(sys_clk),
-         .src_req(uart_wr_busy),
-         .signal(wr_busy)
-   );
-   
-
 endmodule

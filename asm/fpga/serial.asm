@@ -34,7 +34,7 @@ get_byte:
 .endp
 
 .proc serial_read_block
-   lda #1
+   lda #65
    sta SYS_SERIAL_OUT
    
    ldx #0
