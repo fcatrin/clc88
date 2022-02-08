@@ -44,18 +44,15 @@ void tty_close() {
 }
 
 int tty_receive(uint8_t* buffer, uint16_t size) {
-	LOGV(LOGTAG, "wait for %d bytes", size);
 	while(running) {
+		LOGV(LOGTAG, "wait for %d bytes", size);
 		int n = read(tty, buffer, size);
-		printf("%d bytes\n", n);
-		if (n < 0) {
-			if (errno != EAGAIN) LOGE(LOGTAG, "cannot read %s", strerror(errno));
-		} else if (n == 0) {
-			usleep(100);
-		} else {
+		if (n > 0) {
 			LOGV(LOGTAG, "received %d bytes", n);
 			return n;
 		}
+
+		if (n < 0 && errno != EAGAIN) LOGE(LOGTAG, "cannot read %s", strerror(errno));
 		usleep(1000000);
 	}
 	LOGV(LOGTAG, "closing receive channel");
@@ -65,11 +62,15 @@ int tty_receive(uint8_t* buffer, uint16_t size) {
 static void wait_for_other_end() {
 	int n;
 	do {
+		LOGV(LOGTAG, "wait_for_other_end");
 		int err = ioctl(tty, FIONREAD, &n);
 		if (err < 0) {
 			LOGE(LOGTAG, "ioctl failed %s", strerror(errno));
 		}
-		usleep(100);
+		if (n!=0) {
+			if (n > 0) LOGV(LOGTAG, "There are still %d bytes on the input", n);
+			usleep(1000000);
+		}
 	} while (n != 0);
 }
 
@@ -78,6 +79,7 @@ void tty_send(uint8_t *buffer, uint16_t size) {
 
 	LOGV(LOGTAG, "%s", hex_dump(buffer, size));
 	write(tty, buffer, size);
+	LOGV(LOGTAG, "sent %d bytes", size);
 	wait_for_other_end();
 }
 
