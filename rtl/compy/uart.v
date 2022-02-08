@@ -47,7 +47,8 @@ module uart (
          RD_IDLE: begin
             rd_rdy <= 0;
             if (rd_req) begin
-               recv_buffer_addr_rd <= recv_buffer_addr_out;
+               recv_buffer_addr_rd  <= recv_buffer_addr_out;
+               recv_buffer_addr_out <= recv_buffer_addr_out + 1'b1;
                rd_state <= RD_WAIT;
             end
          end
