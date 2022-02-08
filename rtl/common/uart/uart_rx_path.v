@@ -10,10 +10,10 @@ module uart_rx_path(
 	output baud_bps_tb			//for simulation
     );
     
-parameter [12:0] BAUD_DIV     = 13'd10416;  // 100Mhz/9600   = 10416
-parameter [12:0] BAUD_DIV_CAP = 13'd5208;   // 100Mhz/9600/2 = 5208
+parameter [13:0] BAUD_DIV     = 14'd10416;  // 100Mhz/9600   = 10416
+parameter [13:0] BAUD_DIV_CAP = 14'd5208;   // 100Mhz/9600/2 = 5208
 
-reg [12:0] baud_div=0;
+reg [13:0] baud_div=0;
 reg baud_bps=0;
 reg bps_start=0;
 always@(posedge clk_i)
