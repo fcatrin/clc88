@@ -200,7 +200,10 @@ module system (
                7'h06 : sys_rd_data <= {6'b0, sys_timer_enable[sys_timer_index]};
                7'h07 : sys_rd_data <= sys_timer_irq_all;
                7'h08 : sys_rd_data <= {6'b0, uart_wr_busy, uart_rd_avail};
-               7'h09 : sys_rd_data <= uart_rd_data;
+               7'h09 : begin
+                  uart_rd_req <= cpu_rd_req_rising;
+                  sys_rd_data <= uart_rd_data;
+               end
             endcase
          end
       end
