@@ -14,6 +14,9 @@ module uart_tx_path(
 parameter BAUD_DIV     = 14'd10416;     // 100Mhz/9600   = 10416
 parameter BAUD_DIV_CAP = 14'd5208;      // 100Mhz/9600/2 = 5208
 
+// parameter BAUD_DIV     = 14'd16;     // 100Mhz/9600   = 10416
+// parameter BAUD_DIV_CAP = 14'd8;      // 100Mhz/9600/2 = 5208
+
 reg [13:0] baud_div  = 0;
 reg        baud_bps  = 0;
 reg [9:0]  send_data = 10'b1111111111;  // 1bit + 8bit +1bit
