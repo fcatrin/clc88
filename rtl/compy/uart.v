@@ -7,7 +7,7 @@ module uart (
       output uart_tx,
       output       rd_avail,
       input        rd_req,
-      output reg   rd_rdy,
+      output reg   rd_wait,
       output [7:0] rd_data,
       
       input  [7:0] wr_data,
@@ -40,24 +40,24 @@ module uart (
       if (~reset_n) begin
          rd_state = RD_IDLE;
          recv_buffer_addr_out <= 0;
-         rd_rdy <= 0;
-      end
-      
-      case(rd_state) 
-         RD_IDLE: begin
-            rd_rdy <= 0;
-            if (rd_req) begin
-               recv_buffer_addr_rd  <= recv_buffer_addr_out;
-               recv_buffer_addr_out <= recv_buffer_addr_out + 1'b1;
-               rd_state <= RD_WAIT;
+         rd_wait <= 0;
+      end else begin
+         case(rd_state) 
+            RD_IDLE: begin
+               if (rd_req) begin
+                  recv_buffer_addr_rd  <= recv_buffer_addr_out;
+                  recv_buffer_addr_out <= recv_buffer_addr_out + 1'b1;
+                  rd_state <= RD_WAIT;
+                  rd_wait <= 1;
+               end
             end
-         end
-         RD_WAIT: rd_state <= RD_DONE;
-         RD_DONE: begin
-            rd_rdy <= 1;
-            rd_state <= RD_IDLE;
-         end
-      endcase
+            RD_WAIT: rd_state <= RD_DONE;
+            RD_DONE: begin
+               rd_wait  <= 0;
+               rd_state <= RD_IDLE;
+            end
+         endcase
+      end
    end
    
    wire [7:0] uart_rx_data_o;
