@@ -71,8 +71,13 @@ module system (
          end else case (bus_state)
             BUS_IDLE: 
                bus_state <= bus_state;
-            BUS_READ:
-               bus_state <= BUS_IDLE;
+            BUS_READ: begin
+               cpu_ready <= 0;
+               if (!uart_rd_req && !uart_rd_wait) begin
+                  cpu_ready  <= 1;   
+                  bus_state  <= BUS_IDLE;
+               end
+            end
          endcase
       end
    end
@@ -372,7 +377,7 @@ module system (
    );
 
    reg       uart_rd_req = 0;
-   wire      uart_rd_rdy;
+   wire      uart_rd_wait;
    wire[7:0] uart_rd_data;
    wire      uart_rd_avail;
    
@@ -387,7 +392,7 @@ module system (
          .uart_tx(uart_tx),
          .rd_avail(uart_rd_avail),
          .rd_req(uart_rd_req),
-         .rd_rdy(uart_rd_rdy),
+         .rd_wait(uart_rd_wait),
          .rd_data(uart_rd_data),
          .wr_data(uart_wr_data),
          .wr_en(uart_wr_en),
