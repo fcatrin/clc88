@@ -44,8 +44,8 @@ void tty_close() {
 }
 
 int tty_receive(uint8_t* buffer, uint16_t size) {
+	LOGV(LOGTAG, "wait for %d bytes", size);
 	while(running) {
-		LOGV(LOGTAG, "wait for %d bytes", size);
 		int n = read(tty, buffer, size);
 		if (n > 0) {
 			LOGV(LOGTAG, "received %d bytes", n);
@@ -53,7 +53,7 @@ int tty_receive(uint8_t* buffer, uint16_t size) {
 		}
 
 		if (n < 0 && errno != EAGAIN) LOGE(LOGTAG, "cannot read %s", strerror(errno));
-		usleep(1000000);
+		usleep(100);
 	}
 	LOGV(LOGTAG, "closing receive channel");
 	return 0;
@@ -83,6 +83,7 @@ void tty_send(uint8_t *buffer, uint16_t size) {
 	wait_for_other_end();
 }
 
+// serial setup routine from https://gist.github.com/wdalmut/7480422
 int set_interface_attribs (int fd, int speed, int parity) {
 	struct termios tty;
 	memset (&tty, 0, sizeof tty);
