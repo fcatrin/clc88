@@ -101,7 +101,7 @@ palette_dark:
    .word $43B5
 
 test_string:
-   .byte 'This is Compy CLC-88 testing xxVRAM port access and attributes! '
+   .byte 'This is Compy CLC-88 testing VRAM port access and attributes! '
    .byte $F0, $02
    .byte 'Now in color'
    .byte $F0, $01
