@@ -1,26 +1,30 @@
+   icl '../symbols.asm'
+
+CHARSET_SIZE      = $0400
+VRAM_ADDR_CHARSET = 0
+VRAM_ADDR_SCREEN  = VRAM_ADDR_CHARSET + CHARSET_SIZE
 
 COLS = 80
 ROWS = 30
 
 THIS_SCREEN_SIZE = COLS*ROWS
 
-FONT_ROM_ADDR = $e000
 BORDER_COLOR = $2167
 DLIST_ADDR = $0200
 
 text_location = $0400
 attr_location = text_location + THIS_SCREEN_SIZE/2 
    
-   org $f000
+   org USERADDR
    
-demo:   
+start:   
    mwa #palette_dark SRC_ADDR
    jsr gfx_upload_palette
 
    mwa #BORDER_COLOR VBORDER
    
    mwa #$0000 VADDRW
-   mwa #FONT_ROM_ADDR SRC_ADDR
+   mwa #font SRC_ADDR
    jsr gfx_upload_font
 
    mwa #dlist_addr VDLIST   
@@ -97,7 +101,7 @@ palette_dark:
    .word $43B5
 
 test_string:
-   .byte 'This is Compy CLC-88 testing VRAM port access and attributes! '
+   .byte 'This is Compy CLC-88 testing xxVRAM port access and attributes! '
    .byte $F0, $02
    .byte 'Now in color'
    .byte $F0, $01
@@ -120,6 +124,9 @@ test_string:
    icl '../text.asm'
    icl '../stdlib.asm'
    
-   org FONT_ROM_ADDR
+font:
    ins '../../../res/fonts/charset_topaz_a500.bin'
+   
+   org EXECADDR
+   .word start 
    
