@@ -1,4 +1,6 @@
 .proc serial_init
+   lda #66
+   sta ROS7
    lda #$ff
    sta SERIAL_BLOCK_NDX
    lda #$00
@@ -34,13 +36,20 @@ get_byte:
 .endp
 
 .proc serial_read_block
-   lda #65
+   lda ROS7
+   inc ROS7
+   cmp #75
+   bne no_reset_out_flag
+   lda #66
+   sta ROS7
+no_reset_out_flag   
    sta SYS_SERIAL_OUT
    
    ldx #0
    
 wait:
    lda SYS_SERIAL_READY
+   and #1
    beq wait
    
    lda SYS_SERIAL_IN
