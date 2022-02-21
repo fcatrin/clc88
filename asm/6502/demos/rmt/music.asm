@@ -1,4 +1,4 @@
-	icl '../../os/symbols.asm'
+	icl '../../os/include/symbols.asm'
 
 ;
 ; MUSIC init & play
@@ -107,6 +107,6 @@ tabpp  dta 156,78,52,39			;line counter spacing table for instrument speed from 
 ;
 	run start					;run addr
 
-   icl '../../os/stdlib.asm'
+   icl '../../os/libs/stdlib.asm'
 ;
 ;that's all... ;-)

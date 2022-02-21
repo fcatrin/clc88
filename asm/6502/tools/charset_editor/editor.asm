@@ -1,4 +1,4 @@
-   icl '../../os/symbols.asm'
+   icl '../../os/include/symbols.asm'
 	
 CHARSET_EDIT = $4000	
 
@@ -255,4 +255,4 @@ block_chars:
    icl 'charpix_nav.asm'
    icl 'charset_nav.asm'
    icl 'textarea_nav.asm'
-   icl '../../os/stdlib.asm'
+   icl '../../os/libs/stdlib.asm'

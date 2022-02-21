@@ -1,4 +1,4 @@
-   icl '../os/symbols.asm'
+   icl '../os/include/symbols.asm'
 
 POS_BASE = 22*80+9
 POS_CAPS  = POS_BASE
@@ -556,5 +556,5 @@ key_ctrl:
 key_alt:
 	.byte 'alt', 0
 
-   icl '../os/keyboard.asm'
-   icl '../os/stdlib.asm'
+   icl '../os/libs/keyboard.asm'
+   icl '../os/libs/stdlib.asm'

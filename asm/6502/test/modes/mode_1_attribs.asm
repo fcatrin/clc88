@@ -1,4 +1,4 @@
-   icl '../../os/symbols.asm'
+   icl '../../os/include/symbols.asm'
    
    org BOOTADDR
 
@@ -63,4 +63,4 @@ attribs:
 .endr
    .byte $00
 
-   icl '../../os/stdlib.asm'
+   icl '../../os/libs/stdlib.asm'

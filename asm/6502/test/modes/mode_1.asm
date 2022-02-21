@@ -1,4 +1,4 @@
-   icl '../../os/symbols.asm'
+   icl '../../os/include/symbols.asm'
    
    org BOOTADDR
 
@@ -58,4 +58,4 @@ vblank:
 message:
    .by "Hello world!!!!", 96, 255
 
-   icl '../../os/stdlib.asm'
+   icl '../../os/libs/stdlib.asm'

@@ -1,4 +1,4 @@
-	icl '../../os/symbols.asm'
+	icl '../../os/include/symbols.asm'
 	
 	org BOOTADDR
 	
@@ -50,4 +50,4 @@ message:
 	.byte $22, $22, $33, $33
    .byte $64, $e6, $6e, $46
 
-   icl '../../os/stdlib.asm'
+   icl '../../os/libs/stdlib.asm'

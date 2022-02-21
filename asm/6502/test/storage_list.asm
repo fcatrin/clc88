@@ -1,4 +1,4 @@
-	icl '../os/symbols.asm'
+	icl '../os/include/symbols.asm'
 
 ; this test is a direct read from storage, without BIOS support
 	
@@ -116,4 +116,4 @@ dirname:
 message_not_found:
    .by "Cannot open dir: ", 0   
 	
-   icl '../os/stdlib.asm'
+   icl '../os/libs/stdlib.asm'

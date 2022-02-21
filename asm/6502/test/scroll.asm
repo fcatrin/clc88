@@ -1,4 +1,4 @@
-	icl '../os/symbols.asm'
+	icl '../os/include/symbols.asm'
 	
 	org BOOTADDR
 	
@@ -125,7 +125,7 @@ set_chars:
 message:
 	.by "Hello world!! This is Chroni!", 255
    
-   icl '../os/stdlib.asm'   
+   icl '../os/libs/stdlib.asm'
 
    org $C000
 sprite_0:

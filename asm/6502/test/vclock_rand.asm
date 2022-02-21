@@ -1,4 +1,4 @@
-   icl '../os/symbols.asm'
+   icl '../os/include/symbols.asm'
    
    org BOOTADDR
    
@@ -43,4 +43,4 @@ wait:
    beq wait
    jmp next_frame
    
-   icl '../os/stdlib.asm'
+   icl '../os/libs/stdlib.asm'

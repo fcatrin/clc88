@@ -1,4 +1,4 @@
-   icl '../os/symbols.asm'
+   icl '../os/include/symbols.asm'
 
 block_start   = $C8 ; ROS0
 block_end     = $CA ; ROS2

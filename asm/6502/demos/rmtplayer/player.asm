@@ -1,4 +1,4 @@
-	icl '../../os/symbols.asm'
+	icl '../../os/include/symbols.asm'
 
 ;
 ; MUSIC init & play
@@ -338,4 +338,4 @@ custom_subpal
    
    icl 'files.asm'
    icl 'loader.asm'
-   icl '../../os/stdlib.asm'
+   icl '../../os/libs/stdlib.asm'
