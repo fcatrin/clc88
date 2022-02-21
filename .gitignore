@@ -3,3 +3,7 @@
 .vscode
 *.bak
 .idea
+*.lst
+*.xex
+*.lab
+clc88

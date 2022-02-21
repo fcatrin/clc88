@@ -13,7 +13,7 @@ DEFS += -DTRACE_TIME
 # DEFS += -DTRACE_STORAGE
 # DEFS += -DTRACE_KEYB
 # DEFS += -DTRACE_KEYB_IN
-DEFS += -DTRACE_SERIAL
+# DEFS += -DTRACE_SERIAL
 # DEFS += -DTRACE_SYSTEM
 # DEFS += -DDUMP_AUDIO
 
@@ -67,7 +67,7 @@ OBJS = $(addprefix $(OBJDIR)/, \
 
 ASMDIR= ../asm
 XEX = $(addprefix $(ASMDIR)/, \
-	6502/os/6502os.xex \
+	6502/os/rom.xex \
 	6502/test/modes/mode_0_attribs.xex \
 	6502/test/modes/mode_0.xex \
 	6502/test/modes/mode_1_attribs.xex \
@@ -119,11 +119,11 @@ $(OBJDIR)/%.o: %.c
 	@mkdir -p $(dir $@) 2> /dev/null 
 	$(CC) -c -o $@ $(DEFS) -I. $(CFLAGS) $<
 
-$(ASMDIR)/%.xex: $(ASMDIR)/%.asm $(ASMDIR)/6502/os/symbols.asm $(ASMDIR)/6502/os/stdlib.asm
+$(ASMDIR)/%.xex: $(ASMDIR)/%.asm $(ASMDIR)/6502/os/include/symbols.asm $(ASMDIR)/6502/os/libs/stdlib.asm
 	mads $< -l -s -o:$@
 	
-$(ASMDIR)/6502/os/6502os.xex : $(ASMDIR)/6502/os/graphics.asm $(ASMDIR)/6502/os/storage.asm 	
-$(ASMDIR)/6502/test/memopad.xex: $(ASMDIR)/6502/os/keyboard.asm
+$(ASMDIR)/6502/os/rom.xex : $(ASMDIR)/6502/os/graphics.asm $(ASMDIR)/6502/os/storage.asm
+$(ASMDIR)/6502/test/memopad.xex: $(ASMDIR)/6502/os/libs/keyboard.asm
 $(ASMDIR)/6502/demos/rmt/music.xex: $(ASMDIR)/6502/demos/rmt/rmtplayr.asm
 $(ASMDIR)/6502/demos/rmtplayer/player.xex: $(ASMDIR)/6502/demos/rmtplayer/files.asm $(ASMDIR)/6502/demos/rmtplayer/loader.asm
 $(ASMDIR)/6502/tools/charset_editor/editor.xex: $(ASMDIR)/6502/tools/charset_editor/charset_nav.asm  $(ASMDIR)/6502/tools/charset_editor/charpix_nav.asm

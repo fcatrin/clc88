@@ -41,6 +41,7 @@ get_byte:
    
 wait:
    lda SYS_SERIAL_READY
+   and #1
    beq wait
    
    lda SYS_SERIAL_IN
