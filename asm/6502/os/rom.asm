@@ -39,14 +39,30 @@ boot:
 	lda #0
 	jsr gfx_set_video_mode
 
+//  Check if XEX is embedded in ROM (0xE000)
     lda EMBEDDED_XEX_START
     and EMBEDDED_XEX_START+1
     cmp #255
-    bne run_embedded_boot_code
-    jsr run_embedded_xex
+    bne run_embedded_user_code
+    jmp run_embedded_xex
 
+//  Check if XEX is embedded in RAM
+run_embedded_user_code:
+    lda EXECADDR
+    ora EXECADDR+1
+    beq run_embedded_boot_code
+    jmp (EXECADDR)
+
+//  Run boot code embedded in RAM
 run_embedded_boot_code:
+    lda BOOTADDR
+    ora BOOTADDR+1
+    beq rom_halt
 	jmp BOOTADDR
+
+//  Nothing to be run, just halt here
+rom_halt:
+    jmp rom_halt
 
 os_vector_table
 	.word gfx_set_video_mode
