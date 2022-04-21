@@ -6,7 +6,9 @@
 	.word nmi
 	.word boot
 	.word irq
-   
+
+EMBEDDED_XEX_START = $e000
+
 	org OS_CALL
 init:
 	pha
@@ -37,6 +39,13 @@ boot:
 	lda #0
 	jsr gfx_set_video_mode
 
+    lda EMBEDDED_XEX_START
+    and EMBEDDED_XEX_START+1
+    cmp #255
+    bne run_embedded_boot_code
+    jsr run_embedded_xex
+
+run_embedded_boot_code:
 	jmp BOOTADDR
 
 os_vector_table
@@ -66,6 +75,7 @@ os_vector_table
     icl 'keyboard.asm'
     icl 'text.asm'
     icl 'ram_vram.asm'
+    icl 'libs/embedded_xex_loader.asm'
 
 palette:
     icl 'data/palette_atari_ntsc.asm'

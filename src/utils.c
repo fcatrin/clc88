@@ -13,8 +13,10 @@
 #include "trace.h"
 #include "utils.h"
 
+#define MAX_MEM 0x10000
+
 void utils_load_xex(char *filename) {
-	UINT8 buffer[0x10000];
+	UINT8 buffer[MAX_MEM];
 
 	FILE *f = fopen(filename, "rb");
 	if (!f) {
@@ -22,8 +24,7 @@ void utils_load_xex(char *filename) {
 		return;
 	}
 
-	int n=0;
-	while((n = fread(buffer, 2, 1, f))) {
+	while (fread(buffer, 2, 1, f)) {
 		if (buffer[0] & (buffer[1] == 0xFF)) {
 			LOGV(LOGTAG, "skipping header");
 			continue;
@@ -39,6 +40,27 @@ void utils_load_xex(char *filename) {
 
 	fclose(f);
 }
+
+void utils_load_bin(char *filename, UINT16 addr) {
+	UINT8 buffer[MAX_MEM];
+
+	FILE *f = fopen(filename, "rb");
+	if (!f) {
+		LOGE(LOGTAG, "Error opening %s: %s", filename, strerror(errno));
+		return;
+	}
+
+	// read as much as possible without surpassing buffer size
+	int n = fread(buffer, 1, MAX_MEM, f);
+
+	// restrict size to available space
+	if (addr + n > MAX_MEM) n = MAX_MEM - addr;
+
+	bus_write(addr, buffer, n);
+
+	fclose(f);
+}
+
 
 void utils_dump_mem(UINT16 offset, UINT16 size) {
 	UINT16 address = offset & 0xFFF0;

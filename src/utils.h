@@ -4,6 +4,7 @@
 #include <sys/stat.h>
 
 void utils_load_xex(char *filename);
+void utils_load_bin(char *filename, UINT16 addr);
 void utils_dump_mem(UINT16 offset, UINT16 size);
 
 char *utils_str2lower(const char *src);

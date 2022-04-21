@@ -1,6 +1,6 @@
 	icl '../../os/include/symbols.asm'
 	
-	org USERADDR
+	org BOOTADDR
 
 start:
    lda #1
