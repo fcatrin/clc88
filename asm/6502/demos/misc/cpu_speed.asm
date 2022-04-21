@@ -1,27 +1,23 @@
+   icl '../../os/include/symbols.asm'
 
 COLS = 80
 ROWS = 30
 
 THIS_SCREEN_SIZE = COLS*ROWS
 
-FONT_ROM_ADDR = $e000
 BORDER_COLOR = $2167
 DLIST_ADDR = $0200
 
 text_location = $0400
 attr_location = text_location + THIS_SCREEN_SIZE/2 
    
-   org $f000
+   org USERADDR
    
 demo:   
    mwa #palette_dark SRC_ADDR
    jsr gfx_upload_palette
 
    mwa #BORDER_COLOR VBORDER
-   
-   mwa #$0000 VADDRW
-   mwa #FONT_ROM_ADDR SRC_ADDR
-   jsr gfx_upload_font
 
    mwa #dlist_addr VDLIST   
    mwa #dlist_addr VADDRW
@@ -122,10 +118,10 @@ test_string:
    .byte $F0, $01
    .byte 'and back to normal', 0
    
-   icl '../graphics.asm'
-   icl '../text.asm'
-   icl '../stdlib.asm'
+   icl '../../os/graphics.asm'
+   icl '../../os/ram_vram.asm'
+   icl '../../os/text.asm'
+   icl '../../os/libs/stdlib.asm'
    
-   org FONT_ROM_ADDR
-   ins '../../../res/fonts/charset_atari.bin'
-   
+    org EXECADDR
+    .word demo
