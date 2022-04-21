@@ -20,17 +20,18 @@ static void load(FILE *f, int addr, int size, int dups) {
 }
 
 static void load_bin(char *filename, int addr, int dups) {
+	printf("Convert font %s -> ", filename);
 	FILE *f = fopen(filename, "rb");
 	if (!f) {
 		fprintf(stderr, "Error opening %s: %s\n", filename, strerror(errno));
 		return;
 	}
-	printf("Load bin %s at %04X\n", filename, addr);
 	load(f, addr, MEM_SIZE, dups);
 	fclose(f);
 }
 
 static void save_bin(char *filename, int base_addr) {
+    printf("%s\n", filename);
 	FILE *f = fopen(filename, "wb");
 	fwrite(&rom[base_addr], 1, 0x400, f);
 	fclose(f);
