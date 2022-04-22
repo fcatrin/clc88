@@ -87,6 +87,7 @@ XEX = $(addprefix $(ASMDIR)/, \
 	6502/demos/rmtplayer/player.xex \
 	6502/demos/misc/cpu_speed.xex \
 	6502/demos/misc/text_mode_attrib.xex \
+	6502/demos/misc/video_modes.xex \
 	6502/tools/charset_editor/editor.xex \
 	6502/tools/xex_loader.xex \
 	)
