@@ -1,8 +1,4 @@
-   icl '../symbols.asm'
-
-CHARSET_SIZE      = $0400
-VRAM_ADDR_CHARSET = 0
-VRAM_ADDR_SCREEN  = VRAM_ADDR_CHARSET + CHARSET_SIZE
+   icl '../../os/include/symbols.asm'
 
 COLS = 80
 ROWS = 30
@@ -22,10 +18,6 @@ start:
    jsr gfx_upload_palette
 
    mwa #BORDER_COLOR VBORDER
-   
-   mwa #$0000 VADDRW
-   mwa #font SRC_ADDR
-   jsr gfx_upload_font
 
    mwa #dlist_addr VDLIST   
    mwa #dlist_addr VADDRW
@@ -120,12 +112,10 @@ test_string:
    .byte $F0, $01
    .byte 'and back to normal. Font by Ascrnet.', 0
    
-   icl '../graphics.asm'
-   icl '../text.asm'
-   icl '../stdlib.asm'
-   
-font:
-   ins '../../../res/fonts/charset_topaz_a500.bin'
+   icl '../../os/graphics.asm'
+   icl '../../os/ram_vram.asm'
+   icl '../../os/text.asm'
+   icl '../../os/libs/stdlib.asm'
    
    org EXECADDR
    .word start 
