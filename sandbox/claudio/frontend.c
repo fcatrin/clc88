@@ -6,6 +6,12 @@
 #include "main.h"
 #include "sound.h"
 
+#define LOGTAG "FRONTEND"
+#ifdef TRACE_FRONTEND
+#define TRACE
+#endif
+#include "trace.h"
+
 static SDL_Window *window;
 static SDL_Renderer *renderer;
 static int closed;
@@ -191,21 +197,26 @@ void frontend_trace_err(char *tag, ...) {
 }
 
 int main(int argc, char *argv[]) {
+    LOGV(LOGTAG, "init");
 	if (frontend_init(argc, argv)) return 1;
 	main_init(argc, argv);
 
 	emulator_thread = SDL_CreateThread(runEmulatorThread, "EmuThread", (void *)NULL);
 
+    LOGV(LOGTAG, "main loop start");
 	while (frontend_running()) {
+        LOGV(LOGTAG, "main loop run");
 		if (buffer_post>=0) {
 			buffer_post = -1;
 		} else {
 			SDL_Delay(2);
 		}
+		LOGV(LOGTAG, "main loop process events");
 		frontend_process_events();
+		LOGV(LOGTAG, "main loop update audio stream");
 		frontend_update_audio_stream();
 	}
-
+    LOGV(LOGTAG, "main loop end");
 	frontend_done();
 	return 0;
 }

@@ -2,6 +2,7 @@ CC = gcc
 
 DEFS = -DHAVE_CONFIG_H -DINLINE=inline
 # DEFS += -DTRACE_MAIN
+# DEFS += -DTRACE_FRONTEND
 # DEFS += -DDUMP_AUDIO
 
 LIBS = -lm -lz -lpthread
