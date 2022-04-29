@@ -3,12 +3,12 @@
 #include "emu.h"
 #include "claudio.h"
 
-#define SIN_SIZE 8192
+#define SIN_SIZE 1024
 
 typedef struct {
-    UINT16 period;
-    float phase;
-    float step;
+    double period;
+    double phase;
+    double step;
 } oscillator;
 
 oscillator oscillators[2];
@@ -25,8 +25,9 @@ void claudio_sound_init(UINT16 freq) {
     // just for testing
     oscillator *voice = &oscillators[0];
     voice->phase  = 0;
-    voice->period = freq / 220.0;
-    voice->step   = SIN_SIZE / voice->period;
+    voice->period = (double)freq / 440.0;
+    voice->step   = (double)SIN_SIZE / voice->period;
+    printf("step: %f period: %f\n", voice->step, voice->period);
 }
 
 void claudio_write(UINT16 reg, UINT8 val) {
