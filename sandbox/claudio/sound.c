@@ -2,14 +2,7 @@
 #include "emu.h"
 #include "sound/claudio.h"
 
-/*
- * Consider that the sound registers can be changed X times per frame
- * 5 times per frame allows to use a stable buffer using 44100 sampling rate
- *
- * 44100 / 60 frames -> 735 samples per frame -> 147 samples per 1/5 frames
- */
-
-#define CLAUDIO_BUFFER_SIZE 44100
+#define CLAUDIO_BUFFER_SIZE 735*2
 #define SOUND_BUFFER_SIZE (CLAUDIO_BUFFER_SIZE*20)
 
 INT16 claudio_buffer[CLAUDIO_BUFFER_SIZE];
@@ -17,8 +10,9 @@ INT16 sound_buffer_0[SOUND_BUFFER_SIZE];
 INT16 sound_buffer_1[SOUND_BUFFER_SIZE];
 
 INT16 *sound_buffers[] = {sound_buffer_0, sound_buffer_1};
-unsigned buffer_write_index[2];
+bool sound_buffer_full[] = {0, 0};
 
+unsigned buffer_write_index[2];
 unsigned active_sound_buffer = 0;
 
 float samples_to_process;
@@ -33,14 +27,13 @@ void sound_register_write(UINT16 addr, UINT8 val) {
 	claudio_write(reg, val);
 }
 
-static bool updating_buffer = FALSE;
 void sound_process(float samples) {
 	samples_to_process += samples * 2;
 	if (samples_to_process < CLAUDIO_BUFFER_SIZE) return;
 
 	samples_to_process -= CLAUDIO_BUFFER_SIZE;
 
-	while (updating_buffer);
+	while (sound_buffer_full[active_sound_buffer]);
 
 	claudio_process (claudio_buffer, CLAUDIO_BUFFER_SIZE);
 
@@ -55,18 +48,21 @@ void sound_process(float samples) {
 	}
 
 	buffer_write_index[active_sound_buffer] = claudio_write_index;
+	sound_buffer_full[active_sound_buffer] = claudio_write_index >= SOUND_BUFFER_SIZE;
 }
 
 void sound_fill_buffer(INT16 **buffer, unsigned *size) {
-	updating_buffer = TRUE;
+    if (!sound_buffer_full[active_sound_buffer]) return;
+
 	int current_sound_buffer = active_sound_buffer;
-	active_sound_buffer = 1 - active_sound_buffer;
 
 	*buffer = sound_buffers[current_sound_buffer];
 	*size   = buffer_write_index[current_sound_buffer];
 
-	buffer_write_index[current_sound_buffer] = 0;
-	updating_buffer = FALSE;
+    int second_buffer = 1 - active_sound_buffer;
+    buffer_write_index[second_buffer] = 0;
+	sound_buffer_full[second_buffer] = FALSE;
+	active_sound_buffer = second_buffer;
 }
 
 void sound_done() {

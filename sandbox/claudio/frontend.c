@@ -60,9 +60,10 @@ void frontend_stop_audio_stream() {
 
 void frontend_update_audio_stream() {
 	UINT16 *buffer;
-	unsigned size;
+	unsigned size = 0;
 
 	sound_fill_buffer(&buffer, &size);
+	if (size == 0) return;
 
 #ifdef DUMP_AUDIO
 	fwrite(buffer, size*2, 1, sdebug);
