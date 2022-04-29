@@ -2,19 +2,16 @@
 #include <unistd.h>
 #include <stdarg.h>
 #include <time.h>
+#include "emu.h"
 #include "main.h"
 #include "sound.h"
 
 static SDL_Window *window;
 static SDL_Renderer *renderer;
-static int screen_width;
-static int screen_height;
-static int screen_data_size;
 static int closed;
 
 #define MAX_BUFFERS 3
 
-static void *screen_buffers[MAX_BUFFERS];
 static int buffer_next = 0;
 static int buffer_post = -1;
 
@@ -74,6 +71,20 @@ void frontend_sleep(int seconds) {
 	sleep(seconds);
 }
 
+/* This is called from the emulator thread */
+void frontend_update_screen(void *pixels) {
+	while (buffer_next == buffer_post) {
+		SDL_Delay(2);
+	}
+	// memcpy(screen_buffers[buffer_next], pixels, screen_data_size);
+	while (buffer_post>=0) {
+		SDL_Delay(2);
+	}
+	buffer_post = buffer_next;
+	buffer_next++;
+	if (buffer_next == MAX_BUFFERS) buffer_next = 0;
+}
+
 void frontend_process_events() {
 	SDL_Event event;
 	while (SDL_PollEvent(&event)) {
@@ -83,6 +94,7 @@ void frontend_process_events() {
 				closed = 1;
 			}
 			break;
+        }
 	}
 }
 
@@ -127,7 +139,6 @@ void frontend_done() {
 	SDL_DestroyWindow(window);
 	SDL_Quit();
 
-	keyb_done();
 	frontend_stop_audio_stream();
 }
 
@@ -137,7 +148,7 @@ int frontend_running() {
 
 static int runEmulatorThread(void *ptr){
     while (frontend_running()) {
-    	claudio_run();
+    	main_run();
     }
     return 0;
 }
@@ -181,13 +192,12 @@ void frontend_trace_err(char *tag, ...) {
 
 int main(int argc, char *argv[]) {
 	if (frontend_init(argc, argv)) return 1;
-	claudio_init(argc, argv);
+	main_init(argc, argv);
 
-	emulator_thread = SDL_CreateThread(runEmulatorThread, "CompyThread", (void *)NULL);
+	emulator_thread = SDL_CreateThread(runEmulatorThread, "EmuThread", (void *)NULL);
 
 	while (frontend_running()) {
 		if (buffer_post>=0) {
-			update_screen(screen_buffers[buffer_post]);
 			buffer_post = -1;
 		} else {
 			SDL_Delay(2);
@@ -197,5 +207,6 @@ int main(int argc, char *argv[]) {
 	}
 
 	frontend_done();
+	return 0;
 }
 

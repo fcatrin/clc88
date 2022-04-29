@@ -1,5 +1,5 @@
-/obj/
-/Debug/
+obj/
+Debug/
 .vscode
 *.bak
 .idea

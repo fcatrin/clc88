@@ -28,9 +28,9 @@ void sound_init() {
 	samples_to_process = 0;
 }
 
-void sound_register_write(uint16 addr, uint8 val) {
+void sound_register_write(UINT16 addr, UINT8 val) {
 	unsigned reg  = addr & 0x0F;
-	claudio_update_sound(reg, val);
+	claudio_write(reg, val);
 }
 
 static bool updating_buffer = FALSE;
@@ -47,8 +47,8 @@ void sound_process(float samples) {
 	INT16 *sound_buffer = sound_buffers[active_sound_buffer];
 	unsigned claudio_write_index = buffer_write_index[active_sound_buffer];
 	for(unsigned i=0; i<CLAUDIO_BUFFER_SIZE && claudio_write_index < SOUND_BUFFER_SIZE; i+=2) {
-		int16 claudio_l = claudio_buffer[i+0];
-		int16 claudio_r = claudio_buffer[i+1];
+		INT16 claudio_l = claudio_buffer[i+0];
+		INT16 claudio_r = claudio_buffer[i+1];
 
 		sound_buffer[claudio_write_index++] = claudio_l;
 		sound_buffer[claudio_write_index++] = claudio_r;

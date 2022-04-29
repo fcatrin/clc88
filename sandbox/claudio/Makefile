@@ -17,8 +17,10 @@ OBJDIR= ../obj
 
 OBJS = $(addprefix $(OBJDIR)/, \
 	main.o \
-	frontend.o \
 	sound.o \
+	screen.o \
+	trace.o \
+	frontend.o \
 	sound/claudio.o \
 	)
 

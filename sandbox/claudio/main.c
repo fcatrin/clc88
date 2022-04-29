@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "emu.h"
-#include "utils.h"
 #include "sound.h"
 
 #define LOGTAG "MAIN"
@@ -16,6 +15,7 @@ void main_init(int argc, char *argv[]) {
 }
 
 void main_run_frame() {
+    int samples_per_frame = 44100.0 / 60;
     sound_process(samples_per_frame);
 }
 
