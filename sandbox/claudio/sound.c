@@ -9,7 +9,7 @@
  * 44100 / 60 frames -> 735 samples per frame -> 147 samples per 1/5 frames
  */
 
-#define CLAUDIO_BUFFER_SIZE 147*2
+#define CLAUDIO_BUFFER_SIZE 44100
 #define SOUND_BUFFER_SIZE (CLAUDIO_BUFFER_SIZE*20)
 
 INT16 claudio_buffer[CLAUDIO_BUFFER_SIZE];

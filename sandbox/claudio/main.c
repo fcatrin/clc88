@@ -23,6 +23,7 @@ void main_run_frame() {
 
 void main_run() {
 	main_run_frame();
+	screen_update();
 }
 
 void main_done() {
