@@ -48,20 +48,29 @@
 
 #define CLK 1785714
 #define WAVE_SIZE 2048
+#define VOICES 9
+#define OPERATORS 4
 
 typedef struct {
+    UINT16 divider;
     float period;
     float phase;
-} oscillator;
+} osc;
 
-oscillator oscillators[2];
+static osc oscs[VOICES * OPERATORS];
 
+static INT16 sin_table[WAVE_SIZE];
+static INT16 tri_table[WAVE_SIZE];
+static INT16 saw_table[WAVE_SIZE];
 
-INT16 sin_table[WAVE_SIZE];
-INT16 tri_table[WAVE_SIZE];
-INT16 saw_table[WAVE_SIZE];
+static void set_period_low (int osc_index, UINT8 value);
+static void set_period_high(int osc_index, UINT8 value);
+
+static UINT16 sampling_freq;
 
 void claudio_sound_init(UINT16 freq) {
+    sampling_freq = freq;
+
     int half = WAVE_SIZE/2;
     for(int i=0; i<WAVE_SIZE; i++) {
         float v = sin(((float)i / WAVE_SIZE) * M_PI*2);
@@ -70,26 +79,47 @@ void claudio_sound_init(UINT16 freq) {
         float tri_asc = (i*2.0 / half) - 1;
         float tri_des = 1 - ((i-half)*2.0 / half);
         tri_table[i] = (i < half ? tri_asc : tri_des) * 32767;
+
+        saw_table[i] = ((i*2.0 / WAVE_SIZE) - 1) * 32767;;
     }
 
-    // just for testing
-    oscillator *voice = &oscillators[0];
-    voice->phase  = 0;
-    voice->period = (CLK / 4058.0) * (2048.0 / freq);
+    claudio_write(0, 8116 & 0xff);
+    claudio_write(1, 8116 >> 8);
 }
 
-void claudio_write(UINT16 reg, UINT8 val) {
-    oscillator *voice = &oscillators[0];
-    switch(reg & 0x0F) {
-        // case 0: voice->period = (voice->period & 0xFF00) | val; break;
-        // case 1: voice->period = (voice->period & 0x00FF) | (val << 8); break;
+void claudio_write(UINT16 reg, UINT8 value) {
+    reg = reg & 0xFF;
+    if (reg < (VOICES*OPERATORS*2)) {  // 36 oscillators * 2
+        int osc_index = reg / 2;
+        int part = reg & 1;
+        if (part == 0) {
+            set_period_low(osc_index, value);
+        } else {
+            set_period_high(osc_index, value);
+        }
     }
+}
+
+static void update_period(osc *osc){
+    osc->period = (CLK / osc->divider) * ((float)WAVE_SIZE / sampling_freq);
+}
+
+static void set_period_low(int osc_index, UINT8 value) {
+    osc *osc = &oscs[osc_index];
+    osc->divider = (osc->divider & 0xff00) | value;
+    update_period(osc);
+}
+
+static void set_period_high(int osc_index, UINT8 value) {
+    osc *osc = &oscs[osc_index];
+    osc->divider = (osc->divider & 0x00ff) | (value << 8);
+    update_period(osc);
 }
 
 void claudio_process(INT16 *buffer, UINT16 size) {
-    oscillator *voice = &oscillators[0];
+    osc *voice = &oscs[0];
     for(int i=0; i<size; i+=2) {
-        INT16 value = tri_table[(int)voice->phase];
+        INT16 value = saw_table[(int)voice->phase];
         buffer[i] = value;
         buffer[i+1] = value;
 
