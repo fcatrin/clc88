@@ -4,6 +4,7 @@
 #include "emu.h"
 #include "sound.h"
 #include "screen.h"
+#include "tracker/tracker.h"
 
 #define LOGTAG "MAIN"
 #ifdef TRACE_MAIN
@@ -12,6 +13,7 @@
 #include "trace.h"
 
 void main_init(int argc, char *argv[]) {
+    tracker_init();
 	screen_init();
 	sound_init();
 }
