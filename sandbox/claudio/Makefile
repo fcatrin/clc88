@@ -23,6 +23,7 @@ OBJS = $(addprefix $(OBJDIR)/, \
 	trace.o \
 	frontend.o \
 	tracker/tracker.o \
+	tracker/tracker_utils.o \
 	sound/claudio.o \
 	)
 

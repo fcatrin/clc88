@@ -16,6 +16,8 @@ void main_init(int argc, char *argv[]) {
     tracker_init();
 	screen_init();
 	sound_init();
+
+	tracker_load("tracker/test_mod.txt");
 }
 
 void main_run_frame() {
