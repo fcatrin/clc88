@@ -9,7 +9,7 @@
 
     - MSX NTSC 1.789772 MHz
     - NES NTSC 1.789773 MHz
-    - NES PAL  1.662607 MH<
+    - NES PAL  1.662607 MHz
 
     Base waveform
     =============
@@ -47,7 +47,7 @@
 */
 
 #define CLK 1785714
-#define SIN_SIZE 2048
+#define WAVE_SIZE 2048
 
 typedef struct {
     float period;
@@ -57,12 +57,19 @@ typedef struct {
 oscillator oscillators[2];
 
 
-INT16 sin_table[SIN_SIZE];
+INT16 sin_table[WAVE_SIZE];
+INT16 tri_table[WAVE_SIZE];
+INT16 saw_table[WAVE_SIZE];
 
 void claudio_sound_init(UINT16 freq) {
-    for(int i=0; i<SIN_SIZE; i++) {
-        float v = sin(((float)i / SIN_SIZE) * M_PI*2);
+    int half = WAVE_SIZE/2;
+    for(int i=0; i<WAVE_SIZE; i++) {
+        float v = sin(((float)i / WAVE_SIZE) * M_PI*2);
         sin_table[i] = v * 32767;
+
+        float tri_asc = (i*2.0 / half) - 1;
+        float tri_des = 1 - ((i-half)*2.0 / half);
+        tri_table[i] = (i < half ? tri_asc : tri_des) * 32767;
     }
 
     // just for testing
@@ -82,11 +89,11 @@ void claudio_write(UINT16 reg, UINT8 val) {
 void claudio_process(INT16 *buffer, UINT16 size) {
     oscillator *voice = &oscillators[0];
     for(int i=0; i<size; i+=2) {
-        INT16 value = sin_table[(int)voice->phase];
+        INT16 value = tri_table[(int)voice->phase];
         buffer[i] = value;
         buffer[i+1] = value;
 
         voice->phase += voice->period;
-        if (voice->phase >= SIN_SIZE) voice->phase -= SIN_SIZE;
+        if (voice->phase >= WAVE_SIZE) voice->phase -= WAVE_SIZE;
     }
 }
