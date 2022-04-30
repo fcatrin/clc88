@@ -43,6 +43,10 @@
 
     EMU(X) = (CLK / X) * (2048.0 / 44100);
 
+    Volume
+    ======
+    bits 6-0 : static volume
+    bit  7   : use envelope if 1
 
 */
 
@@ -55,6 +59,7 @@ typedef struct {
     UINT16 divider;
     float period;
     float phase;
+    UINT8 volume;
 } osc;
 
 static osc oscs[VOICES * OPERATORS];
@@ -65,6 +70,7 @@ static INT16 saw_table[WAVE_SIZE];
 
 static void set_period_low (int osc_index, UINT8 value);
 static void set_period_high(int osc_index, UINT8 value);
+static void set_volume(int osc_index, UINT8 value);
 
 static UINT16 sampling_freq;
 
@@ -85,6 +91,7 @@ void claudio_sound_init(UINT16 freq) {
 
     claudio_write(0, 8116 & 0xff);
     claudio_write(1, 8116 >> 8);
+    claudio_write(128, 12);
 }
 
 void claudio_write(UINT16 reg, UINT8 value) {
@@ -97,6 +104,9 @@ void claudio_write(UINT16 reg, UINT8 value) {
         } else {
             set_period_high(osc_index, value);
         }
+    } else if (reg < 128 + (VOICES*OPERATORS)) {
+        int osc_index = reg - 128;
+        set_volume(osc_index, value);
     }
 }
 
@@ -116,10 +126,15 @@ static void set_period_high(int osc_index, UINT8 value) {
     update_period(osc);
 }
 
+static void set_volume(int osc_index, UINT8 value) {
+    osc *osc = &oscs[osc_index];
+    osc->volume = value;
+}
+
 void claudio_process(INT16 *buffer, UINT16 size) {
     osc *voice = &oscs[0];
     for(int i=0; i<size; i+=2) {
-        INT16 value = saw_table[(int)voice->phase];
+        INT16 value = saw_table[(int)voice->phase] * (voice->volume / 128.0);
         buffer[i] = value;
         buffer[i+1] = value;
 
