@@ -12,8 +12,9 @@ typedef struct {
 typedef struct {
     UINT8 channels;
     UINT8 bpm;
-    pattern_t patterns[128];
+    pattern_t *patterns[128];
     int patterns_index[128];
+    int patterns_count;
 } song_t;
 
 void tracker_init();

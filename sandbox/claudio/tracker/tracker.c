@@ -5,6 +5,8 @@
 #include "../emu.h"
 #include "tracker.h"
 #include "tracker_utils.h"
+#include "song.h"
+#include "pattern.h"
 
 /*
     note range : 108 notes
@@ -19,7 +21,7 @@
 
 static UINT16 freq_table[NOTES];
 
-song_t song;
+song_t *song;
 
 void tracker_init() {
     float freq = FREQ_A0;
@@ -27,18 +29,31 @@ void tracker_init() {
         freq_table[i] = freq;
         freq = freq * pow(2, 1.0/12);
     }
+
+    song = song_new();
 }
 
 void load_process_line(char *line) {
-    line = trim(line);
-    if (!strlen(line)) return;
+    static pattern_t *current_pattern;
 
-    if (starts_with(line, "bpm")) {
-        song.bpm = load_parameter_int(line, 2);
-    } else if (starts_with(line, "channels")) {
-        song.channels = load_parameter_int(line, 2);
+    line = trim(line);
+    if (!strlen(line)) {
+        current_pattern = NULL;
+        return;
     }
-    printf("bpm: %d channels:%d\n", song.bpm, song.channels);
+
+    if (starts_with(line, "#")) {
+        return;
+    } else if (starts_with(line, "bpm")) {
+        song->bpm = load_parameter_int(line, 2);
+    } else if (starts_with(line, "channels")) {
+        song->channels = load_parameter_int(line, 2);
+    } else if (starts_with(line, "pattern")) {
+        current_pattern = pattern_new();
+        song_add_pattern(song, current_pattern);
+    } else if (current_pattern != NULL) {
+        pattern_add_row(current_pattern, line);
+    }
 }
 
 void tracker_load(const char *filename) {
