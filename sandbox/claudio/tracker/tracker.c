@@ -52,7 +52,7 @@ void load_process_line(char *line) {
         current_pattern = pattern_new();
         song_add_pattern(song, current_pattern);
     } else if (current_pattern != NULL) {
-        pattern_add_row(current_pattern, line);
+        pattern_add_row(current_pattern, song, line);
     }
 }
 
