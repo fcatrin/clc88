@@ -100,7 +100,9 @@ void wopi_sound_init(UINT16 freq) {
 
     // wopi_write(0, 8116 & 0xff);
     // wopi_write(1, 8116 >> 8);
-    wopi_write(128, 12);
+    for(int i=0; i<VOICES; i++) {
+        wopi_write(128+i, 12);
+    }
 }
 
 void wopi_write(UINT16 reg, UINT8 value) {
@@ -150,20 +152,26 @@ static void set_wave_type(int osc_index, UINT8 wave_type) {
 }
 
 void wopi_process(INT16 *buffer, UINT16 size) {
-    osc *voice = &oscs[0];
     for(int i=0; i<size; i+=2) {
-        INT16 *wave_table = NULL;
-        switch(voice->wave_type) {
-            case WAVE_TYPE_SIN : wave_table = sin_table; break;
-            case WAVE_TYPE_SAW : wave_table = saw_table; break;
-            case WAVE_TYPE_TRI : wave_table = tri_table; break;
-            case WAVE_TYPE_SQR : wave_table = sqr_table; break;
-        }
-        INT16 value = wave_table == NULL ? 0 : (wave_table[(int)voice->phase] * (voice->volume / 128.0));
-        buffer[i] = value;
-        buffer[i+1] = value;
+        buffer[i+0] = 0;
+        buffer[i+1] = 0;
 
-        voice->phase += voice->period;
-        if (voice->phase >= WAVE_SIZE) voice->phase -= WAVE_SIZE;
+        for(int v=0; v < VOICES; v++) {
+            osc *voice = &oscs[v];
+
+            INT16 *wave_table = NULL;
+            switch(voice->wave_type) {
+                case WAVE_TYPE_SIN : wave_table = sin_table; break;
+                case WAVE_TYPE_SAW : wave_table = saw_table; break;
+                case WAVE_TYPE_TRI : wave_table = tri_table; break;
+                case WAVE_TYPE_SQR : wave_table = sqr_table; break;
+            }
+            INT16 value = wave_table == NULL ? 0 : (wave_table[(int)voice->phase] * (voice->volume / 128.0));
+            buffer[i+0] += value;
+            buffer[i+1] += value;
+
+            voice->phase += voice->period;
+            if (voice->phase >= WAVE_SIZE) voice->phase -= WAVE_SIZE;
+        }
     }
 }

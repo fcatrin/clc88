@@ -6,7 +6,7 @@
 #include "pattern_row.h"
 #include "note_event.h"
 
-#define CHANNEL_SIZE 6
+#define CHANNEL_SIZE 7
 
 pattern_row_t *pattern_row_new(int channels) {
     printf("pattern_row_new channels:%d\n", channels);
