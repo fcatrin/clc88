@@ -50,7 +50,7 @@
 
 */
 
-#define CLK 1785714
+#define CLK WOPI_CLK
 #define WAVE_SIZE 2048
 #define VOICES 9
 #define OPERATORS 4
@@ -135,7 +135,7 @@ static void set_volume(int osc_index, UINT8 value) {
 void wopi_process(INT16 *buffer, UINT16 size) {
     osc *voice = &oscs[0];
     for(int i=0; i<size; i+=2) {
-        INT16 value = saw_table[(int)voice->phase] * (voice->volume / 128.0);
+        INT16 value = sin_table[(int)voice->phase] * (voice->volume / 128.0);
         buffer[i] = value;
         buffer[i+1] = value;
 

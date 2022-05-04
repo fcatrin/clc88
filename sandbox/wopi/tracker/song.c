@@ -53,5 +53,5 @@ void song_dump(song_t *song) {
 }
 
 void song_dump_playing(song_t *song) {
-    printf("song playing pattern:%d tick:%d", song->playing_pattern, song->playing_tick);
+    // printf("song playing pattern:%d tick:%d\n", song->playing_pattern, song->playing_tick);
 }

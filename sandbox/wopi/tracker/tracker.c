@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <math.h>
 #include "../emu.h"
 #include "../sound/wopi.h"
@@ -28,7 +29,7 @@ song_t *song;
 void tracker_init() {
     float freq = FREQ_A0;
     for(int i=0; i<NOTES; i++) {
-        freq_table[i] = freq;
+        freq_table[i] = WOPI_CLK / freq;
         freq = freq * pow(2, 1.0/12);
     }
 
@@ -40,6 +41,7 @@ void load_process_line(char *line) {
 
     line = trim(line);
     if (!strlen(line)) {
+        printf("empty line, reset pattern\n");
         current_pattern = NULL;
         return;
     }
@@ -52,9 +54,11 @@ void load_process_line(char *line) {
     } else if (starts_with(line, "channels")) {
         song->channels = load_parameter_int(line, 2);
     } else if (starts_with(line, "pattern")) {
+        printf("new pattern\n");
         current_pattern = pattern_new();
         song_add_pattern(song, current_pattern);
     } else if (current_pattern != NULL) {
+        printf("read row %s\n", line);
         pattern_add_row(current_pattern, song, line);
     }
 }
@@ -88,6 +92,7 @@ void tracker_play() {
         note_event_t *event = pattern_row->events[i];
         if (event != NULL && event->note != NO_NOTE) {
             UINT16 freq = freq_table[event->note];
+            printf("wopi write channel %d freq %d\n", i, freq);
             wopi_write(i*2+0, freq & 0xFF);
             wopi_write(i*2+1, (freq & 0xFF00) >> 8);
         }

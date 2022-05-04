@@ -27,6 +27,9 @@ void note_event_init(note_event_t *event, char note, char accident, char octave)
     } else {
         event->sustain = FALSE;
     }
+    printf("create event ");
+    note_event_dump(event);
+    printf("\n");
 }
 
 void note_event_dump(note_event_t *event) {
