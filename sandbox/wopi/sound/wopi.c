@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <math.h>
 #include "emu.h"
-#include "claudio.h"
+#include "wopi.h"
 
 /*
     CLK = 100MHz / 56 = 1.785714 MHz   (Compy system clock is 100MHz)
@@ -74,7 +74,7 @@ static void set_volume(int osc_index, UINT8 value);
 
 static UINT16 sampling_freq;
 
-void claudio_sound_init(UINT16 freq) {
+void wopi_sound_init(UINT16 freq) {
     sampling_freq = freq;
 
     int half = WAVE_SIZE/2;
@@ -89,12 +89,12 @@ void claudio_sound_init(UINT16 freq) {
         saw_table[i] = ((i*2.0 / WAVE_SIZE) - 1) * 32767;;
     }
 
-    claudio_write(0, 8116 & 0xff);
-    claudio_write(1, 8116 >> 8);
-    claudio_write(128, 12);
+    wopi_write(0, 8116 & 0xff);
+    wopi_write(1, 8116 >> 8);
+    wopi_write(128, 12);
 }
 
-void claudio_write(UINT16 reg, UINT8 value) {
+void wopi_write(UINT16 reg, UINT8 value) {
     reg = reg & 0xFF;
     if (reg < (VOICES*OPERATORS*2)) {  // 36 oscillators * 2
         int osc_index = reg / 2;
@@ -131,7 +131,7 @@ static void set_volume(int osc_index, UINT8 value) {
     osc->volume = value;
 }
 
-void claudio_process(INT16 *buffer, UINT16 size) {
+void wopi_process(INT16 *buffer, UINT16 size) {
     osc *voice = &oscs[0];
     for(int i=0; i<size; i+=2) {
         INT16 value = saw_table[(int)voice->phase] * (voice->volume / 128.0);

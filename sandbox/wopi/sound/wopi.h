@@ -1,9 +1,9 @@
-#ifndef _CLAUDIO_H
-#define _CLAUDIO_H
+#ifndef _WOPI_H
+#define _WOPI_H
 
-void claudio_sound_init(UINT16 freq);
-void claudio_write(UINT16 reg, UINT8 val);
-void claudio_process(INT16 *buffer, UINT16 size);
+void wopi_sound_init(UINT16 freq);
+void wopi_write(UINT16 reg, UINT8 val);
+void wopi_process(INT16 *buffer, UINT16 size);
 
 
 #endif
