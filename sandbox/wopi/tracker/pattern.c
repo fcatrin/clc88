@@ -17,3 +17,12 @@ void pattern_add_row(pattern_t *pattern, song_t *song, char *line) {
     pattern->rows[pattern->rows_count++] = row;
     pattern_row_load(row, line);
 }
+
+pattern_row_t *pattern_get_next_row(pattern_t *pattern) {
+    if (pattern->playing_row >= ROWS_PER_PATTERN) {
+        pattern->playing_row = 0;
+        return NULL;
+    }
+
+    return pattern->rows[pattern->playing_row++];
+}

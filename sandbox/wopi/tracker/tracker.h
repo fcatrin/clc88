@@ -18,17 +18,25 @@ typedef struct {
 typedef struct {
     pattern_row_t *rows[ROWS_PER_PATTERN];
     int rows_count;
+
+    int playing_row;
 } pattern_t;
 
 typedef struct {
     UINT8 channels;
     UINT8 bpm;
+    UINT8 ticks_per_row;
+
     pattern_t *patterns[128];
     int patterns_index[128];
     int patterns_count;
+
+    int playing_pattern;
+    int playing_tick;
 } song_t;
 
 void tracker_init();
 void tracker_load(const char *filename);
+void tracker_play();
 
 #endif

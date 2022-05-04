@@ -111,6 +111,7 @@ void wopi_write(UINT16 reg, UINT8 value) {
 }
 
 static void update_period(osc *osc){
+    if (osc->divider == 0) return;
     osc->period = (CLK / osc->divider) * ((float)WAVE_SIZE / sampling_freq);
 }
 

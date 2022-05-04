@@ -23,6 +23,10 @@ void main_init(int argc, char *argv[]) {
 void main_run_frame() {
     int samples_per_frame = 44100.0 / 60;
     sound_process(samples_per_frame);
+
+    // 1 frame = 1 tick. Simple enough for this test
+    // https://modarchive.org/forums/index.php?topic=2709.0
+    tracker_play();
 }
 
 void main_run() {
