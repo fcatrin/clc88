@@ -7,7 +7,7 @@ DEFS += -DDUMP_AUDIO
 
 LIBS = -lm -lz -lpthread
 
-TARGET_BASE_NAME = claudio_test
+TARGET_BASE_NAME = wopi_test
 
 FINALTARGET = $(TARGET_BASE_NAME)
 TARGET = $(FINALTARGET)
@@ -28,7 +28,7 @@ OBJS = $(addprefix $(OBJDIR)/, \
 	tracker/pattern.o \
 	tracker/pattern_row.o \
 	tracker/note_event.o \
-	sound/claudio.o \
+	sound/wopi.o \
 	)
 
 CFLAGS += $(shell pkg-config --cflags sdl2)
