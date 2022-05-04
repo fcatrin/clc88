@@ -55,11 +55,17 @@
 #define VOICES 9
 #define OPERATORS 4
 
+#define WAVE_TYPE_SIN 0
+#define WAVE_TYPE_SAW 1
+#define WAVE_TYPE_TRI 2
+#define WAVE_TYPE_SQR 3
+
 typedef struct {
     UINT16 divider;
     float period;
     float phase;
     UINT8 volume;
+    UINT8 wave_type;
 } osc;
 
 static osc oscs[VOICES * OPERATORS];
@@ -71,6 +77,7 @@ static INT16 saw_table[WAVE_SIZE];
 static void set_period_low (int osc_index, UINT8 value);
 static void set_period_high(int osc_index, UINT8 value);
 static void set_volume(int osc_index, UINT8 value);
+static void set_wave_type(int osc_index, UINT8 wave_type);
 
 static UINT16 sampling_freq;
 
@@ -107,6 +114,9 @@ void wopi_write(UINT16 reg, UINT8 value) {
     } else if (reg < 128 + (VOICES*OPERATORS)) {
         int osc_index = reg - 128;
         set_volume(osc_index, value);
+    } else if (reg < 128 + (VOICES*OPERATORS) + VOICES) {
+        int osc_index = reg - 128 - (VOICES*OPERATORS);
+        set_wave_type(osc_index, value);
     }
 }
 
@@ -132,10 +142,22 @@ static void set_volume(int osc_index, UINT8 value) {
     osc->volume = value;
 }
 
+static void set_wave_type(int osc_index, UINT8 wave_type) {
+    osc *osc = &oscs[osc_index];
+    osc->wave_type = wave_type;
+}
+
 void wopi_process(INT16 *buffer, UINT16 size) {
     osc *voice = &oscs[0];
     for(int i=0; i<size; i+=2) {
-        INT16 value = sin_table[(int)voice->phase] * (voice->volume / 128.0);
+        INT16 *wave_table = NULL;
+        switch(voice->wave_type) {
+            case WAVE_TYPE_SIN : wave_table = sin_table; break;
+            case WAVE_TYPE_SAW : wave_table = saw_table; break;
+            case WAVE_TYPE_TRI : wave_table = tri_table; break;
+            // case WAVE_TYPE_SQR : wave_type = sqr_table; break;
+        }
+        INT16 value = wave_table == NULL ? 0 : (wave_table[(int)voice->phase] * (voice->volume / 128.0));
         buffer[i] = value;
         buffer[i+1] = value;
 

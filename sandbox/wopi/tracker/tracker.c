@@ -93,11 +93,20 @@ void tracker_play() {
     // just send the freq for now
     for(int i=0; i<pattern_row->channels; i++) {
         note_event_t *event = pattern_row->events[i];
-        if (event != NULL && event->note != NO_NOTE) {
-            UINT16 freq = freq_table[event->note];
-            printf("wopi write channel %d freq %d\n", i, freq);
-            wopi_write(i*2+0, freq & 0xFF);
-            wopi_write(i*2+1, (freq & 0xFF00) >> 8);
+        if (event != NULL) {
+            if (event->instrument != 0) {
+                instrument_t *instrument = song->instruments[event->instrument];
+                if (instrument != NULL) {
+                    enum wave_type_t wave_type = instrument->wave_type;
+                    wopi_write(i + 164, wave_type & 0x03);
+                }
+            }
+            if (event->note != NO_NOTE) {
+                UINT16 freq = freq_table[event->note];
+                printf("wopi write channel %d freq %d\n", i, freq);
+                wopi_write(i*2+0, freq & 0xFF);
+                wopi_write(i*2+1, (freq & 0xFF00) >> 8);
+            }
         }
     }
 }
