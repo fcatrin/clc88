@@ -27,6 +27,7 @@ OBJS = $(addprefix $(OBJDIR)/, \
 	tracker/song.o \
 	tracker/pattern.o \
 	tracker/pattern_row.o \
+	tracker/note_event.o \
 	sound/claudio.o \
 	)
 

@@ -15,5 +15,5 @@ void pattern_add_row(pattern_t *pattern, song_t *song, char *line) {
 
     pattern_row_t *row = pattern_row_new(song->channels);
     pattern->rows[pattern->rows_count++] = row;
-    pattern_row_load(line);
+    pattern_row_load(row, line);
 }
