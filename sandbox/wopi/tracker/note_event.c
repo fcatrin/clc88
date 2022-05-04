@@ -28,3 +28,10 @@ void note_event_init(note_event_t *event, char note, char accident, char octave)
         event->sustain = FALSE;
     }
 }
+
+void note_event_dump(note_event_t *event) {
+    if (event == NULL) printf("NULL");
+    else {
+        printf("note:%d sustain:%s", event->note, event->sustain ? "Y":"N");
+    }
+}

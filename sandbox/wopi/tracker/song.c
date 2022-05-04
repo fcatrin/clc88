@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <malloc.h>
 #include "../emu.h"
 #include "tracker.h"
@@ -37,4 +38,20 @@ pattern_row_t *song_get_row(song_t *song) {
 
     song->playing_tick = 0;
     return get_next_row(song);
+}
+
+void song_dump(song_t *song) {
+    printf("song channels:%d, bpm:%d, ticks:%d patterns:%d\n",
+        song->channels, song->bpm, song->ticks_per_row, song->patterns_count
+    );
+    printf("song patterns:\n");
+    for(int i=0; i<song->patterns_count; i++) {
+        // printf("== pattern[%d] = %d\n", i, song->patterns_index[i]);
+        pattern_dump(song->patterns[i]);
+        printf("\n");
+    }
+}
+
+void song_dump_playing(song_t *song) {
+    printf("song playing pattern:%d tick:%d", song->playing_pattern, song->playing_tick);
 }

@@ -4,5 +4,7 @@
 song_t        *song_new();
 void           song_add_pattern(song_t *song, pattern_t *pattern);
 pattern_row_t *song_get_row(song_t *song);
+void           song_dump(song_t *song);
+void           song_dump_playing(song_t *song);
 
 #endif

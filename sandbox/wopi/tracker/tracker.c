@@ -74,9 +74,12 @@ void tracker_load(const char *filename) {
     fclose(fp);
     if (line)
         free(line);
+
+    song_dump(song);
 }
 
 void tracker_play() {
+    song_dump_playing(song);
     pattern_row_t *pattern_row = song_get_row(song);
     if (pattern_row == NULL) return;
 

@@ -26,3 +26,16 @@ pattern_row_t *pattern_get_next_row(pattern_t *pattern) {
 
     return pattern->rows[pattern->playing_row++];
 }
+
+void pattern_dump(pattern_t *pattern) {
+    printf("pattern rows_count:%d\n", pattern->rows_count);
+    for(int i=0; i<pattern->rows_count; i++) {
+        pattern_row_t *row = pattern->rows[i];
+        printf("pattern row:%d ", i);
+        pattern_row_dump(row);
+    }
+}
+
+void pattern_dump_playing(pattern_t *pattern) {
+    printf("pattern playing rows:%d", pattern->playing_row);
+}

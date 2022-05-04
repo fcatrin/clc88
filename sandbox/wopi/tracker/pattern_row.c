@@ -23,5 +23,13 @@ void pattern_row_load(pattern_row_t *pattern_row, char *line) {
         pattern_row->events[i] = event;
         c+= 4;
     }
+}
 
+void pattern_row_dump(pattern_row_t *pattern_row) {
+    for(int i=0; i<pattern_row->channels; i++) {
+        note_event_t *event = pattern_row->events[i];
+        printf("ch:%d ", i);
+        note_event_dump(event);
+    }
+    printf("\n");
 }
