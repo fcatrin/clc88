@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -46,6 +47,29 @@ char *load_parameter(const char *line, int index) {
     return buffer;
 }
 
+int hexchar2int(char c) {
+    if (c >= '0' && c <= '9') {
+        return c - '0';
+    }
+    if (c >= 'A' && c <= 'F') {
+        return c - 'A';
+    }
+    if (c >= 'a' && c <= 'f') {
+        return c - 'a';
+    }
+    fprintf(stderr, "invalid hex char %c\n", c);
+    return 0;
+}
+
+int hex2int(char *hex) {
+    return hexchar2int(hex[0])*16 + hexchar2int(hex[1]);
+}
+
 int load_parameter_int(const char *line, int index) {
     return atoi(load_parameter(line, index));
+}
+
+int load_parameter_hex(const char *line, int index) {
+    char *hex = load_parameter(line, index);
+    return hex2int(hex);
 }

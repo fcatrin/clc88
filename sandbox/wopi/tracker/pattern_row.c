@@ -2,8 +2,11 @@
 #include <malloc.h>
 #include "../emu.h"
 #include "tracker.h"
+#include "tracker_utils.h"
 #include "pattern_row.h"
 #include "note_event.h"
+
+#define CHANNEL_SIZE 6
 
 pattern_row_t *pattern_row_new(int channels) {
     printf("pattern_row_new channels:%d\n", channels);
@@ -14,16 +17,25 @@ pattern_row_t *pattern_row_new(int channels) {
 
 void pattern_row_load(pattern_row_t *pattern_row, char *line) {
     int c = 0;
-    for(int i=0; i<pattern_row->channels && (c+2) < strlen(line); i++) {
-        char note      = line[c+0];
-        char accident  = line[c+1];
-        char octave    = line[c+2];
+    for(int i=0; i<pattern_row->channels && (c+CHANNEL_SIZE-1) < strlen(line); i++) {
+        char instrument_number_desc[3];
+        instrument_number_desc[0] = line[c+0];
+        instrument_number_desc[1] = line[c+1];
+
+        int instrument_index = 0;
+        if (instrument_number_desc[0] != ' ') {
+            instrument_index = hex2int(instrument_number_desc);
+        }
+
+        char note      = line[c+3];
+        char accident  = line[c+4];
+        char octave    = line[c+5];
         printf("row_load ch:%d %c%c%c\n", i, note, accident, octave);
 
         note_event_t *event = note_event_new();
-        note_event_init(event, note, accident, octave);
+        note_event_init(event, instrument_index, note, accident, octave);
         pattern_row->events[i] = event;
-        c+= 4;
+        c+= CHANNEL_SIZE;
     }
 }
 

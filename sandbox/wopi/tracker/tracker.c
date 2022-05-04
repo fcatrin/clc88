@@ -54,6 +54,8 @@ void load_process_line(char *line) {
         song->playing_tick = song->ticks_per_row; // start ASAP
     } else if (starts_with(line, "channels")) {
         song->channels = load_parameter_int(line, 2);
+    } else if (starts_with(line, "instrument")) {
+        song_register_instrument(song, line);
     } else if (starts_with(line, "pattern")) {
         printf("new pattern\n");
         current_pattern = pattern_new();
@@ -98,4 +100,19 @@ void tracker_play() {
             wopi_write(i*2+1, (freq & 0xFF00) >> 8);
         }
     }
+}
+
+char *wave_type_names[] = {"sin", "saw", "tri", "sqr"};
+
+char *tracker_get_wave_type_desc(int wave_type) {
+    if (wave_type >= 0 && wave_type < WAVE_TYPES) {
+        return wave_type_names[wave_type];
+    }
+    return NULL;
+}
+int tracker_get_wave_type(char *desc) {
+    for(int i = 0; i < WAVE_TYPES; i++) {
+        if (!strcmp(desc, wave_type_names[i])) return i;
+    }
+    return WAVE_TYPE_SIN;
 }

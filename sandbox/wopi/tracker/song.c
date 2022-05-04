@@ -2,8 +2,10 @@
 #include <malloc.h>
 #include "../emu.h"
 #include "tracker.h"
+#include "tracker_utils.h"
 #include "song.h"
 #include "pattern.h"
+#include "instrument.h"
 
 song_t *song_new() {
     song_t *song = (song_t *)malloc(sizeof(song_t));
@@ -40,10 +42,28 @@ pattern_row_t *song_get_row(song_t *song) {
     return get_next_row(song);
 }
 
+void song_register_instrument(song_t *song, char *line) {
+    int instrument_number = load_parameter_hex(line, 2);
+    char *wave_type_desc = load_parameter(line, 3);
+    int wave_type = tracker_get_wave_type(wave_type_desc);
+
+    instrument_t *instrument = instrument_new();
+    instrument_init(instrument, wave_type);
+    song->instruments[instrument_number] = instrument;
+}
+
 void song_dump(song_t *song) {
     printf("song channels:%d, bpm:%d, ticks:%d patterns:%d\n",
         song->channels, song->bpm, song->ticks_per_row, song->patterns_count
     );
+    printf("song instruments:\n");
+    for(int i=0; i<MAX_INSTRUMENTS; i++) {
+        instrument_t *instrument = song->instruments[i];
+        if (instrument == NULL) continue;
+        printf("  instrument[%d] = ", i);
+        instrument_dump(instrument);
+    }
+
     printf("song patterns:\n");
     for(int i=0; i<song->patterns_count; i++) {
         // printf("== pattern[%d] = %d\n", i, song->patterns_index[i]);

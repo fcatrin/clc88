@@ -8,5 +8,9 @@ bool starts_with(const char *str, const char *pre);
 
 char *load_parameter    (const char *line, int index);
 int   load_parameter_int(const char *line, int index);
+int   load_parameter_hex(const char *line, int index);
+
+int hex2int(char *hex);
+int hexchar2int(char c);
 
 #endif

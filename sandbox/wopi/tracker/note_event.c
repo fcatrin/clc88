@@ -10,7 +10,8 @@ note_event_t *note_event_new() {
     return event;
 }
 
-void note_event_init(note_event_t *event, char note, char accident, char octave) {
+void note_event_init(note_event_t *event, int instrument, char note, char accident, char octave) {
+    event->instrument = instrument;
     event->note = NO_NOTE;
     if (note == '+') {
         event->sustain = TRUE;
