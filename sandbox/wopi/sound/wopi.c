@@ -89,8 +89,8 @@ void wopi_sound_init(UINT16 freq) {
         saw_table[i] = ((i*2.0 / WAVE_SIZE) - 1) * 32767;;
     }
 
-    wopi_write(0, 8116 & 0xff);
-    wopi_write(1, 8116 >> 8);
+    // wopi_write(0, 8116 & 0xff);
+    // wopi_write(1, 8116 >> 8);
     wopi_write(128, 12);
 }
 

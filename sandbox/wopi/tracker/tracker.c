@@ -51,6 +51,7 @@ void load_process_line(char *line) {
     } else if (starts_with(line, "bpm")) {
         song->bpm = load_parameter_int(line, 2);
         song->ticks_per_row = (1000.0 * 60 / song->bpm / 4 / MS_PER_FRAME);
+        song->playing_tick = song->ticks_per_row; // start ASAP
     } else if (starts_with(line, "channels")) {
         song->channels = load_parameter_int(line, 2);
     } else if (starts_with(line, "pattern")) {

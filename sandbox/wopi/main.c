@@ -42,7 +42,7 @@ void sync_start() {
 void sync_end() {
     unsigned long now = get_time() - t0;
     unsigned long time_target = frame * (1000000.0 / 60);
-    long delta = time_target - now;
+    long delta = time_target - now - 2000; // just make a bit of room to avoid clicks
     // printf("target:%lu now:%lu\n", time_target, now);
     if (delta > 0) {
         // printf("usleep %lu\n", delta);
