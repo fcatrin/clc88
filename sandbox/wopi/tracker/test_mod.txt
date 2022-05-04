@@ -1,11 +1,10 @@
 bpm 200
 channels 1
 
-instrument: 01 saw
-instrument: 02 tri
-instrument: 03 sin
-
-
+instrument: 01 sqr
+instrument: 02 saw
+instrument: 03 tri
+instrument: 04 sin
 
 pattern
 01 A-3
@@ -53,6 +52,22 @@ pattern
    ---
    ---
 03 A-4
+   ---
+   ---
+   ---
+04 A-3
+   ---
+   ---
+   ---
+04 C#3
+   ---
+   ---
+   ---
+04 E-3
+   ---
+   ---
+   ---
+04 A-4
    ---
    ---
    ---

@@ -73,6 +73,7 @@ static osc oscs[VOICES * OPERATORS];
 static INT16 sin_table[WAVE_SIZE];
 static INT16 tri_table[WAVE_SIZE];
 static INT16 saw_table[WAVE_SIZE];
+static INT16 sqr_table[WAVE_SIZE];
 
 static void set_period_low (int osc_index, UINT8 value);
 static void set_period_high(int osc_index, UINT8 value);
@@ -94,6 +95,7 @@ void wopi_sound_init(UINT16 freq) {
         tri_table[i] = (i < half ? tri_asc : tri_des) * 32767;
 
         saw_table[i] = ((i*2.0 / WAVE_SIZE) - 1) * 32767;;
+        sqr_table[i] = (i < half ? -1 : 1) * 32767;
     }
 
     // wopi_write(0, 8116 & 0xff);
@@ -155,7 +157,7 @@ void wopi_process(INT16 *buffer, UINT16 size) {
             case WAVE_TYPE_SIN : wave_table = sin_table; break;
             case WAVE_TYPE_SAW : wave_table = saw_table; break;
             case WAVE_TYPE_TRI : wave_table = tri_table; break;
-            // case WAVE_TYPE_SQR : wave_type = sqr_table; break;
+            case WAVE_TYPE_SQR : wave_table = sqr_table; break;
         }
         INT16 value = wave_table == NULL ? 0 : (wave_table[(int)voice->phase] * (voice->volume / 128.0));
         buffer[i] = value;
