@@ -75,6 +75,14 @@ static INT16 tri_table[WAVE_SIZE];
 static INT16 saw_table[WAVE_SIZE];
 static INT16 sqr_table[WAVE_SIZE];
 
+#define ENVELOPE_STAGE_SIZE 256
+static UINT8 asc_table[ENVELOPE_STAGE_SIZE]; // ascending curve used in attack
+static UINT8 des_table[ENVELOPE_STAGE_SIZE]; // descending curve used in release and decay
+static UINT8 att_table[ENVELOPE_STAGE_SIZE]; // 2s log
+static UINT8 dec_table[ENVELOPE_STAGE_SIZE]; // 5s log
+static UINT8 rel_table[ENVELOPE_STAGE_SIZE]; // 8s log
+
+
 static void set_period_low (int osc_index, UINT8 value);
 static void set_period_high(int osc_index, UINT8 value);
 static void set_volume(int osc_index, UINT8 value);
@@ -98,11 +106,19 @@ void wopi_sound_init(UINT16 freq) {
         sqr_table[i] = (i < half ? -1 : 1) * 32767;
     }
 
+    for(int i=0; i< ENVELOPE_STAGE_SIZE; i++) {
+        // use 1/4 sine as ascending function
+        asc_table[i] = (UINT8)(256.0 * sin(((float)i / 4 / ENVELOPE_STAGE_SIZE) * M_PI*2));
+        // use linear descending
+        des_table[i] = 255.0 - (255.0 * (float)i/ENVELOPE_STAGE_SIZE);
+    }
+
     // wopi_write(0, 8116 & 0xff);
     // wopi_write(1, 8116 >> 8);
     for(int i=0; i<VOICES; i++) {
         wopi_write(128+i, 12);
     }
+
 }
 
 void wopi_write(UINT16 reg, UINT8 value) {
