@@ -9,7 +9,7 @@
 #define CHANNEL_SIZE 7
 
 pattern_row_t *pattern_row_new(int channels) {
-    printf("pattern_row_new channels:%d\n", channels);
+    // printf("pattern_row_new channels:%d\n", channels);
     pattern_row_t *pattern_row = (pattern_row_t *)malloc(sizeof(pattern_row_t));
     pattern_row->channels = channels;
     return pattern_row;
@@ -30,7 +30,7 @@ void pattern_row_load(pattern_row_t *pattern_row, char *line) {
         char note      = line[c+3];
         char accident  = line[c+4];
         char octave    = line[c+5];
-        printf("row_load ch:%d %c%c%c\n", i, note, accident, octave);
+        // printf("row_load ch:%d %c%c%c\n", i, note, accident, octave);
 
         note_event_t *event = note_event_new();
         note_event_init(event, instrument_index, note, accident, octave);

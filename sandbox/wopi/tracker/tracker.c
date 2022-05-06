@@ -61,7 +61,7 @@ void load_process_line(char *line) {
         current_pattern = pattern_new();
         song_add_pattern(song, current_pattern);
     } else if (current_pattern != NULL) {
-        printf("read row %s\n", line);
+        // printf("read row %s\n", line);
         pattern_add_row(current_pattern, song, line);
     }
 }

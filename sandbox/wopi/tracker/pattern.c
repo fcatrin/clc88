@@ -13,7 +13,7 @@ pattern_t *pattern_new() {
 void pattern_add_row(pattern_t *pattern, song_t *song, char *line) {
     if (pattern->rows_count >= ROWS_PER_PATTERN) return;
 
-    printf("add row[%d]\n", pattern->rows_count);
+    // printf("add row[%d]\n", pattern->rows_count);
     pattern_row_t *row = pattern_row_new(song->channels);
     pattern->rows[pattern->rows_count++] = row;
     pattern_row_load(row, line);
