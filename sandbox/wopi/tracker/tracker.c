@@ -102,6 +102,10 @@ void tracker_play() {
                     enum wave_type_t wave_type = instrument->wave_type;
                     wopi_write(i + 164, wave_type & 0x03);
 
+                    adsr_t *adsr = &instrument->adsr[0];
+                    wopi_write(i*2 + 0 + 180, (adsr->attack  << 4) | adsr->decay);
+                    wopi_write(i*2 + 1 + 180, (adsr->sustain << 4) | adsr->release);
+
                     channel_status->has_envelope = instrument->has_envelope;
                 }
             }
