@@ -39,8 +39,7 @@ void tracker_init() {
 void load_process_line(char *line) {
     static pattern_t *current_pattern;
 
-    line = trim(line);
-    if (!strlen(line)) {
+    if (!strlen(trim(line))) {
         printf("empty line, reset pattern\n");
         current_pattern = NULL;
         return;
