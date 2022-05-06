@@ -76,12 +76,14 @@ static INT16 saw_table[WAVE_SIZE];
 static INT16 sqr_table[WAVE_SIZE];
 
 #define ENVELOPE_STAGE_SIZE 256
+#define ENVELOPE_STAGE_VALUES 16
 static UINT8 asc_table[ENVELOPE_STAGE_SIZE]; // ascending curve used in attack
 static UINT8 des_table[ENVELOPE_STAGE_SIZE]; // descending curve used in release and decay
-static UINT8 att_table[ENVELOPE_STAGE_SIZE]; // 2s log
-static UINT8 dec_table[ENVELOPE_STAGE_SIZE]; // 5s log
-static UINT8 rel_table[ENVELOPE_STAGE_SIZE]; // 8s log
-
+static float att_step[ENVELOPE_STAGE_VALUES];
+static float dec_step[ENVELOPE_STAGE_VALUES];
+static float rel_step[ENVELOPE_STAGE_VALUES];
+static UINT32 att_stop[ENVELOPE_STAGE_VALUES];
+static UINT32 rel_stop[ENVELOPE_STAGE_VALUES];
 
 static void set_period_low (int osc_index, UINT8 value);
 static void set_period_high(int osc_index, UINT8 value);
@@ -106,11 +108,31 @@ void wopi_sound_init(UINT16 freq) {
         sqr_table[i] = (i < half ? -1 : 1) * 32767;
     }
 
-    for(int i=0; i< ENVELOPE_STAGE_SIZE; i++) {
+    // create tables for envelope ascending and descending curves
+    for(int i=0; i<ENVELOPE_STAGE_SIZE; i++) {
         // use 1/4 sine as ascending function
         asc_table[i] = (UINT8)(256.0 * sin(((float)i / 4 / ENVELOPE_STAGE_SIZE) * M_PI*2));
         // use linear descending
         des_table[i] = 255.0 - (255.0 * (float)i/ENVELOPE_STAGE_SIZE);
+    }
+
+    // create tables for "steps" required on each envelope value
+    float att_time = 2000.0;
+    float dec_time = 4000.0;
+    float rel_time = 8000.0;
+    int last_index = ENVELOPE_STAGE_SIZE-1;
+    for(int i=0; i<ENVELOPE_STAGE_VALUES; i++) {
+        att_stop[i] = att_time / 1000.0 * freq;
+        att_step[i] = last_index / (float)att_stop[i];
+        printf("att_step[%d] = %f att_stop[%d] = %d\n", i, att_step[i], i, att_stop[i]);
+        att_time /= 2.0; // log scale
+
+        dec_step[i] = last_index / (dec_time / 1000.0 * freq);
+        dec_time /= 2.0; // log scale
+
+        rel_stop[i] = (rel_time / 1000.0 * freq);
+        rel_step[i] = last_index / (float)rel_stop[i];
+        rel_time /= 2.0; // log scale
     }
 
     // wopi_write(0, 8116 & 0xff);
