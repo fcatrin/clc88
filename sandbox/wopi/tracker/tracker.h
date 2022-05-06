@@ -4,6 +4,7 @@
 #define ROWS_PER_PATTERN 64
 #define MAX_CHANNELS 9
 #define MAX_INSTRUMENTS 128
+#define MAX_OPERATORS 2
 #define NO_NOTE 0xff
 
 enum wave_type_t {
@@ -12,13 +13,23 @@ enum wave_type_t {
 };
 
 typedef struct {
+    UINT8 attack;
+    UINT8 decay;
+    UINT8 sustain;
+    UINT8 release;
+} adsr_t;
+
+typedef struct {
     enum wave_type_t wave_type;
+    bool has_envelope;
+    adsr_t adsr[MAX_OPERATORS];
 } instrument_t;
 
 typedef struct {
     UINT8 note;
+    UINT8 volume;
     int   instrument;
-    bool  sustain;
+    bool  note_on;
 } note_event_t;
 
 typedef struct {
@@ -34,6 +45,10 @@ typedef struct {
 } pattern_t;
 
 typedef struct {
+    bool  has_envelope;
+} channel_status_t;
+
+typedef struct {
     UINT8 channels;
     UINT8 bpm;
     UINT8 ticks_per_row;
@@ -43,6 +58,7 @@ typedef struct {
     int patterns_count;
 
     instrument_t *instruments[MAX_INSTRUMENTS];
+    channel_status_t channel_status[MAX_CHANNELS];
 
     int playing_pattern;
     int playing_tick;

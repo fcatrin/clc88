@@ -14,7 +14,7 @@ void note_event_init(note_event_t *event, int instrument, char note, char accide
     event->instrument = instrument;
     event->note = NO_NOTE;
     if (note == '+') {
-        event->sustain = TRUE;
+        event->note_on = TRUE;
     } else if (note >= 'A' && note <= 'G') {
         int note_index = note_table[note - 'A'];
         if (accident == '#') note_index ++;
@@ -24,9 +24,9 @@ void note_event_init(note_event_t *event, int instrument, char note, char accide
             note_octave = octave - '0';
         }
         event->note = note_octave * 12 + note_index;
-        event->sustain = TRUE;
+        event->note_on = TRUE;
     } else {
-        event->sustain = FALSE;
+        event->note_on = FALSE;
     }
     printf("create event ");
     note_event_dump(event);
@@ -36,6 +36,6 @@ void note_event_init(note_event_t *event, int instrument, char note, char accide
 void note_event_dump(note_event_t *event) {
     if (event == NULL) printf("NULL");
     else {
-        printf("note:%d sustain:%s", event->note, event->sustain ? "Y":"N");
+        printf("note:%d note_on:%s", event->note, event->note_on ? "Y":"N");
     }
 }

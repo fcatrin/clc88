@@ -1,10 +1,10 @@
 bpm 200
-channels 2
+channels 1
 
-instrument: 01 sqr
-instrument: 02 saw
-instrument: 03 tri
-instrument: 04 sin
+instrument: 01 sqr FFFF
+instrument: 02 saw FFFF
+instrument: 03 tri FFFF
+instrument: 04 sin FFFF
 
 pattern
 01 A-3 04 A-3

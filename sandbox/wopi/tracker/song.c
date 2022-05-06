@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <malloc.h>
+#include <string.h>
 #include "../emu.h"
 #include "tracker.h"
 #include "tracker_utils.h"
@@ -9,6 +10,7 @@
 
 song_t *song_new() {
     song_t *song = (song_t *)malloc(sizeof(song_t));
+    memset(song, 0, sizeof(song_t));
     song->patterns_count = 0;
     return song;
 }
@@ -43,12 +45,24 @@ pattern_row_t *song_get_row(song_t *song) {
 }
 
 void song_register_instrument(song_t *song, char *line) {
+    adsr_t adsr[MAX_OPERATORS];
+
     int instrument_number = load_parameter_hex(line, 2);
     char *wave_type_desc = load_parameter(line, 3);
     int wave_type = tracker_get_wave_type(wave_type_desc);
 
+    for(int i=0; i<MAX_OPERATORS; i++) {
+        char *envelope_desc = load_parameter(line, 4 + i);
+        if (strlen(envelope_desc)!=4) break;
+
+        adsr[i].attack  = hexchar2int(envelope_desc[0]);
+        adsr[i].decay   = hexchar2int(envelope_desc[1]);
+        adsr[i].sustain = hexchar2int(envelope_desc[2]);
+        adsr[i].release = hexchar2int(envelope_desc[3]);
+    }
+
     instrument_t *instrument = instrument_new();
-    instrument_init(instrument, wave_type);
+    instrument_init(instrument, wave_type, adsr);
     song->instruments[instrument_number] = instrument;
 }
 

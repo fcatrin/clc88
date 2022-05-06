@@ -52,13 +52,17 @@ int hexchar2int(char c) {
         return c - '0';
     }
     if (c >= 'A' && c <= 'F') {
-        return c - 'A';
+        return c - 'A' + 10;
     }
     if (c >= 'a' && c <= 'f') {
-        return c - 'a';
+        return c - 'a' + 10;
     }
     fprintf(stderr, "invalid hex char %c\n", c);
     return 0;
+}
+
+char int2hexchar(int n) {
+    return n < 10 ? ('0' + n) : ('A' + n - 10);
 }
 
 int hex2int(char *hex) {

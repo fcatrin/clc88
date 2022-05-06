@@ -60,12 +60,30 @@
 #define WAVE_TYPE_TRI 2
 #define WAVE_TYPE_SQR 3
 
+#define ENV_ATTACK   0
+#define ENV_DECAY    1
+#define ENV_SUSTAIN  2
+#define ENV_RELEASE  3
+#define ENV_COMPLETE 4
+
 typedef struct {
     UINT16 divider;
     float period;
     float phase;
-    UINT8 volume;
     UINT8 wave_type;
+
+    bool  note_on;
+    bool  envelope;
+    UINT8 volume;
+
+    int    env_stage;
+    UINT8  env_attack;
+    UINT8  env_decay;
+    UINT8  env_sustain;
+    UINT8  env_release;
+    UINT32 env_stop;
+    float  env_phase;
+    float  env_step;
 } osc;
 
 static osc oscs[VOICES * OPERATORS];
@@ -87,8 +105,9 @@ static UINT32 rel_stop[ENVELOPE_STAGE_VALUES];
 
 static void set_period_low (int osc_index, UINT8 value);
 static void set_period_high(int osc_index, UINT8 value);
-static void set_volume(int osc_index, UINT8 value);
+static void set_volume_reg(int osc_index, UINT8 value);
 static void set_wave_type(int osc_index, UINT8 wave_type);
+static void env_start_stage(osc *voice, int stage);
 
 static UINT16 sampling_freq;
 
@@ -155,7 +174,7 @@ void wopi_write(UINT16 reg, UINT8 value) {
         }
     } else if (reg < 128 + (VOICES*OPERATORS)) {
         int osc_index = reg - 128;
-        set_volume(osc_index, value);
+        set_volume_reg(osc_index, value);
     } else if (reg < 128 + (VOICES*OPERATORS) + VOICES) {
         int osc_index = reg - 128 - (VOICES*OPERATORS);
         set_wave_type(osc_index, value);
@@ -179,14 +198,61 @@ static void set_period_high(int osc_index, UINT8 value) {
     update_period(osc);
 }
 
-static void set_volume(int osc_index, UINT8 value) {
+static void set_volume_reg(int osc_index, UINT8 value) {
     osc *osc = &oscs[osc_index];
-    osc->volume = value;
+    osc->volume   = value & 0x0f;
+    osc->envelope = value & 0x10;
+    bool note_on_next  = value & 0x20;
+    if (!osc->note_on && note_on_next) {
+        osc->note_on = TRUE;
+        env_start_stage(osc, ENV_ATTACK);
+    } else if (osc->note_on && !note_on_next) {
+        osc->note_on = FALSE;
+        env_start_stage(osc, ENV_RELEASE);
+    }
 }
 
 static void set_wave_type(int osc_index, UINT8 wave_type) {
     osc *osc = &oscs[osc_index];
     osc->wave_type = wave_type;
+}
+
+static void env_start_stage(osc *voice, int stage) {
+    voice->env_stage = stage;
+    voice->env_phase = 0;
+    if (stage == ENV_ATTACK) {
+        voice->env_step  = att_step[voice->env_attack];
+        voice->env_stop  = att_stop[voice->env_attack];
+    } else if (stage == ENV_DECAY) {
+        voice->env_step  = dec_step[voice->env_decay];
+    } else if (stage == ENV_RELEASE) {
+        voice->env_step  = rel_step[voice->env_release];
+        voice->env_stop  = rel_stop[voice->env_release];
+    }
+}
+
+static UINT8 get_envelope_value(osc *voice) {
+    if (!voice->envelope) return 255;
+
+    UINT8 volume = 0;
+    if (voice->env_stage == ENV_ATTACK) {
+        volume = asc_table[(int)voice->env_phase];
+        voice->env_phase += voice->env_step;
+        voice->env_stop--;
+        if (voice->env_stop == 0) env_start_stage(voice, ENV_DECAY);
+    } else if (voice->env_stage == ENV_DECAY) {
+        volume = des_table[(int)voice->env_phase];
+        voice->env_phase += voice->env_step;
+        if (volume >> 4 == voice->env_sustain) voice->env_stage = ENV_SUSTAIN;
+    } else if (voice->env_stage == ENV_SUSTAIN) {
+        volume = voice->env_sustain << 4;
+    } else if (voice->env_stage == ENV_RELEASE) {
+        volume = des_table[(int)voice->env_phase];
+        voice->env_phase += voice->env_step;
+        voice->env_stop--;
+        if (voice->env_stop == 0) voice->env_stage = ENV_COMPLETE;
+    }
+    return volume;
 }
 
 void wopi_process(INT16 *buffer, UINT16 size) {
@@ -204,9 +270,14 @@ void wopi_process(INT16 *buffer, UINT16 size) {
                 case WAVE_TYPE_TRI : wave_table = tri_table; break;
                 case WAVE_TYPE_SQR : wave_table = sqr_table; break;
             }
-            INT16 value = wave_table == NULL ? 0 : (wave_table[(int)voice->phase] * (voice->volume / 128.0));
-            buffer[i+0] += value;
-            buffer[i+1] += value;
+
+            UINT8  env_value = get_envelope_value(voice);
+            UINT16 voice_value = wave_table == NULL ? 0 : wave_table[(int)voice->phase];
+            UINT16 voice_envelope = voice_value * (env_value / 255.0);
+            float  voice_final = voice_envelope * (voice->volume / 15.0);
+
+            buffer[i+0] += voice_final;
+            buffer[i+1] += voice_final;
 
             voice->phase += voice->period;
             if (voice->phase >= WAVE_SIZE) voice->phase -= WAVE_SIZE;

@@ -12,5 +12,6 @@ int   load_parameter_hex(const char *line, int index);
 
 int hex2int(char *hex);
 int hexchar2int(char c);
+char int2hexchar(int n);
 
 #endif
