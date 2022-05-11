@@ -140,22 +140,23 @@ void wopi_sound_init(UINT16 freq) {
         // use 1/4 sine as ascending function
         asc_table[i] = (UINT8)(256.0 * sin(((float)i / 4 / ENVELOPE_STAGE_SIZE) * M_PI*2));
         // use linear descending
+        // this should be updated by A(t) = A(t-1) * 0,997335937978865
         des_table[i] = 255.0 - (255.0 * (float)i/ENVELOPE_STAGE_SIZE);
     }
 
     // create tables for "steps" required on each envelope value
-    float att_time = 2000.0;
-    float dec_time = 4000.0;
+    float att_time = 2500.0;
+    float dec_time = 5500.0;
     float rel_time = 8000.0;
     int last_index = ENVELOPE_STAGE_SIZE-1;
     for(int i=0; i<ENVELOPE_STAGE_VALUES; i++) {
         att_stop[i] = att_time / 1000.0 * freq;
         att_step[i] = last_index / (float)att_stop[i];
         printf("att_step[%d] = %f att_stop[%d] = %d\n", i, att_step[i], i, att_stop[i]);
-        att_time /= 2.0; // log scale
+        att_time /= 2.0; // log scale  1.4 according to https://github.com/jotego/jt51/blob/master/doc/envelope.ods
 
         dec_step[i] = last_index / (dec_time / 1000.0 * freq);
-        dec_time /= 2.0; // log scale
+        if (dec_time > 2) dec_time /= 2.0; // log scale stopping at 2ms
 
         rel_stop[i] = (rel_time / 1000.0 * freq);
         rel_step[i] = last_index / (float)rel_stop[i];
