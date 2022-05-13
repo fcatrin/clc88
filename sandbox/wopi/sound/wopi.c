@@ -97,6 +97,8 @@ static INT16 sqr_table[WAVE_SIZE];
 
 #define ENVELOPE_STAGE_SIZE 256
 #define ENVELOPE_STAGE_VALUES 16
+#define ENVELOPE_VALUE_MAX 255
+#define ENVELOPE_VALUE_MIN 0
 static UINT8 asc_table[ENVELOPE_STAGE_SIZE]; // ascending curve used in attack
 static UINT8 des_table[ENVELOPE_STAGE_SIZE]; // descending curve used in release and decay
 static float att_step[ENVELOPE_STAGE_VALUES];
@@ -135,13 +137,20 @@ void wopi_sound_init(UINT16 freq) {
         sqr_table[i] = (i < half ? -1 : 1) * 32767;
     }
 
+    // log descending ratio
+    // ratio = (last / first) ^ (1/(N - 1))
+    // https://www.quora.com/How-do-you-find-the-common-ratio-with-the-first-and-last-terms
+    float des_ratio = pow((ENVELOPE_VALUE_MIN+1) / (float)ENVELOPE_VALUE_MAX, (1.0 / (ENVELOPE_STAGE_SIZE-1)));
+    float des_value = ENVELOPE_VALUE_MAX;
+
     // create tables for envelope ascending and descending curves
     for(int i=0; i<ENVELOPE_STAGE_SIZE; i++) {
         // use 1/4 sine as ascending function
-        asc_table[i] = (UINT8)(256.0 * sin(((float)i / 4 / ENVELOPE_STAGE_SIZE) * M_PI*2));
-        // use linear descending
-        // this should be updated by A(t) = A(t-1) * 0,997335937978865
-        des_table[i] = 255.0 - (255.0 * (float)i/ENVELOPE_STAGE_SIZE);
+        asc_table[i] = (UINT8)((ENVELOPE_VALUE_MAX+1) * sin(((float)i / 4 / ENVELOPE_STAGE_SIZE) * M_PI*2));
+
+        // use log descending
+        des_table[i] = des_value;
+        des_value *= des_ratio;
     }
 
     // create tables for "steps" required on each envelope value

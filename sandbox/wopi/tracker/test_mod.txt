@@ -1,15 +1,15 @@
-bpm 120
+bpm 240
 channels 1
 
-instrument: 01 sin 4FF4
-instrument: 02 saw 4FF4
-instrument: 03 tri 4FF4
-instrument: 04 sqr 4FF4
+instrument: 01 sin F482
+instrument: 02 saw F488
+instrument: 03 tri F488
+instrument: 04 sqr F488
 
 pattern
 01 A-3 04 A-3
-   ---    ---
-   ---    ---
+   +++    ---
+   +++    ---
    ---    ---
 01 C#3    ---
    +++    ---
