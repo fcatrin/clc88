@@ -53,6 +53,7 @@
 
 #define CLK WOPI_CLK
 #define WAVE_SIZE 2048
+#define WAVE_HALF (WAVE_SIZE / 2)
 #define VOICES 9
 #define OPERATORS 4
 
@@ -92,9 +93,6 @@ typedef struct {
 static osc oscs[VOICES * OPERATORS];
 
 static INT16 sin_table[WAVE_SIZE];
-static INT16 tri_table[WAVE_SIZE];
-static INT16 saw_table[WAVE_SIZE];
-static INT16 sqr_table[WAVE_SIZE];
 
 #define ENVELOPE_STAGE_SIZE 256
 #define ENVELOPE_STAGE_VALUES 16
@@ -125,17 +123,9 @@ static int debug_env = 0;
 void wopi_sound_init(UINT16 freq) {
     sampling_freq = freq;
 
-    int half = WAVE_SIZE/2;
     for(int i=0; i<WAVE_SIZE; i++) {
         float v = sin(((float)i / WAVE_SIZE) * M_PI*2);
         sin_table[i] = v * 32767;
-
-        float tri_asc = (i*2.0 / half) - 1;
-        float tri_des = 1 - ((i-half)*2.0 / half);
-        tri_table[i] = (i < half ? tri_asc : tri_des) * 32767;
-
-        saw_table[i] = ((i*2.0 / WAVE_SIZE) - 1) * 32767;;
-        sqr_table[i] = (i < half ? -1 : 1) * 32767;
     }
 
     // log descending ratio
@@ -311,13 +301,15 @@ void wopi_process(INT16 *buffer, UINT16 size) {
         for(int v=0; v < 1; v++) {
             osc *voice = &oscs[v];
 
-            INT16 *wave_table = NULL;
+            int voice_value = 0;
             switch(voice->wave_type) {
-                case WAVE_TYPE_SIN : wave_table = sin_table; break;
-                case WAVE_TYPE_SAW : wave_table = saw_table; break;
-                case WAVE_TYPE_TRI : wave_table = tri_table; break;
-                case WAVE_TYPE_SQR : wave_table = sqr_table; break;
+                case WAVE_TYPE_SIN : voice_value = sin_table[(int)voice->phase]; break;
+                case WAVE_TYPE_SAW : voice_value = (voice->phase - WAVE_HALF) * 32; break;
+                case WAVE_TYPE_TRI : voice_value = voice->phase < WAVE_HALF ? (voice->phase*2 - WAVE_HALF) * 32 : (WAVE_SIZE - voice->phase*2) * 32 ; break;
+                case WAVE_TYPE_SQR : voice_value = voice->phase < WAVE_HALF ? -32767 : 32767; break;
             }
+
+            voice_value >>= 1;
 
             resolve_envelope_value(voice);
             UINT8  env_value = voice->env_volume;
@@ -326,11 +318,9 @@ void wopi_process(INT16 *buffer, UINT16 size) {
             }
             debug_env++;
 
-            //UINT16 voice_value = wave_table == NULL ? 0 : wave_table[(int)voice->phase];
             //UINT16 voice_envelope = voice_value * 1; // (env_value / 255.0);
             //float  voice_final = voice_envelope * (voice->volume / 15.0) / 8.0f;
 
-            int voice_value = wave_table == NULL ? 0 : wave_table[(int)voice->phase] / 2.0;
             int voice_envelope = voice_value * (env_value / 255.0);
             int voice_final = voice_envelope;
 
