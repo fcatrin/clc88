@@ -5,7 +5,7 @@
 
 /*
     CLK = 100MHz / 56 = 1.785714 MHz   (Compy system clock is 100MHz)
-    This is probably the closest to the typical clocks for audio chips of the eighties:
+    This is probably the closest to the typical clock rates for audio chips on the eighties:
 
     - MSX NTSC 1.789772 MHz
     - NES NTSC 1.789773 MHz
@@ -14,7 +14,7 @@
     Base waveform
     =============
     Hardware implementation will use a precalculated sine wave. Using 2048 points
-    gives a lower frequency of 20 Hz for 44.1 KHz sampling rate. Good enough
+    gives a lower frequency of 21,53Hz for 44.1 KHz sampling rate. Good enough
 
     Target frequencies
     ==================
@@ -45,8 +45,9 @@
 
     Volume
     ======
-    bits 6-0 : static volume
-    bit  7   : use envelope if 1
+    bits 4-0 : static volume
+    bit  6   : use envelope if 1
+    bit  7   : note on if 1
 
 */
 
@@ -222,9 +223,9 @@ static void set_period_high(int osc_index, UINT8 value) {
 
 static void set_volume_reg(int osc_index, UINT8 value) {
     osc *osc = &oscs[osc_index];
-    osc->volume   = value & 0x0f;
-    osc->envelope = value & 0x10;
-    bool note_on_next  = value & 0x20;
+    osc->volume   = value & 0x3f;
+    osc->envelope = value & 0x40;
+    bool note_on_next  = value & 0x80;
     if (!osc->note_on && note_on_next) {
         osc->note_on = TRUE;
         env_start_stage(osc, ENV_ATTACK);

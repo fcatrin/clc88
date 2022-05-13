@@ -13,7 +13,7 @@ note_event_t *note_event_new() {
 void note_event_init(note_event_t *event, int instrument, char note, char accident, char octave) {
     event->instrument = instrument;
     event->note = NO_NOTE;
-    event->volume = 15;
+    event->volume = 0x3f;
     if (note == '+') {
         event->note_on = TRUE;
     } else if (note >= 'A' && note <= 'G') {
