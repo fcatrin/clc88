@@ -55,7 +55,7 @@
 #define WAVE_SIZE 2048
 #define WAVE_HALF (WAVE_SIZE / 2)
 #define VOICES 9
-#define OPERATORS 4
+#define OPIS 4
 
 #define WAVE_TYPE_SIN 0
 #define WAVE_TYPE_SAW 1
@@ -86,12 +86,12 @@ typedef struct {
     float  env_step;
     UINT8  env_volume;
     UINT8  env_volume_release;
-} operator_t;
+} opi_t;
 
 typedef struct {
     UINT16 divider;
     bool  note_on;
-    operator_t operators[OPERATORS];
+    opi_t opis[OPIS];
 } voice_t;
 
 static voice_t voices[VOICES];
@@ -113,11 +113,11 @@ static UINT32 rel_stop[ENVELOPE_STAGE_VALUES];
 static void set_note_on(voice_t *voice, UINT8 value);
 static void set_period_low (voice_t *voice, UINT8 value);
 static void set_period_high(voice_t *voice, UINT8 value);
-static void set_volume_reg(operator_t *operator, UINT8 value);
-static void set_wave_type(operator_t *operator, UINT8 wave_type);
-static void set_env_ad(operator_t *operator, UINT8 value);
-static void set_env_sr(operator_t *operator, UINT8 value);
-static void env_start_stage(operator_t *operator, int stage);
+static void set_volume_reg(opi_t *opi, UINT8 value);
+static void set_wave_type(opi_t *opi, UINT8 wave_type);
+static void set_env_ad(opi_t *opi, UINT8 value);
+static void set_env_sr(opi_t *opi, UINT8 value);
+static void env_start_stage(opi_t *opi, int stage);
 
 static UINT16 sampling_freq;
 
@@ -176,10 +176,10 @@ void wopi_sound_init(UINT16 freq) {
 
 }
 
-operator_t *get_operator_by_index(int index) {
-    int voice_index = index / OPERATORS;
-    int operator_index = index % OPERATORS;
-    return &voices[voice_index].operators[operator_index];
+opi_t *get_opi_by_index(int index) {
+    int voice_index = index / OPIS;
+    int opi_index = index % OPIS;
+    return &voices[voice_index].opis[opi_index];
 }
 
 void wopi_write(UINT16 reg, UINT8 value) {
@@ -195,23 +195,23 @@ void wopi_write(UINT16 reg, UINT8 value) {
     } else if (reg < 18 + VOICES) {
         voice_t *voice = &voices[reg - 18];
         set_note_on(voice, value);
-    } else if (reg < 128 + (VOICES*OPERATORS)) { // 128 - 163
-        operator_t *operator = get_operator_by_index(reg - 128);
-        set_volume_reg(operator, value);
+    } else if (reg < 128 + (VOICES*OPIS)) { // 128 - 163
+        opi_t *opi = get_opi_by_index(reg - 128);
+        set_volume_reg(opi, value);
     } else if (reg < 164 + VOICES) { // 164 - 173
-        operator_t *operator = get_operator_by_index(reg - 164);
-        set_wave_type(operator, value);
-    } else if (reg < 180 + (VOICES*OPERATORS)*2) { // 180 - 252
-        operator_t *operator = get_operator_by_index(reg - 180);
-        if (reg & 1) set_env_sr(operator, value);
-        else set_env_ad(operator, value);
+        opi_t *opi = get_opi_by_index(reg - 164);
+        set_wave_type(opi, value);
+    } else if (reg < 180 + (VOICES*OPIS)*2) { // 180 - 252
+        opi_t *opi = get_opi_by_index(reg - 180);
+        if (reg & 1) set_env_sr(opi, value);
+        else set_env_ad(opi, value);
     }
 }
 
 static void update_period(voice_t *voice){
     if (voice->divider == 0) return;
-    for(int i=0; i<OPERATORS; i++) {
-        voice->operators[i].period = (CLK / voice->divider) * ((float)WAVE_SIZE / sampling_freq);
+    for(int i=0; i<OPIS; i++) {
+        voice->opis[i].period = (CLK / voice->divider) * ((float)WAVE_SIZE / sampling_freq);
     }
 }
 
@@ -225,14 +225,14 @@ static void set_period_high(voice_t *voice, UINT8 value) {
     update_period(voice);
 }
 
-static void set_volume_reg(operator_t *operator, UINT8 value) {
-    operator->volume   = value & 0x3f;
-    operator->envelope = value & 0x40;
+static void set_volume_reg(opi_t *opi, UINT8 value) {
+    opi->volume   = value & 0x3f;
+    opi->envelope = value & 0x40;
 }
 
 static void voice_env_start_stage(voice_t *voice, UINT8 stage) {
-    for(int i=0; i<OPERATORS; i++) {
-        env_start_stage(&voice->operators[i], stage);
+    for(int i=0; i<OPIS; i++) {
+        env_start_stage(&voice->opis[i], stage);
     }
 }
 
@@ -248,35 +248,35 @@ static void set_note_on(voice_t *voice, UINT8 value) {
     }
 }
 
-static void set_wave_type(operator_t *operator, UINT8 wave_type) {
-    operator->wave_type = wave_type;
+static void set_wave_type(opi_t *opi, UINT8 wave_type) {
+    opi->wave_type = wave_type;
 }
 
-static void set_env_ad(operator_t *operator, UINT8 value) {
-    operator->env_attack = (value & 0xF0) >> 4;
-    operator->env_decay  = (value & 0x0F);
-    env_start_stage(operator, ENV_ATTACK);
+static void set_env_ad(opi_t *opi, UINT8 value) {
+    opi->env_attack = (value & 0xF0) >> 4;
+    opi->env_decay  = (value & 0x0F);
+    env_start_stage(opi, ENV_ATTACK);
 }
 
-static void set_env_sr(operator_t *operator, UINT8 value) {
-    operator->env_sustain = (value & 0xF0) >> 4;
-    operator->env_release = (value & 0x0F);
-    env_start_stage(operator, ENV_ATTACK);
+static void set_env_sr(opi_t *opi, UINT8 value) {
+    opi->env_sustain = (value & 0xF0) >> 4;
+    opi->env_release = (value & 0x0F);
+    env_start_stage(opi, ENV_ATTACK);
 }
 
-static void env_start_stage(operator_t *operator, int stage) {
-    operator->env_stage = stage;
-    operator->env_phase = 0;
+static void env_start_stage(opi_t *opi, int stage) {
+    opi->env_stage = stage;
+    opi->env_phase = 0;
     if (stage == ENV_ATTACK) {
-        operator->env_step  = att_step[operator->env_attack];
-        operator->env_stop  = att_stop[operator->env_attack];
+        opi->env_step  = att_step[opi->env_attack];
+        opi->env_stop  = att_stop[opi->env_attack];
     } else if (stage == ENV_DECAY) {
-        operator->env_step  = dec_step[operator->env_decay];
-        operator->env_stop  = 0;
+        opi->env_step  = dec_step[opi->env_decay];
+        opi->env_stop  = 0;
     } else if (stage == ENV_RELEASE) {
-        operator->env_volume_release = operator->env_volume;
-        operator->env_step  = rel_step[operator->env_release];
-        operator->env_stop  = rel_stop[operator->env_release];
+        opi->env_volume_release = opi->env_volume;
+        opi->env_step  = rel_step[opi->env_release];
+        opi->env_stop  = rel_stop[opi->env_release];
     }
 }
 
@@ -284,31 +284,31 @@ static bool is_debug_env() {
     return debug_env >= MIN_DEBUG_ENV && debug_env <= MAX_DEBUG_ENV;
 }
 
-static void resolve_envelope_value(operator_t *operator) {
-    if (!operator->envelope) {
+static void resolve_envelope_value(opi_t *opi) {
+    if (!opi->envelope) {
         if (is_debug_env()) printf("no envelope ");
-        operator->env_volume = 255;
+        opi->env_volume = 255;
         return;
     }
 
-    if (operator->env_stage == ENV_ATTACK) {
-        if (is_debug_env()) printf("attack envelope phase:%f stop:%d ", operator->env_phase, operator->env_stop);
-        operator->env_volume = asc_table[(int)operator->env_phase];
-        operator->env_phase += operator->env_step;
-        if (operator->env_stop-- == 0) env_start_stage(operator, ENV_DECAY);
-    } else if (operator->env_stage == ENV_DECAY) {
-        if (is_debug_env()) printf("decay envelope phase:%f target sustain:%d ", operator->env_phase, (operator->env_sustain << 4 | 0x0f));
-        operator->env_volume = des_table[(int)operator->env_phase];
-        operator->env_phase += operator->env_step;
-        if (operator->env_volume >> 4 == operator->env_sustain) operator->env_stage = ENV_SUSTAIN;
-    } else if (operator->env_stage == ENV_SUSTAIN) {
-        operator->env_volume = operator->env_sustain << 4 | 0x0f;
-        if (is_debug_env()) printf("sustain envelope volume:%d ", operator->env_volume);
-    } else if (operator->env_stage == ENV_RELEASE) {
-        operator->env_volume = des_table[(int)operator->env_phase] * (float)(operator->env_volume_release / 255.0);
-        if (is_debug_env()) printf("release envelope phase:%f stop:%d tab:%d", operator->env_phase, operator->env_stop, des_table[(int)operator->env_phase]);
-        operator->env_phase += operator->env_step;
-        if (operator->env_volume == 0) operator->env_stage = ENV_COMPLETE;
+    if (opi->env_stage == ENV_ATTACK) {
+        if (is_debug_env()) printf("attack envelope phase:%f stop:%d ", opi->env_phase, opi->env_stop);
+        opi->env_volume = asc_table[(int)opi->env_phase];
+        opi->env_phase += opi->env_step;
+        if (opi->env_stop-- == 0) env_start_stage(opi, ENV_DECAY);
+    } else if (opi->env_stage == ENV_DECAY) {
+        if (is_debug_env()) printf("decay envelope phase:%f target sustain:%d ", opi->env_phase, (opi->env_sustain << 4 | 0x0f));
+        opi->env_volume = des_table[(int)opi->env_phase];
+        opi->env_phase += opi->env_step;
+        if (opi->env_volume >> 4 == opi->env_sustain) opi->env_stage = ENV_SUSTAIN;
+    } else if (opi->env_stage == ENV_SUSTAIN) {
+        opi->env_volume = opi->env_sustain << 4 | 0x0f;
+        if (is_debug_env()) printf("sustain envelope volume:%d ", opi->env_volume);
+    } else if (opi->env_stage == ENV_RELEASE) {
+        opi->env_volume = des_table[(int)opi->env_phase] * (float)(opi->env_volume_release / 255.0);
+        if (is_debug_env()) printf("release envelope phase:%f stop:%d tab:%d", opi->env_phase, opi->env_stop, des_table[(int)opi->env_phase]);
+        opi->env_phase += opi->env_step;
+        if (opi->env_volume == 0) opi->env_stage = ENV_COMPLETE;
     }
 }
 
@@ -318,34 +318,34 @@ void wopi_process(INT16 *buffer, UINT16 size) {
         buffer[i+1] = 0;
 
         for(int voice_index = 0; voice_index < 1; voice_index++) {
-            for(int operator_index = 0; operator_index < 1; operator_index++) {
-                operator_t *operator = &voices[voice_index].operators[operator_index];
+            for(int opi_index = 0; opi_index < 1; opi_index++) {
+                opi_t *opi = &voices[voice_index].opis[opi_index];
 
-                int operator_value = 0;
-                switch(operator->wave_type) {
-                    case WAVE_TYPE_SIN : operator_value = sin_table[(int)operator->phase]; break;
-                    case WAVE_TYPE_SAW : operator_value = (operator->phase - WAVE_HALF) * 32; break;
-                    case WAVE_TYPE_TRI : operator_value = operator->phase < WAVE_HALF ? (operator->phase*2 - WAVE_HALF) * 32 : (WAVE_SIZE - operator->phase*2) * 32 ; break;
-                    case WAVE_TYPE_SQR : operator_value = operator->phase < WAVE_HALF ? -32767 : 32767; break;
+                int opi_value = 0;
+                switch(opi->wave_type) {
+                    case WAVE_TYPE_SIN : opi_value = sin_table[(int)opi->phase]; break;
+                    case WAVE_TYPE_SAW : opi_value = (opi->phase - WAVE_HALF) * 32; break;
+                    case WAVE_TYPE_TRI : opi_value = opi->phase < WAVE_HALF ? (opi->phase*2 - WAVE_HALF) * 32 : (WAVE_SIZE - opi->phase*2) * 32 ; break;
+                    case WAVE_TYPE_SQR : opi_value = opi->phase < WAVE_HALF ? -32767 : 32767; break;
                 }
 
-                operator_value >>= 1;
+                opi_value >>= 1;
 
-                resolve_envelope_value(operator);
-                UINT8  env_value = operator->env_volume;
+                resolve_envelope_value(opi);
+                UINT8  env_value = opi->env_volume;
                 if (is_debug_env()) {
                     printf("env_value[%d] = %d\n", debug_env, env_value);
                 }
                 debug_env++;
 
-                int voice_envelope = operator_value * (env_value / 255.0);
+                int voice_envelope = opi_value * (env_value / 255.0);
                 int voice_final = voice_envelope;
 
                 buffer[i+0] += voice_final;
                 buffer[i+1] += voice_final;
 
-                operator->phase += operator->period;
-                if (operator->phase >= WAVE_SIZE) operator->phase -= WAVE_SIZE;
+                opi->phase += opi->period;
+                if (opi->phase >= WAVE_SIZE) opi->phase -= WAVE_SIZE;
             }
         }
     }
