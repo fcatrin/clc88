@@ -105,8 +105,10 @@ void tracker_play() {
                         wopi_write(i*MAX_OPERATORS + opi_index + 164, wave_type & 0x03);
 
                         adsr_t *adsr = &opi->adsr;
-                        wopi_write(i*MAX_OPERATORS*2 + 0 + 180, (adsr->attack  << 4) | adsr->decay);
-                        wopi_write(i*MAX_OPERATORS*2 + 1 + 180, (adsr->sustain << 4) | adsr->release);
+                        wopi_write(i*MAX_OPERATORS*2 + opi_index * 2 + 0 + 180, (adsr->attack  << 4) | adsr->decay);
+                        wopi_write(i*MAX_OPERATORS*2 + opi_index * 2 + 1 + 180, (adsr->sustain << 4) | adsr->release);
+
+                        wopi_write(i*MAX_OPERATORS + opi_index + 27, opi->multiplier);
                     }
                 }
             }

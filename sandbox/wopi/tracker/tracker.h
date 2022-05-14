@@ -22,6 +22,7 @@ typedef struct {
 typedef struct {
     enum wave_type_t wave_type;
     bool has_envelope;
+    UINT8 multiplier;
     adsr_t adsr;
 } opi_t;
 

@@ -138,6 +138,7 @@ static void set_note_on(voice_t *voice, UINT8 value);
 static void set_period_low (voice_t *voice, UINT8 value);
 static void set_period_high(voice_t *voice, UINT8 value);
 static void set_volume_reg(opi_t *opi, UINT8 value);
+static void set_multiplier_reg(voice_t *voice, opi_t *opi, UINT8 value);
 static void set_wave_type(opi_t *opi, UINT8 wave_type);
 static void set_env_ad(opi_t *opi, UINT8 value);
 static void set_env_sr(opi_t *opi, UINT8 value);
@@ -219,6 +220,10 @@ void wopi_write(UINT16 reg, UINT8 value) {
     } else if (reg < 18 + VOICES) {
         voice_t *voice = &voices[reg - 18];
         set_note_on(voice, value);
+    } else if (reg < 27 + VOICES*OPIS) {
+        voice_t *voice = &voices[(reg - 27) / 4];
+        opi_t *opi = get_opi_by_index(reg - 27);
+        set_multiplier_reg(voice, opi, value);
     } else if (reg < 128 + (VOICES*OPIS)) { // 128 - 163
         opi_t *opi = get_opi_by_index(reg - 128);
         set_volume_reg(opi, value);
@@ -254,6 +259,11 @@ static void set_period_high(voice_t *voice, UINT8 value) {
 static void set_volume_reg(opi_t *opi, UINT8 value) {
     opi->volume   = value & 0x3f;
     opi->envelope = value & 0x40;
+}
+
+static void set_multiplier_reg(voice_t *voice, opi_t *opi, UINT8 value) {
+    opi->multiplier = value & 0x0f;
+    update_period(voice);
 }
 
 static void voice_env_start_stage(voice_t *voice, UINT8 stage) {

@@ -1,10 +1,10 @@
 bpm 240
 channels 1
 
-instrument: 01 sin F482 sin F482
-instrument: 02 saw F488 sin F482
-instrument: 03 tri F488 sin F482
-instrument: 04 sqr F488 sin F482
+instrument: 01 sin FFFF 01 sin FFFF 00
+instrument: 02 saw FFFF 01 saw FFFF 01
+instrument: 03 tri FFFF 01 tri FFFF 01
+instrument: 04 sqr FFFF 01 sqr FFFF 01
 
 pattern
 01 A-3 04 A-3

@@ -17,12 +17,13 @@ void instrument_init(instrument_t *instrument, opi_t *opis) {
 void instrument_dump(instrument_t *instrument) {
     for(int i=0; i<MAX_OPERATORS; i++) {
         opi_t *opi = &instrument->opis[i];
-        printf("opi[%d] wave_type %s adsr:%c%c%c%c\n", i,
+        printf("opi[%d] wave_type %s adsr:%c%c%c%c multiplier:%c\n", i,
             tracker_get_wave_type_desc(opi->wave_type),
             int2hexchar(opi->adsr.attack),
             int2hexchar(opi->adsr.decay),
             int2hexchar(opi->adsr.sustain),
-            int2hexchar(opi->adsr.release)
+            int2hexchar(opi->adsr.release),
+            int2hexchar(opi->multiplier)
             );
     }
 }

@@ -54,7 +54,7 @@ void song_register_instrument(song_t *song, char *line) {
         char *wave_type_desc = load_parameter(line, parameter);
         opi->wave_type = tracker_get_wave_type(wave_type_desc);
 
-        char *envelope_desc = load_parameter(line, parameter + 1 + i);
+        char *envelope_desc = load_parameter(line, parameter + 1);
         if (strlen(envelope_desc)!=4) break;
 
         opi->adsr.attack  = hexchar2int(envelope_desc[0]);
@@ -62,7 +62,10 @@ void song_register_instrument(song_t *song, char *line) {
         opi->adsr.sustain = hexchar2int(envelope_desc[2]);
         opi->adsr.release = hexchar2int(envelope_desc[3]);
 
-        parameter += 2;
+        char *multiplier_desc = load_parameter(line, parameter + 2);
+        opi->multiplier = hex2int(multiplier_desc);
+
+        parameter += 3;
     }
 
     instrument_t *instrument = instrument_new();
