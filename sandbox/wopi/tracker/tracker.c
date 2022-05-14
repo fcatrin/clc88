@@ -115,11 +115,11 @@ void tracker_play() {
                 wopi_write(i*2+0, freq & 0xFF);
                 wopi_write(i*2+1, (freq & 0xFF00) >> 8);
                 // note off to force an envelope reset
-                wopi_write(128 + i, volume);
+                wopi_write(18 + i, 0);
             }
-            UINT8 bit_note_event = (event->note_on               ? 0x80 : 0);
+            wopi_write(18 + i, event->note_on ? 1 : 0);
             UINT8 bit_envelope   = (channel_status->has_envelope ? 0x40 : 0);
-            wopi_write(128 + i, volume + bit_envelope + bit_note_event );
+            wopi_write(128 + i, volume + bit_envelope);
         }
     }
 }
