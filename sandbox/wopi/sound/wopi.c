@@ -344,7 +344,7 @@ static int opi_get_value(opi_t *opi) {
     switch(opi->wave_type) {
         case WAVE_TYPE_SIN : opi_value = sin_table[(int)opi->phase]; break;
         case WAVE_TYPE_SAW : opi_value = (opi->phase - WAVE_HALF) * 32; break;
-        case WAVE_TYPE_TRI : opi_value = opi->phase < WAVE_HALF ? (opi->phase*2 - WAVE_HALF) * 32 : (WAVE_SIZE - opi->phase*2) * 32 ; break;
+        case WAVE_TYPE_TRI : opi_value = (opi->phase < WAVE_HALF ? (opi->phase*2 - WAVE_HALF) : (WAVE_SIZE + WAVE_HALF - 2*opi->phase)) * 32 ; break;
         case WAVE_TYPE_SQR : opi_value = opi->phase < WAVE_HALF ? -32767 : 32767; break;
     }
 
