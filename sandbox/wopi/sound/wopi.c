@@ -49,6 +49,28 @@
     bit  6   : use envelope if 1
     bit  7   : note on if 1
 
+    Algorithms
+    ==========
+
+    Algorithm 0: 1 carrier, 3 modulators
+    4 -> 3 -> 2 -> 1
+
+    Algorithm 1: 2 carrier, 2 modulators
+    2 -> 1
+    4 -> 3
+
+    Algorithm 2: 3 carrier, 1 modulators
+      -> 1
+    3 -> 2
+      -> 4
+
+    Algorithm 3: 4 carrier, 0 modulators
+      -> 1
+      -> 2
+      -> 3
+      -> 4
+
+
 */
 
 #define CLK WOPI_CLK
@@ -90,6 +112,7 @@ typedef struct {
 
 typedef struct {
     UINT16 divider;
+    UINT8  algorithm;
     bool  note_on;
     opi_t opis[OPIS];
 } voice_t;
@@ -284,32 +307,45 @@ static bool is_debug_env() {
     return debug_env >= MIN_DEBUG_ENV && debug_env <= MAX_DEBUG_ENV;
 }
 
-static void resolve_envelope_value(opi_t *opi) {
+static UINT8 opi_envelope_apply(opi_t *opi) {
     if (!opi->envelope) {
         if (is_debug_env()) printf("no envelope ");
         opi->env_volume = 255;
-        return;
+    } else {
+        if (opi->env_stage == ENV_ATTACK) {
+            if (is_debug_env()) printf("attack envelope phase:%f stop:%d ", opi->env_phase, opi->env_stop);
+            opi->env_volume = asc_table[(int)opi->env_phase];
+            opi->env_phase += opi->env_step;
+            if (opi->env_stop-- == 0) env_start_stage(opi, ENV_DECAY);
+        } else if (opi->env_stage == ENV_DECAY) {
+            if (is_debug_env()) printf("decay envelope phase:%f target sustain:%d ", opi->env_phase, (opi->env_sustain << 4 | 0x0f));
+            opi->env_volume = des_table[(int)opi->env_phase];
+            opi->env_phase += opi->env_step;
+            if (opi->env_volume >> 4 == opi->env_sustain) opi->env_stage = ENV_SUSTAIN;
+        } else if (opi->env_stage == ENV_SUSTAIN) {
+            opi->env_volume = opi->env_sustain << 4 | 0x0f;
+            if (is_debug_env()) printf("sustain envelope volume:%d ", opi->env_volume);
+        } else if (opi->env_stage == ENV_RELEASE) {
+            opi->env_volume = des_table[(int)opi->env_phase] * (float)(opi->env_volume_release / 255.0);
+            if (is_debug_env()) printf("release envelope phase:%f stop:%d tab:%d", opi->env_phase, opi->env_stop, des_table[(int)opi->env_phase]);
+            opi->env_phase += opi->env_step;
+            if (opi->env_volume == 0) opi->env_stage = ENV_COMPLETE;
+        }
+    }
+    return opi->env_volume;
+}
+
+static int opi_get_value(opi_t *opi) {
+    int opi_value = 0;
+    switch(opi->wave_type) {
+        case WAVE_TYPE_SIN : opi_value = sin_table[(int)opi->phase]; break;
+        case WAVE_TYPE_SAW : opi_value = (opi->phase - WAVE_HALF) * 32; break;
+        case WAVE_TYPE_TRI : opi_value = opi->phase < WAVE_HALF ? (opi->phase*2 - WAVE_HALF) * 32 : (WAVE_SIZE - opi->phase*2) * 32 ; break;
+        case WAVE_TYPE_SQR : opi_value = opi->phase < WAVE_HALF ? -32767 : 32767; break;
     }
 
-    if (opi->env_stage == ENV_ATTACK) {
-        if (is_debug_env()) printf("attack envelope phase:%f stop:%d ", opi->env_phase, opi->env_stop);
-        opi->env_volume = asc_table[(int)opi->env_phase];
-        opi->env_phase += opi->env_step;
-        if (opi->env_stop-- == 0) env_start_stage(opi, ENV_DECAY);
-    } else if (opi->env_stage == ENV_DECAY) {
-        if (is_debug_env()) printf("decay envelope phase:%f target sustain:%d ", opi->env_phase, (opi->env_sustain << 4 | 0x0f));
-        opi->env_volume = des_table[(int)opi->env_phase];
-        opi->env_phase += opi->env_step;
-        if (opi->env_volume >> 4 == opi->env_sustain) opi->env_stage = ENV_SUSTAIN;
-    } else if (opi->env_stage == ENV_SUSTAIN) {
-        opi->env_volume = opi->env_sustain << 4 | 0x0f;
-        if (is_debug_env()) printf("sustain envelope volume:%d ", opi->env_volume);
-    } else if (opi->env_stage == ENV_RELEASE) {
-        opi->env_volume = des_table[(int)opi->env_phase] * (float)(opi->env_volume_release / 255.0);
-        if (is_debug_env()) printf("release envelope phase:%f stop:%d tab:%d", opi->env_phase, opi->env_stop, des_table[(int)opi->env_phase]);
-        opi->env_phase += opi->env_step;
-        if (opi->env_volume == 0) opi->env_stage = ENV_COMPLETE;
-    }
+    opi_value >>= 1;
+    return opi_value;
 }
 
 void wopi_process(INT16 *buffer, UINT16 size) {
@@ -320,19 +356,8 @@ void wopi_process(INT16 *buffer, UINT16 size) {
         for(int voice_index = 0; voice_index < 1; voice_index++) {
             for(int opi_index = 0; opi_index < 1; opi_index++) {
                 opi_t *opi = &voices[voice_index].opis[opi_index];
-
-                int opi_value = 0;
-                switch(opi->wave_type) {
-                    case WAVE_TYPE_SIN : opi_value = sin_table[(int)opi->phase]; break;
-                    case WAVE_TYPE_SAW : opi_value = (opi->phase - WAVE_HALF) * 32; break;
-                    case WAVE_TYPE_TRI : opi_value = opi->phase < WAVE_HALF ? (opi->phase*2 - WAVE_HALF) * 32 : (WAVE_SIZE - opi->phase*2) * 32 ; break;
-                    case WAVE_TYPE_SQR : opi_value = opi->phase < WAVE_HALF ? -32767 : 32767; break;
-                }
-
-                opi_value >>= 1;
-
-                resolve_envelope_value(opi);
-                UINT8  env_value = opi->env_volume;
+                int opi_value = opi_get_value(opi);
+                UINT8  env_value = opi_envelope_apply(opi);
                 if (is_debug_env()) {
                     printf("env_value[%d] = %d\n", debug_env, env_value);
                 }
