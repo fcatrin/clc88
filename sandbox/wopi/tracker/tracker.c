@@ -98,14 +98,16 @@ void tracker_play() {
             if (event->instrument != 0) {
                 instrument_t *instrument = song->instruments[event->instrument];
                 if (instrument != NULL) {
-                    enum wave_type_t wave_type = instrument->wave_type;
-                    wopi_write(i + 164, wave_type & 0x03);
+                    for(int opi_index = 0; opi_index < MAX_OPERATORS; opi_index++) {
+                        opi_t *opi = &instrument->opis[opi_index];
 
-                    adsr_t *adsr = &instrument->adsr[0];
-                    wopi_write(i*2 + 0 + 180, (adsr->attack  << 4) | adsr->decay);
-                    wopi_write(i*2 + 1 + 180, (adsr->sustain << 4) | adsr->release);
+                        enum wave_type_t wave_type = opi->wave_type;
+                        wopi_write(i*MAX_OPERATORS + opi_index + 164, wave_type & 0x03);
 
-                    channel_status->has_envelope = instrument->has_envelope;
+                        adsr_t *adsr = &opi->adsr;
+                        wopi_write(i*MAX_OPERATORS*2 + 0 + 180, (adsr->attack  << 4) | adsr->decay);
+                        wopi_write(i*MAX_OPERATORS*2 + 1 + 180, (adsr->sustain << 4) | adsr->release);
+                    }
                 }
             }
             UINT8 volume = event->volume;
@@ -118,8 +120,7 @@ void tracker_play() {
                 wopi_write(18 + i, 0);
             }
             wopi_write(18 + i, event->note_on ? 1 : 0);
-            UINT8 bit_envelope   = (channel_status->has_envelope ? 0x40 : 0);
-            wopi_write(128 + i, volume + bit_envelope);
+            wopi_write(128 + i, volume);
         }
     }
 }

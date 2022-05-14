@@ -10,17 +10,19 @@ instrument_t *instrument_new() {
     return instrument;
 }
 
-void instrument_init(instrument_t *instrument, enum wave_type_t wave_type, adsr_t *adsr) {
-    instrument->wave_type = wave_type;
-    memcpy(&instrument->adsr[0], adsr, sizeof(adsr_t) * MAX_OPERATORS);
+void instrument_init(instrument_t *instrument, opi_t *opis) {
+    memcpy(&instrument->opis[0], opis, sizeof(opi_t) * MAX_OPERATORS);
 }
 
 void instrument_dump(instrument_t *instrument) {
-    printf("wave_type %s adsr:%c%c%c%c\n",
-        tracker_get_wave_type_desc(instrument->wave_type),
-        int2hexchar(instrument->adsr[0].attack),
-        int2hexchar(instrument->adsr[0].decay),
-        int2hexchar(instrument->adsr[0].sustain),
-        int2hexchar(instrument->adsr[0].release)
-        );
+    for(int i=0; i<MAX_OPERATORS; i++) {
+        opi_t *opi = &instrument->opis[i];
+        printf("opi[%d] wave_type %s adsr:%c%c%c%c\n", i,
+            tracker_get_wave_type_desc(opi->wave_type),
+            int2hexchar(opi->adsr.attack),
+            int2hexchar(opi->adsr.decay),
+            int2hexchar(opi->adsr.sustain),
+            int2hexchar(opi->adsr.release)
+            );
+    }
 }

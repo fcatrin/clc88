@@ -344,7 +344,7 @@ static int opi_get_value(opi_t *opi) {
         case WAVE_TYPE_SQR : opi_value = opi->phase < WAVE_HALF ? -32767 : 32767; break;
     }
 
-    opi_value >>= 1;
+    opi_value >>= 4;
     return opi_value;
 }
 
@@ -354,7 +354,7 @@ void wopi_process(INT16 *buffer, UINT16 size) {
         buffer[i+1] = 0;
 
         for(int voice_index = 0; voice_index < 1; voice_index++) {
-            for(int opi_index = 0; opi_index < 1; opi_index++) {
+            for(int opi_index = 0; opi_index < OPIS; opi_index++) {
                 opi_t *opi = &voices[voice_index].opis[opi_index];
                 int opi_value = opi_get_value(opi);
                 UINT8  env_value = opi_envelope_apply(opi);

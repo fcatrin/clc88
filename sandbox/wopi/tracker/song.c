@@ -45,24 +45,28 @@ pattern_row_t *song_get_row(song_t *song) {
 }
 
 void song_register_instrument(song_t *song, char *line) {
-    adsr_t adsr[MAX_OPERATORS];
+    opi_t opis[MAX_OPERATORS];
 
     int instrument_number = load_parameter_hex(line, 2);
-    char *wave_type_desc = load_parameter(line, 3);
-    int wave_type = tracker_get_wave_type(wave_type_desc);
-
+    int parameter = 3;
     for(int i=0; i<MAX_OPERATORS; i++) {
-        char *envelope_desc = load_parameter(line, 4 + i);
+        opi_t *opi = &opis[i];
+        char *wave_type_desc = load_parameter(line, parameter);
+        opi->wave_type = tracker_get_wave_type(wave_type_desc);
+
+        char *envelope_desc = load_parameter(line, parameter + 1 + i);
         if (strlen(envelope_desc)!=4) break;
 
-        adsr[i].attack  = hexchar2int(envelope_desc[0]);
-        adsr[i].decay   = hexchar2int(envelope_desc[1]);
-        adsr[i].sustain = hexchar2int(envelope_desc[2]);
-        adsr[i].release = hexchar2int(envelope_desc[3]);
+        opi->adsr.attack  = hexchar2int(envelope_desc[0]);
+        opi->adsr.decay   = hexchar2int(envelope_desc[1]);
+        opi->adsr.sustain = hexchar2int(envelope_desc[2]);
+        opi->adsr.release = hexchar2int(envelope_desc[3]);
+
+        parameter += 2;
     }
 
     instrument_t *instrument = instrument_new();
-    instrument_init(instrument, wave_type, adsr);
+    instrument_init(instrument, opis);
     song->instruments[instrument_number] = instrument;
 }
 

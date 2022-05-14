@@ -22,7 +22,11 @@ typedef struct {
 typedef struct {
     enum wave_type_t wave_type;
     bool has_envelope;
-    adsr_t adsr[MAX_OPERATORS];
+    adsr_t adsr;
+} opi_t;
+
+typedef struct {
+    opi_t opis[MAX_OPERATORS];
 } instrument_t;
 
 typedef struct {
@@ -45,7 +49,7 @@ typedef struct {
 } pattern_t;
 
 typedef struct {
-    bool  has_envelope;
+    // bool  has_envelope;
 } channel_status_t;
 
 typedef struct {
