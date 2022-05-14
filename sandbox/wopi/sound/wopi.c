@@ -235,9 +235,8 @@ void wopi_write(UINT16 reg, UINT8 value) {
 static void update_period(voice_t *voice){
     if (voice->divider == 0) return;
     for(int i=0; i<OPIS; i++) {
-        UINT16 period = (CLK / voice->divider) * ((float)WAVE_SIZE / sampling_freq);
+        float period = (CLK / voice->divider) * ((float)WAVE_SIZE / sampling_freq);
         UINT8  multiplier = voice->opis[i].multiplier;
-        multiplier = i+1;
         voice->opis[i].period = multiplier == 0 ? (period / 2) : (period * multiplier);
     }
 }
