@@ -32,8 +32,18 @@ void pattern_row_load(pattern_row_t *pattern_row, char *line) {
         char octave    = line[c+5];
         // printf("row_load ch:%d %c%c%c\n", i, note, accident, octave);
 
+        char fx = line[c+7];
+        char fx_op1 = line[c+8];
+        char fx_op2 = line[c+9];
+        char fx_op3 = line[c+10];
+        UINT16 set_volume = 0;
+        if (fx == 'C') {
+            set_volume = 0x100 | (hexchar2int(fx_op2)*16 + hexchar2int(fx_op3));
+        }
+
         note_event_t *event = note_event_new();
         note_event_init(event, instrument_index, note, accident, octave);
+        event->set_volume = set_volume;
         pattern_row->events[i] = event;
         c+= CHANNEL_SIZE;
     }

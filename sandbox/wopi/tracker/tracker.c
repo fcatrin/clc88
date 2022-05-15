@@ -22,12 +22,13 @@
 #define NOTES 108
 #define MS_PER_FRAME 16.6
 
-#define WOPI_PORT_PERIOD     0x000
-#define WOPI_PORT_NOTE_ON    0x020
-#define WOPI_PORT_WAVE_TYPE  0x040
-#define WOPI_PORT_MULTIPLIER 0x080
-#define WOPI_PORT_VOLUME     0x0B0
-#define WOPI_PORT_ADSR       0x100
+#define WOPI_PORT_PERIOD         0x000
+#define WOPI_PORT_NOTE_ON        0x020
+#define WOPI_PORT_VOLUME         0x030
+#define WOPI_PORT_OPI_WAVE_TYPE  0x040
+#define WOPI_PORT_OPI_MULTIPLIER 0x080
+#define WOPI_PORT_OPI_VOLUME     0x0B0
+#define WOPI_PORT_OPI_ADSR       0x100
 
 static UINT16 freq_table[NOTES];
 
@@ -98,30 +99,31 @@ void tracker_play() {
 
     // just send the freq for now
     for(int i=0; i<pattern_row->channels; i++) {
-        channel_status_t *channel_status = &song->channel_status[i];
+        // channel_status_t *channel_status = &song->channel_status[i];
 
         note_event_t *event = pattern_row->events[i];
         if (event != NULL) {
             if (event->instrument != 0) {
                 instrument_t *instrument = song->instruments[event->instrument];
                 if (instrument != NULL) {
+                    wopi_write(WOPI_PORT_VOLUME + i, 0xFF);
                     for(int opi_index = 0; opi_index < MAX_OPERATORS; opi_index++) {
                         opi_t *opi = &instrument->opis[opi_index];
                         int opi_offset = i*MAX_OPERATORS + opi_index;
 
                         enum wave_type_t wave_type = opi->wave_type;
-                        wopi_write(WOPI_PORT_WAVE_TYPE + opi_offset, wave_type & 0x03);
+                        wopi_write(WOPI_PORT_OPI_WAVE_TYPE + opi_offset, wave_type & 0x03);
 
                         adsr_t *adsr = &opi->adsr;
-                        wopi_write(WOPI_PORT_ADSR + opi_offset * 2 + 0, (adsr->attack  << 4) | adsr->decay);
-                        wopi_write(WOPI_PORT_ADSR + opi_offset * 2 + 1, (adsr->sustain << 4) | adsr->release);
+                        wopi_write(WOPI_PORT_OPI_ADSR + opi_offset * 2 + 0, (adsr->attack  << 4) | adsr->decay);
+                        wopi_write(WOPI_PORT_OPI_ADSR + opi_offset * 2 + 1, (adsr->sustain << 4) | adsr->release);
 
-                        wopi_write(WOPI_PORT_MULTIPLIER + opi_offset, opi->multiplier);
-                        wopi_write(WOPI_PORT_VOLUME + opi_offset, opi->volume);
+                        wopi_write(WOPI_PORT_OPI_MULTIPLIER + opi_offset, opi->multiplier);
+                        wopi_write(WOPI_PORT_OPI_VOLUME + opi_offset, opi->volume);
+
                     }
                 }
             }
-            UINT8 volume = event->volume;
             if (event->note != NO_NOTE) {
                 UINT16 freq = freq_table[event->note];
                 printf("wopi write channel %d freq %d\n", i, freq);
@@ -131,6 +133,10 @@ void tracker_play() {
                 wopi_write(WOPI_PORT_NOTE_ON + i, 0);
             }
             wopi_write(WOPI_PORT_NOTE_ON + i, event->note_on ? 1 : 0);
+
+            if (event->set_volume & 0x100) {
+                wopi_write(WOPI_PORT_VOLUME + i, event->set_volume & 0xff);
+            }
 
         }
     }

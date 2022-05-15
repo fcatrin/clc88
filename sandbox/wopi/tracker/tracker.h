@@ -32,10 +32,10 @@ typedef struct {
 } instrument_t;
 
 typedef struct {
-    UINT8 note;
-    UINT8 volume;
-    int   instrument;
-    bool  note_on;
+    UINT8  note;
+    UINT16 set_volume;
+    int    instrument;
+    bool   note_on;
 } note_event_t;
 
 typedef struct {
