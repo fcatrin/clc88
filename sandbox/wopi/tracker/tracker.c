@@ -117,6 +117,7 @@ void tracker_play() {
                         wopi_write(WOPI_PORT_ADSR + opi_offset * 2 + 1, (adsr->sustain << 4) | adsr->release);
 
                         wopi_write(WOPI_PORT_MULTIPLIER + opi_offset, opi->multiplier);
+                        wopi_write(WOPI_PORT_VOLUME + opi_offset, opi->volume);
                     }
                 }
             }
@@ -130,7 +131,7 @@ void tracker_play() {
                 wopi_write(WOPI_PORT_NOTE_ON + i, 0);
             }
             wopi_write(WOPI_PORT_NOTE_ON + i, event->note_on ? 1 : 0);
-            wopi_write(WOPI_PORT_VOLUME + i, volume);
+
         }
     }
 }

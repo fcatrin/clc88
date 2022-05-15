@@ -276,7 +276,7 @@ static void set_period_high(voice_t *voice, UINT8 value) {
 }
 
 static void set_volume_reg(opi_t *opi, UINT8 value) {
-    opi->volume   = value & 0x3f;
+    opi->volume = value;
 }
 
 static void set_multiplier_reg(voice_t *voice, opi_t *opi, UINT8 value) {
@@ -390,7 +390,7 @@ void wopi_process(INT16 *buffer, UINT16 size) {
                 debug_env++;
 
                 int voice_envelope = opi_value * (env_value / 255.0);
-                int voice_final = voice_envelope;
+                int voice_final = voice_envelope * (opi->volume / 255.0);
 
                 buffer[i+0] += voice_final;
                 buffer[i+1] += voice_final;

@@ -62,10 +62,13 @@ void song_register_instrument(song_t *song, char *line) {
         opi->adsr.sustain = hexchar2int(envelope_desc[2]);
         opi->adsr.release = hexchar2int(envelope_desc[3]);
 
-        char *multiplier_desc = load_parameter(line, parameter + 2);
+        char *volume_desc = load_parameter(line, parameter + 2);
+        opi->volume = hex2int(volume_desc);
+
+        char *multiplier_desc = load_parameter(line, parameter + 3);
         opi->multiplier = hex2int(multiplier_desc);
 
-        parameter += 3;
+        parameter += 4;
     }
 
     instrument_t *instrument = instrument_new();
