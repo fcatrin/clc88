@@ -201,15 +201,30 @@ void wopi_sound_init(UINT16 freq) {
 
 }
 
-opi_t *get_opi_by_index(int index) {
+static opi_t *get_opi_by_index(int index) {
     int voice_index = index / OPIS;
     int opi_index = index % OPIS;
     return &voices[voice_index].opis[opi_index];
 }
 
+/*
+    Register map
+
+    port base : value
+    000 - 012 : voice period. 2 bytes per voice LSB/MSB   mask: 0000000X
+    020 - 032 : voice note on                             mask: 0000001X
+    040 - 063 : opi wave type                             mask: 000001XX
+    080 - 0A3 : opi multiplier                            mask: 00001000 | 00001001 | 00001100
+    0B0 - 0D3 : opi volume                                mask: 00001101 | 00001100 | 00001101
+    100 - 147 : opi ADSR. 2 bytes per operator AD / SR    mask: 0001XXXX
+
+*/
+
 void wopi_write(UINT16 reg, UINT8 value) {
     reg = reg & 0x1FF;
-    if (reg < (VOICES*2)) {  // 16 bit per voice
+    UINT16 selector = (reg & 0xff0) >> 4;
+    printf("wopi write reg[%02x] = %02x   selector = %02x\n", reg, value, selector);
+    if ((selector & 0xfe) == 0) {
         voice_t *voice = &voices[reg / 2];
         int part = reg & 1;
         if (part == 0) {
@@ -217,21 +232,23 @@ void wopi_write(UINT16 reg, UINT8 value) {
         } else {
             set_period_high(voice, value);
         }
-    } else if (reg < 18 + VOICES) {
-        voice_t *voice = &voices[reg - 18];
+    } else if ((selector & 0xfe) == 2) {
+        voice_t *voice = &voices[reg - 0x20];
         set_note_on(voice, value);
-    } else if (reg < 27 + VOICES*OPIS) {
-        voice_t *voice = &voices[(reg - 27) / 4];
-        opi_t *opi = get_opi_by_index(reg - 27);
-        set_multiplier_reg(voice, opi, value);
-    } else if (reg < 128 + (VOICES*OPIS)) { // 128 - 163
-        opi_t *opi = get_opi_by_index(reg - 128);
-        set_volume_reg(opi, value);
-    } else if (reg < 164 + VOICES) { // 164 - 173
-        opi_t *opi = get_opi_by_index(reg - 164);
+    } else if ((selector & 0xfc) == 4) {
+        opi_t *opi = get_opi_by_index(reg - 0x40);
         set_wave_type(opi, value);
-    } else if (reg < 180 + (VOICES*OPIS)*2) { // 180 - 252
-        opi_t *opi = get_opi_by_index(reg - 180);
+    } else if (selector == 8 || selector == 9 || selector == 10) {
+        int opi_index = reg - 0x80;
+        int voice_index = opi_index >> 2;
+        voice_t *voice = &voices[voice_index];
+        opi_t *opi = get_opi_by_index(opi_index);
+        set_multiplier_reg(voice, opi, value);
+    } else if (selector == 11 || selector == 12 || selector == 13) {
+        opi_t *opi = get_opi_by_index(reg - 0xb0);
+        set_volume_reg(opi, value);
+    } else if ((selector & 0xf0) == 0x10) {
+        opi_t *opi = get_opi_by_index(reg - 0x100);
         if (reg & 1) set_env_sr(opi, value);
         else set_env_ad(opi, value);
     }

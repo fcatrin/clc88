@@ -22,6 +22,13 @@
 #define NOTES 108
 #define MS_PER_FRAME 16.6
 
+#define WOPI_PORT_PERIOD     0x000
+#define WOPI_PORT_NOTE_ON    0x020
+#define WOPI_PORT_WAVE_TYPE  0x040
+#define WOPI_PORT_MULTIPLIER 0x080
+#define WOPI_PORT_VOLUME     0x0B0
+#define WOPI_PORT_ADSR       0x100
+
 static UINT16 freq_table[NOTES];
 
 song_t *song;
@@ -100,15 +107,16 @@ void tracker_play() {
                 if (instrument != NULL) {
                     for(int opi_index = 0; opi_index < MAX_OPERATORS; opi_index++) {
                         opi_t *opi = &instrument->opis[opi_index];
+                        int opi_offset = i*MAX_OPERATORS + opi_index;
 
                         enum wave_type_t wave_type = opi->wave_type;
-                        wopi_write(i*MAX_OPERATORS + opi_index + 164, wave_type & 0x03);
+                        wopi_write(WOPI_PORT_WAVE_TYPE + opi_offset, wave_type & 0x03);
 
                         adsr_t *adsr = &opi->adsr;
-                        wopi_write(i*MAX_OPERATORS*2 + opi_index * 2 + 0 + 180, (adsr->attack  << 4) | adsr->decay);
-                        wopi_write(i*MAX_OPERATORS*2 + opi_index * 2 + 1 + 180, (adsr->sustain << 4) | adsr->release);
+                        wopi_write(WOPI_PORT_ADSR + opi_offset * 2 + 0, (adsr->attack  << 4) | adsr->decay);
+                        wopi_write(WOPI_PORT_ADSR + opi_offset * 2 + 1, (adsr->sustain << 4) | adsr->release);
 
-                        wopi_write(i*MAX_OPERATORS + opi_index + 27, opi->multiplier);
+                        wopi_write(WOPI_PORT_MULTIPLIER + opi_offset, opi->multiplier);
                     }
                 }
             }
@@ -116,13 +124,13 @@ void tracker_play() {
             if (event->note != NO_NOTE) {
                 UINT16 freq = freq_table[event->note];
                 printf("wopi write channel %d freq %d\n", i, freq);
-                wopi_write(i*2+0, freq & 0xFF);
-                wopi_write(i*2+1, (freq & 0xFF00) >> 8);
+                wopi_write(WOPI_PORT_PERIOD + i*2+0, freq & 0xFF);
+                wopi_write(WOPI_PORT_PERIOD + i*2+1, (freq & 0xFF00) >> 8);
                 // note off to force an envelope reset
-                wopi_write(18 + i, 0);
+                wopi_write(WOPI_PORT_NOTE_ON + i, 0);
             }
-            wopi_write(18 + i, event->note_on ? 1 : 0);
-            wopi_write(128 + i, volume);
+            wopi_write(WOPI_PORT_NOTE_ON + i, event->note_on ? 1 : 0);
+            wopi_write(WOPI_PORT_VOLUME + i, volume);
         }
     }
 }
