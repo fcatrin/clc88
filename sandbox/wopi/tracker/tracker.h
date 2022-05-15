@@ -4,7 +4,7 @@
 #define ROWS_PER_PATTERN 64
 #define MAX_CHANNELS 9
 #define MAX_INSTRUMENTS 128
-#define MAX_OPERATORS 2
+#define MAX_OPERATORS 4
 #define NO_NOTE 0xff
 
 enum wave_type_t {

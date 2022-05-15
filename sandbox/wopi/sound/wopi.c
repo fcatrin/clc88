@@ -380,7 +380,7 @@ void wopi_process(INT16 *buffer, UINT16 size) {
         buffer[i+1] = 0;
 
         for(int voice_index = 0; voice_index < 1; voice_index++) {
-            for(int opi_index = 0; opi_index < 2; opi_index++) {
+            for(int opi_index = 0; opi_index < 3; opi_index++) {
                 opi_t *opi = &voices[voice_index].opis[opi_index];
                 int opi_value = opi_get_value(opi);
                 UINT8  env_value = opi_envelope_apply(opi);
@@ -392,8 +392,8 @@ void wopi_process(INT16 *buffer, UINT16 size) {
                 int voice_envelope = opi_value * (env_value / 255.0);
                 int voice_final = voice_envelope;
 
-                buffer[i+opi_index] += voice_final;
-                // buffer[i+1] += voice_final;
+                buffer[i+0] += voice_final;
+                buffer[i+1] += voice_final;
 
                 opi->phase += opi->period;
                 if (opi->phase >= WAVE_SIZE) opi->phase -= WAVE_SIZE;
