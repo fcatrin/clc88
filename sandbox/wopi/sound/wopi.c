@@ -96,7 +96,6 @@ typedef struct {
     float phase;
     UINT8 wave_type;
 
-    bool  envelope;
     UINT8 volume;
 
     int    env_stage;
@@ -146,8 +145,8 @@ static void env_start_stage(opi_t *opi, int stage);
 
 static UINT16 sampling_freq;
 
-#define MIN_DEBUG_ENV 6000
-#define MAX_DEBUG_ENV 5000
+#define MIN_DEBUG_ENV 800
+#define MAX_DEBUG_ENV 400
 static int debug_env = 0;
 
 void wopi_sound_init(UINT16 freq) {
@@ -201,6 +200,10 @@ void wopi_sound_init(UINT16 freq) {
 
 }
 
+static bool is_debug_env() {
+    return debug_env >= MIN_DEBUG_ENV && debug_env <= MAX_DEBUG_ENV;
+}
+
 static opi_t *get_opi_by_index(int index) {
     int voice_index = index / OPIS;
     int opi_index = index % OPIS;
@@ -223,7 +226,6 @@ static opi_t *get_opi_by_index(int index) {
 void wopi_write(UINT16 reg, UINT8 value) {
     reg = reg & 0x1FF;
     UINT16 selector = (reg & 0xff0) >> 4;
-    printf("wopi write reg[%02x] = %02x   selector = %02x\n", reg, value, selector);
     if ((selector & 0xfe) == 0) {
         voice_t *voice = &voices[reg / 2];
         int part = reg & 1;
@@ -248,7 +250,7 @@ void wopi_write(UINT16 reg, UINT8 value) {
         opi_t *opi = get_opi_by_index(reg - 0xb0);
         set_volume_reg(opi, value);
     } else if ((selector & 0xf0) == 0x10) {
-        opi_t *opi = get_opi_by_index(reg - 0x100);
+        opi_t *opi = get_opi_by_index((reg - 0x100) >> 1);
         if (reg & 1) set_env_sr(opi, value);
         else set_env_ad(opi, value);
     }
@@ -275,7 +277,6 @@ static void set_period_high(voice_t *voice, UINT8 value) {
 
 static void set_volume_reg(opi_t *opi, UINT8 value) {
     opi->volume   = value & 0x3f;
-    opi->envelope = value & 0x40;
 }
 
 static void set_multiplier_reg(voice_t *voice, opi_t *opi, UINT8 value) {
@@ -333,34 +334,29 @@ static void env_start_stage(opi_t *opi, int stage) {
     }
 }
 
-static bool is_debug_env() {
-    return debug_env >= MIN_DEBUG_ENV && debug_env <= MAX_DEBUG_ENV;
-}
-
 static UINT8 opi_envelope_apply(opi_t *opi) {
-    if (!opi->envelope) {
-        if (is_debug_env()) printf("no envelope ");
-        opi->env_volume = 255;
-    } else {
-        if (opi->env_stage == ENV_ATTACK) {
-            if (is_debug_env()) printf("attack envelope phase:%f stop:%d ", opi->env_phase, opi->env_stop);
-            opi->env_volume = asc_table[(int)opi->env_phase];
-            opi->env_phase += opi->env_step;
-            if (opi->env_stop-- == 0) env_start_stage(opi, ENV_DECAY);
-        } else if (opi->env_stage == ENV_DECAY) {
-            if (is_debug_env()) printf("decay envelope phase:%f target sustain:%d ", opi->env_phase, (opi->env_sustain << 4 | 0x0f));
+    if (is_debug_env()) printf("sustain is %02X ", opi->env_sustain);
+    if (opi->env_stage == ENV_ATTACK) {
+        if (is_debug_env()) printf("attack envelope phase:%f stop:%d ", opi->env_phase, opi->env_stop);
+        opi->env_volume = asc_table[(int)opi->env_phase];
+        opi->env_phase += opi->env_step;
+        if (opi->env_stop-- == 0) env_start_stage(opi, ENV_DECAY);
+    } else if (opi->env_stage == ENV_DECAY) {
+        if (is_debug_env()) printf("decay envelope phase:%f target sustain:%d ", opi->env_phase, opi->env_sustain);
+        if ((opi->env_volume >> 4) == opi->env_sustain) {
+            opi->env_stage = ENV_SUSTAIN;
+        } else {
             opi->env_volume = des_table[(int)opi->env_phase];
             opi->env_phase += opi->env_step;
-            if (opi->env_volume >> 4 == opi->env_sustain) opi->env_stage = ENV_SUSTAIN;
-        } else if (opi->env_stage == ENV_SUSTAIN) {
-            opi->env_volume = opi->env_sustain << 4 | 0x0f;
-            if (is_debug_env()) printf("sustain envelope volume:%d ", opi->env_volume);
-        } else if (opi->env_stage == ENV_RELEASE) {
-            opi->env_volume = des_table[(int)opi->env_phase] * (float)(opi->env_volume_release / 255.0);
-            if (is_debug_env()) printf("release envelope phase:%f stop:%d tab:%d", opi->env_phase, opi->env_stop, des_table[(int)opi->env_phase]);
-            opi->env_phase += opi->env_step;
-            if (opi->env_volume == 0) opi->env_stage = ENV_COMPLETE;
         }
+    } else if (opi->env_stage == ENV_SUSTAIN) {
+        opi->env_volume = (opi->env_sustain << 4) | 0x0f;
+        if (is_debug_env()) printf("sustain envelope volume:%d ", opi->env_volume);
+    } else if (opi->env_stage == ENV_RELEASE) {
+        opi->env_volume = des_table[(int)opi->env_phase] * (float)(opi->env_volume_release / 255.0);
+        if (is_debug_env()) printf("release envelope phase:%f stop:%d tab:%d", opi->env_phase, opi->env_stop, des_table[(int)opi->env_phase]);
+        opi->env_phase += opi->env_step;
+        if (opi->env_volume == 0) opi->env_stage = ENV_COMPLETE;
     }
     return opi->env_volume;
 }
