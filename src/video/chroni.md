@@ -97,8 +97,8 @@ Video modes are defined one per each line in a display list
 
     ID | Type     | Colors | Bytes | Chars/Pixels  |  Height  | Extra
     -----------------------------------------------------------------
-    02 | Text     |    2   | 40+40 |   40 Chars    |  8 scans | 1 attribute per char (see CHAR_ATTR)
-    03 | Text     |    2   | 80+80 |   80 Chars    |  8 scans | 1 attribute per char (see CHAR_ATTR)
+    02 | Text     |   16   | 40+40 |   40 Chars    |  8 scans | 1 attribute per char (see CHAR_ATTR)
+    03 | Text     |   16   | 80+80 |   80 Chars    |  8 scans | 1 attribute per char (see CHAR_ATTR)
     04 | Text     |   16   | 20+20 |   20 Chars    |  8 scans | 1 attribute per char (see CHAR_ATTR)
     05 | Text     |   16   | 20+20 |   20 Chars    | 16 scans | 1 attribute per char (see CHAR_ATTR)
     06 | Graphics |    4   | 40    |  160 Pixels   |  1 scan  | 4 pixels per byte, 2 bits per color
@@ -108,9 +108,7 @@ Video modes are defined one per each line in a display list
     0A | Graphics |    2   | 40    |  320 Pixels   |  1 scan  | One Background + Foreground color
     0B | Graphics |    4   | 80    |  320 Pixels   |  1 scan  | 4 pixels per byte, 2 bits per color
     0C | Graphics |   16   | 160   |  320 Pixels   |  1 scan  | 2 pixels per byte, 4 bits per color
-    0D | Tiled    |    4   | 40    |  160 Pixels   | 16 scans | See Tiles
-    0E | Tiled    |   16   | 10    |  160 Pixels   | 16 scans | See Tiles
-    0F | Tiled    |   16   | 20    |  320 Pixels   | 16 scans | See Tiles
+    0D | Tiled    |   16   | 20    |  320 Pixels   |  8 scans | See Tiles
    
 ### Text video modes
     
@@ -123,7 +121,7 @@ The **text_attribute register** points to the color attributes for each char on 
     
 ## Graphic video modes
 
-Each screen byte is a set of 4 or 2 pixels (4 or 16 colors respectively).  
+Each screen byte is a set of 8, 4 or 2 pixels (2, 4 or 16 colors respectively).  
 The **graphics_attribute register** points to the color attributes for each 2 bytes on the screen:
 
 
@@ -134,11 +132,11 @@ The **graphics_attribute register** points to the color attributes for each 2 by
 ### Tiled video modes 
 
 Each screen byte is an index into the tiles memory area.  
-Each tile is a 16x16 pixel block using 15 colors + 1 transparency color zero.  
+Each tile is a 8x8 pixel block using 15 colors + 1 transparent color zero.  
 The **tiles_attribute register** points to the color attributes for each tile on the screen:
 
     ??XXXXXX
-        ||||---- Palette index, up to 16 palettes per line
+        ||||---- Palette index, up to 16 palettes per tile
        |-------- Tile is X-inverted
       |--------- Tile is Y-inverted
  
