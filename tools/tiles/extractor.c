@@ -1,34 +1,60 @@
-#include "stdio.h"
-#include "errno.h"
-#include "png.h"
-#include "emu.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <errno.h>
+#include <emu.h>
+#include "readpng.h"
 
-bool load_image_png(const char *filename) {
+typedef struct {
+    ulg width, height;
+    uch *data;
+} image_t;
+
+image_t *load_image_png(FILE *f) {
+    static image_t image;
+
+    int init_result = readpng_init(f, &image.width, &image.height);
+    if (!init_result) {
+        fprintf(stderr, "Invalid PNG file (%d)", init_result);
+        return NULL;
+    }
+
+    double LUT_exponent = 1-0;
+    double CRT_exponent = 2.2;
+    double display_exponent = LUT_exponent * CRT_exponent;
+
+    int channels;
+    unsigned long rowBytes;
+    image.data = readpng_get_image(display_exponent, &channels, &rowBytes);
+
+    readpng_cleanup(FALSE);
+    return &image;
+}
+
+image_t *load_image_png_filename(const char *filename) {
     FILE *f;
-    int width, height;
 
     f = fopen(filename, "rb");
     if (!f) {
         perror("Cannot open png file");
-        return FALSE;
+        return NULL;
     }
 
-    UINT8 sig[8];
+    image_t *result = load_image_png(f);
+    fclose(f);
 
-    fread(sig, 1, 8, f);
-    if (!png_check_sig(sig, 8)) {
-        fprintf(stderr, "Not a PNG image\n");
-        return FALSE;
-    }
-
-    return TRUE;
+    return result;
 }
 
 int main(int argc, const char *argv[]) {
     if (argc < 2) {
         printf("Usage: %s pngfile\n", argv[0]);
-        return 0;
+        return EXIT_FAILURE;
     }
-    load_image_png(argv[1]);
-    return 1;
+    image_t *image = load_image_png_filename(argv[1]);
+    if (image==NULL) return EXIT_FAILURE;
+
+    printf("Image size %lux%lu", image->width, image->height);
+    free(image->data);
+
+    return EXIT_SUCCESS;
 }

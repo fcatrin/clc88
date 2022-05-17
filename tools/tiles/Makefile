@@ -12,6 +12,7 @@ LIBS += $(shell pkg-config --libs libpng16)
 OBJDIR= ../../bin/tiles
 
 OBJS = $(addprefix $(OBJDIR)/, \
+	readpng.o  \
 	extractor.o  \
 	)
 
