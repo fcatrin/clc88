@@ -54,7 +54,7 @@ void compy_init(int argc, char *argv[]) {
 
 	monitor_source_init();
 
-	emulator_load("../asm/bin/6502/os/rom");
+	emulator_load("../bin/asm/6502/os/rom");
 
 	// only if testing ROM embedded xex code
 	// utils_load_bin("../asm/6502/test/modes/mode_0_attribs.xex", 0xe000);

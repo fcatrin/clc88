@@ -1,10 +1,6 @@
-obj/
 Debug/
-asm/bin
 .vscode
 *.bak
 .idea
-*.lst
-*.xex
-*.lab
+bin/
 clc88

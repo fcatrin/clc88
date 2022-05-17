@@ -29,7 +29,7 @@ TARGET = $(FINALTARGET)
 
 CFLAGS = -g -Wall
 
-OBJDIR= ../obj
+OBJDIR= ../bin/emulator
 
 OBJS = $(addprefix $(OBJDIR)/, \
 	clc88.o \
@@ -65,8 +65,8 @@ OBJS = $(addprefix $(OBJDIR)/, \
 	video/chroni.o \
 	)
 
-XEXDIR= ../asm/bin
-ASMDIR= ../asm/src
+XEXDIR= ../bin/asm
+ASMDIR= ../asm
 XEX = $(addprefix $(XEXDIR)/, \
 	6502/os/rom.xex \
 	6502/test/modes/mode_0.xex \
