@@ -13,8 +13,8 @@ image_t *load_image_png(FILE *f) {
     static image_t image;
 
     int init_result = readpng_init(f, &image.width, &image.height);
-    if (!init_result) {
-        fprintf(stderr, "Invalid PNG file (%d)", init_result);
+    if (init_result) {
+        fprintf(stderr, "Invalid PNG file (%d)\n", init_result);
         return NULL;
     }
 
