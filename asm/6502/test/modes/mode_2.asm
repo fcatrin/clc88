@@ -1,27 +1,21 @@
-	icl '../../os/include/symbols.asm'
-	
-	org BOOTADDR
+   icl '../../os/include/symbols.asm'
+   
+   org USERADDR
 
-   mva #1 ROS7
-   lda #2
-   ldx #OS_SET_VIDEO_MODE
-   jsr OS_CALL
+start
+    lda #2
+    ldx #OS_SET_VIDEO_MODE
+    jsr OS_CALL
 
-   mwa DISPLAY_START VADDRW
-	
-	ldy #0
-copy:
-	lda message, y
-	cmp #255
-	beq stop
-	sta VDATA
-	iny
-	bne copy
+    jsr text_test
+halt:
+    jmp halt
 
-stop:
-	jmp stop
-	
-message:
-	.by "Hello world!!!!", 255
+    icl '../../test/include/text_test.asm'
+    icl '../../os/graphics.asm'
+    icl '../../os/ram_vram.asm'
+    icl '../../os/text.asm'
+    icl '../../os/libs/stdlib.asm'
 
-   icl '../../os/libs/stdlib.asm'
+    org EXECADDR
+    .word start

@@ -468,12 +468,16 @@ static void do_scan_text_attribs(bool use_hscroll, bool use_vscroll, UINT8 pitch
 	}
 }
 
-static void do_scan_text_attribs_double(UINT8 line) {
+static void do_scan_text_attribs_double(UINT8 pitch, UINT8 line) {
 	LOGV(LOGTAG, "do_scan_text_attribs double line %d", line);
 
 	UINT8 row;
 	UINT8 foreground, background;
-	int char_offset = 0;
+
+    int scan_offset  = 0;
+    int line_offset  = (line + scan_offset) & 7;
+    int char_offset  = ((line + scan_offset) >> 3) * pitch;
+
 	bool first = TRUE;
 	for(int i=0; i<SCREEN_XRES/2; i++) {
 		if (i % 0x10 == 0) {
@@ -482,7 +486,7 @@ static void do_scan_text_attribs_double(UINT8 line) {
 			foreground = attrib & 0x0F;
 
 			UINT8 c = VRAM_DATA(lms + char_offset);
-			row = VRAM_DATA(charset * CHARSET_PAGE + c*8 + line);
+			row = VRAM_DATA(charset * CHARSET_PAGE + c*8 + line_offset);
 			char_offset++;
 		}
 
@@ -914,8 +918,8 @@ static void do_scanline() {
 		switch(dl_mode) {
 			case 0x2: do_scan_text_attribs(FALSE, FALSE, dl_pitch, dl_line, TRUE); break;
 			case 0x3: do_scan_text_attribs(FALSE, FALSE, dl_pitch, dl_line, FALSE); break;
-			case 0x4: do_scan_text_attribs_double(dl_line); break;
-			case 0x5: do_scan_text_attribs_double(dl_line >> 1); break;
+			case 0x4: do_scan_text_attribs_double(dl_pitch, dl_line); break;
+			case 0x5: do_scan_text_attribs_double(dl_pitch, dl_line >> 1); break;
 			case 0x6: do_scan_pixels_wide_2bpp(); break;
 			case 0x7: do_scan_pixels_wide_2bpp(); break;
 			case 0x8: do_scan_pixels_wide_4bpp(); break;
