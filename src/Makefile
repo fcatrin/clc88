@@ -65,8 +65,9 @@ OBJS = $(addprefix $(OBJDIR)/, \
 	video/chroni.o \
 	)
 
-ASMDIR= ../asm
-XEX = $(addprefix $(ASMDIR)/, \
+XEXDIR= ../asm/bin
+ASMDIR= ../asm/src
+XEX = $(addprefix $(XEXDIR)/, \
 	6502/os/rom.xex \
 	6502/test/modes/mode_0.xex \
 	6502/test/modes/mode_1.xex \
@@ -120,8 +121,9 @@ $(OBJDIR)/%.o: %.c
 	@mkdir -p $(dir $@) 2> /dev/null 
 	$(CC) -c -o $@ $(DEFS) -I. $(CFLAGS) $<
 
-$(ASMDIR)/%.xex: $(ASMDIR)/%.asm $(ASMDIR)/6502/os/include/symbols.asm $(ASMDIR)/6502/os/libs/stdlib.asm
-	mads $< -l -s -o:$@
+$(XEXDIR)/%.xex: $(ASMDIR)/%.asm $(ASMDIR)/6502/os/include/symbols.asm $(ASMDIR)/6502/os/libs/stdlib.asm
+	@mkdir -p $(dir $@) 2> /dev/null
+	mads $< -l:$@.lst -s -o:$@
 	
 $(ASMDIR)/6502/os/rom.xex : $(ASMDIR)/6502/os/graphics.asm $(ASMDIR)/6502/os/storage.asm
 $(ASMDIR)/6502/test/memopad.xex: $(ASMDIR)/6502/os/libs/keyboard.asm

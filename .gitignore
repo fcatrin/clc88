@@ -1,5 +1,6 @@
 obj/
 Debug/
+asm/bin
 .vscode
 *.bak
 .idea
