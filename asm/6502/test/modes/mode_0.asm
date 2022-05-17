@@ -1,39 +1,30 @@
 	icl '../../os/include/symbols.asm'
-	
+
 	org USERADDR
 
-   lda #0
-   ldy #0
-   ldx #OS_SET_VIDEO_MODE
-   jsr OS_CALL
-	
-   lda VSTATUS
-   and #(255 - VSTATUS_EN_INTS)
-   sta VSTATUS
-   	
-   mwa #vblank VBLANK_VECTOR_USER
-   mwa #dli    HBLANK_VECTOR_USER
-   
-   lda #1
-   sta VLINEINT
+start:
+    lda #0
+    ldx #OS_SET_VIDEO_MODE
+    jsr OS_CALL
 
-   lda VSTATUS
-   ora #VSTATUS_EN_INTS
-   sta VSTATUS
-	
-   mwa DISPLAY_START VADDRW
-	
-	ldy #0
-copy:
-	lda message, y
-	cmp #255
-	beq rainbow
-	sta VDATA
-	iny
-	bne copy
-	ldx #0
+    jsr text_test
+
+    lda VSTATUS
+    and #(255 - VSTATUS_EN_INTS)
+    sta VSTATUS
+
+    mwa #vblank VBLANK_VECTOR_USER
+    mwa #dli    HBLANK_VECTOR_USER
+
+    lda #1
+    sta VLINEINT
+
+    lda VSTATUS
+    ora #VSTATUS_EN_INTS
+    sta VSTATUS
+
 rainbow:
-   clc
+    clc
 	lda VCOUNT
 	adc FRAMECOUNT
 	sta WSYNC
@@ -54,8 +45,12 @@ vblank:
    ; sta VBORDER
    pla
    rts
-	
-message:
-   .by "Hello world!!!!", 96, 255
 
-   icl '../../os/libs/stdlib.asm'
+    icl '../../test/include/text_test.asm'
+    icl '../../os/graphics.asm'
+    icl '../../os/ram_vram.asm'
+    icl '../../os/text.asm'
+    icl '../../os/libs/stdlib.asm'
+
+    org EXECADDR
+    .word start

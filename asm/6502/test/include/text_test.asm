@@ -3,6 +3,10 @@
     mwa #palette_dark SRC_ADDR
     jsr gfx_upload_palette
 
+    ; set default attribute for the whole screen
+    lda #$01
+    jsr txt_clear_screen
+
     mwa #test_string SRC_ADDR
     ldy #0
     ldx #0

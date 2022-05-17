@@ -26,12 +26,10 @@ copy_dl:
    inx
    bne copy_dl
    
-   mwa #text_location DISPLAY_START
-   mwa #attr_location ATTRIB_START
-   mwa #THIS_SCREEN_SIZE SCREEN_SIZE
-   lda #$01
-   jsr txt_clear_screen
-         
+    mwa #text_location DISPLAY_START
+    mwa #attr_location ATTRIB_START
+    mwa #THIS_SCREEN_SIZE SCREEN_SIZE
+
     jsr text_test
 
 enable_chroni:
