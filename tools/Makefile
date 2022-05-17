@@ -2,7 +2,7 @@ MIF=../rtl/compy/rom.mif
 
 BIOS_ROOT=../asm/6502/os
 BIOS_SRC=$(BIOS_ROOT)/rom.asm
-BIOS_XEX=$(BIOS_ROOT)/rom.xex
+BIOS_XEX=../bin/fpga_rom.xex
 BIOS_INCLUDES= \
 	$(BIOS_ROOT)/interrupts.asm \
 	$(BIOS_ROOT)/graphics.asm \
