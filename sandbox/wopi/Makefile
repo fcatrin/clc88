@@ -14,7 +14,7 @@ TARGET = $(FINALTARGET)
 
 CFLAGS = -g -Wall
 
-OBJDIR= ../obj
+OBJDIR= ../../bin/wopi
 
 OBJS = $(addprefix $(OBJDIR)/, \
 	main.o \
