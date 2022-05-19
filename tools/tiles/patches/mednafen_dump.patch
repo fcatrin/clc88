@@ -1,0 +1,33 @@
+--- src/pce/vce.cpp.original	2022-05-18 17:26:24.895688208 -0400
++++ src/pce/vce.cpp	2022-05-18 21:38:47.595073362 -0400
+@@ -860,6 +860,11 @@
+ 
+ void VCE::StateAction(StateMem *sm, const unsigned load, const bool data_only)
+ {
++
++    FILE *f = fopen("palette.dump.bin", "wb");
++    fwrite(color_table_cache, sizeof(color_table_cache), 1, f);
++    fclose(f);
++
+  SFORMAT VCE_StateRegs[] =
+  {
+   SFVARN(CR, "VCECR"),
+--- src/hw_video/huc6270/vdc.cpp.original	2022-05-17 16:22:42.556638963 -0400
++++ src/hw_video/huc6270/vdc.cpp	2022-05-17 16:45:47.409707509 -0400
+@@ -1833,6 +1833,16 @@
+ 	SFEND
+   };
+ 
++
++	FILE *f = fopen("vram.dump.bin", "wb");
++	fwrite(VRAM, VRAM_Size * sizeof(uint16), 1, f);
++	fclose(f);
++
++	f = fopen("sat.dump.bin", "wb");
++	fwrite(SAT, 0x100 * sizeof(uint16), 1, f);
++	fclose(f);
++
++
+   MDFNSS_StateAction(sm, load, data_only, StateRegs, sname);
+ 
+   if(load)

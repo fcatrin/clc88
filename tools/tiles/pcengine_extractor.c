@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <emu.h>
 
 #define VRAM_SIZE 0x10000
@@ -26,7 +28,7 @@ bool load_bin(const char *filename, void *data, size_t size) {
     return TRUE;
 }
 
-void save_tile(int tile_index, UINT16 color, UINT8* tile) {
+void save_tile(char *out_dir, int tile_index, UINT16 color, UINT8* tile) {
     UINT32 rgb[64];
     for(int i=0; i<16; i++) {
         printf("palette index %04x = %08x\n", color*16 +i, palette[color * 16 + i]);
@@ -47,14 +49,16 @@ void save_tile(int tile_index, UINT16 color, UINT8* tile) {
         rgb[i*2 + 1] = rgb_1;
     }
 
+    mkdir(out_dir, 0755);
+
     char filename[1024];
-    sprintf(filename, "data/tile_%04x.rgb", tile_index);
+    sprintf(filename, "%s/tile_%04x.rgb", out_dir, tile_index);
     FILE *f = fopen(filename, "wb");
     fwrite(rgb, sizeof(rgb), 1, f);
     fclose(f);
 }
 
-void dump_screen_tile(int tile_index, UINT16 color, UINT16 address) {
+void dump_screen_tile(char *out_dir, int tile_index, UINT16 color, UINT16 address) {
     UINT8 tile[64];
     printf("dump_screen_tile %02x color:%02x address:%04x\n", tile_index, color, address);
     for(int row=0; row<8; row++) {
@@ -76,15 +80,15 @@ void dump_screen_tile(int tile_index, UINT16 color, UINT16 address) {
         }
     }
 
-    save_tile(tile_index, color, tile);
+    save_tile(out_dir, tile_index, color, tile);
 }
 
-void dump_screen_tiles() {
+void dump_screen_tiles(char *out_dir) {
     for(int i=0; i<3; i++) {
         UINT16 bat_value = vram[i];
         UINT16 color   = bat_value >> 12;
         UINT16 address = (bat_value & 0xFFF) << 4;
-        dump_screen_tile(i, color, address);
+        dump_screen_tile(out_dir, i, color, address);
     }
 }
 
@@ -100,13 +104,22 @@ void fix_palette() {
 }
 
 int main(int argc, const char *argv[]) {
-    if (argc < 4) {
-        printf("Usage: %s vram.bin sat.bin color_table.bin\n", argv[0]);
+    if (argc < 2) {
+        printf("Usage: %s dump_name\n", argv[0]);
         return EXIT_FAILURE;
     }
-    if (!load_bin(argv[1], vram, sizeof(vram))) return EXIT_FAILURE;
-    if (!load_bin(argv[2], sat, sizeof(sat))) return EXIT_FAILURE;
-    if (!load_bin(argv[3], palette, sizeof(palette))) return EXIT_FAILURE;
+
+    const char *dump_dir = argv[1];
+    char filename[1024];
+
+    sprintf(filename, "data/%s/vram.bin", dump_dir);
+    if (!load_bin(filename, vram, sizeof(vram))) return EXIT_FAILURE;
+
+    sprintf(filename, "data/%s/sat.bin", dump_dir);
+    if (!load_bin(filename, sat, sizeof(sat))) return EXIT_FAILURE;
+
+    sprintf(filename, "data/%s/palette.bin", dump_dir);
+    if (!load_bin(filename, palette, sizeof(palette))) return EXIT_FAILURE;
 
     fix_palette();
 
@@ -114,7 +127,8 @@ int main(int argc, const char *argv[]) {
         printf("palette[%04x] = %08x\n", i, palette[i]);
     }
 
-    dump_screen_tiles();
+    sprintf(filename, "data/%s/tiles", dump_dir);
+    dump_screen_tiles(filename);
 
     return EXIT_SUCCESS;
 }
