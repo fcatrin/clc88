@@ -9,9 +9,14 @@
 #define SAT_SIZE 0x100
 #define PALETTE_SIZE 0x200
 
+#define SCREEN_WIDTH  32
+#define SCREEN_HEIGHT 29
+
 UINT16 vram[VRAM_SIZE];
 UINT16 sat[SAT_SIZE];
 UINT32 palette[PALETTE_SIZE];
+
+UINT32 screen[SCREEN_WIDTH * SCREEN_HEIGHT * 64];
 
 bool load_bin(const char *filename, void *data, size_t size) {
 
@@ -28,39 +33,19 @@ bool load_bin(const char *filename, void *data, size_t size) {
     return TRUE;
 }
 
-void save_tile(char *out_dir, int tile_index, UINT16 color, UINT8* tile) {
-    UINT32 rgb[64];
-    for(int i=0; i<16; i++) {
-        printf("palette index %04x = %08x\n", color*16 +i, palette[color * 16 + i]);
-    }
-
-    for(int i=0; i<32; i++) {
-        UINT8 pixel_0 = tile[i*2 + 0];
-        UINT8 pixel_1 = tile[i*2 + 1];
-        printf("tile:%02x pixel:%02x px0:%02x px1:%02x\n", tile_index, i, pixel_0, pixel_1);
-
-        UINT32 rgb_0 = palette[color * 16 + pixel_0];
-        UINT32 rgb_1 = palette[color * 16 + pixel_1];
-        printf("tile:%02x pixel:%02x rgb0:%08x rgb1:%08x pal_index_0:%04x pal_index_1:%04x\n", tile_index, i, rgb_0, rgb_1,
-        color * 16 + pixel_0,
-        color * 16 + pixel_1
-        );
-        rgb[i*2 + 0] = rgb_0;
-        rgb[i*2 + 1] = rgb_1;
-    }
-
+void save_tile(char *out_dir, UINT16 color, UINT16 address, UINT32* tile) {
     mkdir(out_dir, 0755);
 
     char filename[1024];
-    sprintf(filename, "%s/tile_%04x.rgb", out_dir, tile_index);
+    sprintf(filename, "%s/tile_%04x_%02x.rgb", out_dir, address >> 4, color);
     FILE *f = fopen(filename, "wb");
-    fwrite(rgb, sizeof(rgb), 1, f);
+    fwrite(tile, sizeof(UINT32), 64, f);
     fclose(f);
 }
 
-void dump_screen_tile(char *out_dir, int tile_index, UINT16 color, UINT16 address) {
+UINT32 *dump_screen_tile(char *out_dir, UINT16 color, UINT16 address) {
     UINT8 tile[64];
-    printf("dump_screen_tile %02x color:%02x address:%04x\n", tile_index, color, address);
+    printf("dump_screen_tile color:%02x address:%04x\n", color, address);
     for(int row=0; row<8; row++) {
         UINT16 plane01 = vram[address + row];
         UINT16 plane23 = vram[address + row + 8];
@@ -80,15 +65,40 @@ void dump_screen_tile(char *out_dir, int tile_index, UINT16 color, UINT16 addres
         }
     }
 
-    save_tile(out_dir, tile_index, color, tile);
+    static UINT32 rgb[64];
+    for(int i=0; i<16; i++) {
+        printf("palette index %04x = %08x\n", color*16 +i, palette[color * 16 + i]);
+    }
+
+    for(int i=0; i<32; i++) {
+        UINT8 pixel_0 = tile[i*2 + 0];
+        UINT8 pixel_1 = tile[i*2 + 1];
+        printf("tile:%04x pixel:%02x px0:%02x px1:%02x\n", address >> 4, i, pixel_0, pixel_1);
+
+        UINT32 rgb_0 = palette[color * 16 + pixel_0];
+        UINT32 rgb_1 = palette[color * 16 + pixel_1];
+        printf("tile:%04x pixel:%02x rgb0:%08x rgb1:%08x pal_index_0:%04x pal_index_1:%04x\n", address >> 4, i, rgb_0, rgb_1,
+        color * 16 + pixel_0,
+        color * 16 + pixel_1
+        );
+        rgb[i*2 + 0] = rgb_0;
+        rgb[i*2 + 1] = rgb_1;
+    }
+
+    return rgb;
 }
 
 void dump_screen_tiles(char *out_dir) {
-    for(int i=0; i<3; i++) {
-        UINT16 bat_value = vram[i];
-        UINT16 color   = bat_value >> 12;
-        UINT16 address = (bat_value & 0xFFF) << 4;
-        dump_screen_tile(out_dir, i, color, address);
+    for(int y=0; y<SCREEN_HEIGHT; y++) {
+        for(int x=0; x<SCREEN_WIDTH; x++) {
+            UINT16 bat_value = vram[x + y*SCREEN_WIDTH];
+            UINT16 color   = bat_value >> 12;
+            UINT16 address = (bat_value & 0xFFF) << 4;
+
+            UINT32 *tile = dump_screen_tile(out_dir, color, address);
+            save_tile(out_dir, color, address, tile);
+            // screen_put(x, y, tile);
+        }
     }
 }
 
