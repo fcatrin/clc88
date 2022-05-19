@@ -3,7 +3,7 @@ CC = gcc
 DEFS =
 LIBS = -lm
 
-TARGET = extractor
+TARGET = pcengine_extractor
 
 CFLAGS = -g -Wall -I../../src
 CFLAGS += $(shell pkg-config --cflags libpng16)
@@ -12,8 +12,7 @@ LIBS += $(shell pkg-config --libs libpng16)
 OBJDIR= ../../bin/tiles
 
 OBJS = $(addprefix $(OBJDIR)/, \
-	readpng.o  \
-	extractor.o  \
+	pcengine_extractor.o \
 	)
 
 all: $(TARGET)
