@@ -67,10 +67,10 @@ UINT32 *dump_screen_tile(char *out_dir, UINT16 color, UINT16 address) {
         UINT16 bitmask_l = 128;
         for(int bit=0; bit<8; bit++) {
             tile[row*8 + bit] =
-                ((plane01 & bitmask_h) ? 1 : 0) * 1 +
-                ((plane01 & bitmask_l) ? 1 : 0) * 2 +
-                ((plane23 & bitmask_h) ? 1 : 0) * 4 +
-                ((plane23 & bitmask_l) ? 1 : 0) * 8;
+                ((plane01 & bitmask_l) ? 1 : 0) * 1 +
+                ((plane01 & bitmask_h) ? 1 : 0) * 2 +
+                ((plane23 & bitmask_l) ? 1 : 0) * 4 +
+                ((plane23 & bitmask_h) ? 1 : 0) * 8;
             printf("    tile row:%d bit:%d = %02x bm_h:%04x bm_l:%04x\n", row, bit, tile[row*8 + bit], bitmask_h, bitmask_l);
             bitmask_h >>= 1;
             bitmask_l >>= 1;
