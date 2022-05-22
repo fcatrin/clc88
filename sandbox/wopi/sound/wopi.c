@@ -420,6 +420,21 @@ void wopi_process(INT16 *buffer, UINT16 size) {
                 voice_final *= (voice->volume / 255.0);
             }
 
+            if (voice->algorithm == 1) {
+                int modulation = 0;
+                for(int opi_index = 3; opi_index >=0; opi_index--) {
+                    opi_t *opi = &voice->opis[opi_index];
+                    int opi_value = opi_get_value(opi, opi_index & 1 ? 0 : modulation);
+                    UINT8  env_value = opi_envelope_apply(opi);
+
+                    int opi_envelope = opi_value * (env_value / 255.0);
+                    int opi_final = opi_envelope * (opi->volume / 255.0);
+                    if (!(opi_index & 1)) voice_final += opi_final;
+                    modulation = opi_final >> 4;
+                }
+                voice_final *= (voice->volume / 255.0);
+            }
+
             if (voice->algorithm == 3) {
                 for(int opi_index = 0; opi_index < 4; opi_index++) {
                     opi_t *opi = &voice->opis[opi_index];
