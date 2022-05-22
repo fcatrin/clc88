@@ -23,7 +23,12 @@ void main_init(int argc, char *argv[]) {
 	screen_init();
 	sound_init();
 
-	tracker_load("tracker/test_mod.txt");
+    char *test_file = "tracker/test/op4_alg_3.txt";
+    if (argc > 1) {
+        test_file = argv[1];
+    }
+
+	tracker_load(test_file);
 }
 
 unsigned long get_time() {
