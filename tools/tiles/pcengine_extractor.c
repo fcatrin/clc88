@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <errno.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -51,12 +52,12 @@ void save_tile(char *out_dir, UINT16 color, UINT16 address, UINT32* tile) {
     save_rgb(filename, tile, 64*sizeof(UINT32));
 }
 
-void save_sprite(char *out_dir, UINT16 color, UINT16 address, UINT32* tile) {
+void save_sprite(char *out_dir, UINT16 color, UINT16 address, UINT32* tile, UINT16 cols, UINT16 rows) {
     mkdir(out_dir, 0755);
 
     char filename[1024];
-    sprintf(filename, "%s/sprite_%04x_%02x.rgb", out_dir, address >> 5, color);
-    save_rgb(filename, tile, 256*sizeof(UINT32));
+    sprintf(filename, "%s/sprite_%04x_%02x_%dx%d.rgb", out_dir, address >> 5, color, cols, rows);
+    save_rgb(filename, tile, 256*sizeof(UINT32)*cols*rows);
 }
 
 void save_screen(char *out_dir) {
@@ -130,7 +131,6 @@ UINT32 *dump_screen_sprite(char *out_dir, UINT16 color, UINT16 address) {
     }
 
     static UINT32 rgb[256];
-
     for(int i=0; i<256; i++) {
         UINT8  pixel     = sprite[i];
         UINT32 pixel_rgb = palette[color * 16 + pixel + 0x100];
@@ -152,22 +152,21 @@ void screen_put_tile(int x, int y, UINT32 *tile) {
     }
 }
 
-void screen_put_sprite(int x, int y, UINT32 *sprite) {
-    bool put = FALSE;
-    for(int row = 0; row < 16; row++) {
-        for(int col = 0; col < 16; col++) {
-            int rx = x + col - 32;
-            int ry = y + row - 64;
-            if (rx < 0 || ry < 0 || rx >= SCREEN_PIXEL_WIDTH || ry >= SCREEN_PIXEL_HEIGHT) continue;
-            if (!put) {
-                printf("put sprite %dx%d\n", x, y);
-                put = TRUE;
-            }
+void draw(UINT32 *buffer, UINT32 *graphic, UINT16 width, UINT16 height, INT16 x, INT16 y, UINT16 buffer_width, UINT16 buffer_height) {
+    int ry = y;
+    for(int row = 0; row < height; row++) {
+        int rx = x;
+        for(int col = 0; col < width; col++) {
+            if (rx < 0 || ry < 0 || rx >= buffer_width || ry > buffer_height) continue;
 
-            UINT32 address = rx + ry * SCREEN_PIXEL_WIDTH;
-            UINT32 pixel = sprite[row * 16 + col];
-            if (pixel) screen[address] = pixel;
+            UINT32 address = rx + ry * buffer_width;
+            UINT32 pixel = graphic[row * width + col];
+            // printf("write pixel (%d, %d) => (%d, %d) address:%d\n", col, row, rx, ry, address);
+            if (pixel) buffer[address] = pixel;
+
+            rx++;
         }
+        ry++;
     }
 }
 
@@ -190,12 +189,34 @@ void dump_screen_sprites(char *out_dir) {
     for(int i=0; i<64; i++) {
         UINT16 y = sat[i*4 + 0];
         UINT16 x = sat[i*4 + 1];
-        UINT16 address = ((sat[i*4 + 2] >> 1) & 0x3FF) * 64;
-        UINT16 color   = sat[i*4 + 3] & 0x0f;
-        printf("sprite %04x  x:%04x y:%04x color:%02x address:%04x\n", i, x, y, color, address);
-        UINT32 *sprite = dump_screen_sprite(out_dir, color, address);
-        save_sprite(out_dir, color, address, sprite);
-        screen_put_sprite(x, y, sprite);
+        UINT16 address = (sat[i*4 + 2] >> 1) & 0x3ff;
+        UINT16 flags   = sat[i*4 + 3];
+        UINT16 color   = flags & 0x0f;
+        UINT8 cgx = (flags >> 8) & 1;
+        UINT8 cgy = (flags >> 12) & 3;
+        printf("sprite %04x  x:%04x y:%04x color:%02x address:%04x cgx:%x gcy:%x\n", i, x, y, color, address, cgx, cgy);
+        UINT16 cols = cgx == 0 ? 1 : 2;
+        UINT16 rows = cgy == 0 ? 1 : (cgy == 1 ? 2 : 4);
+
+        if (address == 0) continue;
+
+        int sprite_size_pixel = cols * rows * 16 * 16;
+        UINT32 sprite[sprite_size_pixel];
+        memset(sprite, 0, sprite_size_pixel * sizeof(UINT32));
+        UINT16 data_address = address;
+        for(int col = 0; col < cols; col++) {
+            if (cols == 2) data_address = (data_address & 0x3fe) | col;
+            for(int row = 0; row < rows; row++) {
+                if (rows > 1) data_address = (data_address & 0x3f9) | (row << 1);
+                UINT32 *graphic = dump_screen_sprite(out_dir, color, data_address << 6);
+                draw(sprite, graphic, 16, 16, col*16, row*16, cols*16, rows*16);
+
+                // data_address += 1;
+            }
+        }
+
+        save_sprite(out_dir, color, address, sprite, cols, rows);
+        draw(screen, sprite, cols*16, rows*16, x - 32, y - 64, SCREEN_PIXEL_WIDTH, SCREEN_PIXEL_HEIGHT);
     }
 }
 
