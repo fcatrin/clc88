@@ -5,7 +5,7 @@ channels 1
 
 instrument: 01 FF 03 sin F34F 8F 01 sin F34F FF 00 sin F34F 8F 03 sin F34F 8F 03
 instrument: 02 FF 03 saw F34F 8F 01 saw F34F FF 00 saw F34F 8F 03 saw F34F 8F 03
-instrument: 03 2F 03 tri F34F 8F 01 tri F34F FF 00 tri F34F 8F 03 tri F34F 8F 03
+instrument: 03 FF 03 tri F34F 8F 01 tri F34F FF 00 tri F34F 8F 03 tri F34F 8F 03
 instrument: 04 FF 03 sqr F34F 8F 01 sqr F34F FF 00 sqr F34F 8F 03 sqr F34F 8F 03
 
 pattern
