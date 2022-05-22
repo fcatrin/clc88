@@ -3,7 +3,7 @@ channels 1
 
 # instrument: INDEX ALGORITHM WAVE_TYPE ADSR VOLUME MULTIPLIER
 
-instrument: 01 FF 03 sin 8342 ff 01 saw 432F 00 02 sin FFFF 00 01 sin FFFF 00 00
+instrument: 01 FF 00 sin 8342 ff 01 saw 432F 00 02 sin FFFF 00 01 sin FFFF 00 00
 instrument: 02 FF 00 sin 83a2 ff 01 sin 432F ff 02 sin FFFF 00 01 sin FFFF 00 00
 instrument: 03 FF 00 sin 8342 ff 01 sin 432F ff 02 sin FFFF ff 01 sin FFFF 00 00
 instrument: 04 FF 00 sin 8342 ff 01 sin 432F ff 02 sin FFFF ff 01 sin FFFF ff 01
