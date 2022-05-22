@@ -380,14 +380,18 @@ static UINT8 opi_envelope_apply(opi_t *opi) {
     return opi->env_volume;
 }
 
-static int opi_get_value(opi_t *opi) {
+static int opi_get_value(opi_t *opi, int modulation) {
     int opi_value = 0;
+    int phase = ((int)(opi->phase + modulation)) % (WAVE_SIZE-1);
     switch(opi->wave_type) {
-        case WAVE_TYPE_SIN : opi_value = sin_table[(int)opi->phase]; break;
-        case WAVE_TYPE_SAW : opi_value = (opi->phase - WAVE_HALF) * 32; break;
-        case WAVE_TYPE_TRI : opi_value = (opi->phase < WAVE_HALF ? (opi->phase*2 - WAVE_HALF) : (WAVE_SIZE + WAVE_HALF - 2*opi->phase)) * 32 ; break;
-        case WAVE_TYPE_SQR : opi_value = opi->phase < WAVE_HALF ? -32767 : 32767; break;
+        case WAVE_TYPE_SIN : opi_value = sin_table[phase]; break;
+        case WAVE_TYPE_SAW : opi_value = (phase - WAVE_HALF) * 32; break;
+        case WAVE_TYPE_TRI : opi_value = (phase < WAVE_HALF ? (phase*2 - WAVE_HALF) : (WAVE_SIZE + WAVE_HALF - 2*phase)) * 32 ; break;
+        case WAVE_TYPE_SQR : opi_value = phase < WAVE_HALF ? -32767 : 32767; break;
     }
+
+    opi->phase += opi->period;
+    if (opi->phase >= WAVE_SIZE) opi->phase -= WAVE_SIZE;
 
     opi_value >>= 2;
     return opi_value;
@@ -398,28 +402,23 @@ void wopi_process(INT16 *buffer, UINT16 size) {
         buffer[i+0] = 0;
         buffer[i+1] = 0;
 
+        int voice_final = 0;
+
         for(int voice_index = 0; voice_index < 1; voice_index++) {
             voice_t *voice = &voices[voice_index];
             if (voice->algorithm == 3) {
                 for(int opi_index = 0; opi_index < 3; opi_index++) {
                     opi_t *opi = &voice->opis[opi_index];
-                    int opi_value = opi_get_value(opi);
+                    int opi_value = opi_get_value(opi, 0);
                     UINT8  env_value = opi_envelope_apply(opi);
-                    if (is_debug_env()) {
-                        printf("env_value[%d] = %d\n", debug_env, env_value);
-                    }
-                    debug_env++;
 
-                    int voice_envelope = opi_value * (env_value / 255.0);
-                    int voice_final = voice_envelope * (opi->volume / 255.0) * (voice->volume / 255.0);
-
-                    buffer[i+0] += voice_final;
-                    buffer[i+1] += voice_final;
-
-                    opi->phase += opi->period;
-                    if (opi->phase >= WAVE_SIZE) opi->phase -= WAVE_SIZE;
+                    int opi_envelope = opi_value * (env_value / 255.0);
+                    voice_final += opi_envelope * (opi->volume / 255.0) * (voice->volume / 255.0);
                 }
             }
         }
+        buffer[i+0] = voice_final;
+        buffer[i+1] = voice_final;
+
     }
 }
