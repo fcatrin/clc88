@@ -48,8 +48,9 @@ void song_register_instrument(song_t *song, char *line) {
     opi_t opis[MAX_OPERATORS];
 
     int instrument_number    = load_parameter_hex(line, 2);
-    int instrument_algorithm = load_parameter_hex(line, 3);
-    int parameter = 4;
+    int instrument_volume    = load_parameter_hex(line, 3);
+    int instrument_algorithm = load_parameter_hex(line, 4);
+    int parameter = 5;
     for(int i=0; i<MAX_OPERATORS; i++) {
         opi_t *opi = &opis[i];
         char *wave_type_desc = load_parameter(line, parameter);
@@ -73,7 +74,7 @@ void song_register_instrument(song_t *song, char *line) {
     }
 
     instrument_t *instrument = instrument_new();
-    instrument_init(instrument, instrument_algorithm, opis);
+    instrument_init(instrument, instrument_volume, instrument_algorithm, opis);
     song->instruments[instrument_number] = instrument;
 }
 

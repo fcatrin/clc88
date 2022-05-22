@@ -107,7 +107,7 @@ void tracker_play() {
             if (event->instrument != 0) {
                 instrument_t *instrument = song->instruments[event->instrument];
                 if (instrument != NULL) {
-                    wopi_write(WOPI_PORT_VOLUME + i, 0xFF);
+                    wopi_write(WOPI_PORT_VOLUME + i, instrument->volume);
                     wopi_write(WOPI_PORT_ALGORITHM + i, instrument->algorithm);
                     for(int opi_index = 0; opi_index < MAX_OPERATORS; opi_index++) {
                         opi_t *opi = &instrument->opis[opi_index];

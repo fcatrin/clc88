@@ -28,6 +28,7 @@ typedef struct {
 } opi_t;
 
 typedef struct {
+    UINT8 volume;
     UINT8 algorithm;
     opi_t opis[MAX_OPERATORS];
 } instrument_t;

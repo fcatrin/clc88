@@ -3,73 +3,73 @@ channels 1
 
 # instrument: INDEX ALGORITHM WAVE_TYPE ADSR VOLUME MULTIPLIER
 
-instrument: 01 03 sin F34F 8F 01 sin F34F FF 00 sin F34F 8F 03
-instrument: 02 03 saw F34F 8F 01 saw F34F FF 00 saw F34F 8F 03
-instrument: 03 03 tri F34F 8F 01 tri F34F FF 00 tri F34F 8F 03
-instrument: 04 03 sqr F34F 8F 01 sqr F34F FF 00 sqr F34F 8F 03
+instrument: 01 FF 03 sin F34F 8F 01 sin F34F FF 00 sin F34F 8F 03
+instrument: 02 FF 03 saw F34F 8F 01 saw F34F FF 00 saw F34F 8F 03
+instrument: 03 2F 03 tri F34F 8F 01 tri F34F FF 00 tri F34F 8F 03
+instrument: 04 FF 03 sqr F34F 8F 01 sqr F34F FF 00 sqr F34F 8F 03
 
 pattern
-01 A-3 C0FF 04 A-3
+01 A-3 10FF 04 A-3
    +++         ---
    +++         ---
    +++         ---
-01 C#3 C02F    ---
+01 C#3 102F    ---
    +++         ---
    +++         ---
    +++         ---
-01 E-3 C0FF    ---
+01 E-3 10FF    ---
    +++         ---
    +++         ---
    ---         ---
-01 A-4 C02F    ---
+01 A-4 102F    ---
    +++         ---
    +++         ---
    +++         ---
-02 A-3 C0FF    ---
+02 A-3 10FF    ---
    ---         ---
    ---         ---
    ---         ---
-02 C#3 C0FF    ---
+02 C#3 10FF    ---
    +++         ---
    +++         ---
    ---         ---
-02 E-3 C0FF    ---
+02 E-3 10FF    ---
    +++         ---
    +++         ---
    ---         ---
-02 A-4 C0FF    ---
+02 A-4 10FF    ---
    ---         ---
    ---         ---
    ---         ---
-03 A-3 C0FF    ---
+03 A-3 10FF    ---
    ---         ---
    ---         ---
    ---         ---
-03 C#3 C0FF    ---
+03 C#3 10FF    ---
    ---         ---
    ---         ---
    ---         ---
-03 E-3 C0FF    ---
+03 E-3 10FF    ---
    ---         ---
    ---         ---
    ---         ---
-03 A-4 C0FF    ---
+03 A-4 10FF    ---
    ---         ---
    ---         ---
    ---         ---
-04 A-3 C0FF    ---
+04 A-3 10FF    ---
    ---         ---
    ---         ---
    ---         ---
-04 C#3 C0FF    ---
+04 C#3 10FF    ---
    ---         ---
    ---         ---
    ---         ---
-04 E-3 C0FF    ---
+04 E-3 10FF    ---
    ---         ---
    ---         ---
    ---         ---
-04 A-4 C0FF    ---
+04 A-4 10FF    ---
    +++         ---
    +++         ---
    +++         ---
