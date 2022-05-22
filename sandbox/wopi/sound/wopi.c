@@ -414,7 +414,7 @@ void wopi_process(INT16 *buffer, UINT16 size) {
                     UINT8  env_value = opi_envelope_apply(opi);
 
                     int opi_envelope = opi_value * (env_value / 255.0);
-                    voice_final += opi_envelope * (opi->volume / 255.0);
+                    voice_final = opi_envelope * (opi->volume / 255.0);
                     modulation = voice_final >> 4;
                 }
                 voice_final *= (voice->volume / 255.0);
