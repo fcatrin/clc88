@@ -12,6 +12,8 @@
 #define SCREEN_WIDTH  32
 #define SCREEN_HEIGHT 29
 #define SCREEN_SIZE (SCREEN_WIDTH * SCREEN_HEIGHT * 64)
+#define SCREEN_PIXEL_WIDTH  (SCREEN_WIDTH * 8)
+#define SCREEN_PIXEL_HEIGHT (SCREEN_HEIGHT * 8)
 
 UINT16 vram[VRAM_SIZE];
 UINT16 sat[SAT_SIZE];
@@ -47,6 +49,14 @@ void save_tile(char *out_dir, UINT16 color, UINT16 address, UINT32* tile) {
     char filename[1024];
     sprintf(filename, "%s/tile_%04x_%02x.rgb", out_dir, address >> 4, color);
     save_rgb(filename, tile, 64*sizeof(UINT32));
+}
+
+void save_sprite(char *out_dir, UINT16 color, UINT16 address, UINT32* tile) {
+    mkdir(out_dir, 0755);
+
+    char filename[1024];
+    sprintf(filename, "%s/sprite_%04x_%02x.rgb", out_dir, address >> 5, color);
+    save_rgb(filename, tile, 256*sizeof(UINT32));
 }
 
 void save_screen(char *out_dir) {
@@ -100,7 +110,38 @@ UINT32 *dump_screen_tile(char *out_dir, UINT16 color, UINT16 address) {
     return rgb;
 }
 
-void screen_put(int x, int y, UINT32 *tile) {
+UINT32 *dump_screen_sprite(char *out_dir, UINT16 color, UINT16 address) {
+    UINT8 sprite[256];
+    for(int row=0; row<16; row++) {
+        UINT16 sg0 = vram[address + row];
+        UINT16 sg1 = vram[address + row + 16];
+        UINT16 sg2 = vram[address + row + 32];
+        UINT16 sg3 = vram[address + row + 48];
+
+        UINT32 bitmask = 32768;
+        for(int bit=0; bit<16; bit++) {
+            sprite[row*16 + bit] =
+                ((sg0 & bitmask) ? 1 : 0) * 1 +
+                ((sg1 & bitmask) ? 1 : 0) * 2 +
+                ((sg2 & bitmask) ? 1 : 0) * 4 +
+                ((sg3 & bitmask) ? 1 : 0) * 8;
+            bitmask >>= 1;
+        }
+    }
+
+    static UINT32 rgb[256];
+
+    for(int i=0; i<256; i++) {
+        UINT8  pixel     = sprite[i];
+        UINT32 pixel_rgb = palette[color * 16 + pixel + 0x100];
+        rgb[i] = pixel == 0 ? 0 : pixel_rgb;
+    }
+
+    return rgb;
+}
+
+
+void screen_put_tile(int x, int y, UINT32 *tile) {
     UINT32 address = x * 8 + y * 8 * SCREEN_WIDTH * 8;
     printf("screen put %dx%d at %04x\n", x, y, address);
     for(int row = 0; row < 8; row++) {
@@ -111,6 +152,26 @@ void screen_put(int x, int y, UINT32 *tile) {
     }
 }
 
+void screen_put_sprite(int x, int y, UINT32 *sprite) {
+    bool put = FALSE;
+    for(int row = 0; row < 16; row++) {
+        for(int col = 0; col < 16; col++) {
+            int rx = x + col - 32;
+            int ry = y + row - 64;
+            if (rx < 0 || ry < 0 || rx >= SCREEN_PIXEL_WIDTH || ry >= SCREEN_PIXEL_HEIGHT) continue;
+            if (!put) {
+                printf("put sprite %dx%d\n", x, y);
+                put = TRUE;
+            }
+
+            UINT32 address = rx + ry * SCREEN_PIXEL_WIDTH;
+            UINT32 pixel = sprite[row * 16 + col];
+            if (pixel) screen[address] = pixel;
+        }
+    }
+}
+
+
 void dump_screen_tiles(char *out_dir) {
     for(int y=0; y<SCREEN_HEIGHT; y++) {
         for(int x=0; x<SCREEN_WIDTH; x++) {
@@ -120,8 +181,21 @@ void dump_screen_tiles(char *out_dir) {
 
             UINT32 *tile = dump_screen_tile(out_dir, color, address);
             save_tile(out_dir, color, address, tile);
-            screen_put(x, y, tile);
+            screen_put_tile(x, y, tile);
         }
+    }
+}
+
+void dump_screen_sprites(char *out_dir) {
+    for(int i=0; i<64; i++) {
+        UINT16 y = sat[i*4 + 0];
+        UINT16 x = sat[i*4 + 1];
+        UINT16 address = ((sat[i*4 + 2] >> 1) & 0x3FF) * 64;
+        UINT16 color   = sat[i*4 + 3] & 0x0f;
+        printf("sprite %04x  x:%04x y:%04x color:%02x address:%04x\n", i, x, y, color, address);
+        UINT32 *sprite = dump_screen_sprite(out_dir, color, address);
+        save_sprite(out_dir, color, address, sprite);
+        screen_put_sprite(x, y, sprite);
     }
 }
 
@@ -167,6 +241,7 @@ int main(int argc, const char *argv[]) {
     sprintf(path, "data/%s/tiles", dump_dir);
     mkdir(path, 0755);
     dump_screen_tiles(path);
+    dump_screen_sprites(path);
     save_screen(path);
 
     return EXIT_SUCCESS;
