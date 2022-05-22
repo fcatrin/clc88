@@ -249,7 +249,7 @@ void wopi_write(UINT16 reg, UINT8 value) {
         voice_t *voice = &voices[reg - 0x40];
         set_algorithm(voice, value);
     } else if (selector == 5 || selector == 6 || selector == 7) {
-        opi_t *opi = get_opi_by_index(reg - 0x40);
+        opi_t *opi = get_opi_by_index(reg - 0x50);
         set_wave_type(opi, value);
     } else if (selector == 8 || selector == 9 || selector == 10) {
         int opi_index = reg - 0x80;
@@ -406,8 +406,22 @@ void wopi_process(INT16 *buffer, UINT16 size) {
 
         for(int voice_index = 0; voice_index < 1; voice_index++) {
             voice_t *voice = &voices[voice_index];
+            if (voice->algorithm == 0) {
+                int modulation = 0;
+                for(int opi_index = 3; opi_index >=0; opi_index--) {
+                    opi_t *opi = &voice->opis[opi_index];
+                    int opi_value = opi_get_value(opi, modulation);
+                    UINT8  env_value = opi_envelope_apply(opi);
+
+                    int opi_envelope = opi_value * (env_value / 255.0);
+                    voice_final += opi_envelope * (opi->volume / 255.0);
+                    modulation = voice_final >> 4;
+                }
+                voice_final *= (voice->volume / 255.0);
+            }
+
             if (voice->algorithm == 3) {
-                for(int opi_index = 0; opi_index < 3; opi_index++) {
+                for(int opi_index = 0; opi_index < 4; opi_index++) {
                     opi_t *opi = &voice->opis[opi_index];
                     int opi_value = opi_get_value(opi, 0);
                     UINT8  env_value = opi_envelope_apply(opi);
