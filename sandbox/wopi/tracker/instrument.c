@@ -10,7 +10,8 @@ instrument_t *instrument_new() {
     return instrument;
 }
 
-void instrument_init(instrument_t *instrument, opi_t *opis) {
+void instrument_init(instrument_t *instrument, UINT8 algorithm, opi_t *opis) {
+    instrument->algorithm = algorithm;
     memcpy(&instrument->opis[0], opis, sizeof(opi_t) * MAX_OPERATORS);
 }
 

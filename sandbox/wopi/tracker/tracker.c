@@ -25,7 +25,8 @@
 #define WOPI_PORT_PERIOD         0x000
 #define WOPI_PORT_NOTE_ON        0x020
 #define WOPI_PORT_VOLUME         0x030
-#define WOPI_PORT_OPI_WAVE_TYPE  0x040
+#define WOPI_PORT_ALGORITHM      0x040
+#define WOPI_PORT_OPI_WAVE_TYPE  0x050
 #define WOPI_PORT_OPI_MULTIPLIER 0x080
 #define WOPI_PORT_OPI_VOLUME     0x0B0
 #define WOPI_PORT_OPI_ADSR       0x100
@@ -107,6 +108,7 @@ void tracker_play() {
                 instrument_t *instrument = song->instruments[event->instrument];
                 if (instrument != NULL) {
                     wopi_write(WOPI_PORT_VOLUME + i, 0xFF);
+                    wopi_write(WOPI_PORT_ALGORITHM + i, instrument->algorithm);
                     for(int opi_index = 0; opi_index < MAX_OPERATORS; opi_index++) {
                         opi_t *opi = &instrument->opis[opi_index];
                         int opi_offset = i*MAX_OPERATORS + opi_index;

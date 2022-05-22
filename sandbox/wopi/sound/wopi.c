@@ -136,6 +136,7 @@ static UINT32 rel_stop[ENVELOPE_STAGE_VALUES];
 
 static void set_note_on(voice_t *voice, UINT8 value);
 static void set_volume(voice_t *voice, UINT8 value);
+static void set_algorithm(voice_t *voice, UINT8 value);
 static void set_period_low (voice_t *voice, UINT8 value);
 static void set_period_high(voice_t *voice, UINT8 value);
 static void set_volume_reg(opi_t *opi, UINT8 value);
@@ -219,7 +220,8 @@ static opi_t *get_opi_by_index(int index) {
     000 - 012 : voice period. 2 bytes per voice LSB/MSB   mask: 0000000X
     020 - 028 : voice note on                             mask: 00000010
     030 - 038 : voice volume                              mask: 00000011
-    040 - 063 : opi wave type                             mask: 000001XX
+    040 - 048 : voice algorithm                           mask: 00000100
+    050 - 073 : opi wave type                             mask: 00000101 | 00000110 | 00000111
     080 - 0A3 : opi multiplier                            mask: 00001000 | 00001001 | 00001100
     0B0 - 0D3 : opi volume                                mask: 00001101 | 00001100 | 00001101
     100 - 147 : opi ADSR. 2 bytes per operator AD / SR    mask: 0001XXXX
@@ -243,7 +245,10 @@ void wopi_write(UINT16 reg, UINT8 value) {
     } else if (selector == 3) {
         voice_t *voice = &voices[reg - 0x30];
         set_volume(voice, value);
-    } else if ((selector & 0xfc) == 4) {
+    } else if (selector == 4) {
+        voice_t *voice = &voices[reg - 0x40];
+        set_algorithm(voice, value);
+    } else if (selector == 5 || selector == 6 || selector == 7) {
         opi_t *opi = get_opi_by_index(reg - 0x40);
         set_wave_type(opi, value);
     } else if (selector == 8 || selector == 9 || selector == 10) {
@@ -298,6 +303,10 @@ static void voice_env_start_stage(voice_t *voice, UINT8 stage) {
 
 static void set_volume(voice_t *voice, UINT8 value) {
     voice->volume = value;
+}
+
+static void set_algorithm(voice_t *voice, UINT8 value) {
+    voice->algorithm = value & 0x07;
 }
 
 static void set_note_on(voice_t *voice, UINT8 value) {
@@ -391,23 +400,25 @@ void wopi_process(INT16 *buffer, UINT16 size) {
 
         for(int voice_index = 0; voice_index < 1; voice_index++) {
             voice_t *voice = &voices[voice_index];
-            for(int opi_index = 0; opi_index < 3; opi_index++) {
-                opi_t *opi = &voice->opis[opi_index];
-                int opi_value = opi_get_value(opi);
-                UINT8  env_value = opi_envelope_apply(opi);
-                if (is_debug_env()) {
-                    printf("env_value[%d] = %d\n", debug_env, env_value);
+            if (voice->algorithm == 3) {
+                for(int opi_index = 0; opi_index < 3; opi_index++) {
+                    opi_t *opi = &voice->opis[opi_index];
+                    int opi_value = opi_get_value(opi);
+                    UINT8  env_value = opi_envelope_apply(opi);
+                    if (is_debug_env()) {
+                        printf("env_value[%d] = %d\n", debug_env, env_value);
+                    }
+                    debug_env++;
+
+                    int voice_envelope = opi_value * (env_value / 255.0);
+                    int voice_final = voice_envelope * (opi->volume / 255.0) * (voice->volume / 255.0);
+
+                    buffer[i+0] += voice_final;
+                    buffer[i+1] += voice_final;
+
+                    opi->phase += opi->period;
+                    if (opi->phase >= WAVE_SIZE) opi->phase -= WAVE_SIZE;
                 }
-                debug_env++;
-
-                int voice_envelope = opi_value * (env_value / 255.0);
-                int voice_final = voice_envelope * (opi->volume / 255.0) * (voice->volume / 255.0);
-
-                buffer[i+0] += voice_final;
-                buffer[i+1] += voice_final;
-
-                opi->phase += opi->period;
-                if (opi->phase >= WAVE_SIZE) opi->phase -= WAVE_SIZE;
             }
         }
     }

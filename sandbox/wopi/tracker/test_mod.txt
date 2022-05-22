@@ -1,12 +1,12 @@
 bpm 240
 channels 1
 
-# instrument: INDEX WAVE_TYPE ADSR VOLUME MULTIPLIER
+# instrument: INDEX ALGORITHM WAVE_TYPE ADSR VOLUME MULTIPLIER
 
-instrument: 01 sin F34F 8F 01 sin F34F FF 00 sin F34F 8F 03
-instrument: 02 saw F34F 8F 01 saw F34F FF 00 saw F34F 8F 03
-instrument: 03 tri F34F 8F 01 tri F34F FF 00 tri F34F 8F 03
-instrument: 04 sqr F34F 8F 01 sqr F34F FF 00 sqr F34F 8F 03
+instrument: 01 03 sin F34F 8F 01 sin F34F FF 00 sin F34F 8F 03
+instrument: 02 03 saw F34F 8F 01 saw F34F FF 00 saw F34F 8F 03
+instrument: 03 03 tri F34F 8F 01 tri F34F FF 00 tri F34F 8F 03
+instrument: 04 03 sqr F34F 8F 01 sqr F34F FF 00 sqr F34F 8F 03
 
 pattern
 01 A-3 C0FF 04 A-3
