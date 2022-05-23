@@ -1,3 +1,4 @@
+#include <string.h>
 #include <malloc.h>
 #include "../emu.h"
 #include "tracker.h"
@@ -37,6 +38,12 @@ void note_event_init(note_event_t *event, int instrument, char note, char accide
 void note_event_dump(note_event_t *event) {
     if (event == NULL) printf("NULL");
     else {
-        printf("note:%d note_on:%s", event->note, event->note_on ? "Y":"N");
+        char instrument_desc[30];
+        if (event->instrument) {
+            sprintf(instrument_desc, "instrument:%02x", event->instrument);
+        } else {
+            strcpy(instrument_desc,"");
+        }
+        printf("note:%d note_on:%s %s", event->note, event->note_on ? "Y":"N", instrument_desc);
     }
 }
