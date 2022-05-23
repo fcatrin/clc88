@@ -77,3 +77,9 @@ int load_parameter_hex(const char *line, int index) {
     char *hex = load_parameter(line, index);
     return hex2int(hex);
 }
+
+int load_parameter_hex_with_default(const char *line, int index, int default_value) {
+    char *hex = load_parameter(line, index);
+    if (strlen(hex) == 0) return default_value;
+    return hex2int(hex);
+}

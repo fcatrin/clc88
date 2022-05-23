@@ -3,6 +3,7 @@
 
 #define ROWS_PER_PATTERN 64
 #define MAX_CHANNELS 9
+#define MAX_PATTERNS 128
 #define MAX_INSTRUMENTS 128
 #define MAX_OPERATORS 4
 #define NO_NOTE 0xff
@@ -61,9 +62,10 @@ typedef struct {
     UINT8 bpm;
     UINT8 ticks_per_row;
 
-    pattern_t *patterns[128];
-    int patterns_index[128];
+    pattern_t *patterns[MAX_PATTERNS];
+    int patterns_index[MAX_PATTERNS];
     int patterns_count;
+    int patterns_last;
 
     instrument_t *instruments[MAX_INSTRUMENTS];
     channel_status_t channel_status[MAX_CHANNELS];

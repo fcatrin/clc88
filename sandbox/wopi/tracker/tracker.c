@@ -64,6 +64,8 @@ void load_process_line(char *line) {
         song->channels = load_parameter_int(line, 2);
     } else if (starts_with(line, "instrument")) {
         song_register_instrument(song, line);
+    } else if (starts_with(line, "patterns")) {
+        song_register_patterns(song, line);
     } else if (starts_with(line, "pattern")) {
         printf("new pattern\n");
         current_pattern = pattern_new();

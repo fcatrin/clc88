@@ -22,7 +22,7 @@ void song_add_pattern(song_t *song, pattern_t *pattern) {
 static pattern_row_t *get_next_row(song_t *song) {
     pattern_row_t *pattern_row;
     do {
-        if (song->playing_pattern >= song->patterns_count) {
+        if (song->playing_pattern >= song->patterns_last) {
             song->playing_pattern = 0; // just restart for now
         }
 
@@ -42,6 +42,17 @@ pattern_row_t *song_get_row(song_t *song) {
 
     song->playing_tick = 0;
     return get_next_row(song);
+}
+
+void song_register_patterns(song_t *song, char *line) {
+    song->patterns_last = 0;
+    for(int i=0; i<MAX_PATTERNS; i++) {
+        int pattern_number = load_parameter_hex_with_default(line, i + 2, -1);
+        if (pattern_number < 0) break;
+
+        song->patterns_index[i] = pattern_number;
+        song->patterns_last++;
+    }
 }
 
 void song_register_instrument(song_t *song, char *line) {
@@ -79,16 +90,22 @@ void song_register_instrument(song_t *song, char *line) {
 }
 
 void song_dump(song_t *song) {
-    printf("song channels:%d, bpm:%d, ticks:%d patterns:%d\n",
-        song->channels, song->bpm, song->ticks_per_row, song->patterns_count
+    printf("song channels:%d, bpm:%d, ticks:%d patterns:%d patterns to play:%d\n",
+        song->channels, song->bpm, song->ticks_per_row, song->patterns_count, song->patterns_last
     );
     printf("song instruments:\n");
     for(int i=0; i<MAX_INSTRUMENTS; i++) {
         instrument_t *instrument = song->instruments[i];
         if (instrument == NULL) continue;
-        printf("  instrument[%d] = ", i);
+        printf("instrument[%d] = ", i);
         instrument_dump(instrument);
     }
+
+    printf("song patterns index:");
+    for(int i=0; i<song->patterns_last; i++) {
+        printf(" %02x", song->patterns_index[i]);
+    }
+    printf("\n");
 
     printf("song patterns:\n");
     for(int i=0; i<song->patterns_count; i++) {
