@@ -1,4 +1,4 @@
-bpm 180
+bpm 200
 channels 1
 patterns 00 01 02 03 04 05
 
@@ -8,7 +8,7 @@ instrument: 01 a0 03 sqr F34F 8F 01 sin F34F 00 00 sin F34F 00 03 sin F34F 00 03
 instrument: 02 FF 03 sin F34F 8F 01 saw F34F 00 00 saw F34F 00 03 saw F34F 00 03
 instrument: 03 FF 03 saw F34F 8F 01 tri F34F 00 00 tri F34F 00 03 tri F34F 00 03
 instrument: 04 FF 03 tri F34F 8F 01 sqr F34F 00 00 sqr F34F 00 03 sqr F34F 00 03
-instrument: 05 60 03 sqr F34F 80 01 sqr F34F ff 00 sqr F34F a0 02 sqr F34F 20 03
+instrument: 05 40 03 sqr F34F 80 01 sqr F34F ff 00 sqr F34F a0 02 sqr F34F 20 03
 instrument: 06 60 03 sin F34F 80 01 sin F34F ff 00 sin F34F a0 02 sin F34F 20 03
 instrument: 07 60 03 saw F34F 80 01 saw F34F ff 00 saw F34F a0 02 saw F34F 20 03
 instrument: 08 60 03 tri F34F 80 01 tri F34F ff 00 tri F34F a0 02 tri F34F 20 03
