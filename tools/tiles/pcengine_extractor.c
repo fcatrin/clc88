@@ -10,6 +10,7 @@
 #define SAT_SIZE 0x100
 #define PALETTE_SIZE 0x200
 #define COLOR_CODES 0x10
+#define MAX_TILES 4096
 
 #define SCREEN_WIDTH  32
 #define SCREEN_HEIGHT 29
@@ -31,11 +32,12 @@ UINT32 sprites_palette_final[PALETTE_SIZE / 2];
 UINT8  sprites_palette_codes[COLOR_CODES];
 UINT8  sprites_palette_size;
 
+UINT16 tiles_index[MAX_TILES];
+UINT16 tiles_size;
+UINT32 tiles_patterns[VRAM_SIZE];
+
+
 void init() {
-    for(int i=0; i<PALETTE_SIZE / 2; i++) {
-        tiles_palette_codes[i]   = 0xff;
-        sprites_palette_codes[i] = 0xff;
-    }
     tiles_palette_size   = 0;
     sprites_palette_size = 0;
 }
@@ -52,6 +54,23 @@ UINT8 get_palette_code(int color_code, UINT8 *palette_codes, UINT8 *palette_size
     *palette_size = size;
 
     return i;
+}
+
+UINT16 get_tile_index(UINT16 address) {
+    for(int i=0; i<tiles_size; i++) {
+        if (tiles_index[i] == address) return i;
+    }
+
+    tiles_index[tiles_size] = address;
+    return tiles_size++;
+}
+
+void register_tile(UINT32 *tile, UINT16 address) {
+    int index = get_tile_index(address);
+    int base_address = index * 64;
+    for(int i=0; i<64; i++) {
+        tiles_patterns[base_address + i] = tile[i];
+    }
 }
 
 void register_palette(UINT32 *palette_final, UINT8 *palette_codes, UINT8 *palette_size, int color_code, int palette_base) {
@@ -149,6 +168,8 @@ UINT32 *dump_screen_tile(char *out_dir, UINT16 color, UINT16 address) {
         rgb[i*2 + 0] = rgb_0;
         rgb[i*2 + 1] = rgb_1;
     }
+
+    register_tile(rgb, address);
 
     return rgb;
 }
@@ -302,6 +323,31 @@ void dump_asm_palettes(char *path) {
     fclose(f);
 }
 
+void dump_asm_tiles(char *path) {
+    char file_path[2048];
+    sprintf(file_path, "%s/tiles.asm", path);
+    FILE *f = fopen(file_path, "w");
+    fprintf(f, "tile_patterns_size: .word %04x\n", tiles_size);
+    fprintf(f, "tile_patterns:\n");
+    for(int tile=0; tile < tiles_size; tile++) {
+        int base_address = tile * 64;
+        for(int row = 0; row < 8; row++) {
+            fprintf(f, "    .word ");
+            for(int i=0; i<8; i++) {
+                UINT32 entry = tiles_patterns[base_address + row*8 + i];
+                UINT16 rgb565 = argb2rgb565(entry);
+
+                if (i>0) fprintf(f, ", ");
+                fprintf(f, "$%04x", rgb565);
+            }
+            fprintf(f, "\n");
+        }
+        fprintf(f, "\n");
+    }
+    fprintf(f, "\n");
+    fclose(f);
+}
+
 void fix_palette() {
     for(int i=0; i<PALETTE_SIZE; i++) {
         UINT16 entry = color[i];
@@ -353,6 +399,7 @@ int main(int argc, const char *argv[]) {
     mkdir(path, 0755);
 
     dump_asm_palettes(path);
+    dump_asm_tiles(path);
 
     return EXIT_SUCCESS;
 }
