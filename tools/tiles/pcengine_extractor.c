@@ -327,7 +327,7 @@ void dump_asm_tiles(char *path) {
     char file_path[2048];
     sprintf(file_path, "%s/tiles.asm", path);
     FILE *f = fopen(file_path, "w");
-    fprintf(f, "tile_patterns_size: .word %04x\n", tiles_size);
+    fprintf(f, "tile_patterns_size: .word $%04x\n", tiles_size);
     fprintf(f, "tile_patterns:\n");
     for(int tile=0; tile < tiles_size; tile++) {
         int base_address = tile * 64;
@@ -341,6 +341,33 @@ void dump_asm_tiles(char *path) {
                 fprintf(f, "$%04x", rgb565);
             }
             fprintf(f, "\n");
+        }
+        fprintf(f, "\n");
+    }
+    fprintf(f, "\n");
+    fclose(f);
+}
+
+void dump_asm_screen(char *path) {
+    char file_path[2048];
+    sprintf(file_path, "%s/screen.asm", path);
+    FILE *f = fopen(file_path, "w");
+    fprintf(f, "screen_data_size: .word $%04x\n", SCREEN_SIZE);
+    fprintf(f, "screen_data:\n");
+    for(int y = 0; y < SCREEN_HEIGHT; y++) {
+        fprintf(f, "    .word ");
+        for(int x = 0; x < SCREEN_WIDTH; x++) {
+            UINT16 bat_value = vram[x + y*SCREEN_WIDTH*2];
+            UINT16 color   = bat_value >> 12;
+            UINT16 address = (bat_value & 0xFFF) << 4;
+
+            int    new_color_code = get_palette_code(color, tiles_palette_codes, &tiles_palette_size);
+            UINT16 new_address_index = get_tile_index(address);
+            UINT16 new_bat_value = (new_color_code << 12) | new_address_index;
+
+            if (x == 16) fprintf(f, " // row %d\n    .word ", y);
+            else if (x>0) fprintf(f, ", ");
+            fprintf(f, "$%04x", new_bat_value);
         }
         fprintf(f, "\n");
     }
@@ -400,6 +427,7 @@ int main(int argc, const char *argv[]) {
 
     dump_asm_palettes(path);
     dump_asm_tiles(path);
+    dump_asm_screen(path);
 
     return EXIT_SUCCESS;
 }
