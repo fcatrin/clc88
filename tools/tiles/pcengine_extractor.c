@@ -9,6 +9,7 @@
 #define VRAM_SIZE 0x10000
 #define SAT_SIZE 0x100
 #define PALETTE_SIZE 0x200
+#define COLOR_CODES 0x10
 
 #define SCREEN_WIDTH  32
 #define SCREEN_HEIGHT 29
@@ -22,6 +23,44 @@ UINT32 palette[PALETTE_SIZE];
 UINT16 color[PALETTE_SIZE];
 
 UINT32 screen[SCREEN_SIZE];
+
+UINT32 tiles_palette_final[PALETTE_SIZE / 2];
+UINT8  tiles_palette_codes[COLOR_CODES];
+UINT8  tiles_palette_size;
+UINT32 sprites_palette_final[PALETTE_SIZE / 2];
+UINT8  sprites_palette_codes[COLOR_CODES];
+UINT8  sprites_palette_size;
+
+void init() {
+    for(int i=0; i<PALETTE_SIZE / 2; i++) {
+        tiles_palette_codes[i]   = 0xff;
+        sprites_palette_codes[i] = 0xff;
+    }
+    tiles_palette_size   = 0;
+    sprites_palette_size = 0;
+}
+
+UINT8 get_palette_code(int color_code, UINT8 *palette_codes, UINT8 *palette_size) {
+    int size = *palette_size;
+
+    int i = 0;
+    for(; i<size; i++) {
+        if (palette_codes[i] == color_code) return i;
+    }
+
+    palette_codes[size++] = color_code;
+    *palette_size = size;
+
+    return i;
+}
+
+void register_palette(UINT32 *palette_final, UINT8 *palette_codes, UINT8 *palette_size, int color_code, int palette_base) {
+    UINT8 new_color_code = get_palette_code(color_code, palette_codes, palette_size);
+    printf("register palette color code %02x on new color code %02x\n", color_code, new_color_code);
+    for(int i=0; i<16; i++) {
+        palette_final[new_color_code * 16 + i] = palette[color_code * 16 + i + palette_base];
+    }
+}
 
 bool load_bin(const char *filename, void *data, size_t size) {
 
@@ -67,6 +106,9 @@ void save_screen(char *out_dir) {
 }
 
 UINT32 *dump_screen_tile(char *out_dir, UINT16 color, UINT16 address) {
+
+    register_palette(tiles_palette_final, tiles_palette_codes, &tiles_palette_size, color, 0);
+
     UINT8 tile[64];
     printf("dump_screen_tile color:%02x address:%04x\n", color, address);
     for(int row=0; row<8; row++) {
@@ -112,6 +154,8 @@ UINT32 *dump_screen_tile(char *out_dir, UINT16 color, UINT16 address) {
 }
 
 UINT32 *dump_screen_sprite(char *out_dir, UINT16 color, UINT16 address) {
+    register_palette(sprites_palette_final, sprites_palette_codes, &sprites_palette_size, color, 0x100);
+
     UINT8 sprite[256];
     for(int row=0; row<16; row++) {
         UINT16 sg0 = vram[address + row];
@@ -220,6 +264,44 @@ void dump_screen_sprites(char *out_dir) {
     }
 }
 
+UINT16 argb2rgb565(UINT32 rgb) {
+    UINT8 r = (rgb & 0x00ff0000) >> 16;
+    UINT8 g = (rgb & 0x0000ff00) >> 8;
+    UINT8 b = (rgb & 0x000000ff);
+
+    r >>= 3;
+    g >>= 2;
+    b >>= 3;
+
+    return (r << 11) | (g << 5) | b;
+}
+
+void dump_asm_palette(FILE *f, char *name, UINT32 *palette_final, UINT8 *palette_codes, UINT8 palette_size) {
+    fprintf(f, "%s_palette_size: .byte $%02x\n", name, palette_size * 16);
+    fprintf(f, "%s_palette:\n", name);
+    for(int entries = 0; entries < palette_size; entries++) {
+        fprintf(f, "    .word ");
+        for(int i=0; i<16; i++) {
+            UINT32 entry = palette_final[entries * 16 + i];
+            UINT16 rgb565 = argb2rgb565(entry);
+
+            if (i>0) fprintf(f, ", ");
+            fprintf(f, "$%04x", rgb565);
+        }
+        fprintf(f, "\n");
+    }
+    fprintf(f, "\n");
+}
+
+void dump_asm_palettes(char *path) {
+    char file_path[2048];
+    sprintf(file_path, "%s/palette.asm", path);
+    FILE *f = fopen(file_path, "w");
+    dump_asm_palette(f, "tiles", tiles_palette_final,     tiles_palette_codes,   tiles_palette_size);
+    dump_asm_palette(f, "sprites", sprites_palette_final, sprites_palette_codes, sprites_palette_size);
+    fclose(f);
+}
+
 void fix_palette() {
     for(int i=0; i<PALETTE_SIZE; i++) {
         UINT16 entry = color[i];
@@ -240,6 +322,8 @@ int main(int argc, const char *argv[]) {
         printf("Usage: %s dump_name\n", argv[0]);
         return EXIT_FAILURE;
     }
+
+    init();
 
     const char *dump_dir = argv[1];
     char path[1024];
@@ -264,6 +348,11 @@ int main(int argc, const char *argv[]) {
     dump_screen_tiles(path);
     dump_screen_sprites(path);
     save_screen(path);
+
+    sprintf(path, "data/%s/asm", dump_dir);
+    mkdir(path, 0755);
+
+    dump_asm_palettes(path);
 
     return EXIT_SUCCESS;
 }
