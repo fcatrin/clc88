@@ -11,12 +11,22 @@
 #define PALETTE_SIZE 0x200
 #define COLOR_CODES 0x10
 #define MAX_TILES 4096
+#define MAX_SPRITES 4096
 
 #define SCREEN_WIDTH  32
 #define SCREEN_HEIGHT 29
 #define SCREEN_SIZE (SCREEN_WIDTH * SCREEN_HEIGHT * 64)
 #define SCREEN_PIXEL_WIDTH  (SCREEN_WIDTH * 8)
 #define SCREEN_PIXEL_HEIGHT (SCREEN_HEIGHT * 8)
+
+#define SPRITE_WIDTH 16
+#define SPRITE_HEIGHT 16
+#define SPRITE_MAX_X 2
+#define SPRITE_MAX_Y 4
+#define SPRITE_BYTES_PER_ROW (SPRITE_WIDTH/2)
+#define SPRITE_BYTES_PER_SCAN (SPRITE_BYTES_PER_ROW * SPRITE_MAX_X)
+#define SPRITE_SCANS (SPRITE_MAX_Y * SPRITE_HEIGHT)
+#define SPRITE_SIZE_BYTES (SPRITE_BYTES_PER_SCAN * SPRITE_SCANS)
 
 UINT16 vram[VRAM_SIZE];
 UINT16 sat[SAT_SIZE];
@@ -35,6 +45,11 @@ UINT8  sprites_palette_size;
 UINT16 tiles_index[MAX_TILES];
 UINT16 tiles_size;
 UINT8  tiles_patterns[VRAM_SIZE];
+
+UINT16 sprites_index[MAX_SPRITES];
+UINT16 sprites_size;
+UINT8  sprites_patterns[VRAM_SIZE];
+UINT8  sprites_data[MAX_SPRITES];
 
 
 void init() {
@@ -65,6 +80,15 @@ UINT16 get_tile_index(UINT16 address) {
     return tiles_size++;
 }
 
+UINT16 get_sprite_index(UINT16 address) {
+    for(int i=0; i<sprites_size; i++) {
+        if (sprites_index[i] == address) return i;
+    }
+
+    sprites_index[sprites_size] = address;
+    return sprites_size++;
+}
+
 void register_tile(UINT8 *tile, UINT16 address) {
     int index = get_tile_index(address);
     int base_address = index * 32;
@@ -73,6 +97,31 @@ void register_tile(UINT8 *tile, UINT16 address) {
         UINT8 pixel_1 = tile[i*2 + 1];
         tiles_patterns[base_address + i] = (pixel_0 & 0x0f) | (pixel_1 << 4);
     }
+}
+
+void register_sprite(UINT8 *sprite, UINT16 address, int col, int row) {
+    int index = get_sprite_index(address);
+
+    int base_address = index * SPRITE_SIZE_BYTES;
+    int offset = row * SPRITE_BYTES_PER_SCAN * SPRITE_HEIGHT + col * SPRITE_BYTES_PER_ROW;
+    for(int y=0; y<SPRITE_HEIGHT; y++) {
+        int offset_row = y * SPRITE_WIDTH;
+        for(int x=0; x<SPRITE_BYTES_PER_ROW; x++) {
+            UINT8 pixel_0 = sprite[x*2 + offset_row + 0];
+            UINT8 pixel_1 = sprite[x*2 + offset_row + 1];
+            sprites_patterns[base_address + offset + x + y*SPRITE_BYTES_PER_ROW] = (pixel_0 & 0x0f) | (pixel_1 << 4);
+        }
+    }
+}
+
+void register_sprite_info(UINT16 address, INT8 color, int cols, int rows) {
+    int new_color_code = get_palette_code(color, sprites_palette_codes, &sprites_palette_size);
+    UINT8 data = (new_color_code << 4) | (((cols-1) & 3) << 2) | ((rows-1) & 3);
+
+    int index = get_sprite_index(address);
+    sprites_data[index] = data;
+
+    printf("register_sprite_info address:%04x index:%d size:%dx%d data:%02x\n", address, index, cols, rows, data);
 }
 
 void register_palette(UINT32 *palette_final, UINT8 *palette_codes, UINT8 *palette_size, int color_code, int palette_base) {
@@ -162,7 +211,7 @@ UINT32 *dump_screen_tile(char *out_dir, UINT16 color, UINT16 address) {
     return rgb;
 }
 
-UINT32 *dump_screen_sprite(char *out_dir, UINT16 color, UINT16 address) {
+UINT32 *dump_screen_sprite(char *out_dir, UINT16 color, UINT16 address, UINT16 base_address, int col, int row) {
     register_palette(sprites_palette_final, sprites_palette_codes, &sprites_palette_size, color, 0x100);
 
     UINT8 sprite[256];
@@ -189,6 +238,8 @@ UINT32 *dump_screen_sprite(char *out_dir, UINT16 color, UINT16 address) {
         UINT32 pixel_rgb = palette[color * 16 + pixel + 0x100];
         rgb[i] = pixel == 0 ? 0 : pixel_rgb;
     }
+
+    register_sprite(sprite, base_address, col, row);
 
     return rgb;
 }
@@ -261,13 +312,13 @@ void dump_screen_sprites(char *out_dir) {
             if (cols == 2) data_address = (data_address & 0x3fe) | col;
             for(int row = 0; row < rows; row++) {
                 if (rows > 1) data_address = (data_address & 0x3f9) | (row << 1);
-                UINT32 *graphic = dump_screen_sprite(out_dir, color, data_address << 6);
+                UINT32 *graphic = dump_screen_sprite(out_dir, color, data_address << 6, address, col, row);
                 draw(sprite, graphic, 16, 16, col*16, row*16, cols*16, rows*16);
 
                 // data_address += 1;
             }
         }
-
+        register_sprite_info(address, color, cols, rows);
         save_sprite(out_dir, color, address, sprite, cols, rows);
         draw(screen, sprite, cols*16, rows*16, x - 32, y - 64, SCREEN_PIXEL_WIDTH, SCREEN_PIXEL_HEIGHT);
     }
@@ -328,6 +379,44 @@ void dump_asm_tiles(char *path) {
                 fprintf(f, "$%02x", entry);
             }
             fprintf(f, "\n");
+        }
+        fprintf(f, "\n");
+    }
+    fprintf(f, "\n");
+    fclose(f);
+}
+
+void dump_asm_sprites(char *path) {
+    char file_path[2048];
+    sprintf(file_path, "%s/sprites.asm", path);
+    FILE *f = fopen(file_path, "w");
+    fprintf(f, "sprites_patterns_size: .word $%04x", sprites_size);
+    fprintf(f, "sprites_info:");
+    for(int i=0; i<sprites_size; i++) {
+        if (i % 8 == 0) {
+            fprintf(f, "\n    .byte ");
+        } else {
+            fprintf(f, ", ");
+        }
+        fprintf(f, "$%02x", sprites_data[i]);
+    }
+    fprintf(f, "\n\nsprites_patterns:");
+
+    for(int sprite=0; sprite < sprites_size; sprite++) {
+        int base_address = sprite * SPRITE_SIZE_BYTES;
+        UINT8 data = sprites_data[sprite];
+        int cols = ((data & 0xc) >> 2) + 1;
+        int rows = (data & 0x3) + 1;
+        int size = cols * SPRITE_BYTES_PER_ROW * rows * SPRITE_HEIGHT;
+
+        fprintf(f, "\n    // sprite %d size:%dx%d", sprite, cols, rows);
+        for(int i=0; i<size; i++) {
+            if (i % 8 == 0) {
+                fprintf(f, "\n    .byte ");
+            } else {
+                fprintf(f, ", ");
+            }
+            fprintf(f, "$%02x", sprites_patterns[base_address + i]);
         }
         fprintf(f, "\n");
     }
@@ -415,6 +504,7 @@ int main(int argc, const char *argv[]) {
     dump_asm_palettes(path);
     dump_asm_tiles(path);
     dump_asm_screen(path);
+    dump_asm_sprites(path);
 
     return EXIT_SUCCESS;
 }
