@@ -34,7 +34,7 @@ UINT8  sprites_palette_size;
 
 UINT16 tiles_index[MAX_TILES];
 UINT16 tiles_size;
-UINT32 tiles_patterns[VRAM_SIZE];
+UINT8  tiles_patterns[VRAM_SIZE];
 
 
 void init() {
@@ -65,11 +65,13 @@ UINT16 get_tile_index(UINT16 address) {
     return tiles_size++;
 }
 
-void register_tile(UINT32 *tile, UINT16 address) {
+void register_tile(UINT8 *tile, UINT16 address) {
     int index = get_tile_index(address);
-    int base_address = index * 64;
-    for(int i=0; i<64; i++) {
-        tiles_patterns[base_address + i] = tile[i];
+    int base_address = index * 32;
+    for(int i=0; i<32; i++) {
+        UINT8 pixel_0 = tile[i*2 + 0];
+        UINT8 pixel_1 = tile[i*2 + 1];
+        tiles_patterns[base_address + i] = (pixel_0 & 0x0f) | (pixel_1 << 4);
     }
 }
 
@@ -150,26 +152,12 @@ UINT32 *dump_screen_tile(char *out_dir, UINT16 color, UINT16 address) {
     }
 
     static UINT32 rgb[64];
-    for(int i=0; i<16; i++) {
-        printf("palette index %04x = %08x\n", color*16 +i, palette[color * 16 + i]);
+    for(int i=0; i<64; i++) {
+        UINT8 pixel = tile[i];
+        rgb[i] = palette[color * 16 + pixel];
     }
 
-    for(int i=0; i<32; i++) {
-        UINT8 pixel_0 = tile[i*2 + 0];
-        UINT8 pixel_1 = tile[i*2 + 1];
-        printf("tile:%04x pixel:%02x px0:%02x px1:%02x\n", address >> 4, i, pixel_0, pixel_1);
-
-        UINT32 rgb_0 = palette[color * 16 + pixel_0];
-        UINT32 rgb_1 = palette[color * 16 + pixel_1];
-        printf("tile:%04x pixel:%02x rgb0:%08x rgb1:%08x pal_index_0:%04x pal_index_1:%04x\n", address >> 4, i, rgb_0, rgb_1,
-        color * 16 + pixel_0,
-        color * 16 + pixel_1
-        );
-        rgb[i*2 + 0] = rgb_0;
-        rgb[i*2 + 1] = rgb_1;
-    }
-
-    register_tile(rgb, address);
+    register_tile(tile, address);
 
     return rgb;
 }
@@ -330,15 +318,14 @@ void dump_asm_tiles(char *path) {
     fprintf(f, "tile_patterns_size: .word $%04x\n", tiles_size);
     fprintf(f, "tile_patterns:\n");
     for(int tile=0; tile < tiles_size; tile++) {
-        int base_address = tile * 64;
+        int base_address = tile * 32;
         for(int row = 0; row < 8; row++) {
-            fprintf(f, "    .word ");
-            for(int i=0; i<8; i++) {
-                UINT32 entry = tiles_patterns[base_address + row*8 + i];
-                UINT16 rgb565 = argb2rgb565(entry);
+            fprintf(f, "    .byte ");
+            for(int i=0; i<4; i++) {
+                UINT8 entry = tiles_patterns[base_address + row*4 + i];
 
                 if (i>0) fprintf(f, ", ");
-                fprintf(f, "$%04x", rgb565);
+                fprintf(f, "$%02x", entry);
             }
             fprintf(f, "\n");
         }
