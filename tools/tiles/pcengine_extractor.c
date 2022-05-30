@@ -401,11 +401,12 @@ void dump_asm_palettes(char *path) {
     fclose(f);
 }
 
-void dump_asm_tiles(char *path) {
+void dump_asm_tiles(char *path, UINT16 tiles_address) {
     char file_path[2048];
     sprintf(file_path, "%s/tiles.asm", path);
     FILE *f = fopen(file_path, "w");
-    fprintf(f, "tile_patterns_size: .word $%04x\n", tiles_size);
+    fprintf(f, "tile_vram_address:\n    .word $%04x\n", tiles_address);
+    fprintf(f, "tile_patterns_size:\n    .word $%04x\n", tiles_size * 16 * 4);
     fprintf(f, "tile_patterns:\n");
     for(int tile=0; tile < tiles_size; tile++) {
         int base_address = tile * 32;
@@ -425,11 +426,12 @@ void dump_asm_tiles(char *path) {
     fclose(f);
 }
 
-void dump_asm_sprites(char *path) {
+void dump_asm_sprites(char *path, UINT16 sprites_address) {
     char file_path[2048];
     sprintf(file_path, "%s/sprites.asm", path);
     FILE *f = fopen(file_path, "w");
     fprintf(f, "sprite_patterns_size:\n    .word $%04x", sprites_info_size);
+    fprintf(f, "sprite_vram_address:\n     .word $%04x", sprites_address);
     fprintf(f, "\n\nsprite_patterns:");
 
     int base_address = 0;
@@ -464,7 +466,7 @@ void dump_asm_sprites(char *path) {
         UINT8 color = data->color;
         UINT8 cols = data->cols;
         UINT8 rows = data->rows;
-        UINT16 address = info->vram_address;
+        UINT16 address = info->vram_address + sprites_address;
 
         UINT16 mixed = (color << 4) | (((cols-1) & 3) << 2) | ((rows-1) & 3);
 
@@ -481,11 +483,11 @@ void dump_asm_sprites(char *path) {
     fclose(f);
 }
 
-void dump_asm_screen(char *path) {
+void dump_asm_screen(char *path, UINT16 tiles_address) {
     char file_path[2048];
     sprintf(file_path, "%s/screen.asm", path);
     FILE *f = fopen(file_path, "w");
-    fprintf(f, "screen_data_size: .word $%04x\n", SCREEN_SIZE);
+    fprintf(f, "screen_data_size:\n    .word $%04x\n", SCREEN_WIDTH * SCREEN_HEIGHT / 2);
     fprintf(f, "screen_data:\n");
     for(int y = 0; y < SCREEN_HEIGHT; y++) {
         fprintf(f, "    .word ");
@@ -495,7 +497,7 @@ void dump_asm_screen(char *path) {
             UINT16 address = (bat_value & 0xFFF) << 4;
 
             int    new_color_code = get_palette_code(color, tiles_palette_codes, &tiles_palette_size);
-            UINT16 new_address_index = get_tile_index(address);
+            UINT16 new_address_index = get_tile_index(address) + tiles_address;
             UINT16 new_bat_value = (new_color_code << 12) | new_address_index;
 
             if (x == 16) fprintf(f, " // row %d\n    .word ", y);
@@ -558,10 +560,13 @@ int main(int argc, const char *argv[]) {
     sprintf(path, "data/%s/asm", dump_dir);
     mkdir(path, 0755);
 
+    UINT16 tiles_address = 0x8000;
+    UINT16 sprites_address = 0xa000;
+
     dump_asm_palettes(path);
-    dump_asm_tiles(path);
-    dump_asm_screen(path);
-    dump_asm_sprites(path);
+    dump_asm_tiles(path, tiles_address);
+    dump_asm_screen(path, tiles_address);
+    dump_asm_sprites(path, sprites_address);
 
     return EXIT_SUCCESS;
 }
