@@ -364,9 +364,9 @@ void dump_screen_sprites(char *out_dir) {
 }
 
 UINT16 argb2rgb565(UINT32 rgb) {
-    UINT8 r = (rgb & 0x00ff0000) >> 16;
+    UINT8 b = (rgb & 0x00ff0000) >> 16;
     UINT8 g = (rgb & 0x0000ff00) >> 8;
-    UINT8 b = (rgb & 0x000000ff);
+    UINT8 r = (rgb & 0x000000ff);
 
     r >>= 3;
     g >>= 2;
