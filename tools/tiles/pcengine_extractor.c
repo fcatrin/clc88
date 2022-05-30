@@ -487,7 +487,7 @@ void dump_asm_screen(char *path, UINT16 tiles_address) {
     char file_path[2048];
     sprintf(file_path, "%s/screen.asm", path);
     FILE *f = fopen(file_path, "w");
-    fprintf(f, "screen_data_size:\n    .word $%04x\n", SCREEN_WIDTH * SCREEN_HEIGHT / 2);
+    fprintf(f, "screen_data_size:\n    .word $%04x\n", SCREEN_WIDTH * SCREEN_HEIGHT);
     fprintf(f, "screen_data:\n");
     for(int y = 0; y < SCREEN_HEIGHT; y++) {
         fprintf(f, "    .word ");
