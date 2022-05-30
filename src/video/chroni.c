@@ -525,41 +525,57 @@ static void do_scan_tile_wide_2bpp(UINT8 line) {
 	}
 }
 
-static void do_scan_tile_wide_4bpp(UINT8 line) {
-	LOGV(LOGTAG, "do_scan_tile_wide_4bpp line %d", line);
+static int debug_size = 3*32;
+static int debug_skip_frames = 20;
 
-	UINT8  subpal = 0;
-	UINT8  pixel = 0;
+static void do_scan_tile_4bpp(UINT8 pitch, UINT8 line) {
+	LOGV(LOGTAG, "do_scan_tile_4bpp line %d", line);
+
+	UINT8  tile_color;
+	UINT32 tile_address;
+
 	UINT8  pixel_data = 0;
-	UINT8  tile = 0;
-	UINT8  tile_data;
 	int tile_offset = 0;
-	for(int i=0; i<SCREEN_XRES/2; i++) {
-		if ((i & 31) == 0) {
-			subpal = VRAM_DATA(attribs + tile_offset);
-			tile    = VRAM_DATA(lms + tile_offset);
-			tile_data = 0;
+	int tile_pixel_data_index = 0;
+	int line_offset = 64 * (line >> 3);
+    // if (!debug_skip_frames && debug_size) printf("lms:%04x pitch:%04x line:%04x\n", lms, pitch, line);
+	for(int i=0; i<SCREEN_XRES/2; i++) { // for each pixel
+		if ((i & 7) == 0) {
+		    UINT8 tile_l = VRAM_DATA(lms + line_offset + tile_offset);
+		    UINT8 tile_h = VRAM_DATA(lms + line_offset + tile_offset + 1);
+		    UINT16 tile = (tile_h << 8) + tile_l;
 
-			tile_offset++;
-		}
+		    tile_color   = (tile & 0xf000) >> 12;
+		    tile_address = (tile & 0x0fff) << 4;
 
-		if ((i & 3) == 0) {
-			pixel_data = VRAM_DATA(tileset_big + tile*128 + line*8 + tile_data);
-			tile_data++;
+		    if (!debug_skip_frames && debug_size && (line & 7) == 0) {
+		        printf("line:%02x pixel:%d address:%04x tile:%04x color:%02x tile address:%04x\n", (line >> 3), i, (lms + line_offset + tile_offset),
+		            tile, tile_color, tile_address);
+            }
+
+			tile_pixel_data_index = 0;
+
+			tile_offset+=2;
 		}
 
 		if ((i & 1) == 0) {
-			pixel   = (pixel_data & 0xF0) >> 4;
-			pixel_data <<= 4;
+			pixel_data = VRAM_DATA(tile_address*2 + tile_pixel_data_index + ((line & 7) << 2));
+			tile_pixel_data_index++;
+		} else {
+		    pixel_data >>= 4;
 		}
 
-		UINT8 color = VRAM_DATA(subpals + subpal*16 + pixel);
+        UINT8 pixel = (pixel_data & 0xF);
+		UINT8 color = (tile_color << 4) | pixel;
 
 		put_pixel(offset, color);
 		put_pixel(offset, color);
+
 	}
-}
+	if (!debug_skip_frames && debug_size > 0) debug_size--;
 
+}
+/*
 static void do_scan_tile_4bpp(UINT8 line) {
 	LOGV(LOGTAG, "do_scan_tile_wide_4bpp line %d", line);
 
@@ -593,7 +609,7 @@ static void do_scan_tile_4bpp(UINT8 line) {
 	}
 }
 
-
+*/
 static void do_scan_pixels_2bpp() {
 	LOGV(LOGTAG, "do_scan_pixels_2bpp line");
 
@@ -763,14 +779,14 @@ static void do_scan_pixels_1bpp() {
 
 static UINT8 bytes_per_scan[] = {
 		0, 0, 80, 40,
-		20, 20, 40, 40,
+		20, 20, 80, 40,
 		80, 80, 40, 80,
 		160, 40, 10, 20
 };
 
 static UINT8 lines_per_mode[] = {
 		0, 0, 8, 8,
-		8, 16, 1, 2,
+		8, 16, 8, 2,
 		1, 2, 1, 1,
 		1, 8, 16, 16
 };
@@ -801,6 +817,7 @@ void chroni_frame_start() {
 }
 
 void chroni_frame_end() {
+    if (debug_skip_frames > 0) debug_skip_frames--;
 }
 
 bool chroni_frame_is_complete() {
@@ -892,9 +909,11 @@ static void process_dl() {
 			} else if (dl_instruction & 64) {
 				lms     = VRAM_PTR(dl + dl_pos);
 				dl_pos+=2;
-				attribs = VRAM_PTR(dl + dl_pos);
-				dl_pos+=2;
-				LOGV(LOGTAG, "DL LMS %04X ATTR %04X", lms, attribs);
+				if (dl_mode < 6) {
+                    attribs = VRAM_PTR(dl + dl_pos);
+                    dl_pos+=2;
+                    LOGV(LOGTAG, "DL LMS %04X ATTR %04X", lms, attribs);
+                }
 
 				dl_scanlines = lines_per_mode[dl_mode] - 1;
 				dl_pitch = bytes_per_scan[dl_mode];
@@ -920,16 +939,15 @@ static void do_scanline() {
 			case 0x3: do_scan_text_attribs(FALSE, FALSE, dl_pitch, dl_line, FALSE); break;
 			case 0x4: do_scan_text_attribs_double(dl_pitch, dl_line); break;
 			case 0x5: do_scan_text_attribs_double(dl_pitch, dl_line >> 1); break;
-			case 0x6: do_scan_pixels_wide_2bpp(); break;
+			case 0x6: do_scan_tile_4bpp(dl_pitch, dl_line); break;
 			case 0x7: do_scan_pixels_wide_2bpp(); break;
-			case 0x8: do_scan_pixels_wide_4bpp(); break;
+			case 0x8: do_scan_pixels_wide_2bpp(); break;
 			case 0x9: do_scan_pixels_wide_4bpp(); break;
-			case 0xA: do_scan_pixels_1bpp(); break;
-			case 0xB: do_scan_pixels_2bpp(); break;
-			case 0xC: do_scan_pixels_4bpp(); break;
-			case 0xD: do_scan_tile_wide_2bpp(dl_line); break;
-			case 0xE: do_scan_tile_wide_4bpp(dl_line); break;
-			case 0xF: do_scan_tile_4bpp(dl_line); break;
+			case 0xA: do_scan_pixels_wide_4bpp(); break;
+			case 0xB: do_scan_pixels_1bpp(); break;
+			case 0xC: do_scan_pixels_2bpp(); break;
+			case 0xD: do_scan_pixels_4bpp(); break;
+			case 0xE: do_scan_tile_wide_2bpp(dl_line); break;
 		}
 
 		dl_line++;
