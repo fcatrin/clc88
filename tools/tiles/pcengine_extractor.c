@@ -34,7 +34,7 @@ UINT16 sat[SAT_SIZE];
 UINT32 palette[PALETTE_SIZE];
 UINT16 color[PALETTE_SIZE];
 
-UINT32 screen[SCREEN_SIZE];
+UINT32 screen[SCREEN_PIXEL_WIDTH * SCREEN_PIXEL_HEIGHT];
 
 UINT32 tiles_palette_final[PALETTE_SIZE / 2];
 UINT8  tiles_palette_codes[COLOR_CODES];
@@ -298,7 +298,7 @@ void draw(UINT32 *buffer, UINT32 *graphic, UINT16 width, UINT16 height, INT16 x,
     for(int row = 0; row < height; row++) {
         int rx = x;
         for(int col = 0; col < width; col++) {
-            if (rx < 0 || ry < 0 || rx >= buffer_width || ry > buffer_height) continue;
+            if (rx < 0 || ry < 0 || rx >= buffer_width || ry >= buffer_height) continue;
 
             UINT32 address = rx + ry * buffer_width;
             UINT32 pixel = graphic[row * width + col];
@@ -406,7 +406,7 @@ void dump_asm_tiles(char *path, UINT16 tiles_address) {
     sprintf(file_path, "%s/tiles.asm", path);
     FILE *f = fopen(file_path, "w");
     fprintf(f, "tile_vram_address:\n    .word $%04x\n", tiles_address);
-    fprintf(f, "tile_patterns_size:\n    .word $%04x\n", tiles_size * 16 * 4);
+    fprintf(f, "tile_patterns_size:\n    .word $%04x\n", tiles_size * 8 * 4);
     fprintf(f, "tile_patterns:\n");
     for(int tile=0; tile < tiles_size; tile++) {
         int base_address = tile * 32;
@@ -497,7 +497,7 @@ void dump_asm_screen(char *path, UINT16 tiles_address) {
             UINT16 address = (bat_value & 0xFFF) << 4;
 
             int    new_color_code = get_palette_code(color, tiles_palette_codes, &tiles_palette_size);
-            UINT16 new_address_index = get_tile_index(address) + tiles_address;
+            UINT16 new_address_index = get_tile_index(address) + (tiles_address>>4);
             UINT16 new_bat_value = (new_color_code << 12) | new_address_index;
 
             if (x == 16) fprintf(f, " // row %d\n    .word ", y);
