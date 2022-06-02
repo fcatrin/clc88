@@ -126,9 +126,17 @@ void atascii2ascii(int src_addr, int dst_addr) {
 	for(int i=0; i<8; i++) rom[dst_addr + i] = 0;
 }
 
+void set_version_signature(int signature) {
+	rom[0xEFFD] = (signature & 0x00f);
+	rom[0xEFFE] = (signature & 0x0f0) >> 4;
+	rom[0xEFFF] = (signature & 0xf00) >> 8;
+}
+
 int main(int argc, char *argv[]) {
 	load_xex("../bin/fpga_rom.xex");
 	load_bin("../bin/asm/6502/test/modes/mode_0.xex", 0xE000, 0);
+
+    set_version_signature(0x10f);
 
 	create_mif("../rtl/compy/rom.mif", 0xE000);
 }

@@ -27,6 +27,10 @@ boot:
     sta VSTATUS
     sta CHRONI_ENABLED
 
+; display version signature on LCD
+    mva $effd LED_HEX_0
+    mwa $effe LED_HEX_1
+
 ; set default interrupt handlers
     jsr interrupts_init
 
