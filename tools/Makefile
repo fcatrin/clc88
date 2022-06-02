@@ -1,5 +1,3 @@
-MIF=../rtl/compy/rom.mif
-
 BIOS_ROOT=../asm/6502/os
 BIOS_SRC=$(BIOS_ROOT)/rom.asm
 BIOS_XEX=../bin/fpga_rom.xex
@@ -15,9 +13,7 @@ BIOS_INCLUDES= \
 	$(BIOS_ROOT)/data/palette_atari_ntsc.asm \
 	$(BIOS_ROOT)/data/charset_atari.bin
 
-ALL:  fonts_convert ${MIF}
-
-${MIF} : fpga_rom_build
+ALL:  fonts_convert fpga_rom_build
 	./fpga_rom_build
 
 fpga_rom_build : fpga_rom_build.c ${BIOS_XEX}
