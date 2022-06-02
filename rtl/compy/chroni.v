@@ -552,7 +552,7 @@ module chroni (
          .wr_busy(wr_busy)
       );
    
-   reg[15:0]   border_color;
+   reg[15:0]   border_color = 0;
    
    wire [10:0] pixel_buffer_index_out;
    wire [7:0]  pixel;

@@ -19,7 +19,7 @@ module vga_output (
       input read_text,
       input read_font,
       input [15:0] pixel,
-      input [16:0] border_color,
+      input [15:0] border_color,
       input blank_scanline,
       input double_pixel
       );

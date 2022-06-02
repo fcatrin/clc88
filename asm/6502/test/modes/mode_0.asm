@@ -2,7 +2,10 @@
 
    org USERADDR
 
+BORDER_COLOR = $2167
+
 start
+    mwa #BORDER_COLOR VBORDER
     lda #0
     ldx #OS_SET_VIDEO_MODE
     jsr OS_CALL
