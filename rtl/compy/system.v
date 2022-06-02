@@ -13,8 +13,8 @@ module system (
    input [4:0] buttons,
    input  uart_rx,
    output uart_tx,
-   output [7:0] lcd_segment,
-   output [2:0] lcd_digit
+   output [7:0] led_segment,
+   output [2:0] led_digit
 );
 
 `include "chroni.vh"
@@ -317,8 +317,8 @@ module system (
          .wr_data(io_wr_data),
          .wr_en(io_wr_en && io_s),
          .buttons(buttons),
-         .lcd_segment(lcd_segment),
-         .lcd_digit(lcd_digit)
+         .led_segment(led_segment),
+         .led_digit(led_digit)
    );
    
    // bit order from 0-7 to make it easier to check using the 6502 bit instruction
