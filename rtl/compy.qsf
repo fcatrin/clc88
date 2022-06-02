@@ -94,6 +94,17 @@ set_location_assignment PIN_J22 -to vga_vs
 set_location_assignment PIN_H21 -to vga_b[4]
 set_location_assignment PIN_J2 -to uart_rx
 set_location_assignment PIN_J1 -to uart_tx
+set_location_assignment PIN_A4 -to lcd_segment[7]
+set_location_assignment PIN_B1 -to lcd_segment[6]
+set_location_assignment PIN_B4 -to lcd_segment[5]
+set_location_assignment PIN_A5 -to lcd_segment[4]
+set_location_assignment PIN_C3 -to lcd_segment[3]
+set_location_assignment PIN_A3 -to lcd_segment[2]
+set_location_assignment PIN_B2 -to lcd_segment[1]
+set_location_assignment PIN_C4 -to lcd_segment[0]
+set_location_assignment PIN_B6 -to lcd_digit[2]
+set_location_assignment PIN_B3 -to lcd_digit[1]
+set_location_assignment PIN_B5 -to lcd_digit[0]
 set_global_assignment -name ENABLE_SIGNALTAP ON
 set_global_assignment -name USE_SIGNALTAP_FILE signaltap.stp
 set_global_assignment -name VERILOG_FILE compy.v

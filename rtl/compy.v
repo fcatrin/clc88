@@ -11,7 +11,9 @@ module compy (
    output [5:0] vga_g,
    output [4:0] vga_b,
    input  uart_rx,
-   output uart_tx
+   output uart_tx,
+   output [7:0] lcd_segment,
+   output [2:0] lcd_digit
 );
    
    wire pll_locked;
@@ -59,7 +61,9 @@ module compy (
       .vga_b(vga_b),
       .pll_locked(pll_locked),
       .uart_rx(uart_rx),
-      .uart_tx(uart_tx)
+      .uart_tx(uart_tx),
+      .lcd_segment(lcd_segment),
+      .lcd_digit(lcd_digit)
    );
   
    debouncer debounce_key_mode (

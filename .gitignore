@@ -1,6 +1,7 @@
 Debug/
 .vscode
 *.bak
+*.lst
 .idea
 bin/
 clc88
