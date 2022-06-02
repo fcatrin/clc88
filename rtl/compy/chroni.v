@@ -26,6 +26,7 @@ module chroni (
    wire register_cs = cpu_addr[15:7] == 9'b100100000;
    reg[16:0] vram_address;
    reg[16:0] vram_address_aux;
+   reg[1:0]  vram_cpu_byte_en;
    
    always @(posedge sys_clk) begin : register_write
       reg[1:0]  palette_write_state = PAL_WRITE_IDLE;
@@ -33,13 +34,13 @@ module chroni (
       reg[15:0] palette_write_value;
       
       palette_wr_en <= 0;
-      cpu_port_cs <= 0;
-      cpu_port_wr_en <= 0;
+      vram_cpu_wr_en <= 0;
+      vram_cpu_byte_en <= 0;
       
       if (register_cs & cpu_wr_en_rising) begin
          case (cpu_addr[6:0])
             7'h00:
-               display_list_addr[8:1]  <= cpu_wr_data;
+               display_list_addr[8:0]  <= {cpu_wr_data, 1'b0};
             7'h01:
                display_list_addr[16:9] <= cpu_wr_data;
             7'h02:
@@ -65,10 +66,10 @@ module chroni (
                vram_address[16] <= cpu_wr_data[0];
             7'h09:
             begin
-               cpu_port_cs      <= 1;
-               cpu_port_wr_en   <= 1;
-               cpu_port_wr_data <= cpu_wr_data;
-               cpu_port_addr    <= vram_address;
+               vram_cpu_wr_en   <= 1;
+               vram_cpu_wr_data <= {cpu_wr_data, cpu_wr_data};
+               vram_cpu_addr    <= vram_address[16:1];
+               vram_cpu_byte_en <= vram_address[0] ? 2'b10 : 2'b11;
                vram_address     <= vram_address + 1'b1;
             end
             7'h0a:
@@ -79,10 +80,10 @@ module chroni (
                vram_address_aux[16]   <= cpu_wr_data[0];
             7'h0d:
             begin
-               cpu_port_cs      <= 1;
-               cpu_port_wr_en   <= 1;
-               cpu_port_wr_data <= cpu_wr_data;
-               cpu_port_addr    <= vram_address_aux;
+               vram_cpu_wr_en   <= 1;
+               vram_cpu_wr_data <= {cpu_wr_data, cpu_wr_data};
+               vram_cpu_addr    <= vram_address_aux[16:1];
+               vram_cpu_byte_en <= vram_address_aux[0] ? 2'b10 : 2'b11;
                vram_address_aux <= vram_address_aux + 1'b1;
             end
             7'h1a:
@@ -204,11 +205,11 @@ module chroni (
             case (font_decode_state)
                FD_TEXT_READ: // transfer line of text from vram to text_buffer
                begin
-                  vram_char_addr <= data_memory_addr;
-                  data_memory_addr <= data_memory_addr + 1'b1;
+                  vram_char_addr    <= data_memory_addr;
+                  data_memory_addr  <= data_memory_addr + 1'b1;
                   if (mem_wait == 0) begin
                      text_buffer_addr    <= text_buffer_index;
-                     text_buffer_data_wr <= vram_chroni_rd_data;
+                     text_buffer_data_wr <= vram_chroni_rd_byte;
                      text_buffer_we <= 1;
                      if (text_buffer_index == pitch-1) begin
                         text_buffer_index <= 0;
@@ -223,11 +224,11 @@ module chroni (
                end
                FD_ATTR_READ: // transfer line of attrs from vram to attr_buffer
                begin
-                  vram_char_addr   <= attr_memory_addr;
-                  attr_memory_addr <= attr_memory_addr + 1'b1;
+                  vram_char_addr    <= attr_memory_addr;
+                  attr_memory_addr  <= attr_memory_addr + 1'b1;
                   if (mem_wait == 0) begin
                      attr_buffer_addr    <= attr_buffer_index;
-                     attr_buffer_data_wr <= vram_chroni_rd_data;
+                     attr_buffer_data_wr <= vram_chroni_rd_byte;
                      attr_buffer_we <= 1;
                      if (attr_buffer_index == pitch-1) begin
                         attr_buffer_index <= 0;
@@ -261,7 +262,7 @@ module chroni (
                   attr_buffer_index <= attr_buffer_index + 1'b1;
 
                   // fetch font data
-                  vram_char_addr <= {charset_base[6:0] + text_buffer_data_rd[7], text_buffer_data_rd[6:0], font_scan};
+                  vram_char_addr  <= {charset_base[6:0] + text_buffer_data_rd[7], text_buffer_data_rd[6:0], font_scan};
                   text_attr <= attr_buffer_data_rd;
                   font_decode_state <= FD_FONT_WAIT;
                   mem_wait <= 2;
@@ -269,7 +270,7 @@ module chroni (
                FD_FONT_WAIT:
                begin
                   if (mem_wait == 0) begin
-                     pixel_out_next <= vram_chroni_rd_data;
+                     pixel_out_next <= vram_chroni_rd_byte;
                      font_decode_state <= FD_FONT_WRITE;
                   end
                   mem_wait <= mem_wait - 1'b1;
@@ -348,29 +349,27 @@ module chroni (
             case(dlproc_state)
             DL_READ:
             begin
-               vram_render  <= 0;
-               vram_read_dl <= 1;
+               vram_render      <= 0;
+               vram_read_dl     <= 1;
                vram_dl_addr     <= display_list_ptr;
                display_list_ptr <= display_list_ptr + 1'b1;
                
-               mem_wait <= 2;
+               mem_wait <= 3;
                dlproc_state <= DL_READ_WAIT;
             end
             DL_READ_WAIT:
             begin
-               vram_read_dl <= 0;
                mem_wait <= mem_wait - 1'b1;
                if (mem_wait == 0) begin
-                  dl_inst  <= vram_chroni_rd_data[3:0];
-                  dl_value <= vram_chroni_rd_data;
-                  dlproc_state <= 
-                     vram_chroni_rd_data[3:0] == 0 ? DL_EXEC :
-                     (vram_chroni_rd_data[6] ? (vram_chroni_rd_data[3:0] == 1 ? DL_IDLE : DL_LMS) : DL_EXEC);
+                  dl_inst  <= vram_chroni_rd_byte[3:0];
+                  dl_value <= vram_chroni_rd_byte;
+                  dlproc_state <=
+                     (vram_chroni_rd_byte[3:0] == 0) ? DL_EXEC :
+                     (vram_chroni_rd_byte[6] ? (vram_chroni_rd_byte[3:0] == 1 ? DL_IDLE : DL_LMS) : DL_EXEC);
                end
             end
             DL_LMS:
             begin
-               vram_read_dl <= 1;
                vram_dl_addr     <= display_list_ptr;
                display_list_ptr <= display_list_ptr + 1'b1;
                mem_wait <= 2;
@@ -379,14 +378,13 @@ module chroni (
             end
             DL_LMS_READ:
             begin
-               vram_read_dl <= 1;
                mem_wait <= mem_wait - 1'b1;
                if (mem_wait == 0) begin
                   case(addr_part)
-                     3: dl_lms[8:0]   <= {vram_chroni_rd_data, 1'b0};
-                     2: dl_lms[16:9]  <= vram_chroni_rd_data;
-                     1: dl_attr[8:0]  <= {vram_chroni_rd_data, 1'b0};
-                     0: dl_attr[16:9] <= vram_chroni_rd_data;
+                     3: dl_lms[8:0]   <= {vram_chroni_rd_byte, 1'b0};
+                     2: dl_lms[16:9]  <=  vram_chroni_rd_byte;
+                     1: dl_attr[8:0]  <= {vram_chroni_rd_byte, 1'b0};
+                     0: dl_attr[16:9] <=  vram_chroni_rd_byte;
                   endcase
                   
                   if (addr_part == 0) begin
@@ -510,40 +508,35 @@ module chroni (
          .q (palette_rd_data)
       );
 
-   reg[2:0] vram_page = 0;
-   
-   reg        cpu_port_cs;
-   reg        cpu_port_wr_en;
-   reg[7:0]   cpu_port_wr_data;
-   reg[16:0]  cpu_port_addr;
-      
-   wire[7:0]  vram_cpu_wr_data = cpu_port_cs ? cpu_port_wr_data : cpu_wr_data;
-   wire       vram_cpu_wr_en   = cpu_port_wr_en || cpu_wr_en;
-   wire[16:0] vram_cpu_addr    = cpu_port_cs ? cpu_port_addr : {vram_page, !cpu_addr[13], cpu_addr[12:0]};
-   wire       vram_cs = cpu_addr[15:13] == 3'b101 || cpu_addr[15:13] == 3'b110 || cpu_port_cs;
-   wire[7:0]  vram_chroni_rd_data;
-   wire[7:0]  vram_cpu_rd_data;
+   reg        vram_cpu_wr_en;
+   reg[15:0]  vram_cpu_wr_data;
+   reg[15:0]  vram_cpu_addr;
+
+   wire[7:0]  vram_chroni_rd_byte = vram_read_byte_en ? vram_chroni_rd_word[15:8] : vram_chroni_rd_word[7:0];
+   wire[15:0] vram_chroni_rd_word;
+   wire[15:0] vram_cpu_rd_word;
    reg[16:0]  vram_char_addr;
    reg[16:0]  vram_dl_addr;
    
    reg vram_read_dl;
    
-   wire[16:0] vram_chroni_addr = vram_read_dl ? vram_dl_addr : vram_char_addr;
-   
-   dpram_ab #(131072, 17, 8) vram (
-         .clock(sys_clk),
-         .address_en_a(vram_cs),
-         .address_en_b(1'b1),
-         .address_a(vram_cpu_addr),
-         .address_b(vram_chroni_addr),
-         .data_a(vram_cpu_wr_data),
-         .data_b(0),
-         .wren_a(vram_cpu_wr_en && vram_cs),
-         .wren_b(0),
-         .q_a(vram_cpu_rd_data),
-         .q_b(vram_chroni_rd_data)
-      );
-   
+   wire[15:0] vram_chroni_addr  = vram_read_dl ? vram_dl_addr[16:1] : vram_char_addr[16:1];
+   wire       vram_read_byte_en = vram_read_dl ? vram_dl_addr[0]    : vram_char_addr[0];
+
+   vram16_dp vram (
+        .clock_a (sys_clk),
+        .clock_b (sys_clk),
+        .address_a ( vram_cpu_addr ),
+        .address_b ( vram_chroni_addr ),
+        .byteena_a ( vram_cpu_byte_en ),
+        .data_a ( vram_cpu_wr_data ),
+        .data_b ( 16'b0 ),
+        .wren_a ( vram_cpu_wr_en),
+        .wren_b ( 1'b0 ),
+        .q_a ( vram_cpu_rd_word ),
+        .q_b ( vram_chroni_rd_word )
+    );
+
    chroni_line_buffer chroni_line_buffer_inst (
          .reset_n(reset_n),
          .rd_clk(vga_clk),
