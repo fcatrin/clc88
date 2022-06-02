@@ -24,6 +24,18 @@ module qmtech_board (
      endcase
    end
 
+    always @(posedge clk) begin : register_write
+        if (!reset_n) begin
+            lcd_hex <= 12'h598;
+        end else if (wr_en) begin
+            case (addr[3:0])
+                4'h1: lcd_hex[3:0]  <= wr_data[3:0];
+                4'h2: lcd_hex[7:4]  <= wr_data[3:0];
+                4'h3: lcd_hex[11:8] <= wr_data[3:0];
+            endcase
+        end
+   end
+
     parameter   // pgfe dcba
         lcd_0 = 8'b1100_0000,    //
         lcd_1 = 8'b1111_1001,    //    aaaaaa
@@ -43,12 +55,12 @@ module qmtech_board (
         lcd_f = 8'b1000_1110;
 
     parameter LCD_CYCLE_1MS = 16'd49999;
-    reg[11:0] lcd_bcd = 12'hdef;
+    reg[11:0] lcd_hex;
     reg[15:0] lcd_counter;
     reg[7:0]  lcd_segment_on;
     reg[1:0]  lcd_digit_index;
-    wire[3:0] lcd_number = lcd_digit_index == 2'b0 ? lcd_bcd[3:0] :
-        (lcd_digit_index == 2'b1 ? lcd_bcd[7:4] : lcd_bcd[11:8]);
+    wire[3:0] lcd_number = lcd_digit_index == 2'b0 ? lcd_hex[3:0] :
+        (lcd_digit_index == 2'b1 ? lcd_hex[7:4] : lcd_hex[11:8]);
 
     always @(posedge clk) begin : lcd_counter_cycle
         if(!reset_n || lcd_counter == LCD_CYCLE_1MS)

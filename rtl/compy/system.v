@@ -315,7 +315,7 @@ module system (
          .addr(io_addr),
          .rd_data(io_rd_data),
          .wr_data(io_wr_data),
-         .wr_en(io_wr_en && io_cs),
+         .wr_en(io_wr_en && io_s),
          .buttons(buttons),
          .lcd_segment(lcd_segment),
          .lcd_digit(lcd_digit)
