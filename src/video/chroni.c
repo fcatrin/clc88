@@ -40,12 +40,13 @@ static UINT16 lms = 0;
 static UINT16 attribs = 0;
 static UINT16 ypos, xpos, memscan;
 
-int dl_pos;
-int dl_scanlines;
-int dl_pitch;
-UINT8 dl_instruction;
-UINT8 dl_mode;
-UINT8 dl_line;
+UINT16 dl_pos;
+UINT16 dl_scanlines;
+UINT16 dl_mode_scanlines;
+UINT8  dl_mode_scanline;
+UINT16 dl_mode_pitch;
+UINT16 dl_instruction;
+UINT8  dl_mode;
 
 static UINT16 border_color;
 static UINT32 subpals;
@@ -430,29 +431,30 @@ static void inline do_border(int offset, int size) {
 	}
 }
 
-static void do_scan_text_attribs(bool use_hscroll, bool use_vscroll, UINT8 pitch, UINT8 line, bool cols80) {
+static void do_scan_text_attribs(bool use_hscroll, bool use_vscroll, UINT8 line, bool cols80) {
 	LOGV(LOGTAG, "do_scan_text_attribs line %d", line);
+	printf("do_scan_text_attribs lms:%04x attr:%04x line:%d\n", lms, attribs, line);
 
 	UINT8 row;
 	UINT8 bit;
 	UINT8 foreground, background;
 
-	int pixel_offset = use_hscroll ? (hscroll & 0x3F) : 0;
-	int scan_offset  = use_vscroll ? (vscroll & 0x3F) : 0;
+	int pixel_offset = use_hscroll ? (hscroll & 0x7) : 0;
+	int scan_offset  = use_vscroll ? (vscroll & 0x7) : 0;
 	int line_offset  = (line + scan_offset) & 7;
-	int char_offset  = (pixel_offset >> 3) + ((line + scan_offset) >> 3) * pitch;
+	int char_offset  = pixel_offset >> 3;
 
 	int width = cols80 ? SCREEN_XRES : (SCREEN_XRES/2);
 
 	for(int i=0; i<width; i++) {
 		if (i  == 0 || (pixel_offset & 7) == 0) {
-			LOGV(LOGTAG, "do_scan_text_attribs char_offset: %d", char_offset);
+			LOGV(LOGTAG, "do_scan_text_attribs char_offset: %d lms:%04x\n", char_offset, lms);
 
-			UINT8 attrib = VRAM_BYTE(attribs + char_offset);
+			UINT8 attrib = VRAM_BYTE(attribs*2 + char_offset);
 			background = (attrib & 0xF0) >> 4;
 			foreground = attrib & 0x0F;
 
-			UINT8 c = VRAM_BYTE(lms + char_offset);
+			UINT8 c = VRAM_BYTE(lms*2 + char_offset);
 			row = VRAM_BYTE(charset * CHARSET_PAGE + c*8 + line_offset);
 
 			bit = 0x80 >> (pixel_offset & 7);
@@ -471,7 +473,7 @@ static void do_scan_text_attribs(bool use_hscroll, bool use_vscroll, UINT8 pitch
 	}
 }
 
-static void do_scan_text_attribs_double(UINT8 pitch, UINT8 line) {
+static void do_scan_text_attribs_double(UINT8 line) {
 	LOGV(LOGTAG, "do_scan_text_attribs double line %d", line);
 
 	UINT8 row;
@@ -479,16 +481,16 @@ static void do_scan_text_attribs_double(UINT8 pitch, UINT8 line) {
 
     int scan_offset  = 0;
     int line_offset  = (line + scan_offset) & 7;
-    int char_offset  = ((line + scan_offset) >> 3) * pitch;
+    int char_offset  = 0;
 
 	bool first = TRUE;
 	for(int i=0; i<SCREEN_XRES/2; i++) {
 		if (i % 0x10 == 0) {
-			UINT8 attrib = VRAM_BYTE(attribs + char_offset);
+			UINT8 attrib = VRAM_BYTE(attribs*2 + char_offset);
 			background = (attrib & 0xF0) >> 4;
 			foreground = attrib & 0x0F;
 
-			UINT8 c = VRAM_BYTE(lms + char_offset);
+			UINT8 c = VRAM_BYTE(lms*2 + char_offset);
 			row = VRAM_BYTE(charset * CHARSET_PAGE + c*8 + line_offset);
 			char_offset++;
 		}
@@ -511,7 +513,7 @@ static void do_scan_tile_wide_2bpp(UINT8 line) {
 		if ((i & 7) == 0) {
 			subpal = VRAM_BYTE(attribs + tile_offset);
 
-			UINT8 tile = VRAM_BYTE(lms + tile_offset);
+			UINT8 tile = VRAM_BYTE(lms*2 + tile_offset);
 			pixel_data = VRAM_BYTE(tileset_small + tile*8 + line);
 			tile_offset++;
 		}
@@ -544,7 +546,7 @@ static void do_scan_tile_4bpp(UINT8 pitch, UINT8 line) {
     // if (!debug_skip_frames && debug_size) printf("lms:%04x pitch:%04x line:%04x\n", lms, pitch, line);
 	for(int i=0; i<SCREEN_XRES/2; i++) { // for each pixel
 		if ((i & 7) == 0) {
-		    UINT16 tile  = VRAM_DATA((lms>>1) + line_offset + tile_offset);
+		    UINT16 tile  = VRAM_DATA(lms + line_offset + tile_offset);
 
 		    tile_color   = (tile & 0xf000) >> 12;
 		    tile_address = (tile & 0x0fff) << 4;
@@ -622,9 +624,9 @@ static void do_scan_pixels_2bpp() {
 	for(int i=0; i<SCREEN_XRES/2; i++) {
 		if ((i & 3) == 0) {
 			LOGV(LOGTAG, "vram offset: %05X pixel:%05X attrib:%05X",
-					pixel_data_offset, lms+pixel_data_offset, attribs+pixel_data_offset);
+					pixel_data_offset, lms*2+pixel_data_offset, attribs+pixel_data_offset);
 			palette_data = VRAM_BYTE(attribs + pixel_data_offset);
-			pixel_data = VRAM_BYTE(lms + pixel_data_offset);
+			pixel_data = VRAM_BYTE(lms*2 + pixel_data_offset);
 			pixel_data_offset++;
 		}
 
@@ -656,9 +658,9 @@ static void do_scan_pixels_4bpp() {
 	for(int i=0; i<SCREEN_XRES/2; i++) {
 		if ((i & 1) == 0) {
 			LOGV(LOGTAG, "vram offset: %05X pixel:%05X attrib:%05X",
-					pixel_data_offset, lms+pixel_data_offset, attribs+pixel_data_offset);
+					pixel_data_offset, lms*2+pixel_data_offset, attribs+pixel_data_offset);
 			palette_data = VRAM_BYTE(attribs + pixel_data_offset);
-			pixel_data = VRAM_BYTE(lms + pixel_data_offset);
+			pixel_data = VRAM_BYTE(lms*2 + pixel_data_offset);
 			pixel_data_offset++;
 		}
 
@@ -688,9 +690,9 @@ static void do_scan_pixels_wide_2bpp() {
 	for(int i=0; i<SCREEN_XRES/2; i++) {
 		if ((i & 7) == 0) {
 			LOGV(LOGTAG, "vram offset: %05X pixel:%05X attrib:%05X",
-					pixel_data_offset, lms+pixel_data_offset, attribs+pixel_data_offset);
+					pixel_data_offset, lms*2+pixel_data_offset, attribs+pixel_data_offset);
 			palette_data = VRAM_BYTE(attribs + pixel_data_offset);
-			pixel_data = VRAM_BYTE(lms + pixel_data_offset);
+			pixel_data = VRAM_BYTE(lms*2 + pixel_data_offset);
 			pixel_data_offset++;
 		}
 
@@ -723,9 +725,9 @@ static void do_scan_pixels_wide_4bpp() {
 	for(int i=0; i<SCREEN_XRES/2; i++) {
 		if ((i & 3) == 0) {
 			LOGV(LOGTAG, "vram offset: %05X pixel:%05X attrib:%05X",
-					pixel_data_offset, lms+pixel_data_offset, attribs+pixel_data_offset);
+					pixel_data_offset, lms*2+pixel_data_offset, attribs+pixel_data_offset);
 			palette_data = VRAM_BYTE(attribs + pixel_data_offset);
-			pixel_data = VRAM_BYTE(lms + pixel_data_offset);
+			pixel_data = VRAM_BYTE(lms*2 + pixel_data_offset);
 			pixel_data_offset++;
 		}
 
@@ -757,9 +759,9 @@ static void do_scan_pixels_1bpp() {
 	for(int i=0; i<SCREEN_XRES/2; i++) {
 		if ((i & 7) == 0) {
 			LOGV(LOGTAG, "vram offset: %05X pixel:%05X attrib:%05X",
-					pixel_data_offset, lms+pixel_data_offset, attribs+pixel_data_offset);
+					pixel_data_offset, lms*2+pixel_data_offset, attribs+pixel_data_offset);
 			palette_data = VRAM_BYTE(attribs + pixel_data_offset);
-			pixel_data = VRAM_BYTE(lms + pixel_data_offset);
+			pixel_data = VRAM_BYTE(lms*2 + pixel_data_offset);
 			pixel_data_offset++;
 		}
 
@@ -778,11 +780,11 @@ static void do_scan_pixels_1bpp() {
 	}
 }
 
-static UINT8 bytes_per_scan[] = {
-		0, 0, 80, 40,
-		20, 20, 80, 40,
-		80, 80, 40, 80,
-		160, 40, 10, 20
+static UINT8 words_per_scan[] = {
+		0, 0, 40, 20,
+		10, 10, 40, 20,
+		40, 40, 20, 40,
+		80, 20, 5, 10
 };
 
 static UINT8 lines_per_mode[] = {
@@ -898,30 +900,23 @@ static void process_dl() {
 	if (dl_scanlines > 0) {
 		dl_scanlines--;
 	} else {
-		dl_instruction = VRAM_BYTE(dl*2 + dl_pos);
-		dl_pos++;
-		if (dl_instruction == 0x41) {
-			dl_pos--;
-		} else {
-			dl_mode = dl_instruction & 0x0F;
-			if (dl_mode == 0) {
-				dl_scanlines = 1 + ((dl_instruction & 0x70) >> 4);
-			} else if (dl_instruction & 64) {
-				lms     = VRAM_PTR(dl*2 + dl_pos);
-				dl_pos+=2;
-				if (dl_mode < 6) {
-                    attribs = VRAM_PTR(dl*2 + dl_pos);
-                    dl_pos+=2;
-                    LOGV(LOGTAG, "DL LMS %04X ATTR %04X", lms, attribs);
-                }
-
-				dl_scanlines = lines_per_mode[dl_mode] - 1;
-				dl_pitch = bytes_per_scan[dl_mode];
-				dl_line = 0;
-			} else {
-				dl_scanlines = lines_per_mode[dl_mode] - 1;
-			}
-		}
+		dl_instruction = VRAM_DATA(dl + dl_pos++);
+        dl_mode        = (dl_instruction & 0x0f00) >> 8;
+        dl_scanlines   = (dl_instruction & 0x00ff);
+        if (dl_mode == 0x0f) {
+            dl_scanlines = 0;
+            dl_pos--;
+        } else if (dl_mode != 0) {
+            lms = VRAM_DATA(dl + dl_pos++);
+            if (dl_mode < 6) {
+                attribs = VRAM_DATA(dl + dl_pos++);
+                printf("DL LMS %04X ATTR %04X\n", lms, attribs);
+                LOGV(LOGTAG, "DL LMS %04X ATTR %04X", lms, attribs);
+            }
+            dl_mode_scanlines = lines_per_mode[dl_mode] - 1;
+            dl_mode_scanline = 0;
+            dl_mode_pitch = words_per_scan[dl_mode];
+        }
 	}
 }
 
@@ -931,15 +926,15 @@ static void do_scanline() {
 
 	process_dl();
 
-	if (dl_instruction == 0x41 || dl_mode == 0) {
+	if (dl_mode == 0 || dl_mode == 0xf) {
 		do_border(offset, SCREEN_XRES);
 	} else {
 		switch(dl_mode) {
-			case 0x2: do_scan_text_attribs(FALSE, FALSE, dl_pitch, dl_line, TRUE); break;
-			case 0x3: do_scan_text_attribs(FALSE, FALSE, dl_pitch, dl_line, FALSE); break;
-			case 0x4: do_scan_text_attribs_double(dl_pitch, dl_line); break;
-			case 0x5: do_scan_text_attribs_double(dl_pitch, dl_line >> 1); break;
-			case 0x6: do_scan_tile_4bpp(dl_pitch, dl_line); break;
+			case 0x2: do_scan_text_attribs(FALSE, FALSE, dl_mode_scanline, TRUE); break;
+			case 0x3: do_scan_text_attribs(FALSE, FALSE, dl_mode_scanline, FALSE); break;
+			case 0x4: do_scan_text_attribs_double(dl_mode_scanline); break;
+			case 0x5: do_scan_text_attribs_double(dl_mode_scanline >> 1); break;
+			case 0x6: do_scan_tile_4bpp(dl_mode_pitch, dl_mode_scanline); break;
 			case 0x7: do_scan_pixels_wide_2bpp(); break;
 			case 0x8: do_scan_pixels_wide_2bpp(); break;
 			case 0x9: do_scan_pixels_wide_4bpp(); break;
@@ -947,10 +942,14 @@ static void do_scanline() {
 			case 0xB: do_scan_pixels_1bpp(); break;
 			case 0xC: do_scan_pixels_2bpp(); break;
 			case 0xD: do_scan_pixels_4bpp(); break;
-			case 0xE: do_scan_tile_wide_2bpp(dl_line); break;
+			case 0xE: do_scan_tile_wide_2bpp(dl_mode_scanline); break;
 		}
 
-		dl_line++;
+        if (dl_mode_scanline++ == dl_mode_scanlines) {
+            lms += dl_mode_pitch;
+            attribs += dl_mode_pitch;
+            dl_mode_scanline = 0;
+        }
 	}
 
 }
