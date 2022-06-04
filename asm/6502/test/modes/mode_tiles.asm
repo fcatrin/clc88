@@ -60,12 +60,9 @@ halt:
     jmp halt
 
 display_list:
-    .byte $46
+    .word $06F0
     .word VRAM_SCREEN_DATA_ADDR
-.rept (ROWS-1)
-    .byte $06
-.endr
-    .byte $41
+    .word $0f00
 
 display_list_size:
     .byte * - display_list + 1

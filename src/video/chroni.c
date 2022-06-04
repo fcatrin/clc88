@@ -533,7 +533,7 @@ static void do_scan_tile_wide_2bpp(UINT8 line) {
 static int debug_size = 0;
 static int debug_skip_frames = 20;
 
-static void do_scan_tile_4bpp(UINT8 pitch, UINT8 line) {
+static void do_scan_tile_4bpp(UINT8 line) {
 	LOGV(LOGTAG, "do_scan_tile_4bpp line %d", line);
 
 	UINT8  tile_color;
@@ -782,7 +782,7 @@ static void do_scan_pixels_1bpp() {
 
 static UINT8 words_per_scan[] = {
 		0, 0, 40, 20,
-		10, 10, 40, 20,
+		10, 10, 32, 20,
 		40, 40, 20, 40,
 		80, 20, 5, 10
 };
@@ -934,7 +934,7 @@ static void do_scanline() {
 			case 0x3: do_scan_text_attribs(FALSE, FALSE, dl_mode_scanline, FALSE); break;
 			case 0x4: do_scan_text_attribs_double(dl_mode_scanline); break;
 			case 0x5: do_scan_text_attribs_double(dl_mode_scanline >> 1); break;
-			case 0x6: do_scan_tile_4bpp(dl_mode_pitch, dl_mode_scanline); break;
+			case 0x6: do_scan_tile_4bpp(dl_mode_scanline); break;
 			case 0x7: do_scan_pixels_wide_2bpp(); break;
 			case 0x8: do_scan_pixels_wide_2bpp(); break;
 			case 0x9: do_scan_pixels_wide_4bpp(); break;
