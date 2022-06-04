@@ -88,8 +88,114 @@ As the global palette and the smaller 16 color palettes can be put anywhere
 on the vram, you only need to change a register to switch to a completely
 different palette at any time. 
 
-
 ## Display lists
+
+The display list is a processing instruction set for Chroni. To draw a screen, Chroni
+will read each entry in sequence to know which video mode to use and for how many
+scanlines long.
+
+The simplest display list will have tree entries, two defining the video mode and one
+declaring the end of the list.
+
+More complex display lists can easily create screens with mixed content, mixed scrolling
+and mixed video modes. For example a screen with a score panel at the top and a playfield
+at the bottom, with only the playfield being scrolled is very easy to do with a display
+list without having to use the CPU.
+
+Each entry is a 16 bit value. The basic entry is this:
+
+    FEDCBA9876543210
+      |-----------------> 1 for narrow (256), 0 for normal (320) mode
+       |----------------> scroll enabled
+        ||||------------> video mode
+            |||||||| ---> number of scalines
+
+Video modes 0x0 and 0xF are special modes:
+- Video mode 0x0 is blank screen, the border/background color is used
+- Video mode 0xF is the end of the playlist / screen
+
+For each entry, optional entries may follow.
+
+If the entry defines a video mode (0x1-0xE), the following entry is the VRAM address
+of the screen buffer. The interpretation of this buffer depends on the video mode
+
+If the video mode needs an attribute table, like the 16 color text mode, the following
+entry is the VRAM address of that attribute table.
+
+### Scrolling
+
+If the scroll bit is set, there will be two more entries. First comes the size of
+the scrolling window. This should be larger than the screen size
+
+    FEDCBA9876543210
+    ||||||||------------> window width in bytes
+            ||||||||----> window height in bytes
+
+Then comes the current position into the scrolling window.
+
+    FEDCBA9876543210
+    ||||||||------------> left position
+            ||||||||----> top  position
+
+Note that the scrolling window wraps, so if the width is 130 and the left position is 129
+the first displayed element will be from memory position 129 and the next element will be from
+memory position 0, then 1, and so on. The same applies for vertical positions.
+
+Finally, comes the current fine scrolling position
+
+    FEDCBA9876543210
+        ||||------------> fine horizontal scrolling
+                ||||----> fine vertical scrolling
+
+Combining the display list with the scrolling entries you can manage several scroll/non scroll
+portions of the screen, with different scrolling values (parallax) without needing the use of
+interrupts neither CPU code
+
+### Some display list examples
+
+A simple text mode with attributes, 240 scanlines height (30 chars)
+
+    02F0 : mode 0x2 with 240 scanlines
+    8200 : chars at VRAM address $8200
+    9200 : attributes at VRAM address $9200
+    0F00 : end of display list
+    
+An Atari like text mode, with 24 empty lines at the top, then 192 scanlines (24 chars)
+
+    0018 : 24 empty scanlines
+    02C0 : mode 0x2 with 192 scanlines
+    8200 : chars at VRAM address $8200
+    9200 : attributes at VRAM address $9200
+    0F00 : end of display list
+
+A mixed video mode, 3 lines of text at the top, tiles at the bottom
+
+    0218 : mode 0x2 with 24 scanlines (3*8)
+    8200 : chars at VRAM address $8200
+    9200 : attributes at VRAM address $9200
+    06C0 : mode 0x6 with 192 scanlines
+    A200 : tiles at VRAM address $A200
+    0F00 : end of display list
+
+Another mixed video mode, 3 lines of fixed tiles at the top, then a playfield
+with scrolling tiles at the bottom
+
+    0618 : fixed tiles mode 0x6 with 24 scanlines (3*8)
+    8200 : tiles at VRAM address $8200
+    16C0 : scrolling tiles mode 0x6 with 192 scanlines
+    A200 : tiles at VRAM address $A200
+    A040 : scrolling window is 160x64 bytes
+    0312 : current position is left=3, top=18
+    0102 : fine scrolling is x=1, y=2
+    0F00 : end of display list
+
+A spectrum like graphics mode (256x192)
+
+    0018 : 24 empty scanlines
+    29C0 : mode 0x9 with 192 scanlines. Narrow
+    7000 : pixel data at VRAM address $7000
+    8800 : attributes at VRAM address $8800
+    0F00 : end of display list
 
 ## Video Modes
 
