@@ -353,7 +353,7 @@ module chroni (
                vram_dl_addr     <= display_list_ptr;
                display_list_ptr <= display_list_ptr + 1'b1;
                
-               mem_wait <= 3;
+               mem_wait <= 2;
                dlproc_state <= DL_READ_WAIT;
             end
             DL_READ_WAIT:
