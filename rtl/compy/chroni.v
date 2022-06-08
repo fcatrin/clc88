@@ -360,11 +360,11 @@ module chroni (
             begin
                mem_wait <= mem_wait - 1'b1;
                if (mem_wait == 0) begin
-                  dl_mode      <= vram_chroni_rd_word[11:8];
-                  dl_scanlines <= vram_chroni_rd_word[7:0];
+                  dl_mode      = vram_chroni_rd_word[11:8];
+                  dl_scanlines = vram_chroni_rd_word[7:0];
                   dlproc_state <=
-                     ((vram_chroni_rd_word[11:8] == 0) ? DL_EXEC :
-                      (vram_chroni_rd_word[11:8] == 4'hf ? DL_IDLE : DL_LMS));
+                     ((dl_mode == 0) ? DL_EXEC :
+                      (dl_mode == 4'hf ? DL_IDLE : DL_LMS));
                end
             end
             DL_LMS:
