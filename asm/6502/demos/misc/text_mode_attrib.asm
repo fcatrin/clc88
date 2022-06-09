@@ -59,8 +59,11 @@ wait_release:
    jmp wait_press
 
 display_list:
-   .word $01F0
+   .word $11F0
    .word text_location 
+   .word attr_location
+   .word $0150
+   .word text_location
    .word attr_location
    .word $0f00
 

@@ -60,7 +60,7 @@ halt:
     jmp halt
 
 display_list:
-    .word $03F0
+    .word $13F0
     .word VRAM_SCREEN_DATA_ADDR
     .word $0f00
 

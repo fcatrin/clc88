@@ -7,6 +7,9 @@
 #define SCREEN_XBORDER 48
 #define SCREEN_YBORDER 4
 
+#define SCREEN_XBORDER_NARROW 112
+#define SCREEN_XRES_NARROW    512
+
 extern int screen_width;
 extern int screen_height;
 extern int screen_pitch;

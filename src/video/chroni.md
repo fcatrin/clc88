@@ -105,8 +105,8 @@ list without having to use the CPU.
 Each entry is a 16 bit value. The basic entry is this:
 
     FEDCBA9876543210
-      |-----------------> 1 for narrow (256), 0 for normal (320) mode
-       |----------------> scroll enabled
+      |-----------------> scroll enabled
+       |----------------> 1 for narrow (256), 0 for normal (320) mode
         ||||------------> video mode
             |||||||| ---> number of scalines
 
