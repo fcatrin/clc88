@@ -402,12 +402,12 @@ module chroni (
                vram_render_trigger <= 1;
                lms_changed <= report_lms_changed;
                blank_scanline <= 0;
-               if (dl_mode == 2) begin
+               if (dl_mode == 1) begin
                   dl_mode_scanlines <= 7;
                   dl_mode_pitch <= 80;
                   double_pixel <= 0;
                   vram_render <= 1;
-               end else if (dl_mode == 3) begin
+               end else if (dl_mode == 2) begin
                   dl_mode_scanlines <= 7;
                   dl_mode_pitch <= 40;
                   double_pixel <= 1;

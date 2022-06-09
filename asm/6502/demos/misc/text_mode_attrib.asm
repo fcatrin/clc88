@@ -59,15 +59,10 @@ wait_release:
    jmp wait_press
 
 display_list:
-   .byte $42
+   .word $01F0
    .word text_location 
    .word attr_location
-.rept (ROWS-1)/2
-   .byte $02
-   .byte $02
-.endr 
-   .byte $02
-   .byte $41
+   .word $0f00
 
    icl '../../test/include/text_test.asm'
    icl '../../os/graphics.asm'

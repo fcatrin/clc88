@@ -203,18 +203,9 @@ Video modes are defined one per each line in a display list
 
     ID | Type     | Colors | Bytes | Chars/Pixels  |  Height  | Extra
     -----------------------------------------------------------------
-    02 | Text     |   16   | 40+40 |   40 Chars    |  8 scans | 1 attribute per char (see CHAR_ATTR)
-    03 | Text     |   16   | 80+80 |   80 Chars    |  8 scans | 1 attribute per char (see CHAR_ATTR)
-    04 | Text     |   16   | 20+20 |   20 Chars    |  8 scans | 1 attribute per char (see CHAR_ATTR)
-    05 | Text     |   16   | 20+20 |   20 Chars    | 16 scans | 1 attribute per char (see CHAR_ATTR)
-    06 | Tiles    |   16   | 80    |  320 Pixels   |  8 scans | See Tiles
-    07 | Graphics |    4   | 40    |  160 Pixels   |  1 scan  | 4 pixels per byte, 2 bits per color
-    08 | Graphics |    4   | 40    |  160 Pixels   |  2 scans | 4 pixels per byte, 2 bits per color
-    09 | Graphics |   16   | 80    |  160 Pixels   |  1 scan  | 2 pixels per byte, 4 bits per color
-    0A | Graphics |   16   | 80    |  160 Pixels   |  2 scans | 2 pixels per byte, 4 bits per color
-    0B | Graphics |    2   | 40    |  320 Pixels   |  1 scan  | One Background + Foreground color
-    0C | Graphics |    4   | 80    |  320 Pixels   |  1 scan  | 4 pixels per byte, 2 bits per color
-    0D | Graphics |   16   | 160   |  320 Pixels   |  1 scan  | 2 pixels per byte, 4 bits per color
+    01 | Text     |   16   | 40+40 |   40 Chars    |  8 scans | 1 attribute per char (see CHAR_ATTR)
+    02 | Text     |   16   | 80+80 |   80 Chars    |  8 scans | 1 attribute per char (see CHAR_ATTR)
+    03 | Tiles    |   16   | 80    |  320 Pixels   |  8 scans | See Tiles
    
 ### Text video modes
     
@@ -240,9 +231,9 @@ The **graphics_attribute register** points to the color attributes for each 2 by
 Each screen byte is a tile definition for a 8x8 pixel / 16 color image
 Each tile definition is
 
-bits FEDCBA9876543210
-     ||||------------ sub-palette
-         |||||||||||| vram address (high 12 bits)
+    bits FEDCBA9876543210
+         ||||------------ sub-palette
+             |||||||||||| vram address (high 12 bits)
 
 The 256 color palette is divided in 16 sub-palettes
 

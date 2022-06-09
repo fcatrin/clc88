@@ -12,13 +12,8 @@ VMODE_1_ATTRIB_SIZE = 40*VMODE_1_LINES
 
 VMODE_2_LINES       = 30
 VMODE_2_SCANLINES   = 8*VMODE_2_LINES
-VMODE_2_SCREEN_SIZE = 40*VMODE_2_LINES
-VMODE_2_ATTRIB_SIZE = 40*VMODE_2_LINES
-
-VMODE_3_LINES       = 15
-VMODE_3_SCANLINES   = 16*VMODE_3_LINES
-VMODE_3_SCREEN_SIZE = 40*VMODE_3_LINES
-VMODE_3_ATTRIB_SIZE = 40*VMODE_3_LINES
+VMODE_2_SCREEN_SIZE = 32*VMODE_2_LINES
+VMODE_2_ATTRIB_SIZE = 32*VMODE_2_LINES
 
 CHARSET_SIZE      = $400
 VRAM_ADDR_CHARSET = 0
@@ -60,7 +55,7 @@ upload_next:
    mwa video_mode_params,x SRC_ADDR
    pla
    clc
-   adc #2
+   adc #1
    tay
    jsr set_video_mode_screen
    jsr set_video_mode_dl
@@ -178,11 +173,8 @@ video_mode_params_1:
    .word VMODE_1_LINES, VMODE_1_SCANLINES, VMODE_1_SCREEN_SIZE, VMODE_1_ATTRIB_SIZE, $9F
 video_mode_params_2:
    .word VMODE_2_LINES, VMODE_2_SCANLINES, VMODE_2_SCREEN_SIZE, VMODE_2_ATTRIB_SIZE, $9F
-video_mode_params_3:
-   .word VMODE_3_LINES, VMODE_3_SCANLINES, VMODE_3_SCREEN_SIZE, VMODE_3_ATTRIB_SIZE, $9F
 
 video_mode_params:
    .word video_mode_params_0
    .word video_mode_params_1
    .word video_mode_params_2
-   .word video_mode_params_3
