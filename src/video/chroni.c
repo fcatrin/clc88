@@ -570,12 +570,13 @@ bool is_output_scanline_border() {
 void chroni_scanline_back_porch() {
 	do_scan_start();
 
-	process_dl();
-
 	status |= STATUS_HBLANK; // make sure to start first scanline with hblank flag on
 
 	offset = memscan * screen_pitch;
 	xpos = 0;
+	if (!is_output_scanline_border()) {
+	    process_dl();
+	}
 	if (is_output_scanline_visible()) {
 		do_border(offset, dl_narrow ? SCREEN_XBORDER_NARROW : SCREEN_XBORDER);
 	}
@@ -585,6 +586,8 @@ void chroni_scanline_back_porch() {
 void chroni_scanline_display() {
 	status &= (255 - STATUS_HBLANK);
 	cpuexec_nmi(0);
+
+    printf("display scanline:%d mode_scanline:%d\n", output_scanline, dl_mode_scanline);
 
 	if (is_output_scanline_visible()) {
 	    UINT16 width = dl_narrow ? SCREEN_XRES_NARROW : SCREEN_XRES;
@@ -635,14 +638,15 @@ static void process_dl() {
 	if (dl_scanlines > 0) {
 		dl_scanlines--;
 	} else {
-		dl_instruction = VRAM_DATA(dl + dl_pos++);
+		dl_instruction = VRAM_DATA(dl + dl_pos);
 		dl_narrow      = (dl_instruction & 0x1000) ? 1 : 0;
         dl_mode        = (dl_instruction & 0x0f00) >> 8;
-        dl_scanlines   = (dl_instruction & 0x00ff);
+        dl_scanlines   = (dl_instruction & 0x00ff) - 1;
+	    printf("read dl at scanline:%d mode:%02x scanlines:%d\n", output_scanline, dl_mode, dl_scanlines);
         if (dl_mode == 0x0f) {
             dl_scanlines = 0;
-            dl_pos--;
         } else if (dl_mode != 0) {
+            dl_pos++;
             lms = VRAM_DATA(dl + dl_pos++);
             if (dl_mode < 6) {
                 attribs = VRAM_DATA(dl + dl_pos++);
@@ -659,6 +663,7 @@ static void process_dl() {
 static void do_scanline(UINT16 width) {
 	if (!(status & STATUS_ENABLE_CHRONI)) return;
 
+    printf("do scanline:%d of %d\n", dl_mode_scanline, dl_mode_scanlines);
 	if (dl_mode == 0 || dl_mode == 0xf) {
 		do_border(offset, width);
 	} else {
