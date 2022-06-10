@@ -338,8 +338,10 @@ module chroni (
       end else if (render_flag_rising) begin
          report_lms_changed <= 0;
          blank_scanline <= 1;
-         if (dl_scanlines == 0) begin
-            dlproc_state <= dl_mode == 4'hf ? DL_IDLE : DL_READ;
+         if (dl_mode == 4'hf) begin
+            dlproc_state <= DL_IDLE;
+         end else if (dl_scanlines == 0) begin
+            dlproc_state <= DL_READ;
          end else begin
             dl_scanlines <= dl_scanlines - 1'b1;
             vram_render_trigger <= vram_render;
