@@ -14,6 +14,7 @@ BIOS_INCLUDES= \
 	$(BIOS_ROOT)/data/charset_atari.bin
 
 ALL:  fonts_convert fpga_rom_build
+	rm -rf ../rtl/incremental_db
 	./fpga_rom_build
 
 fpga_rom_build : fpga_rom_build.c ${BIOS_XEX}
