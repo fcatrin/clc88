@@ -185,8 +185,8 @@ module chroni (
             text_buffer_index <= 0;
             attr_buffer_index <= 0;
             pixel_buffer_index_in <= render_buffer ? 11'd640 : 11'd0;
-            font_decode_state <= dl_mode_scanline == 0 ? FD_TEXT_READ : FD_FONT_READ;
-            mem_wait <= dl_mode_scanline == 0 ? 2'd3 : 2'd2;
+            font_decode_state <= (dl_mode_scanline == 0 || lms_changed) ? FD_TEXT_READ : FD_FONT_READ;
+            mem_wait <= (dl_mode_scanline == 0 || lms_changed) ? 2'd3 : 2'd2;
             if (lms_changed) begin
                load_memory_addr <= {dl_lms, 1'b0};
                data_memory_addr <= {dl_lms, 1'b0};
@@ -314,6 +314,7 @@ module chroni (
    reg[7:0]  dl_mode_pitch;
    reg[7:0]  dl_mode_scanlines;
    reg[7:0]  dl_mode_scanline;
+   reg       dl_narrow;
    reg[7:0]  dl_scanlines;
    reg vram_render;
    reg vram_render_trigger;
@@ -360,8 +361,9 @@ module chroni (
             begin
                mem_wait <= mem_wait - 1'b1;
                if (mem_wait == 0) begin
+                  dl_narrow    = vram_chroni_rd_word[12];
                   dl_mode      = vram_chroni_rd_word[11:8];
-                  dl_scanlines = vram_chroni_rd_word[7:0];
+                  dl_scanlines = vram_chroni_rd_word[7:0] - 1;
                   dlproc_state <=
                      ((dl_mode == 0) ? DL_EXEC :
                       (dl_mode == 4'hf ? DL_IDLE : DL_LMS));
@@ -404,12 +406,12 @@ module chroni (
                blank_scanline <= 0;
                if (dl_mode == 1) begin
                   dl_mode_scanlines <= 7;
-                  dl_mode_pitch <= 80;
+                  dl_mode_pitch <= dl_narrow ? 64 : 80;
                   double_pixel <= 0;
                   vram_render <= 1;
                end else if (dl_mode == 2) begin
                   dl_mode_scanlines <= 7;
-                  dl_mode_pitch <= 40;
+                  dl_mode_pitch <= dl_narrow ? 40 : 32;
                   double_pixel <= 1;
                   vram_render <= 1;
                end else if (dl_mode == 0) begin
@@ -586,7 +588,8 @@ module chroni (
          .read_font(read_font),
          .blank_scanline(blank_scanline),
          .border_color(border_color),
-         .double_pixel(double_pixel)
+         .double_pixel(double_pixel),
+         .narrow(dl_narrow)
       );
 
    wire cpu_wr_en_rising;

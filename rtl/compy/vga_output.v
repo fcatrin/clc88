@@ -21,7 +21,8 @@ module vga_output (
       input [15:0] pixel,
       input [15:0] border_color,
       input blank_scanline,
-      input double_pixel
+      input double_pixel,
+      input narrow
       );
 
    `include "chroni.vh"
@@ -33,7 +34,9 @@ module vga_output (
    reg[11:0] h_de_end;
    reg[11:0] h_pf_start;
    reg[11:0] h_pf_end;
-   
+   reg[11:0] h_pf_start_narrow;
+   reg[11:0] h_pf_end_narrow;
+
    reg[11:0] v_sync_pulse;
    reg[11:0] v_total;
    reg[11:0] v_de_start;
@@ -54,6 +57,7 @@ module vga_output (
    reg h_pf_pix;
    reg h_sync_p;
    reg v_sync_p;
+   reg h_pf_narrow;
    
    reg[1:0] vga_mode;
    reg vga_scale;
@@ -71,6 +75,8 @@ module vga_output (
             h_de_end     <= Mode1_H_DeEnd;
             h_pf_start   <= Mode1_H_PfStart;
             h_pf_end     <= Mode1_H_PfEnd;
+            h_pf_start_narrow   <= Mode1_H_PfStart_Narrow;
+            h_pf_end_narrow     <= Mode1_H_PfEnd_Narrow;
             v_sync_pulse <= Mode1_V_SyncPulse;
             v_total      <= Mode1_V_Total;
             v_de_start   <= Mode1_V_DeStart;
@@ -87,6 +93,8 @@ module vga_output (
             h_de_end     <= Mode2_H_DeEnd;
             h_pf_start   <= Mode2_H_PfStart;
             h_pf_end     <= Mode2_H_PfEnd;
+            h_pf_start_narrow   <= Mode2_H_PfStart_Narrow;
+            h_pf_end_narrow     <= Mode2_H_PfEnd_Narrow;
             v_sync_pulse <= Mode2_V_SyncPulse;
             v_total      <= Mode2_V_Total;
             v_de_start   <= Mode2_V_DeStart;
@@ -103,6 +111,8 @@ module vga_output (
             h_de_end     <= Mode3_H_DeEnd;
             h_pf_start   <= Mode3_H_PfStart;
             h_pf_end     <= Mode3_H_PfEnd;
+            h_pf_start_narrow   <= Mode3_H_PfStart_Narrow;
+            h_pf_end_narrow     <= Mode3_H_PfEnd_Narrow;
             v_sync_pulse <= Mode3_V_SyncPulse;
             v_total      <= Mode3_V_Total;
             v_de_start   <= Mode3_V_DeStart;
@@ -161,18 +171,30 @@ module vga_output (
       if(~reset_n) hsync_r <= 1'b1;
       else if(x_cnt == 1) hsync_r <= 1'b0;
       else if(x_cnt == h_sync_pulse) hsync_r <= 1'b1;
+
+      if (x_cnt == 1) h_pf_narrow = narrow;
              
       if(~reset_n) h_de <= 1'b0;
       else if(x_cnt == h_de_start) h_de <= 1'b1;
       else if(x_cnt == h_de_end) h_de <= 1'b0;   
          
       if(~reset_n) h_pf <= 1'b0;
-      else if(x_cnt == h_pf_start) h_pf <= 1'b1;
-      else if(x_cnt == h_pf_end) h_pf <= 1'b0;
-         
+      else if (h_pf_narrow) begin
+          if(x_cnt == h_pf_start_narrow) h_pf <= 1'b1;
+          else if(x_cnt == h_pf_end_narrow) h_pf <= 1'b0;
+      end else begin
+          if(x_cnt == h_pf_start) h_pf <= 1'b1;
+          else if(x_cnt == h_pf_end) h_pf <= 1'b0;
+      end
+
       if (~reset_n) h_pf_pix <= 1'b0;
-      else if(x_cnt == h_pf_start-4) h_pf_pix <= 1'b1;
-      else if(x_cnt == h_pf_end-4) h_pf_pix <= 1'b0;
+      else if (h_pf_narrow) begin
+          if(x_cnt == h_pf_start_narrow-4) h_pf_pix <= 1'b1;
+          else if(x_cnt == h_pf_end_narrow-4) h_pf_pix <= 1'b0;
+      end else begin
+          if(x_cnt == h_pf_start-4) h_pf_pix <= 1'b1;
+          else if(x_cnt == h_pf_end-4) h_pf_pix <= 1'b0;
+      end
       
       if (vga_scanline_end) begin
          if (!render_start_busy && y_cnt == v_pf_start - 2) begin
