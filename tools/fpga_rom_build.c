@@ -134,9 +134,10 @@ void set_version_signature(int signature) {
 
 int main(int argc, char *argv[]) {
 	load_xex("../bin/fpga_rom.xex");
-	load_bin("../bin/asm/6502/test/modes/mode_0.xex", 0xE000, 0);
+	// load_bin("../bin/asm/6502/test/modes/mode_0.xex", 0xE000, 0);
+	load_bin("../bin/asm/6502/demos/misc/text_mode_attrib.xex", 0xE000, 0);
 
-    set_version_signature(0x210);
+    set_version_signature(0x212);
 
 	create_mif("../rtl/compy/rom.mif", 0xE000);
 }

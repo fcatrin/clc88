@@ -59,7 +59,7 @@ wait_release:
    jmp wait_press
 
 display_list:
-   .word $11A0
+   .word $1104
    .word text_location 
    .word attr_location
    .word $0150
