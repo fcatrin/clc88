@@ -193,6 +193,8 @@ module chroni (
                
                load_attr_addr   <= {dl_attr, 1'b0};
                attr_memory_addr <= {dl_attr, 1'b0};
+
+               dl_mode_scanline <= 0;
             end else begin
                data_memory_addr <= load_memory_addr;
                attr_memory_addr <= load_attr_addr;
