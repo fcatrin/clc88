@@ -3,7 +3,7 @@ block_end     = $CA ; ROS2
 block_src     = $CC ; ROS4
 
 .proc run_embedded_xex
-    mwa #$e000 block_src
+    mwa #$c000 block_src
 next_block:
     jsr emb_xex_get_byte
     sta block_start

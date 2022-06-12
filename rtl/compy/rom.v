@@ -41,7 +41,7 @@ module rom (
 	clock,
 	q);
 
-	input	[12:0]  address;
+	input	[13:0]  address;
 	input	  clock;
 	output	[7:0]  q;
 `ifndef ALTERA_RESERVED_QIS
@@ -87,11 +87,11 @@ module rom (
 		altsyncram_component.intended_device_family = "Cyclone IV E",
 		altsyncram_component.lpm_hint = "ENABLE_RUNTIME_MOD=NO",
 		altsyncram_component.lpm_type = "altsyncram",
-		altsyncram_component.numwords_a = 8192,
+		altsyncram_component.numwords_a = 16384,
 		altsyncram_component.operation_mode = "ROM",
 		altsyncram_component.outdata_aclr_a = "NONE",
 		altsyncram_component.outdata_reg_a = "CLOCK0",
-		altsyncram_component.widthad_a = 13,
+		altsyncram_component.widthad_a = 14,
 		altsyncram_component.width_a = 8,
 		altsyncram_component.width_byteena_a = 1;
 

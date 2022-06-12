@@ -7,7 +7,7 @@
 	.word boot
 	.word irq
 
-EMBEDDED_XEX_START = $e000
+EMBEDDED_XEX_START = $c000
 
 	org OS_CALL
 init:
@@ -43,7 +43,7 @@ boot:
 	lda #0
 	jsr gfx_set_video_mode
 
-//  Check if XEX is embedded in ROM (0xE000)
+//  Check if XEX is embedded in ROM (0xC000)
     lda EMBEDDED_XEX_START
     and EMBEDDED_XEX_START+1
     cmp #255

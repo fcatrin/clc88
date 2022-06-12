@@ -84,7 +84,7 @@ module system (
       end
    end
    
-   wire[12:0] rom_addr = cpu_addr[12:0]; 
+   wire[13:0] rom_addr = cpu_addr[13:0];
    wire[7:0]  rom_rd_data;
    
    rom rom_inst (
