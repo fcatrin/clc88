@@ -158,15 +158,16 @@ module chroni (
    localparam FD_FONT_WAIT  = 10;
    localparam FD_FONT_WRITE = 13;
    localparam FD_FONT_DONE  = 14;
-   reg[3:0]  font_decode_state;
    reg[7:0]  charset_base;
 
    // state machine to read char or font from rom
    always @(posedge sys_clk) begin : char_gen
+      reg[3:0]  font_decode_state;
       reg[16:0] data_memory_addr;
       reg[16:0] attr_memory_addr;
       reg[16:0] load_memory_addr;
       reg[16:0] load_attr_addr;
+      reg[7:0]  dl_mode_scanline;
       reg[7:0]  text_attr;
       reg[6:0]  text_buffer_index;
       reg[6:0]  attr_buffer_index;
@@ -174,17 +175,17 @@ module chroni (
    
       text_buffer_we <= 0;
       attr_buffer_we <= 0;
-      wr_en <= 0;
+      text_line_buffer_wr_en <= 0;
       if (!reset_n || vga_mode_changed || vga_frame_start) begin
          font_decode_state <= FD_IDLE;
          dl_mode_scanline <= 0;
-         pixel_buffer_index_in <= 0;
+         text_line_buffer_index_in <= 0;
          wr_bitmap_bits <= 0;
       end else begin
-         if (vram_render_trigger_rising) begin
+         if (vram_render_trigger_rising && is_text_mode) begin
             text_buffer_index <= 0;
             attr_buffer_index <= 0;
-            pixel_buffer_index_in <= render_buffer ? 11'd640 : 11'd0;
+            text_line_buffer_index_in <= render_buffer ? 11'd640 : 11'd0;
             font_decode_state <= (dl_mode_scanline == 0 || lms_changed) ? FD_TEXT_READ : FD_FONT_READ;
             mem_wait <= (dl_mode_scanline == 0 || lms_changed) ? 2'd3 : 2'd2;
             if (lms_changed) begin
@@ -268,15 +269,15 @@ module chroni (
                FD_FONT_WAIT:
                begin
                   if (mem_wait == 0) begin
-                     pixel_out_next <= vram_chroni_rd_byte;
+                     text_pixel_out_next <= vram_chroni_rd_byte;
                      font_decode_state <= FD_FONT_WRITE;
                   end
                   mem_wait <= mem_wait - 1'b1;
                end
                FD_FONT_WRITE:
                if (!wr_busy) begin
-                  pixel_out <= pixel_out_next;
-                  wr_en <= 1;
+                  text_pixel_out <= text_pixel_out_next;
+                  text_line_buffer_wr_en <= 1;
                   wr_bitmap_on   <= text_attr[3:0];
                   wr_bitmap_off  <= text_attr[7:4];
                   wr_bitmap_bits <= 4'd8;
@@ -293,12 +294,136 @@ module chroni (
                   end
                end else begin
                   font_decode_state <= FD_FONT_FETCH;
-                  pixel_buffer_index_in <= pixel_buffer_index_in + 4'd8;
+                  text_line_buffer_index_in <= text_line_buffer_index_in + 4'd8;
                end
             endcase
          end
       end      
    end         
+
+   localparam TL_IDLE        = 0;
+   localparam TL_SCREEN_READ = 1;
+   localparam TL_TILE_READ   = 2;
+   localparam TL_TILE_FETCH  = 3;
+   localparam TL_TILE_WAIT   = 4;
+   localparam TL_TILE_WRITE  = 5;
+   localparam TL_TILE_NEXT   = 6;
+   localparam TL_TILE_DONE   = 7;
+
+   // state machine to read tiles
+   always @(posedge sys_clk) begin : tile_gen
+      reg[2:0]  tile_decode_state;
+      reg[15:0] data_memory_addr;
+      reg[15:0] load_memory_addr;
+      reg[7:0]  dl_mode_scanline;
+      reg[5:0]  tile_buffer_index;
+      reg[3:0]  tile_palette;
+      reg       tile_pixel_index;
+      reg[1:0]  mem_wait;
+
+      tile_buffer_we <= 0;
+      tile_line_buffer_wr_en <= 0;
+      if (!reset_n || vga_mode_changed || vga_frame_start) begin
+         tile_decode_state <= TL_IDLE;
+         dl_mode_scanline <= 0;
+         tile_line_buffer_index_in <= 0;
+         wr_tile_pixels <= 0;
+      end else begin
+         if (vram_render_trigger_rising && !is_text_mode) begin
+            tile_buffer_index <= 0;
+            tile_line_buffer_index_in <= render_buffer ? 11'd640 : 11'd0;
+            tile_decode_state <= (dl_mode_scanline == 0 || lms_changed) ? TL_SCREEN_READ : TL_TILE_READ;
+            mem_wait <= (dl_mode_scanline == 0 || lms_changed) ? 2'd3 : 2'd2;
+            if (lms_changed) begin
+               load_memory_addr <= dl_lms;
+               data_memory_addr <= dl_lms;
+
+               dl_mode_scanline <= 0;
+            end else begin
+               data_memory_addr <= load_memory_addr;
+            end
+         end else begin
+            case (tile_decode_state)
+               TL_SCREEN_READ: // transfer line of text from vram to tile_buffer
+               begin
+                  vram_tile_addr    <= data_memory_addr;
+                  data_memory_addr  <= data_memory_addr + 1'b1;
+                  if (mem_wait == 0) begin
+                     tile_buffer_addr    <= tile_buffer_index;
+                     tile_buffer_data_wr <= vram_chroni_rd_word;
+                     tile_buffer_we <= 1;
+                     if (tile_buffer_index == dl_mode_pitch-1) begin
+                        tile_buffer_index <= 0;
+                        mem_wait <= 3;
+                        tile_decode_state <= TL_TILE_READ;
+                     end else begin
+                        tile_buffer_index <= tile_buffer_index + 1'b1;
+                     end
+                  end else begin
+                     mem_wait <= mem_wait - 1'b1;
+                  end
+               end
+               TL_TILE_READ: // read font data from each char on text_buffer
+               begin
+                  if (mem_wait == 2) begin
+                     tile_buffer_addr  <= tile_buffer_index;
+                     tile_buffer_index <= tile_buffer_index + 1'b1;
+                  end else if (mem_wait == 0) begin
+                     tile_pixel_index  <= 0;
+                     tile_decode_state <= TL_TILE_FETCH;
+                  end
+                  mem_wait <= mem_wait - 1'b1;
+               end
+               TL_TILE_FETCH:
+               begin
+                  // fetch tile data
+                  tile_palette      <= tile_buffer_data_rd[15:12];
+                  vram_tile_addr    <= {tile_buffer_data_rd[11:0], dl_mode_scanline[2:0], tile_pixel_index};
+                  tile_decode_state <= TL_TILE_WAIT;
+                  mem_wait <= 2;
+               end
+               TL_TILE_WAIT:
+               begin
+                  if (mem_wait == 0) begin
+                     tile_pixel_out_next <= vram_chroni_rd_word;
+                     tile_decode_state   <= TL_TILE_WRITE;
+                  end
+                  mem_wait <= mem_wait - 1'b1;
+               end
+               TL_TILE_WRITE:
+               if (!wr_busy) begin
+                  tile_pixel_out         <= tile_pixel_out_next;
+                  wr_tile_palette        <= tile_palette;
+                  tile_line_buffer_wr_en <= 1;
+                  wr_tile_pixels         <= 3'd4;
+                  tile_decode_state      <= TL_TILE_NEXT;
+               end
+               TL_TILE_NEXT:
+               begin
+                  tile_line_buffer_index_in <= tile_line_buffer_index_in + 4'd4;
+                  if (tile_pixel_index == 0) begin
+                     tile_decode_state  <= TL_TILE_FETCH;
+                     tile_pixel_index   <= 1;
+                  end else begin
+                     tile_decode_state <= TL_TILE_DONE;
+                  end
+               end
+               TL_TILE_DONE:
+               if (tile_buffer_index == dl_mode_pitch+1) begin
+                  tile_decode_state <= TL_IDLE;
+                  dl_mode_scanline <= dl_mode_scanline + 1'b1;
+                  if (dl_mode_scanline == dl_mode_scanlines) begin
+                     load_memory_addr <= load_memory_addr + dl_mode_pitch;
+                     dl_mode_scanline <= 0;
+                  end
+               end else begin
+                  tile_decode_state         <= TL_TILE_READ;
+                  tile_pixel_index          <= 0;
+               end
+            endcase
+         end
+      end
+   end
 
    localparam DL_IDLE = 0;
    localparam DL_READ = 1;
@@ -315,7 +440,6 @@ module chroni (
    reg[3:0]  dl_mode;
    reg[7:0]  dl_mode_pitch;
    reg[7:0]  dl_mode_scanlines;
-   reg[7:0]  dl_mode_scanline;
    reg       dl_narrow;
    reg[7:0]  dl_scanlines;
    reg vram_render;
@@ -367,7 +491,7 @@ module chroni (
                if (mem_wait == 0) begin
                   dl_narrow    = vram_chroni_rd_word[12];
                   dl_mode      = vram_chroni_rd_word[11:8];
-                  dl_scanlines = vram_chroni_rd_word[7:0] - 1;
+                  dl_scanlines = vram_chroni_rd_word[7:0] - 1'b1;
                   dlproc_state <=
                      ((dl_mode == 0) ? DL_EXEC :
                       (dl_mode == 4'hf ? DL_IDLE : DL_LMS));
@@ -410,13 +534,18 @@ module chroni (
                blank_scanline <= 0;
                if (dl_mode == 1) begin
                   dl_mode_scanlines <= 7;
-                  dl_mode_pitch <= dl_narrow ? 64 : 80;
+                  dl_mode_pitch <= dl_narrow ? 8'd64 : 8'd80;
                   double_pixel <= 0;
                   vram_render <= 1;
                end else if (dl_mode == 2) begin
                   dl_mode_scanlines <= 7;
-                  dl_mode_pitch <= dl_narrow ? 40 : 32;
+                  dl_mode_pitch <= dl_narrow ? 8'd32 : 8'd40;
                   double_pixel <= 1;
+                  vram_render <= 1;
+               end else if (dl_mode == 3) begin
+                  dl_mode_scanlines <= 7;
+                  dl_mode_pitch <= dl_narrow ? 8'd32 : 8'd40;
+                  double_pixel <=1;
                   vram_render <= 1;
                end else if (dl_mode == 0) begin
                   blank_scanline <= 1;
@@ -457,20 +586,10 @@ module chroni (
    reg render_buffer;
    reg render_flag  = 0;
 
-   reg[10:0] pixel_buffer_index_in;
-   reg wr_en = 0;
-   reg[3:0] wr_bitmap_bits;
-   reg[7:0] wr_bitmap_on;
-   reg[7:0] wr_bitmap_off;
-   reg[7:0] pixel_out;
-   reg[7:0] pixel_out_next;
-   wire wr_busy;
-
-   reg[6:0] text_buffer_addr;
-   reg text_buffer_we;
-   reg[7:0] text_buffer_data_wr;
+   reg [6:0] text_buffer_addr;
+   reg       text_buffer_we;
+   reg [7:0] text_buffer_data_wr;
    wire[7:0] text_buffer_data_rd;
-   
    spram #(80, 7, 8) text_buffer (
          .address(text_buffer_addr),
          .clock(sys_clk),
@@ -478,7 +597,19 @@ module chroni (
          .wren(text_buffer_we),
          .q(text_buffer_data_rd)
       );
-   
+
+   reg [5:0]  tile_buffer_addr;
+   reg        tile_buffer_we;
+   reg [15:0] tile_buffer_data_wr;
+   wire[15:0] tile_buffer_data_rd;
+   spram #(40, 6, 16) tile_buffer (
+         .address(tile_buffer_addr),
+         .clock(sys_clk),
+         .data(tile_buffer_data_wr),
+         .wren(tile_buffer_we),
+         .q(tile_buffer_data_rd)
+      );
+
    reg[6:0] attr_buffer_addr;
    reg attr_buffer_we;
    reg[7:0] attr_buffer_data_wr;
@@ -519,10 +650,12 @@ module chroni (
    wire[15:0] vram_cpu_rd_word;
    reg[16:0]  vram_char_addr;
    reg[15:0]  vram_dl_addr;
+   reg[15:0]  vram_tile_addr;
    
    reg vram_read_dl;
-   
-   wire[15:0] vram_chroni_addr  = vram_read_dl ? vram_dl_addr : vram_char_addr[16:1];
+
+   wire       is_text_mode = dl_mode < 3;
+   wire[15:0] vram_chroni_addr  = vram_read_dl ? vram_dl_addr : (is_text_mode ? vram_char_addr[16:1] : vram_tile_addr);
    wire       vram_read_byte_en = vram_char_addr[0];
 
    vram16_dp vram (
@@ -539,21 +672,42 @@ module chroni (
         .q_b ( vram_chroni_rd_word )
     );
 
+   reg[3:0]   wr_bitmap_bits;
+   reg[7:0]   wr_bitmap_on;
+   reg[7:0]   wr_bitmap_off;
+   reg[7:0]   text_pixel_out;
+   reg[7:0]   text_pixel_out_next;
+   reg[15:0]  tile_pixel_out;
+   reg[15:0]  tile_pixel_out_next;
+   reg[2:0]   wr_tile_pixels;
+   reg[3:0]   wr_tile_palette;
+   wire wr_busy;
+
+   reg[10:0] text_line_buffer_index_in;
+   reg[10:0] tile_line_buffer_index_in;
+   reg       text_line_buffer_wr_en;
+   reg       tile_line_buffer_wr_en;
+
+   wire[15:0] pixel_out            = is_text_mode ? {8'b0, text_pixel_out} : tile_pixel_out;
+   wire       line_buffer_wr_en    = is_text_mode ? text_line_buffer_wr_en : tile_line_buffer_wr_en;
+   wire[10:0] line_buffer_index_in = is_text_mode ? text_line_buffer_index_in : tile_line_buffer_index_in;
    chroni_line_buffer chroni_line_buffer_inst (
          .reset_n(reset_n),
          .rd_clk(vga_clk),
          .wr_clk(sys_clk),
          .rd_addr(pixel_buffer_index_out),
-         .wr_addr(pixel_buffer_index_in),
+         .wr_addr(line_buffer_index_in),
          .rd_data(pixel),
          .wr_data(pixel_out),
-         .wr_en(wr_en),
+         .wr_en(line_buffer_wr_en),
          .wr_bitmap_on(wr_bitmap_on),
          .wr_bitmap_off(wr_bitmap_off),
          .wr_bitmap_bits(wr_bitmap_bits),
+         .wr_tile_pixels(wr_tile_pixels),
+         .wr_tile_palette(wr_tile_palette),
          .wr_busy(wr_busy)
       );
-   
+
    reg[15:0]   border_color = 0;
    
    wire [10:0] pixel_buffer_index_out;

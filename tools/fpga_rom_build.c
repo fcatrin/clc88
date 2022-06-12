@@ -130,14 +130,17 @@ void set_version_signature(int signature) {
 	rom[0xEFFD] = (signature & 0x00f);
 	rom[0xEFFE] = (signature & 0x0f0) >> 4;
 	rom[0xEFFF] = (signature & 0xf00) >> 8;
+	printf("signature is %04x\n", signature);
 }
 
 int main(int argc, char *argv[]) {
 	load_xex("../bin/fpga_rom.xex");
-	// load_bin("../bin/asm/6502/test/modes/mode_0.xex", 0xE000, 0);
-	load_bin("../bin/asm/6502/demos/misc/text_mode_attrib.xex", 0xE000, 0);
+	// load_bin("../bin/asm/6502/tools/xex_loader.xex", 0xE000, 0);
+	// load_bin("../bin/asm/6502/test/modes/mode_0.xex", 0xC000, 0);
+	// load_bin("../bin/asm/6502/demos/misc/text_mode_attrib.xex", 0xE000, 0);
+	load_bin("../bin/asm/6502/test/modes/mode_tiles.xex", 0xC000, 0);
 
-    set_version_signature(0x212);
+    set_version_signature(0x218);
 
-	create_mif("../rtl/compy/rom.mif", 0xE000);
+	create_mif("../rtl/compy/rom.mif", 0xC000);
 }
