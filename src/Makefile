@@ -69,8 +69,9 @@ XEXDIR= ../bin/asm
 ASMDIR= ../asm
 XEX = $(addprefix $(XEXDIR)/, \
 	6502/os/rom.xex \
-	6502/test/modes/mode_0_ints.xex \
 	6502/test/modes/mode_0.xex \
+	6502/test/modes/mode_0_ints.xex \
+	6502/test/modes/mode_0_scroll.xex \
 	6502/test/modes/mode_1.xex \
 	6502/test/modes/mode_tiles.xex \
 	6502/test/sprites.xex \

@@ -13,6 +13,8 @@
 #endif
 #include "trace.h"
 
+#define BYTE_L(word) ((word) & 0xff)
+#define BYTE_H(word) ((word) >> 8)
 #define VRAM_PTR(addr)  ((VRAM_BYTE(addr) + (VRAM_BYTE(addr+1) << 8)) << 1)
 #define VRAM_DATA(addr) (vram[(addr) & 0xFFFF])
 #define VRAM_BYTE(addr) (((addr) & 1 ? (VRAM_DATA((addr)>>1) >> 8) : VRAM_DATA((addr)>>1)) & 0xff)
@@ -48,6 +50,14 @@ UINT16 dl_mode_pitch;
 UINT16 dl_instruction;
 UINT8  dl_mode;
 bool   dl_narrow;
+bool   dl_scroll;
+
+UINT8 dl_scroll_width;
+UINT8 dl_scroll_height;
+UINT8 dl_scroll_left;
+UINT8 dl_scroll_top;
+UINT8 dl_scroll_fine_x;
+UINT8 dl_scroll_fine_y;
 
 static UINT16 border_color;
 
@@ -432,8 +442,21 @@ static void do_scan_text_attribs(UINT16 width, UINT8 line, bool cols80) {
 	int scan_width = cols80 ? width : (width/2);
 	int pixel_offset = 0;
 
-	UINT32 char_addr = lms << 1;
-	UINT32 attr_addr = attribs << 1;
+    UINT32 char_origin = lms << 1;
+    UINT32 attr_origin = attribs << 1;
+
+	UINT32 char_addr = char_origin;
+	UINT32 attr_addr = attr_origin;
+	UINT8  line_wrap = 0;
+	if (dl_scroll) {
+	    char_addr += dl_scroll_left;
+	    attr_addr += dl_scroll_left;
+	    line_wrap = dl_scroll_width - dl_scroll_left - 1;
+	}
+
+    if (line_offset == 0) {
+        printf("lms:%04x char_addr:%04x line:%d\n", lms, char_addr, line >> 3);
+    }
 
 	for(int i=0; i<scan_width; i++) {
 		if (i  == 0 || (pixel_offset & 7) == 0) {
@@ -447,8 +470,16 @@ static void do_scan_text_attribs(UINT16 width, UINT8 line, bool cols80) {
 			row = VRAM_BYTE(charset * CHARSET_PAGE + (c<<3) + line_offset);
 
 			bit = 0x80;
-			attr_addr++;
-			char_addr++;
+
+			if (line_wrap > 0) {
+                attr_addr++;
+                char_addr++;
+                line_wrap--;
+            } else {
+                char_addr = char_origin;
+                attr_addr = attr_origin;
+                line_wrap = dl_scroll_width - 1;
+            }
 		}
 
 		put_pixel(offset, row & bit ? foreground : background);
@@ -620,13 +651,15 @@ static void process_dl() {
 		dl_scanlines--;
 	} else {
 		dl_instruction = VRAM_DATA(dl + dl_pos);
+		dl_scroll      = (dl_instruction & 0x2000) ? 1 : 0;
 		dl_narrow      = (dl_instruction & 0x1000) ? 1 : 0;
         dl_mode        = (dl_instruction & 0x0f00) >> 8;
         dl_scanlines   = (dl_instruction & 0x00ff) - 1;
-	    LOGV(LOGTAG, "read dl at scanline:%d mode:%02x scanlines:%d\n", output_scanline, dl_mode, dl_scanlines);
+	    LOGV(LOGTAG, "read dl mode:%02x scanlines:%d scroll:%s\n", dl_mode, dl_scanlines, dl_scroll ? "true" : "false");
         if (dl_mode == 0x0f) {
             dl_scanlines = 0;
         } else if (dl_mode != 0) {
+    	    printf("read dl mode:%02x scanlines:%d scroll:%s\n", dl_mode, dl_scanlines, dl_scroll ? "true" : "false");
             dl_pos++;
             lms = VRAM_DATA(dl + dl_pos++);
             if (dl_mode < 6) {
@@ -635,7 +668,23 @@ static void process_dl() {
             }
             dl_mode_scanlines = lines_per_mode[dl_mode] - 1;
             dl_mode_scanline = 0;
-            dl_mode_pitch = dl_narrow ? words_per_scan_narrow[dl_mode] : words_per_scan[dl_mode];
+            if (dl_scroll) {
+                UINT16 scroll_window = VRAM_DATA(dl + dl_pos++);
+                dl_scroll_width  = BYTE_L(scroll_window);
+                dl_scroll_height = BYTE_H(scroll_window);
+
+                UINT16 scroll_position = VRAM_DATA(dl + dl_pos++);
+                dl_scroll_left = BYTE_L(scroll_position);
+                dl_scroll_top  = BYTE_H(scroll_position);
+
+                UINT16 scroll_fine = VRAM_DATA(dl + dl_pos++);
+                dl_scroll_fine_x = BYTE_L(scroll_fine);
+                dl_scroll_fine_y = BYTE_H(scroll_fine);
+
+                dl_mode_pitch = dl_scroll_width / 2;
+            } else {
+                dl_mode_pitch = dl_narrow ? words_per_scan_narrow[dl_mode] : words_per_scan[dl_mode];
+            }
         }
 	}
 }
