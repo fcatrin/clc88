@@ -111,7 +111,7 @@ void chroni_reset() {
 }
 
 // deprecate
-UINT8 chroni_vram_read_linear(UINT32 index) {
+UINT8 chroni_vram_read(UINT32 index) {
 	return VRAM_BYTE(index & 0x1FFFF);
 }
 

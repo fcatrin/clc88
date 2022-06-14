@@ -128,7 +128,7 @@ static UINT32 dump_vram(UINT32 addr, unsigned lines) {
 	for(int line=0; line < lines; line++) {
 		printf("%05X|", addr);
 		for(int i=0; i<16; i++) {
-			printf("%02X", chroni_vram_read_linear(addr + i));
+			printf("%02X", chroni_vram_read(addr + i));
 			if (((i+1) % 4) == 0) {
 				printf("|");
 			} else {
@@ -136,7 +136,7 @@ static UINT32 dump_vram(UINT32 addr, unsigned lines) {
 			}
 		}
 		for(int i=0; i<16; i++) {
-			UINT8 c = chroni_vram_read_linear(addr + i);
+			UINT8 c = chroni_vram_read(addr + i);
 			if (0x20 <= c && c <= 0x7F) {
 				printf("%c", c);
 			} else {
@@ -154,7 +154,7 @@ static UINT32 dump_vram_words(UINT32 addr, unsigned lines) {
 	for(int line=0; line < lines; line++) {
 		printf("%04X|", addr / 2);
 		for(int i=0; i<32; i++) {
-			printf("%02X", chroni_vram_read_linear(addr + i));
+			printf("%02X", chroni_vram_read(addr + i));
 			if (((i+1) % 4) == 0) {
 				printf("|");
 			} else {
@@ -162,7 +162,7 @@ static UINT32 dump_vram_words(UINT32 addr, unsigned lines) {
 			}
 		}
 		for(int i=0; i<32; i++) {
-			UINT8 c = chroni_vram_read_linear(addr + i);
+			UINT8 c = chroni_vram_read(addr + i);
 			if (0x20 <= c && c <= 0x7F) {
 				printf("%c", c);
 			} else {
