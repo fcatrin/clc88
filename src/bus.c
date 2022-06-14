@@ -5,6 +5,7 @@
 #include "video/chroni.h"
 #include "sound.h"
 #include "keyb.h"
+#include "system.h"
 #include "bus.h"
 
 /*
