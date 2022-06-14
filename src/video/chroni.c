@@ -50,7 +50,6 @@ UINT8  dl_mode;
 bool   dl_narrow;
 
 static UINT16 border_color;
-static UINT32 subpals;
 
 #define CHARSET_PAGE 1024
 static UINT8  charset;
@@ -90,6 +89,8 @@ static UINT8 hscroll;
 
 static UINT8 clock_multiplier;
 static UINT8 clock_multipliers[] = {1, 2, 4, 8};
+
+static int debug_skip_frames = 20;
 
 static void do_scanline(UINT16 width);
 static void process_dl();
@@ -460,9 +461,6 @@ static void do_scan_text_attribs(UINT16 width, bool use_hscroll, bool use_vscrol
 		bit >>= 1;
 	}
 }
-
-static int debug_size = 0;
-static int debug_skip_frames = 20;
 
 static void do_scan_tile_4bpp(UINT16 width, UINT8 line) {
 	LOGV(LOGTAG, "do_scan_tile_4bpp line %d", line);
