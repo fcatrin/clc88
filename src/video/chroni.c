@@ -481,26 +481,24 @@ static void do_scan_tile_4bpp(UINT16 width, UINT8 line) {
 	LOGV(LOGTAG, "do_scan_tile_4bpp line %d", line);
 
 	UINT8  tile_color;
-	UINT32 tile_address;
+	UINT16 tile_address;
 
 	UINT16 pixel_data = 0;
-	int tile_offset = 0;
+	UINT16 addr = lms;
+	UINT16 line_offset = (line & 7) << 1;
 	int tile_pixel_data_index = 0;
-	int line_offset = 32 * (line >> 3);
 	for(int i=0; i<width/2; i++) { // for each pixel
 		if ((i & 7) == 0) {
-		    UINT16 tile  = VRAM_DATA(lms + line_offset + tile_offset);
+		    UINT16 tile  = VRAM_DATA(addr++);
 
 		    tile_color   = (tile & 0xf000) >> 12;
 		    tile_address = (tile & 0x0fff) << 4;
 
 			tile_pixel_data_index = 0;
-
-			tile_offset++;
 		}
 
 		if ((i & 3) == 0) {
-			pixel_data = VRAM_DATA(tile_address + tile_pixel_data_index + ((line & 7) << 1));
+			pixel_data = VRAM_DATA(tile_address + tile_pixel_data_index + line_offset);
 			tile_pixel_data_index++;
 		} else {
 		    pixel_data >>= 4;
@@ -511,7 +509,6 @@ static void do_scan_tile_4bpp(UINT16 width, UINT8 line) {
 
 		put_pixel(offset, color);
 		put_pixel(offset, color);
-
 	}
 }
 
@@ -587,7 +584,7 @@ void chroni_scanline_display() {
 	status &= (255 - STATUS_HBLANK);
 	cpuexec_nmi(0);
 
-    printf("display scanline:%d mode_scanline:%d\n", output_scanline, dl_mode_scanline);
+    LOGV(LOGTAG, "display scanline:%d mode_scanline:%d\n", output_scanline, dl_mode_scanline);
 
 	if (is_output_scanline_visible()) {
 	    UINT16 width = dl_narrow ? SCREEN_XRES_NARROW : SCREEN_XRES;
@@ -642,7 +639,7 @@ static void process_dl() {
 		dl_narrow      = (dl_instruction & 0x1000) ? 1 : 0;
         dl_mode        = (dl_instruction & 0x0f00) >> 8;
         dl_scanlines   = (dl_instruction & 0x00ff) - 1;
-	    printf("read dl at scanline:%d mode:%02x scanlines:%d\n", output_scanline, dl_mode, dl_scanlines);
+	    LOGV(LOGTAG, "read dl at scanline:%d mode:%02x scanlines:%d\n", output_scanline, dl_mode, dl_scanlines);
         if (dl_mode == 0x0f) {
             dl_scanlines = 0;
         } else if (dl_mode != 0) {
@@ -659,11 +656,10 @@ static void process_dl() {
 	}
 }
 
-
 static void do_scanline(UINT16 width) {
 	if (!(status & STATUS_ENABLE_CHRONI)) return;
 
-    printf("do scanline:%d of %d\n", dl_mode_scanline, dl_mode_scanlines);
+    LOGV(LOGTAG, "do scanline:%d of %d\n", dl_mode_scanline, dl_mode_scanlines);
 	if (dl_mode == 0 || dl_mode == 0xf) {
 		do_border(offset, width);
 	} else {
@@ -674,12 +670,11 @@ static void do_scanline(UINT16 width) {
 		}
 
         if (dl_mode_scanline++ == dl_mode_scanlines) {
-            lms += dl_mode_pitch;
+            lms     += dl_mode_pitch;
             attribs += dl_mode_pitch;
             dl_mode_scanline = 0;
         }
 	}
-
 }
 
 static void init_rgb565_table() {
