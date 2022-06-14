@@ -110,9 +110,8 @@ void chroni_reset() {
 	srand(time(NULL));
 }
 
-// deprecate
-UINT8 chroni_vram_read(UINT32 index) {
-	return VRAM_BYTE(index & 0x1FFFF);
+UINT16 chroni_vram_read(UINT16 addr) {
+	return VRAM_DATA(addr);
 }
 
 static void reg_low(UINT16 *reg, UINT8 value) {

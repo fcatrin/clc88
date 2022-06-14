@@ -124,11 +124,12 @@ static unsigned dump_memory(unsigned addr, unsigned lines) {
 	return addr;
 }
 
-static UINT32 dump_vram(UINT32 addr, unsigned lines) {
+static UINT16 dump_vram(UINT16 addr, unsigned lines) {
 	for(int line=0; line < lines; line++) {
-		printf("%05X|", addr);
+		printf("%04X|", addr);
 		for(int i=0; i<16; i++) {
-			printf("%02X", chroni_vram_read(addr + i));
+		    UINT16 data = chroni_vram_read(addr + i);
+			printf("%02X %02X", data & 0xff, data >> 8);
 			if (((i+1) % 4) == 0) {
 				printf("|");
 			} else {
@@ -136,42 +137,19 @@ static UINT32 dump_vram(UINT32 addr, unsigned lines) {
 			}
 		}
 		for(int i=0; i<16; i++) {
-			UINT8 c = chroni_vram_read(addr + i);
-			if (0x20 <= c && c <= 0x7F) {
-				printf("%c", c);
-			} else {
-				printf(".");
-			}
-
+			UINT16 data = chroni_vram_read(addr + i);
+			for(int b=0; b<2; b++) {
+			    UINT8 c = data & 0xff;
+			    data >>= 8;
+                if (0x20 <= c && c <= 0x7F) {
+                    printf("%c", c);
+                } else {
+                    printf(".");
+                }
+            }
 		}
 		printf("\n");
 		addr += 16;
-	}
-	return addr;
-}
-
-static UINT32 dump_vram_words(UINT32 addr, unsigned lines) {
-	for(int line=0; line < lines; line++) {
-		printf("%04X|", addr / 2);
-		for(int i=0; i<32; i++) {
-			printf("%02X", chroni_vram_read(addr + i));
-			if (((i+1) % 4) == 0) {
-				printf("|");
-			} else {
-				printf(" ");
-			}
-		}
-		for(int i=0; i<32; i++) {
-			UINT8 c = chroni_vram_read(addr + i);
-			if (0x20 <= c && c <= 0x7F) {
-				printf("%c", c);
-			} else {
-				printf(".");
-			}
-
-		}
-		printf("\n");
-		addr += 32;
 	}
 	return addr;
 }
@@ -304,8 +282,7 @@ void monitor_enter() {
 
 	unsigned dasm_start = cpu->get_pc();
 	unsigned mem_start  = 0;
-	UINT32   vram_start  = 0;
-	UINT32   vram_start_words = 0;
+	UINT16   vram_start  = 0;
 
 	dump_registers();
 	dump_code(cpu->get_pc());
@@ -346,17 +323,8 @@ void monitor_enter() {
 			if (nparts == 1) {
 				vram_start = dump_vram(vram_start, 16);
 			} else {
-				UINT32 addr = parse_hex(parts[1]);
+				UINT16 addr = parse_hex(parts[1]);
 				vram_start = dump_vram(addr, 16);
-			}
-		} else if (!strcmp(parts[0], "vw")) {
-			if (nparts == 1) {
-				vram_start_words = dump_vram_words(vram_start_words, 16);
-			} else {
-				UINT32 addr = parse_hex(parts[1]);
-				if (addr & 1) addr++;
-				addr = addr << 1;
-				vram_start_words = dump_vram_words(addr, 16);
 			}
 		} else if (!strcmp(parts[0], "da")) {
 			dasm_start = disasm(cpu->get_pc(), 16);
