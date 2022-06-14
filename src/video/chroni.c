@@ -110,18 +110,6 @@ void chroni_reset() {
 	srand(time(NULL));
 }
 
-void chroni_vram_write(UINT16 index, UINT8 value) {
-    // obsolete
-	// LOGV(LOGTAG, "vram write %04X = %02X", index, value);
-	// VRAM_BYTE(PAGE_BASE(page) + index) = value;
-}
-
-UINT8 chroni_vram_read(UINT16 index) {
-    // obsolete
-	// return VRAM_BYTE(PAGE_BASE(page) + index);
-	return 0;
-}
-
 // deprecate
 UINT8 chroni_vram_read_linear(UINT32 index) {
 	return VRAM_BYTE(index & 0x1FFFF);

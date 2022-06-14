@@ -32,8 +32,6 @@ UINT8 bus_read16(UINT16 addr) {
 	UINT8 retvalue = 0;
 	if (addr >= CHRONI_START && addr <= CHRONI_END) {
 		retvalue = chroni_register_read(addr - CHRONI_START);
-	} else if (addr >= CHRONI_MEM_START && addr <= CHRONI_MEM_END) {
-		retvalue = chroni_vram_read(addr - CHRONI_MEM_START);
 	} else if (addr >= STORAGE_START && addr <= STORAGE_END) {
 		retvalue = storage_register_read(addr - STORAGE_START);
 	} else if (addr >= KEYB_START && addr <= KEYB_END) {
@@ -52,8 +50,6 @@ void  bus_write16(UINT16 addr, UINT8 value) {
 	}
 	if (addr >= CHRONI_START && addr <= CHRONI_END) {
 		chroni_register_write(addr - CHRONI_START, value);
-	} else if (addr >= CHRONI_MEM_START && addr <= CHRONI_MEM_END) {
-		chroni_vram_write(addr - CHRONI_MEM_START, value);
 	} else if (addr >= STORAGE_START && addr <= STORAGE_END) {
 		storage_register_write(addr - STORAGE_START, value);
 	} else if (addr >= SOUND_POKEY_START && addr <= SOUND_POKEY_END) {

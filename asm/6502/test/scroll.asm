@@ -165,9 +165,9 @@ sprite_1:
    .byte $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF
 
    org $C100
- sprites_base:
-   .word [sprite_0 - VRAM] / 2
-   .word [sprite_1 - VRAM] / 2
+ sprites_base: ; deprecated as VRAM cannot be accessed this way
+   .word [sprite_0 - $a000] / 2
+   .word [sprite_1 - $a000] / 2
    
    org $C140
  sprites_x:

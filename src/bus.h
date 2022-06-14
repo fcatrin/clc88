@@ -13,9 +13,6 @@
 #define SOUND_POKEY_START 0x9100
 #define SOUND_POKEY_END   0x911F
 
-#define CHRONI_MEM_START 0xA000
-#define CHRONI_MEM_END   0xDFFF
-
 #define SYS_START 0x9300
 #define SYS_END   0x930F
 

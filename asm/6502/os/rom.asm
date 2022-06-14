@@ -73,8 +73,6 @@ os_vector_table
 	.word copy_block
 	.word copy_block_with_params
 	.word mem_set_bytes
-	.word ram2vram
-	.word vram2ram
 	.word gfx_vram_set
 	.word keyb_poll
 	.word storage_dir_open
