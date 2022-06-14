@@ -421,43 +421,42 @@ static void inline do_border(int offset, int size) {
 	}
 }
 
-static void do_scan_text_attribs(UINT16 width, bool use_hscroll, bool use_vscroll, UINT8 line, bool cols80) {
+static void do_scan_text_attribs(UINT16 width, UINT8 line, bool cols80) {
 	LOGV(LOGTAG, "do_scan_text_attribs lms:%04x attr:%04x line:%d\n", lms, attribs, line);
 
 	UINT8 row;
 	UINT8 bit;
 	UINT8 foreground, background;
 
-	int pixel_offset = use_hscroll ? (hscroll & 0x7) : 0;
-	int scan_offset  = use_vscroll ? (vscroll & 0x7) : 0;
-	int line_offset  = (line + scan_offset) & 7;
-	int char_offset  = pixel_offset >> 3;
-
+	int line_offset  = line & 7;
 	int scan_width = cols80 ? width : (width/2);
+	int pixel_offset = 0;
+
+	UINT32 char_addr = lms << 1;
+	UINT32 attr_addr = attribs << 1;
 
 	for(int i=0; i<scan_width; i++) {
 		if (i  == 0 || (pixel_offset & 7) == 0) {
-			LOGV(LOGTAG, "do_scan_text_attribs char_offset: %d lms:%04x\n", char_offset, lms);
+			LOGV(LOGTAG, "do_scan_text_attribs char:%04x attr:%04x\n", char_addr, attr_addr);
 
-			UINT8 attrib = VRAM_BYTE(attribs*2 + char_offset);
+			UINT8 attrib = VRAM_BYTE(attr_addr);
 			background = (attrib & 0xF0) >> 4;
 			foreground = attrib & 0x0F;
 
-			UINT8 c = VRAM_BYTE(lms*2 + char_offset);
-			row = VRAM_BYTE(charset * CHARSET_PAGE + c*8 + line_offset);
+			UINT8 c = VRAM_BYTE(char_addr);
+			row = VRAM_BYTE(charset * CHARSET_PAGE + (c<<3) + line_offset);
 
-			bit = 0x80 >> (pixel_offset & 7);
-
-			char_offset++;
+			bit = 0x80;
+			attr_addr++;
+			char_addr++;
 		}
-
 
 		put_pixel(offset, row & bit ? foreground : background);
 		if (!cols80) {
 			put_pixel(offset, row & bit ? foreground : background);
 		}
 
-		pixel_offset++;
+        pixel_offset++;
 		bit >>= 1;
 	}
 }
@@ -649,8 +648,8 @@ static void do_scanline(UINT16 width) {
 		do_border(offset, width);
 	} else {
 		switch(dl_mode) {
-			case 0x1: do_scan_text_attribs(width, FALSE, FALSE, dl_mode_scanline, TRUE); break;
-			case 0x2: do_scan_text_attribs(width, FALSE, FALSE, dl_mode_scanline, FALSE); break;
+			case 0x1: do_scan_text_attribs(width, dl_mode_scanline, TRUE); break;
+			case 0x2: do_scan_text_attribs(width, dl_mode_scanline, FALSE); break;
 			case 0x3: do_scan_tile_4bpp(width, dl_mode_scanline); break;
 		}
 
