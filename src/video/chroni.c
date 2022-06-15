@@ -530,7 +530,6 @@ static void do_scan_tile_4bpp(UINT16 width, UINT8 line) {
                 tile_addr = tile_origin;
                 line_wrap = dl_scroll_width - 1;
             }
-
 		}
 
 		if (i == 0 || (pixel_offset & 3) == 0) {
