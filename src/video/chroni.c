@@ -440,7 +440,7 @@ static void do_scan_text_attribs(UINT16 width, UINT8 line, bool cols80) {
 
 	int line_offset  = line & 7;
 	int scan_width = cols80 ? width : (width/2);
-	int pixel_offset = 0;
+	int pixel_offset = dl_scroll_fine_x;
 
     UINT32 char_origin = lms << 1;
     UINT32 attr_origin = attribs << 1;
@@ -459,7 +459,7 @@ static void do_scan_text_attribs(UINT16 width, UINT8 line, bool cols80) {
     }
 
 	for(int i=0; i<scan_width; i++) {
-		if (i  == 0 || (pixel_offset & 7) == 0) {
+		if (i  == 0 || pixel_offset == 0) {
 			LOGV(LOGTAG, "do_scan_text_attribs char:%04x attr:%04x\n", char_addr, attr_addr);
 
 			UINT8 attrib = VRAM_BYTE(attr_addr);
@@ -469,7 +469,7 @@ static void do_scan_text_attribs(UINT16 width, UINT8 line, bool cols80) {
 			UINT8 c = VRAM_BYTE(char_addr);
 			row = VRAM_BYTE(charset * CHARSET_PAGE + (c<<3) + line_offset);
 
-			bit = 0x80;
+			bit = 0x80 >> pixel_offset;
 
 			if (line_wrap > 0) {
                 attr_addr++;
@@ -487,7 +487,7 @@ static void do_scan_text_attribs(UINT16 width, UINT8 line, bool cols80) {
 			put_pixel(offset, row & bit ? foreground : background);
 		}
 
-        pixel_offset++;
+        pixel_offset = (pixel_offset + 1) & 7;
 		bit >>= 1;
 	}
 }

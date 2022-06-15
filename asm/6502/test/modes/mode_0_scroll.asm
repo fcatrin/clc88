@@ -27,6 +27,9 @@ copy_dl:
     mwa #dlist_addr vram_scroll_left_addr
     adw vram_scroll_left_addr #4
 
+    mwa #dlist_addr vram_scroll_fine_x_addr
+    adw vram_scroll_fine_x_addr #5
+
 main_loop:
     lda FRAMECOUNT
 wait_frame:
@@ -35,19 +38,30 @@ wait_frame:
 
     inc frame_wait
     lda frame_wait
-    cmp #10
+    cmp #2
     bne main_loop
     mva #0 frame_wait
+
+    inc dl_scroll_fine_x
+    lda dl_scroll_fine_x
+    and #7
+    tay
+    sta dl_scroll_fine_x
+    bne write_fine_scroll_x
 
     ldx dl_scroll_left
     inx
     cpx dl_scroll_width
-    bne just_scroll_x
+    bne write_scroll_x
     ldx #0
-just_scroll_x:
+write_scroll_x:
     mwa vram_scroll_left_addr VADDRW
     stx VDATA
     stx dl_scroll_left
+write_fine_scroll_x
+    mwa vram_scroll_fine_x_addr VADDRW
+    sty VDATA
+
     jmp main_loop
 
 
@@ -59,12 +73,14 @@ dl_scroll_width  .byte 100
 dl_scroll_height .byte 30
 dl_scroll_left   .byte 0
 dl_scroll_top    .byte 0
-    .word $0000
+dl_scroll_fine_x .byte 0
+dl_scroll_fine_y .byte 0
     .word $0f00
 display_list_size:
     .byte * - display_list + 1
 
-vram_scroll_left_addr .word 0
+vram_scroll_left_addr   .word 0
+vram_scroll_fine_x_addr .word 0
 frame_wait .byte 0
 
     icl '../../test/include/text_test.asm'
