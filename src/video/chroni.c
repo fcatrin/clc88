@@ -52,6 +52,7 @@ UINT8  dl_mode;
 bool   dl_narrow;
 bool   dl_scroll;
 
+UINT16 dl_mode_tile_addr;
 UINT16 dl_mode_char_addr;
 UINT16 dl_mode_attr_addr;
 UINT16 dl_row_wrap;
@@ -500,24 +501,41 @@ static void do_scan_tile_4bpp(UINT16 width, UINT8 line) {
 	LOGV(LOGTAG, "do_scan_tile_4bpp line %d", line);
 
 	UINT8  tile_color;
-	UINT16 tile_address;
+	UINT16 tile_data;
 
 	UINT16 pixel_data = 0;
-	UINT16 addr = lms;
+	UINT32 tile_origin = dl_mode_tile_addr;
+	UINT16 tile_addr   = dl_mode_tile_addr;
+
+    UINT8  line_wrap = 0;
+    if (dl_scroll) {
+        tile_addr += dl_scroll_left;
+        line_wrap  = dl_scroll_width - dl_scroll_left - 1;
+    }
+
 	UINT16 line_offset = (line & 7) << 1;
 	int tile_pixel_data_index = 0;
 	for(int i=0; i<width/2; i++) { // for each pixel
 		if ((i & 7) == 0) {
-		    UINT16 tile  = VRAM_DATA(addr++);
+		    UINT16 tile = VRAM_DATA(tile_addr);
 
-		    tile_color   = (tile & 0xf000) >> 12;
-		    tile_address = (tile & 0x0fff) << 4;
+		    tile_color = (tile & 0xf000) >> 12;
+		    tile_data  = (tile & 0x0fff) << 4;
 
 			tile_pixel_data_index = 0;
+
+			if (line_wrap > 0) {
+                tile_addr++;
+                line_wrap--;
+            } else {
+                tile_addr = tile_origin;
+                line_wrap = dl_scroll_width - 1;
+            }
+
 		}
 
 		if ((i & 3) == 0) {
-			pixel_data = VRAM_DATA(tile_address + tile_pixel_data_index + line_offset);
+			pixel_data = VRAM_DATA(tile_data + tile_pixel_data_index + line_offset);
 			tile_pixel_data_index++;
 		} else {
 		    pixel_data >>= 4;
@@ -685,16 +703,17 @@ static void process_dl() {
                 dl_scroll_fine_x = BYTE_L(scroll_fine) & 7;
                 dl_scroll_fine_y = BYTE_H(scroll_fine) & 7;
 
-                dl_mode_pitch = dl_scroll_width / 2;
+                dl_mode_pitch = dl_scroll_width / (dl_mode == 3 ? 1 : 2);
 
-                if (dl_mode < 3) {
-                    dl_mode_char_addr = lms    + dl_mode_pitch * dl_scroll_top;
-                    dl_mode_attr_addr = attribs + dl_mode_pitch * dl_scroll_top;
-                    dl_row_wrap = dl_scroll_height - dl_scroll_top - 1;
-                    dl_mode_scanline = dl_scroll_fine_y;
-                }
+                UINT16 first_row_offset = dl_mode_pitch * dl_scroll_top;
+                dl_mode_tile_addr = lms     + first_row_offset;
+                dl_mode_char_addr = lms     + first_row_offset;
+                dl_mode_attr_addr = attribs + first_row_offset;
+                dl_row_wrap = dl_scroll_height - dl_scroll_top - 1;
+                dl_mode_scanline = dl_scroll_fine_y;
             } else {
                 dl_row_wrap = 0xffff;
+                dl_mode_tile_addr = lms;
                 dl_mode_char_addr = lms;
                 dl_mode_attr_addr = attribs;
                 dl_mode_pitch = dl_narrow ? words_per_scan_narrow[dl_mode] : words_per_scan[dl_mode];
@@ -718,10 +737,12 @@ static void do_scanline(UINT16 width) {
 
         if (dl_mode_scanline++ == dl_mode_scanlines) {
             if (dl_row_wrap > 0) {
+                dl_mode_tile_addr += dl_mode_pitch;
                 dl_mode_char_addr += dl_mode_pitch;
                 dl_mode_attr_addr += dl_mode_pitch;
                 dl_row_wrap--;
             } else {
+                dl_mode_tile_addr = lms;
                 dl_mode_char_addr = lms;
                 dl_mode_attr_addr = attribs;
                 dl_row_wrap = dl_scroll_height - 1;
