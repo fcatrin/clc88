@@ -52,6 +52,10 @@ UINT8  dl_mode;
 bool   dl_narrow;
 bool   dl_scroll;
 
+UINT16 dl_mode_char_addr;
+UINT16 dl_mode_attr_addr;
+UINT16 dl_row_wrap;
+
 UINT8 dl_scroll_width;
 UINT8 dl_scroll_height;
 UINT8 dl_scroll_left;
@@ -442,8 +446,8 @@ static void do_scan_text_attribs(UINT16 width, UINT8 line, bool cols80) {
 	int scan_width = cols80 ? width : (width/2);
 	int pixel_offset = dl_scroll_fine_x;
 
-    UINT32 char_origin = lms << 1;
-    UINT32 attr_origin = attribs << 1;
+    UINT32 char_origin = dl_mode_char_addr << 1;
+    UINT32 attr_origin = dl_mode_attr_addr << 1;
 
 	UINT32 char_addr = char_origin;
 	UINT32 attr_addr = attr_origin;
@@ -455,7 +459,7 @@ static void do_scan_text_attribs(UINT16 width, UINT8 line, bool cols80) {
 	}
 
     if (line_offset == 0) {
-        printf("lms:%04x char_addr:%04x line:%d\n", lms, char_addr, line >> 3);
+        printf("lms:%04x dl_mode_char_addr:%04x char_origin:%d\n", lms, dl_mode_char_addr, char_origin);
     }
 
 	for(int i=0; i<scan_width; i++) {
@@ -662,7 +666,7 @@ static void process_dl() {
     	    printf("read dl mode:%02x scanlines:%d scroll:%s\n", dl_mode, dl_scanlines, dl_scroll ? "true" : "false");
             dl_pos++;
             lms = VRAM_DATA(dl + dl_pos++);
-            if (dl_mode < 6) {
+            if (dl_mode < 3) {
                 attribs = VRAM_DATA(dl + dl_pos++);
                 LOGV(LOGTAG, "DL LMS %04X ATTR %04X", lms, attribs);
             }
@@ -682,7 +686,16 @@ static void process_dl() {
                 dl_scroll_fine_y = BYTE_H(scroll_fine);
 
                 dl_mode_pitch = dl_scroll_width / 2;
+
+                if (dl_mode < 3) {
+                    dl_mode_char_addr = lms    + dl_mode_pitch * dl_scroll_top;
+                    dl_mode_attr_addr = attribs + dl_mode_pitch * dl_scroll_top;
+                    dl_row_wrap = dl_scroll_height - dl_scroll_top - 1;
+                }
             } else {
+                dl_row_wrap = 0xffff;
+                dl_mode_char_addr = lms;
+                dl_mode_attr_addr = attribs;
                 dl_mode_pitch = dl_narrow ? words_per_scan_narrow[dl_mode] : words_per_scan[dl_mode];
             }
         }
@@ -703,8 +716,15 @@ static void do_scanline(UINT16 width) {
 		}
 
         if (dl_mode_scanline++ == dl_mode_scanlines) {
-            lms     += dl_mode_pitch;
-            attribs += dl_mode_pitch;
+            if (dl_row_wrap > 0) {
+                dl_mode_char_addr += dl_mode_pitch;
+                dl_mode_attr_addr += dl_mode_pitch;
+                dl_row_wrap--;
+            } else {
+                dl_mode_char_addr = lms;
+                dl_mode_attr_addr = attribs;
+                dl_row_wrap = dl_scroll_height - 1;
+            }
             dl_mode_scanline = 0;
         }
 	}

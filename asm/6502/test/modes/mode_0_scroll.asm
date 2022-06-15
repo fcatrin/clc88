@@ -70,9 +70,9 @@ display_list:
     .word VRAM_SCREEN_CHAR_ADDR
     .word VRAM_SCREEN_ATTR_ADDR
 dl_scroll_width  .byte 100
-dl_scroll_height .byte 30
+dl_scroll_height .byte 3
 dl_scroll_left   .byte 0
-dl_scroll_top    .byte 0
+dl_scroll_top    .byte 1
 dl_scroll_fine_x .byte 0
 dl_scroll_fine_y .byte 0
     .word $0f00
