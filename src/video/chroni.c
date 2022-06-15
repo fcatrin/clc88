@@ -503,6 +503,7 @@ static void do_scan_tile_4bpp(UINT16 width, UINT8 line) {
 	UINT8  tile_color;
 	UINT16 tile_data;
 
+    UINT8  pixel_offset = dl_scroll_fine_x;
 	UINT16 pixel_data = 0;
 	UINT32 tile_origin = dl_mode_tile_addr;
 	UINT16 tile_addr   = dl_mode_tile_addr;
@@ -516,13 +517,11 @@ static void do_scan_tile_4bpp(UINT16 width, UINT8 line) {
 	UINT16 line_offset = (line & 7) << 1;
 	int tile_pixel_data_index = 0;
 	for(int i=0; i<width/2; i++) { // for each pixel
-		if ((i & 7) == 0) {
+		if (i == 0 || pixel_offset == 0) {
 		    UINT16 tile = VRAM_DATA(tile_addr);
 
 		    tile_color = (tile & 0xf000) >> 12;
 		    tile_data  = (tile & 0x0fff) << 4;
-
-			tile_pixel_data_index = 0;
 
 			if (line_wrap > 0) {
                 tile_addr++;
@@ -534,9 +533,9 @@ static void do_scan_tile_4bpp(UINT16 width, UINT8 line) {
 
 		}
 
-		if ((i & 3) == 0) {
-			pixel_data = VRAM_DATA(tile_data + tile_pixel_data_index + line_offset);
-			tile_pixel_data_index++;
+		if (i == 0 || (pixel_offset & 3) == 0) {
+			pixel_data = VRAM_DATA(tile_data + (pixel_offset >> 2) + line_offset);
+			pixel_data >>= 4 * (pixel_offset & 3);
 		} else {
 		    pixel_data >>= 4;
 		}
@@ -546,6 +545,8 @@ static void do_scan_tile_4bpp(UINT16 width, UINT8 line) {
 
 		put_pixel(offset, color);
 		put_pixel(offset, color);
+
+		pixel_offset = (pixel_offset + 1) & 7;
 	}
 }
 
