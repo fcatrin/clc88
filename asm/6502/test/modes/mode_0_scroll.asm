@@ -74,7 +74,7 @@ dl_scroll_height .byte 3
 dl_scroll_left   .byte 0
 dl_scroll_top    .byte 1
 dl_scroll_fine_x .byte 0
-dl_scroll_fine_y .byte 0
+dl_scroll_fine_y .byte 2
     .word $0f00
 display_list_size:
     .byte * - display_list + 1

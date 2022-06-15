@@ -682,8 +682,8 @@ static void process_dl() {
                 dl_scroll_top  = BYTE_H(scroll_position);
 
                 UINT16 scroll_fine = VRAM_DATA(dl + dl_pos++);
-                dl_scroll_fine_x = BYTE_L(scroll_fine);
-                dl_scroll_fine_y = BYTE_H(scroll_fine);
+                dl_scroll_fine_x = BYTE_L(scroll_fine) & 7;
+                dl_scroll_fine_y = BYTE_H(scroll_fine) & 7;
 
                 dl_mode_pitch = dl_scroll_width / 2;
 
@@ -691,6 +691,7 @@ static void process_dl() {
                     dl_mode_char_addr = lms    + dl_mode_pitch * dl_scroll_top;
                     dl_mode_attr_addr = attribs + dl_mode_pitch * dl_scroll_top;
                     dl_row_wrap = dl_scroll_height - dl_scroll_top - 1;
+                    dl_mode_scanline = dl_scroll_fine_y;
                 }
             } else {
                 dl_row_wrap = 0xffff;
