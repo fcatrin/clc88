@@ -167,11 +167,16 @@ module chroni (
       reg[16:0] attr_memory_addr;
       reg[16:0] load_memory_addr;
       reg[16:0] load_attr_addr;
+      reg[16:0] text_origin;
+      reg[16:0] attr_origin;
       reg[7:0]  dl_mode_scanline;
       reg[7:0]  text_attr;
       reg[6:0]  text_buffer_index;
       reg[6:0]  attr_buffer_index;
       reg[1:0]  mem_wait;
+      reg[7:0]  line_wrap;
+      reg[7:0]  char_line_wrap;
+      reg[7:0]  attr_line_wrap;
    
       text_buffer_we <= 0;
       attr_buffer_we <= 0;
@@ -189,33 +194,44 @@ module chroni (
             font_decode_state <= (dl_mode_scanline == 0 || lms_changed) ? FD_TEXT_READ : FD_FONT_READ;
             mem_wait <= (dl_mode_scanline == 0 || lms_changed) ? 2'd3 : 2'd2;
             if (lms_changed) begin
-               load_memory_addr <= {dl_lms, 1'b0};
-               data_memory_addr <= {dl_lms, 1'b0};
-               
-               load_attr_addr   <= {dl_attr, 1'b0};
-               attr_memory_addr <= {dl_attr, 1'b0};
+               text_origin      <= {dl_lms, 1'b0};
+               load_memory_addr <= {dl_lms, 1'b0}  + dl_scroll_left;
+               data_memory_addr <= {dl_lms, 1'b0}  + dl_scroll_left;
+
+               attr_origin      <= {dl_attr, 1'b0};
+               load_attr_addr   <= {dl_attr, 1'b0} + dl_scroll_left;
+               attr_memory_addr <= {dl_attr, 1'b0} + dl_scroll_left;
 
                dl_mode_scanline <= 0;
             end else begin
                data_memory_addr <= load_memory_addr;
                attr_memory_addr <= load_attr_addr;
             end
+            line_wrap = dl_scroll ? (dl_scroll_width - dl_scroll_left - 1) : 8'hff;
+            char_line_wrap = line_wrap;
+            attr_line_wrap = line_wrap;
          end else begin
             case (font_decode_state)
                FD_TEXT_READ: // transfer line of text from vram to text_buffer
                begin
                   vram_char_addr    <= data_memory_addr;
                   data_memory_addr  <= data_memory_addr + 1'b1;
+
+                  char_line_wrap    <= char_line_wrap - 1'b1;
+                  if (char_line_wrap == 0) begin
+                     data_memory_addr <= text_origin;
+                     char_line_wrap   <= 8'hff;
+                  end
                   if (mem_wait == 0) begin
                      text_buffer_addr    <= text_buffer_index;
                      text_buffer_data_wr <= vram_chroni_rd_byte;
                      text_buffer_we <= 1;
-                     if (text_buffer_index == dl_mode_pitch-1) begin
+
+                     text_buffer_index <= text_buffer_index + 1'b1;
+                     if (text_buffer_index == dl_mode_cols-1) begin
                         text_buffer_index <= 0;
                         mem_wait <= 3;
                         font_decode_state <= FD_ATTR_READ;
-                     end else begin
-                        text_buffer_index <= text_buffer_index + 1'b1;
                      end
                   end else begin
                      mem_wait <= mem_wait - 1'b1;
@@ -225,16 +241,22 @@ module chroni (
                begin
                   vram_char_addr    <= attr_memory_addr;
                   attr_memory_addr  <= attr_memory_addr + 1'b1;
+
+                  attr_line_wrap    <= attr_line_wrap - 1'b1;
+                  if (attr_line_wrap == 0) begin
+                     attr_memory_addr <= attr_origin;
+                     attr_line_wrap   <= 8'hff;
+                  end
+
                   if (mem_wait == 0) begin
                      attr_buffer_addr    <= attr_buffer_index;
                      attr_buffer_data_wr <= vram_chroni_rd_byte;
                      attr_buffer_we <= 1;
-                     if (attr_buffer_index == dl_mode_pitch-1) begin
+                     attr_buffer_index <= attr_buffer_index + 1'b1;
+                     if (attr_buffer_index == dl_mode_cols-1) begin
                         attr_buffer_index <= 0;
                         mem_wait <= 2;
                         font_decode_state <= FD_FONT_READ;
-                     end else begin
-                        attr_buffer_index <= attr_buffer_index + 1'b1;
                      end
                   end else begin
                      mem_wait <= mem_wait - 1'b1;
@@ -284,12 +306,14 @@ module chroni (
                   font_decode_state <= FD_FONT_DONE;
                end
                FD_FONT_DONE:
-               if (text_buffer_index == dl_mode_pitch+1) begin
+               if (text_buffer_index == dl_mode_cols+1) begin
                   font_decode_state <= FD_IDLE;
                   dl_mode_scanline <= dl_mode_scanline + 1'b1;
                   if (dl_mode_scanline == dl_mode_scanlines) begin
                      load_memory_addr <= load_memory_addr + dl_mode_pitch;
                      load_attr_addr <= load_attr_addr + dl_mode_pitch;
+                     text_origin <= text_origin + dl_mode_pitch;
+                     attr_origin <= attr_origin + dl_mode_pitch;
                      dl_mode_scanline <= 0;
                   end
                end else begin
@@ -425,13 +449,15 @@ module chroni (
       end
    end
 
-   localparam DL_IDLE = 0;
-   localparam DL_READ = 1;
-   localparam DL_READ_WAIT = 2;
-   localparam DL_LMS  = 3;
-   localparam DL_LMS_READ = 4;
-   localparam DL_EXEC = 5;
-   localparam DL_WAIT = 6;
+   localparam DL_IDLE        = 0;
+   localparam DL_READ        = 1;
+   localparam DL_READ_WAIT   = 2;
+   localparam DL_LMS         = 3;
+   localparam DL_LMS_READ    = 4;
+   localparam DL_SCROLL      = 5;
+   localparam DL_SCROLL_READ = 6;
+   localparam DL_EXEC        = 7;
+   localparam DL_WAIT        = 8;
    reg[3:0] dlproc_state;
    
    reg[15:0] display_list_addr;
@@ -439,9 +465,19 @@ module chroni (
    reg[15:0] dl_attr;
    reg[3:0]  dl_mode;
    reg[7:0]  dl_mode_pitch;
+   reg[7:0]  dl_mode_cols;
    reg[7:0]  dl_mode_scanlines;
    reg       dl_narrow;
+   reg       dl_scroll;
    reg[7:0]  dl_scanlines;
+
+   reg[7:0] dl_scroll_width;
+   reg[7:0] dl_scroll_height;
+   reg[7:0] dl_scroll_left;
+   reg[7:0] dl_scroll_top;
+   reg[7:0] dl_scroll_fine_x;
+   reg[7:0] dl_scroll_fine_y;
+
    reg vram_render;
    reg vram_render_trigger;
    reg lms_changed;
@@ -451,6 +487,7 @@ module chroni (
       reg[15:0] display_list_ptr;
       reg[1:0] mem_wait;
       reg[1:0] addr_part;
+      reg[1:0] scroll_part;
 
       vram_render_trigger <= 0;
       lms_changed <= 0;
@@ -489,6 +526,7 @@ module chroni (
             begin
                mem_wait <= mem_wait - 1'b1;
                if (mem_wait == 0) begin
+                  dl_scroll    = vram_chroni_rd_word[13];
                   dl_narrow    = vram_chroni_rd_word[12];
                   dl_mode      = vram_chroni_rd_word[11:8];
                   dl_scanlines = vram_chroni_rd_word[7:0] - 1'b1;
@@ -514,9 +552,10 @@ module chroni (
                      0: dl_attr <= vram_chroni_rd_word;
                   endcase
                   
-                  if (addr_part == 0) begin
+                  if (addr_part == 0 || dl_mode == 3) begin
                      report_lms_changed <= 1;
-                     dlproc_state <= DL_EXEC;
+                     scroll_part = 2'b0;
+                     dlproc_state <= dl_scroll ? DL_SCROLL : DL_EXEC;
                   end else begin
                      vram_dl_addr     <= display_list_ptr;
                      display_list_ptr <= display_list_ptr + 1'b1;
@@ -524,6 +563,35 @@ module chroni (
                      addr_part <= addr_part - 1'b1;
                   end
                end
+            end
+            DL_SCROLL:
+            begin
+                vram_dl_addr     <= display_list_ptr;
+                display_list_ptr <= display_list_ptr + 1'b1;
+                mem_wait <= 2;
+                dlproc_state <= DL_SCROLL_READ;
+            end
+            DL_SCROLL_READ:
+            begin
+                mem_wait <= mem_wait - 1'b1;
+                if (mem_wait == 0) begin
+                    case (scroll_part)
+                        2'd0 : begin
+                            dl_scroll_width  = vram_chroni_rd_word[7:0];
+                            dl_scroll_height = vram_chroni_rd_word[15:8];
+                        end
+                        2'd1 : begin
+                            dl_scroll_left = vram_chroni_rd_word[7:0];
+                            dl_scroll_top  = vram_chroni_rd_word[15:8];
+                        end
+                        2'd2 : begin
+                            dl_scroll_fine_x = vram_chroni_rd_word[7:0];
+                            dl_scroll_fine_y = vram_chroni_rd_word[15:8];
+                        end
+                    endcase
+                    scroll_part  <= scroll_part + 1'b1;
+                    dlproc_state <= scroll_part == 2 ? DL_EXEC : DL_SCROLL;
+                end
             end
             DL_EXEC:
             begin
@@ -534,17 +602,20 @@ module chroni (
                blank_scanline <= 0;
                if (dl_mode == 1) begin
                   dl_mode_scanlines <= 7;
-                  dl_mode_pitch <= dl_narrow ? 8'd64 : 8'd80;
+                  dl_mode_cols = dl_narrow ? 8'd64 : 8'd80;
+                  dl_mode_pitch <= dl_scroll ? dl_scroll_width : dl_mode_cols;
                   double_pixel <= 0;
                   vram_render <= 1;
                end else if (dl_mode == 2) begin
                   dl_mode_scanlines <= 7;
-                  dl_mode_pitch <= dl_narrow ? 8'd32 : 8'd40;
+                  dl_mode_cols = dl_narrow ? 8'd32 : 8'd40;
+                  dl_mode_pitch <= dl_scroll ? dl_scroll_width : dl_mode_cols;
                   double_pixel <= 1;
                   vram_render <= 1;
                end else if (dl_mode == 3) begin
                   dl_mode_scanlines <= 7;
-                  dl_mode_pitch <= dl_narrow ? 8'd32 : 8'd40;
+                  dl_mode_cols = dl_narrow ? 8'd32 : 8'd40;
+                  dl_mode_pitch <= dl_scroll ? dl_scroll_width : dl_mode_cols;
                   double_pixel <=1;
                   vram_render <= 1;
                end else if (dl_mode == 0) begin
