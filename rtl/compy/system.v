@@ -233,6 +233,7 @@ module system (
 
    end
 
+   wire      chroni_irq;
    wire[7:0] chroni_rd_data;
    chroni chroni_inst (
       .vga_clk(vga_clock),
@@ -247,7 +248,8 @@ module system (
       .cpu_rd_data(chroni_rd_data),
       .cpu_wr_data(cpu_wr_data),
       .cpu_wr_en(cpu_wr_en & chroni_s),
-      .cpu_addr(cpu_addr)
+      .cpu_addr(cpu_addr),
+      .irq(chroni_irq)
    );
    
    wire[7:0] cpu_wr_data;
@@ -299,7 +301,7 @@ module system (
          .bus_wr_en(cpu_wr_en),
          .bus_rd_req(cpu_rd_req),
          .ready(cpu_ready),
-         .nmi_n(1'b1),
+         .nmi_n(!chroni_irq),
          .irq_n(!sys_timer_irq_all)
       );
       

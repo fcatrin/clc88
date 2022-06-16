@@ -13,7 +13,8 @@ module chroni (
       input  [15:0] cpu_addr,
       output [7:0]  cpu_rd_data,
       input  [7:0]  cpu_wr_data,
-      input         cpu_wr_en
+      input         cpu_wr_en,
+      output        irq
       );
 
    `include "chroni.vh"
@@ -36,6 +37,12 @@ module chroni (
       palette_wr_en <= 0;
       vram_cpu_wr_en <= 0;
       vram_cpu_byte_en <= 0;
+
+      if (!reset_n) begin
+         status_chroni_enabled  <= 1;
+         status_irq_enabled     <= 0;
+         status_sprites_enabled <= 1;
+      end
       
       if (register_cs & cpu_wr_en_rising) begin
          case (cpu_addr[6:0])
@@ -86,6 +93,12 @@ module chroni (
                vram_cpu_byte_en <= vram_address_aux[0] ? 2'b10 : 2'b11;
                vram_address_aux <= vram_address_aux + 1'b1;
             end
+            7'h12:
+            begin
+                status_chroni_enabled  <= cpu_wr_data[4];
+                status_sprites_enabled <= cpu_wr_data[3];
+                status_irq_enabled     <= cpu_wr_data[2];
+            end
             7'h1a:
                border_color[7:0]  <= cpu_wr_data;
             7'h1b:
@@ -133,6 +146,12 @@ module chroni (
                cpu_rd_data_reg <= vram_address_aux[15:8];
             7'h0c:
                cpu_rd_data_reg <= vram_address_aux[16];
+            7'h12:
+               cpu_rd_data_reg <= {vertical_irq_fired,
+                                   scanline_irq_fired, 1'b0,
+                                   status_chroni_enabled,
+                                   status_sprites_enabled,
+                                   status_irq_enabled, 2'b0};
             7'h1a:
                cpu_rd_data_reg <= border_color[7:0];
             7'h1b:
@@ -498,6 +517,7 @@ module chroni (
          dl_mode <= 0;
          dl_scanlines <= 0;
          double_pixel <= 0;
+         scanline_out <= 0;
       end else if (render_flag_rising) begin
          report_lms_changed <= 0;
          blank_scanline <= 1;
@@ -509,6 +529,7 @@ module chroni (
             dl_scanlines <= dl_scanlines - 1'b1;
             vram_render_trigger <= vram_render;
             blank_scanline <= dl_mode == 0;
+            scanline_out <= scanline_out + 1'b1;
          end
       end else begin
             case(dlproc_state)
@@ -652,7 +673,30 @@ module chroni (
          end
       end
    end
-   
+
+   reg status_chroni_enabled;
+   reg status_irq_enabled;
+   reg status_sprites_enabled;
+
+   reg[7:0] scanline_irq;
+   reg[7:0] scanline_out;
+
+   wire v_blank;
+   wire h_blank;
+   reg scanline_irq_fired;
+   reg vertical_irq_fired;
+   assign irq = status_irq_enabled && (scanline_irq_fired || vertical_irq_fired);
+
+   always @ (posedge sys_clk) begin : irq_block
+       if (!reset_n) begin
+           scanline_irq_fired <= 0;
+           vertical_irq_fired <= 0;
+       end else begin
+           scanline_irq_fired <= h_blank && (scanline_out + 1'b1) == scanline_irq;
+           vertical_irq_fired <= v_blank;
+       end
+   end
+
    // line render trigger
    reg render_buffer;
    reg render_flag  = 0;
@@ -818,7 +862,9 @@ module chroni (
          .blank_scanline(blank_scanline),
          .border_color(border_color),
          .double_pixel(double_pixel),
-         .narrow(dl_narrow)
+         .narrow(dl_narrow),
+         .v_blank(v_blank),
+         .h_blank(h_blank)
       );
 
    wire cpu_wr_en_rising;

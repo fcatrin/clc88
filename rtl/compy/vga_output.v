@@ -22,7 +22,9 @@ module vga_output (
       input [15:0] border_color,
       input blank_scanline,
       input double_pixel,
-      input narrow
+      input narrow,
+      output v_blank,
+      output h_blank
       );
 
    `include "chroni.vh"
@@ -289,7 +291,9 @@ module vga_output (
    assign vga_g = (h_de & v_de) ? (read_font ? 6'b111111 : ((h_pf & v_pf & display_scanline) ? pixel[10:05] : border_color[10:05])) : 6'b000000;
    assign vga_b = (h_de & v_de) ? (                         (h_pf & v_pf & display_scanline) ? pixel[04:0]  : border_color[04:00])  : 5'b00000;
    
-   
+   assign v_blank = !v_de;
+   assign h_blank = !h_de;
+
    wire mode_changed_busy;
    reg  mode_changed_req;
    wire mode_changed_ack;
