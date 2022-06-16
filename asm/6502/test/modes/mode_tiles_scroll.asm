@@ -83,17 +83,15 @@ wait_frame:
 
     ldx dl_scroll_left
     inx
-    cpx dl_scroll_height
+    cpx dl_scroll_width
     bne write_scroll_x
     ldx #0
 write_scroll_x:
     mwa vram_scroll_left_addr VADDRW
-    mva #0 VDATA
     stx VDATA
     stx dl_scroll_left
 write_fine_scroll_x
     mwa vram_scroll_fine_x_addr VADDRW
-    mva #0 VDATA
     sty VDATA
 
     jmp main_loop
@@ -106,7 +104,7 @@ dl_scroll_height .byte 26
 dl_scroll_left   .byte 0
 dl_scroll_top    .byte 0
 dl_scroll_fine_x .byte 0
-dl_scroll_fine_y .byte 1
+dl_scroll_fine_y .byte 0
 
     .word $0f00
 
