@@ -182,9 +182,9 @@ module chroni (
    // state machine to read char or font from rom
    always @(posedge sys_clk) begin : char_gen
       reg[3:0]  font_decode_state;
-      reg[16:0] data_memory_addr;
+      reg[16:0] char_memory_addr;
       reg[16:0] attr_memory_addr;
-      reg[16:0] load_memory_addr;
+      reg[16:0] load_char_addr;
       reg[16:0] load_attr_addr;
       reg[16:0] char_origin;
       reg[16:0] attr_origin;
@@ -219,8 +219,8 @@ module chroni (
             bit_last  <= 0;
             if (lms_changed) begin
                char_origin      <= {dl_lms, 1'b0};
-               load_memory_addr <= {dl_lms, 1'b0}  + dl_scroll_left;
-               data_memory_addr <= {dl_lms, 1'b0}  + dl_scroll_left;
+               load_char_addr   <= {dl_lms, 1'b0}  + dl_scroll_left;
+               char_memory_addr <= {dl_lms, 1'b0}  + dl_scroll_left;
 
                attr_origin      <= {dl_attr, 1'b0};
                load_attr_addr   <= {dl_attr, 1'b0} + dl_scroll_left;
@@ -228,7 +228,7 @@ module chroni (
 
                dl_mode_scanline <= 0;
             end else begin
-               data_memory_addr <= load_memory_addr;
+               char_memory_addr <= load_char_addr;
                attr_memory_addr <= load_attr_addr;
             end
             line_wrap = dl_scroll ? (dl_scroll_width - dl_scroll_left - 1) : 8'hff;
@@ -238,12 +238,12 @@ module chroni (
             case (font_decode_state)
                FD_TEXT_READ: // transfer line of text from vram to char_buffer
                begin
-                  vram_char_addr    <= data_memory_addr;
-                  data_memory_addr  <= data_memory_addr + 1'b1;
+                  vram_char_addr    <= char_memory_addr;
+                  char_memory_addr  <= char_memory_addr + 1'b1;
 
                   char_line_wrap    <= char_line_wrap - 1'b1;
                   if (char_line_wrap == 0) begin
-                     data_memory_addr <= char_origin;
+                     char_memory_addr <= char_origin;
                      char_line_wrap   <= 8'hff;
                   end
                   if (mem_wait == 0) begin
@@ -335,7 +335,7 @@ module chroni (
                   font_decode_state <= FD_IDLE;
                   dl_mode_scanline <= dl_mode_scanline + 1'b1;
                   if (dl_mode_scanline == dl_mode_scanlines) begin
-                     load_memory_addr <= load_memory_addr + dl_mode_pitch;
+                     load_char_addr <= load_char_addr + dl_mode_pitch;
                      load_attr_addr <= load_attr_addr + dl_mode_pitch;
                      char_origin <= char_origin + dl_mode_pitch;
                      attr_origin <= attr_origin + dl_mode_pitch;
@@ -365,8 +365,8 @@ module chroni (
    // state machine to read tiles
    always @(posedge sys_clk) begin : tile_gen
       reg[2:0]  tile_decode_state;
-      reg[15:0] data_memory_addr;
-      reg[15:0] load_memory_addr;
+      reg[15:0] char_memory_addr;
+      reg[15:0] load_char_addr;
       reg[7:0]  dl_mode_scanline;
       reg[5:0]  tile_buffer_index;
       reg[3:0]  tile_palette;
@@ -387,19 +387,19 @@ module chroni (
             tile_decode_state <= (dl_mode_scanline == 0 || lms_changed) ? TL_SCREEN_READ : TL_TILE_READ;
             mem_wait <= (dl_mode_scanline == 0 || lms_changed) ? 2'd3 : 2'd2;
             if (lms_changed) begin
-               load_memory_addr <= dl_lms;
-               data_memory_addr <= dl_lms;
+               load_char_addr <= dl_lms;
+               char_memory_addr <= dl_lms;
 
                dl_mode_scanline <= 0;
             end else begin
-               data_memory_addr <= load_memory_addr;
+               char_memory_addr <= load_char_addr;
             end
          end else begin
             case (tile_decode_state)
                TL_SCREEN_READ: // transfer line of text from vram to tile_buffer
                begin
-                  vram_tile_addr    <= data_memory_addr;
-                  data_memory_addr  <= data_memory_addr + 1'b1;
+                  vram_tile_addr    <= char_memory_addr;
+                  char_memory_addr  <= char_memory_addr + 1'b1;
                   if (mem_wait == 0) begin
                      tile_buffer_addr    <= tile_buffer_index;
                      tile_buffer_data_wr <= vram_chroni_rd_word;
@@ -465,7 +465,7 @@ module chroni (
                   tile_decode_state <= TL_IDLE;
                   dl_mode_scanline <= dl_mode_scanline + 1'b1;
                   if (dl_mode_scanline == dl_mode_scanlines) begin
-                     load_memory_addr <= load_memory_addr + dl_mode_pitch;
+                     load_char_addr <= load_char_addr + dl_mode_pitch;
                      dl_mode_scanline <= 0;
                   end
                end else begin
