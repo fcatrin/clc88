@@ -227,7 +227,7 @@ module chroni (
                load_attr_addr   <= {dl_mode_attr_addr, 1'b0} + dl_scroll_left;
                attr_memory_addr <= {dl_mode_attr_addr, 1'b0} + dl_scroll_left;
 
-               dl_mode_scanline <= 0;
+               dl_mode_scanline <= dl_scroll_fine_y;
                row_wrap = dl_scroll ? (dl_scroll_height - dl_scroll_top - 1) : 8'hff;
             end else begin
                char_memory_addr <= load_char_addr;
