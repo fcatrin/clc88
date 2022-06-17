@@ -377,13 +377,17 @@ module chroni (
    // state machine to read tiles
    always @(posedge sys_clk) begin : tile_gen
       reg[2:0]  tile_decode_state;
-      reg[15:0] char_memory_addr;
-      reg[15:0] load_char_addr;
+      reg[15:0] tile_memory_addr;
+      reg[15:0] load_tile_addr;
+      reg[16:0] tile_origin;
       reg[7:0]  dl_mode_scanline;
       reg[5:0]  tile_buffer_index;
       reg[3:0]  tile_palette;
       reg       tile_pixel_index;
       reg[1:0]  mem_wait;
+      reg[7:0]  line_wrap;
+      reg[7:0]  tile_line_wrap;
+      reg[3:0]  row_wrap;
 
       tile_buffer_we <= 0;
       tile_line_buffer_wr_en <= 0;
@@ -399,24 +403,33 @@ module chroni (
             tile_decode_state <= (dl_mode_scanline == 0 || lms_changed) ? TL_SCREEN_READ : TL_TILE_READ;
             mem_wait <= (dl_mode_scanline == 0 || lms_changed) ? 2'd3 : 2'd2;
             if (lms_changed) begin
-               load_char_addr <= dl_lms;
-               char_memory_addr <= dl_lms;
+               tile_origin      <= dl_mode_tile_addr;
+               load_tile_addr   <= dl_mode_tile_addr + dl_scroll_left;
+               tile_memory_addr <= dl_mode_tile_addr + dl_scroll_left;
 
                dl_mode_scanline <= 0;
             end else begin
-               char_memory_addr <= load_char_addr;
+               tile_memory_addr <= load_tile_addr;
             end
+            line_wrap = dl_scroll ? (dl_scroll_width - dl_scroll_left - 1) : 8'hff;
+            tile_line_wrap = line_wrap;
          end else begin
             case (tile_decode_state)
                TL_SCREEN_READ: // transfer line of text from vram to tile_buffer
                begin
-                  vram_tile_addr    <= char_memory_addr;
-                  char_memory_addr  <= char_memory_addr + 1'b1;
+                  vram_tile_addr    <= tile_memory_addr;
+                  tile_memory_addr  <= tile_memory_addr + 1'b1;
+
+                  tile_line_wrap    <= tile_line_wrap - 1'b1;
+                  if (tile_line_wrap == 0) begin
+                     tile_memory_addr <= tile_origin;
+                     tile_line_wrap   <= 8'hff;
+                  end
                   if (mem_wait == 0) begin
                      tile_buffer_addr    <= tile_buffer_index;
                      tile_buffer_data_wr <= vram_chroni_rd_word;
                      tile_buffer_we <= 1;
-                     if (tile_buffer_index == dl_mode_pitch-1) begin
+                     if (tile_buffer_index == dl_mode_cols-1) begin
                         tile_buffer_index <= 0;
                         mem_wait <= 3;
                         tile_decode_state <= TL_TILE_READ;
@@ -473,11 +486,12 @@ module chroni (
                   end
                end
                TL_TILE_DONE:
-               if (tile_buffer_index == dl_mode_pitch+1) begin
+               if (tile_buffer_index == dl_mode_cols+1) begin
                   tile_decode_state <= TL_IDLE;
                   dl_mode_scanline <= dl_mode_scanline + 1'b1;
                   if (dl_mode_scanline == dl_mode_scanlines) begin
-                     load_char_addr <= load_char_addr + dl_mode_pitch;
+                     tile_origin    <= tile_origin    + dl_mode_pitch;
+                     load_tile_addr <= load_tile_addr + dl_mode_pitch;
                      dl_mode_scanline <= 0;
                   end
                end else begin
@@ -510,6 +524,7 @@ module chroni (
    reg[7:0]  dl_mode_scanlines;
    reg[15:0] dl_mode_char_addr;
    reg[15:0] dl_mode_attr_addr;
+   reg[15:0] dl_mode_tile_addr;
    reg       dl_narrow;
    reg       dl_scroll;
    reg[7:0]  dl_scanlines;
@@ -663,7 +678,7 @@ module chroni (
                   dl_mode_scanlines <= 7;
                   dl_mode_cols = dl_narrow ? 8'd32 : 8'd40;
                   dl_mode_pitch = dl_scroll ? dl_scroll_width : dl_mode_cols;
-                  memory_row_size <= dl_mode_pitch[7:1];
+                  memory_row_size <= dl_mode_pitch;
                   double_pixel <=1;
                   vram_render <= 1;
                end else if (dl_mode == 0) begin
@@ -676,6 +691,7 @@ module chroni (
                 first_row_offset  = dl_scroll ? (memory_row_size * dl_scroll_top) : 0;
                 dl_mode_char_addr <= dl_lms  + first_row_offset;
                 dl_mode_attr_addr <= dl_attr + first_row_offset;
+                dl_mode_tile_addr <= dl_lms  + first_row_offset;
                 dlproc_state = DL_WAIT;
                 vram_render_trigger <= dl_mode != 0;
             end
