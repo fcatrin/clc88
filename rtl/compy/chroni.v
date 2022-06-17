@@ -196,6 +196,8 @@ module chroni (
       reg[7:0]  line_wrap;
       reg[7:0]  char_line_wrap;
       reg[7:0]  attr_line_wrap;
+      reg[3:0]  bit_first;
+      reg[3:0]  bit_last;
    
       text_buffer_we <= 0;
       attr_buffer_we <= 0;
@@ -204,7 +206,8 @@ module chroni (
          font_decode_state <= FD_IDLE;
          dl_mode_scanline <= 0;
          text_line_buffer_index_in <= 0;
-         wr_bitmap_bits <= 0;
+         wr_bitmap_first <= 0;
+         wr_bitmap_last  <= 0;
       end else begin
          if (vram_render_trigger_rising && is_text_mode) begin
             text_buffer_index <= 0;
@@ -212,6 +215,8 @@ module chroni (
             text_line_buffer_index_in <= render_buffer ? 11'd640 : 11'd0;
             font_decode_state <= (dl_mode_scanline == 0 || lms_changed) ? FD_TEXT_READ : FD_FONT_READ;
             mem_wait <= (dl_mode_scanline == 0 || lms_changed) ? 2'd3 : 2'd2;
+            bit_first <= 4'd8 - dl_scroll_fine_x;
+            bit_last  <= 0;
             if (lms_changed) begin
                text_origin      <= {dl_lms, 1'b0};
                load_memory_addr <= {dl_lms, 1'b0}  + dl_scroll_left;
@@ -319,9 +324,10 @@ module chroni (
                if (!wr_busy) begin
                   text_pixel_out <= text_pixel_out_next;
                   text_line_buffer_wr_en <= 1;
-                  wr_bitmap_on   <= text_attr[3:0];
-                  wr_bitmap_off  <= text_attr[7:4];
-                  wr_bitmap_bits <= 4'd8;
+                  wr_bitmap_on    <= text_attr[3:0];
+                  wr_bitmap_off   <= text_attr[7:4];
+                  wr_bitmap_first <= bit_first;
+                  wr_bitmap_last  <= bit_last;
                   font_decode_state <= FD_FONT_DONE;
                end
                FD_FONT_DONE:
@@ -337,7 +343,10 @@ module chroni (
                   end
                end else begin
                   font_decode_state <= FD_FONT_FETCH;
-                  text_line_buffer_index_in <= text_line_buffer_index_in + 4'd8;
+                  text_line_buffer_index_in <= text_line_buffer_index_in + bit_first;
+                  bit_first <= 4'd8;
+                  bit_last  <= text_buffer_index != dl_mode_cols || dl_scroll_fine_x == 0 ?
+                               0 : (4'd8 - dl_scroll_fine_x);
                end
             endcase
          end
@@ -494,8 +503,8 @@ module chroni (
    reg[7:0] dl_scroll_height;
    reg[7:0] dl_scroll_left;
    reg[7:0] dl_scroll_top;
-   reg[7:0] dl_scroll_fine_x;
-   reg[7:0] dl_scroll_fine_y;
+   reg[2:0] dl_scroll_fine_x;
+   reg[2:0] dl_scroll_fine_y;
 
    reg vram_render;
    reg vram_render_trigger;
@@ -606,8 +615,8 @@ module chroni (
                             dl_scroll_top  = vram_chroni_rd_word[15:8];
                         end
                         2'd2 : begin
-                            dl_scroll_fine_x = vram_chroni_rd_word[7:0];
-                            dl_scroll_fine_y = vram_chroni_rd_word[15:8];
+                            dl_scroll_fine_x = vram_chroni_rd_word[2:0];
+                            dl_scroll_fine_y = vram_chroni_rd_word[10:8];
                         end
                     endcase
                     scroll_part  <= scroll_part + 1'b1;
@@ -623,13 +632,13 @@ module chroni (
                blank_scanline <= 0;
                if (dl_mode == 1) begin
                   dl_mode_scanlines <= 7;
-                  dl_mode_cols = dl_narrow ? 8'd64 : 8'd80;
+                  dl_mode_cols = (dl_narrow ? 8'd64 : 8'd80) + (dl_scroll_fine_x!=0 ? 1 : 0);
                   dl_mode_pitch <= dl_scroll ? dl_scroll_width : dl_mode_cols;
                   double_pixel <= 0;
                   vram_render <= 1;
                end else if (dl_mode == 2) begin
                   dl_mode_scanlines <= 7;
-                  dl_mode_cols = dl_narrow ? 8'd32 : 8'd40;
+                  dl_mode_cols = (dl_narrow ? 8'd32 : 8'd40) + (dl_scroll_fine_x!=0 ? 1 : 0);
                   dl_mode_pitch <= dl_scroll ? dl_scroll_width : dl_mode_cols;
                   double_pixel <= 1;
                   vram_render <= 1;
@@ -787,7 +796,8 @@ module chroni (
         .q_b ( vram_chroni_rd_word )
     );
 
-   reg[3:0]   wr_bitmap_bits;
+   reg[3:0]   wr_bitmap_first;
+   reg[3:0]   wr_bitmap_last;
    reg[7:0]   wr_bitmap_on;
    reg[7:0]   wr_bitmap_off;
    reg[7:0]   text_pixel_out;
@@ -817,7 +827,8 @@ module chroni (
          .wr_en(line_buffer_wr_en),
          .wr_bitmap_on(wr_bitmap_on),
          .wr_bitmap_off(wr_bitmap_off),
-         .wr_bitmap_bits(wr_bitmap_bits),
+         .wr_bitmap_first(wr_bitmap_first),
+         .wr_bitmap_last(wr_bitmap_last),
          .wr_tile_pixels(wr_tile_pixels),
          .wr_tile_palette(wr_tile_palette),
          .wr_busy(wr_busy)

@@ -15,7 +15,8 @@ module chroni_line_buffer (
       input [7:0] wr_bitmap_on,
       input [7:0] wr_bitmap_off,
       
-      input [3:0] wr_bitmap_bits,
+      input [3:0] wr_bitmap_first,
+      input [3:0] wr_bitmap_last,
       input [2:0] wr_tile_pixels,
       input [3:0] wr_tile_palette,
       output reg wr_busy
@@ -23,7 +24,8 @@ module chroni_line_buffer (
 
 reg[7:0]  bitmap_data;
 reg[10:0] bitmap_addr;
-reg[3:0]  bitmap_bits;
+reg[3:0]  bitmap_first;
+reg[3:0]  bitmap_last;
 reg[7:0]  bitmap_on;
 reg[7:0]  bitmap_off;
 
@@ -36,27 +38,29 @@ reg[10:0] tile_addr;
 always @ (posedge wr_clk) begin
    wr_busy <= 0;
    if (~reset_n) begin
-      bitmap_bits <= 0;
-      line_wr_en <= 0;
-      tile_pixels <= 0;
-   end else if (wr_en && wr_bitmap_bits != 0) begin
-      bitmap_data <= wr_data[7:0];
-      bitmap_bits <= wr_bitmap_bits;
-      bitmap_on   <= wr_bitmap_on;
-      bitmap_off  <= wr_bitmap_off;
+      bitmap_first <= 0;
+      bitmap_last  <= 0;
+      line_wr_en   <= 0;
+      tile_pixels  <= 0;
+   end else if (wr_en && wr_bitmap_first != 0) begin
+      bitmap_data  <= wr_data[7:0];
+      bitmap_first <= wr_bitmap_first;
+      bitmap_last  <= wr_bitmap_last;
+      bitmap_on    <= wr_bitmap_on;
+      bitmap_off   <= wr_bitmap_off;
       
       bitmap_addr <= wr_addr;
       
       wr_busy <= 1;
-   end else if (bitmap_bits != 0) begin
-      line_wr_data <= bitmap_data[bitmap_bits-1] ? bitmap_on : bitmap_off;
+   end else if (bitmap_first != bitmap_last) begin
+      line_wr_data <= bitmap_data[bitmap_first-1] ? bitmap_on : bitmap_off;
       line_wr_addr <= bitmap_addr;
       line_wr_en   <= 1;
       
-      bitmap_addr <= bitmap_addr + 1'b1;
-      bitmap_bits <= bitmap_bits - 1'b1;
+      bitmap_addr  <= bitmap_addr  + 1'b1;
+      bitmap_first <= bitmap_first - 1'b1;
       
-      wr_busy <= bitmap_bits != 1;
+      wr_busy <= bitmap_first != bitmap_last;
    end else if (wr_en && wr_tile_pixels != 0) begin
       tile_data    <= wr_data;
       tile_pixels  <= wr_tile_pixels;
