@@ -76,7 +76,7 @@ module chroni (
                vram_cpu_wr_en   <= 1;
                vram_cpu_wr_data <= {cpu_wr_data, cpu_wr_data};
                vram_cpu_addr    <= vram_address[16:1];
-               vram_cpu_byte_en <= vram_address[0] ? 2'b10 : 2'b11;
+               vram_cpu_byte_en <= vram_address[0] ? 2'b10 : 2'b01;
                vram_address     <= vram_address + 1'b1;
             end
             7'h0a:
@@ -198,6 +198,7 @@ module chroni (
       reg[7:0]  attr_line_wrap;
       reg[3:0]  bit_first;
       reg[3:0]  bit_last;
+      reg[3:0]  row_wrap;
    
       char_buffer_we <= 0;
       attr_buffer_we <= 0;
@@ -218,15 +219,16 @@ module chroni (
             bit_first <= 4'd8 - dl_scroll_fine_x;
             bit_last  <= 0;
             if (lms_changed) begin
-               char_origin      <= {dl_lms, 1'b0};
-               load_char_addr   <= {dl_lms, 1'b0}  + dl_scroll_left;
-               char_memory_addr <= {dl_lms, 1'b0}  + dl_scroll_left;
+               char_origin      <= {dl_mode_char_addr, 1'b0};
+               load_char_addr   <= {dl_mode_char_addr, 1'b0}  + dl_scroll_left;
+               char_memory_addr <= {dl_mode_char_addr, 1'b0}  + dl_scroll_left;
 
-               attr_origin      <= {dl_attr, 1'b0};
-               load_attr_addr   <= {dl_attr, 1'b0} + dl_scroll_left;
-               attr_memory_addr <= {dl_attr, 1'b0} + dl_scroll_left;
+               attr_origin      <= {dl_mode_attr_addr, 1'b0};
+               load_attr_addr   <= {dl_mode_attr_addr, 1'b0} + dl_scroll_left;
+               attr_memory_addr <= {dl_mode_attr_addr, 1'b0} + dl_scroll_left;
 
                dl_mode_scanline <= 0;
+               row_wrap = dl_scroll ? (dl_scroll_height - dl_scroll_top - 1) : 8'hff;
             end else begin
                char_memory_addr <= load_char_addr;
                attr_memory_addr <= load_attr_addr;
@@ -335,11 +337,21 @@ module chroni (
                   font_decode_state <= FD_IDLE;
                   dl_mode_scanline <= dl_mode_scanline + 1'b1;
                   if (dl_mode_scanline == dl_mode_scanlines) begin
-                     load_char_addr <= load_char_addr + dl_mode_pitch;
-                     load_attr_addr <= load_attr_addr + dl_mode_pitch;
-                     char_origin <= char_origin + dl_mode_pitch;
-                     attr_origin <= attr_origin + dl_mode_pitch;
                      dl_mode_scanline <= 0;
+                     row_wrap <= row_wrap - 1'b1;
+                     if (row_wrap == 0) begin
+                        char_origin      <= {dl_lms,  1'b0};
+                        attr_origin      <= {dl_attr, 1'b0};
+                        load_char_addr   <= {dl_lms,  1'b0} + dl_scroll_left;
+                        load_attr_addr   <= {dl_attr, 1'b0} + dl_scroll_left;
+
+                        row_wrap <= dl_scroll ? (dl_scroll_height-1) : 8'hff;
+                     end else begin
+                        char_origin <= char_origin + dl_mode_pitch;
+                        attr_origin <= attr_origin + dl_mode_pitch;
+                        load_char_addr <= load_char_addr + dl_mode_pitch;
+                        load_attr_addr <= load_attr_addr + dl_mode_pitch;
+                     end
                   end
                end else begin
                   font_decode_state <= FD_FONT_FETCH;
@@ -485,7 +497,8 @@ module chroni (
    localparam DL_SCROLL      = 5;
    localparam DL_SCROLL_READ = 6;
    localparam DL_EXEC        = 7;
-   localparam DL_WAIT        = 8;
+   localparam DL_PREPARE     = 8;
+   localparam DL_WAIT        = 9;
    reg[3:0] dlproc_state;
    
    reg[15:0] display_list_addr;
@@ -495,6 +508,8 @@ module chroni (
    reg[7:0]  dl_mode_pitch;
    reg[7:0]  dl_mode_cols;
    reg[7:0]  dl_mode_scanlines;
+   reg[15:0] dl_mode_char_addr;
+   reg[15:0] dl_mode_attr_addr;
    reg       dl_narrow;
    reg       dl_scroll;
    reg[7:0]  dl_scanlines;
@@ -513,9 +528,11 @@ module chroni (
    always @ (posedge sys_clk) begin : dlproc
       reg report_lms_changed;
       reg[15:0] display_list_ptr;
+      reg[15:0] first_row_offset;
       reg[1:0] mem_wait;
       reg[1:0] addr_part;
       reg[1:0] scroll_part;
+      reg[7:0] memory_row_size;
 
       vram_render_trigger <= 0;
       lms_changed <= 0;
@@ -625,33 +642,42 @@ module chroni (
             end
             DL_EXEC:
             begin
-               dlproc_state = DL_WAIT;
+               dlproc_state = DL_PREPARE;
                vram_read_dl <= 0;
-               vram_render_trigger <= 1;
-               lms_changed <= report_lms_changed;
                blank_scanline <= 0;
                if (dl_mode == 1) begin
                   dl_mode_scanlines <= 7;
                   dl_mode_cols = (dl_narrow ? 8'd64 : 8'd80) + (dl_scroll_fine_x!=0 ? 1 : 0);
-                  dl_mode_pitch <= dl_scroll ? dl_scroll_width : dl_mode_cols;
+                  dl_mode_pitch = dl_scroll ? dl_scroll_width : dl_mode_cols;
+                  memory_row_size <= {1'b0, dl_mode_pitch[7:1]};
                   double_pixel <= 0;
                   vram_render <= 1;
                end else if (dl_mode == 2) begin
                   dl_mode_scanlines <= 7;
                   dl_mode_cols = (dl_narrow ? 8'd32 : 8'd40) + (dl_scroll_fine_x!=0 ? 1 : 0);
-                  dl_mode_pitch <= dl_scroll ? dl_scroll_width : dl_mode_cols;
+                  dl_mode_pitch = dl_scroll ? dl_scroll_width : dl_mode_cols;
+                  memory_row_size <= {1'b0, dl_mode_pitch[7:1]};
                   double_pixel <= 1;
                   vram_render <= 1;
                end else if (dl_mode == 3) begin
                   dl_mode_scanlines <= 7;
                   dl_mode_cols = dl_narrow ? 8'd32 : 8'd40;
-                  dl_mode_pitch <= dl_scroll ? dl_scroll_width : dl_mode_cols;
+                  dl_mode_pitch = dl_scroll ? dl_scroll_width : dl_mode_cols;
+                  memory_row_size <= dl_mode_pitch[7:1];
                   double_pixel <=1;
                   vram_render <= 1;
                end else if (dl_mode == 0) begin
                   blank_scanline <= 1;
-                  vram_render_trigger <= 0;
                end
+            end
+            DL_PREPARE:
+            begin
+                lms_changed <= report_lms_changed;
+                first_row_offset  = dl_scroll ? (memory_row_size * dl_scroll_top) : 0;
+                dl_mode_char_addr <= dl_lms  + first_row_offset;
+                dl_mode_attr_addr <= dl_attr + first_row_offset;
+                dlproc_state = DL_WAIT;
+                vram_render_trigger <= dl_mode != 0;
             end
          endcase
       end
