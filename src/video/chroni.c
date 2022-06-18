@@ -452,16 +452,12 @@ static void do_scan_text_attribs(UINT16 width, UINT8 line, bool cols80) {
 
 	UINT32 char_addr = char_origin;
 	UINT32 attr_addr = attr_origin;
-	UINT8  line_wrap = 0;
+	UINT8  line_wrap = 0xff;
 	if (dl_scroll) {
 	    char_addr += dl_scroll_left;
 	    attr_addr += dl_scroll_left;
 	    line_wrap = dl_scroll_width - dl_scroll_left - 1;
 	}
-
-    if (line_offset == 0) {
-        printf("lms:%04x dl_mode_char_addr:%04x char_origin:%d\n", lms, dl_mode_char_addr, char_origin);
-    }
 
 	for(int i=0; i<scan_width; i++) {
 		if (i  == 0 || pixel_offset == 0) {
@@ -681,7 +677,6 @@ static void process_dl() {
         if (dl_mode == 0x0f) {
             dl_scanlines = 0;
         } else if (dl_mode != 0) {
-    	    printf("read dl mode:%02x scanlines:%d scroll:%s\n", dl_mode, dl_scanlines, dl_scroll ? "true" : "false");
             dl_pos++;
             lms = VRAM_DATA(dl + dl_pos++);
             if (dl_mode < 3) {
