@@ -246,7 +246,7 @@ module chroni (
                   char_line_wrap    <= char_line_wrap - 1'b1;
                   if (char_line_wrap == 0) begin
                      char_memory_addr <= char_origin;
-                     char_line_wrap   <= 8'hff;
+                     char_line_wrap   <= dl_scroll ? (dl_scroll_width - 1'b1) : 8'hff;
                   end
                   if (mem_wait == 0) begin
                      char_buffer_addr    <= char_buffer_index;
