@@ -48,4 +48,4 @@ test_string:
     .byte $F0, $03
     .byte 'another color '
     .byte $F0, $01
-    .byte 'and back to normal. Font by Ascrnet.', 0
+    .byte 'and back to normal.', 0
