@@ -17,7 +17,8 @@ module chroni_line_buffer (
       
       input [3:0] wr_bitmap_first,
       input [3:0] wr_bitmap_last,
-      input [2:0] wr_tile_pixels,
+      input [2:0] wr_tile_pixel_first,
+      input [2:0] wr_tile_pixel_last,
       input [3:0] wr_tile_palette,
       output reg wr_busy
 );
@@ -30,7 +31,9 @@ reg[7:0]  bitmap_on;
 reg[7:0]  bitmap_off;
 
 reg[15:0] tile_data;
-reg[2:0]  tile_pixels;
+reg[2:0]  tile_pixel_first;
+reg[2:0]  tile_pixel_last;
+reg[2:0]  tile_pixel_skip;
 reg[3:0]  tile_palette;
 reg[10:0] tile_addr;
 
@@ -41,7 +44,8 @@ always @ (posedge wr_clk) begin
       bitmap_first <= 0;
       bitmap_last  <= 0;
       line_wr_en   <= 0;
-      tile_pixels  <= 0;
+      tile_pixel_first <= 0;
+      tile_pixel_last  <= 0;
    end else if (wr_en && wr_bitmap_first != 0) begin
       bitmap_data  <= wr_data[7:0];
       bitmap_first <= wr_bitmap_first;
@@ -61,23 +65,29 @@ always @ (posedge wr_clk) begin
       bitmap_first <= bitmap_first - 1'b1;
       
       wr_busy <= bitmap_first != bitmap_last;
-   end else if (wr_en && wr_tile_pixels != 0) begin
-      tile_data    <= wr_data;
-      tile_pixels  <= wr_tile_pixels;
-      tile_palette <= wr_tile_palette;
-      tile_addr    <= wr_addr;
+   end else if (wr_en && wr_tile_pixel_first != 0) begin
+      tile_data        <= wr_data;
+      tile_pixel_first <= wr_tile_pixel_first;
+      tile_pixel_last  <= wr_tile_pixel_last;
+      tile_palette     <= wr_tile_palette;
+      tile_addr        <= wr_addr;
+      tile_pixel_skip  <= 3'd4 - wr_tile_pixel_first;
 
       wr_busy      <= 1;
-   end else if (tile_pixels != 0) begin
-      line_wr_data <= {tile_palette, tile_data[3:0]};
-      line_wr_addr <= tile_addr;
-      line_wr_en   <= 1;
+   end else if (tile_pixel_first != tile_pixel_last) begin
+      if (tile_pixel_skip == 0) begin
+          line_wr_data <= {tile_palette, tile_data[3:0]};
+          line_wr_addr <= tile_addr;
+          line_wr_en   <= 1;
 
-      tile_addr    <= tile_addr   + 1'b1;
-      tile_pixels  <= tile_pixels - 1'b1;
+          tile_addr        <= tile_addr        + 1'b1;
+          tile_pixel_first <= tile_pixel_first - 1'b1;
+      end else begin
+          tile_pixel_skip = tile_pixel_skip - 1'b1;
+      end
 
       tile_data    <= {4'b0, tile_data[15:4]};
-      wr_busy      <= tile_pixels != 1;
+      wr_busy      <= tile_pixel_first != tile_pixel_last;
    end else begin
       if (wr_en) begin
          line_wr_data <= wr_data[7:0];
