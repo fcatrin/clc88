@@ -4,7 +4,7 @@
 #include "sound/wopi.h"
 
 #define WOPI_BUFFER_SIZE 735*2
-#define SOUND_BUFFER_SIZE (WOPI_BUFFER_SIZE*20)
+#define SOUND_BUFFER_SIZE (WOPI_BUFFER_SIZE*4)
 
 INT16 wopi_buffer[WOPI_BUFFER_SIZE];
 INT16 sound_buffer_0[SOUND_BUFFER_SIZE];
