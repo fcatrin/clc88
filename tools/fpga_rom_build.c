@@ -138,9 +138,9 @@ int main(int argc, char *argv[]) {
 	// load_bin("../bin/asm/6502/tools/xex_loader.xex", 0xE000, 0);
 	// load_bin("../bin/asm/6502/test/modes/mode_0.xex", 0xC000, 0);
 	// load_bin("../bin/asm/6502/demos/misc/text_mode_attrib.xex", 0xE000, 0);
-	load_bin("../bin/asm/6502/test/modes/mode_tiles.xex", 0xC000, 0);
+	load_bin("../bin/asm/6502/test/modes/mode_tiles_scroll_multi.xex", 0xC000, 0);
 
-    set_version_signature(0x218);
+    set_version_signature(0x234);
 
 	create_mif("../rtl/compy/rom.mif", 0xC000);
 }
