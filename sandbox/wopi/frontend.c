@@ -14,10 +14,14 @@
 
 static SDL_Window *window;
 static SDL_Renderer *renderer;
+static int screen_width;
+static int screen_height;
+static int screen_data_size;
 static int closed;
 
 #define MAX_BUFFERS 3
 
+static void *screen_buffers[MAX_BUFFERS];
 static int buffer_next = 0;
 static int buffer_post = -1;
 
@@ -83,7 +87,7 @@ void frontend_update_screen(void *pixels) {
 	while (buffer_next == buffer_post) {
 		SDL_Delay(2);
 	}
-	// memcpy(screen_buffers[buffer_next], pixels, screen_data_size);
+	memcpy(screen_buffers[buffer_next], pixels, screen_data_size);
 	while (buffer_post>=0) {
 		SDL_Delay(2);
 	}
@@ -105,6 +109,29 @@ void frontend_process_events() {
 	}
 }
 
+static void update_screen(void *pixels) {
+	SDL_Surface *surface = SDL_CreateRGBSurfaceFrom(
+			pixels, screen_width, screen_height, 24,
+			screen_width*3, 0, 0, 0, 0);
+	if (surface == NULL) {
+		printf("SDL_CreateRGBSurfaceFrom Error: %s", SDL_GetError());
+		return;
+	}
+
+	SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
+	SDL_FreeSurface(surface);
+	if (texture == NULL){
+		printf("SDL_CreateTextureFromSurface Error: %s", SDL_GetError());
+		return ;
+	}
+
+	SDL_RenderClear(renderer);
+	SDL_RenderCopy(renderer, texture, NULL, NULL);
+	SDL_RenderPresent(renderer);
+
+	SDL_DestroyTexture(texture);
+}
+
 int  frontend_init_screen(int width, int height) {
 	window = SDL_CreateWindow("CL-Audio Test", 160, 20, width*2, height*4, SDL_WINDOW_SHOWN);
 	if (window == NULL){
@@ -121,9 +148,17 @@ int  frontend_init_screen(int width, int height) {
 		return 1;
 	}
 
+    screen_width = width;
+    screen_height = height;
+
+    screen_data_size = width * 3 * height;
+
+	for(int i=0; i<MAX_BUFFERS; i++) {
+		screen_buffers[i] = malloc(screen_data_size);
+	}
+
 	return 0;
 }
-
 
 int frontend_init(int argc, char *argv[]) {
 	closed = 0;
@@ -145,6 +180,10 @@ void frontend_done() {
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
 	SDL_Quit();
+
+	for(int i=0; i<MAX_BUFFERS; i++) {
+		free(screen_buffers[i]);
+	}
 
 	frontend_stop_audio_stream();
 }
@@ -208,6 +247,7 @@ int main(int argc, char *argv[]) {
 	while (frontend_running()) {
         LOGV(LOGTAG, "main loop run");
 		if (buffer_post>=0) {
+            update_screen(screen_buffers[buffer_post]);
 			buffer_post = -1;
 		} else {
 			SDL_Delay(2);

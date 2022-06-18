@@ -20,6 +20,7 @@ OBJS = $(addprefix $(OBJDIR)/, \
 	main.o \
 	sound.o \
 	screen.o \
+	video.o \
 	trace.o \
 	frontend.o \
 	tracker/tracker.o \

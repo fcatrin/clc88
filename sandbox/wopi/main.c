@@ -6,6 +6,7 @@
 #include "emu.h"
 #include "sound.h"
 #include "screen.h"
+#include "video.h"
 #include "tracker/tracker.h"
 
 #define LOGTAG "MAIN"
@@ -22,6 +23,7 @@ void main_init(int argc, char *argv[]) {
     tracker_init();
 	screen_init();
 	sound_init();
+	video_init();
 
     char *test_file = "tracker/test/op4_alg_3.txt";
     if (argc > 1) {
@@ -56,7 +58,10 @@ void sync_end() {
 }
 
 void main_run_frame() {
+    video_start_frame();
     sync_start();
+
+    video_run_frame();
 
     int samples_per_frame = 44100.0 / 60;
     sound_process(samples_per_frame);
@@ -66,6 +71,7 @@ void main_run_frame() {
     tracker_play();
 
     sync_end();
+    video_end_frame();
 }
 
 void main_run() {
