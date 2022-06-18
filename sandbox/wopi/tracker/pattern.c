@@ -27,7 +27,7 @@ pattern_row_t *pattern_get_next_row(pattern_t *pattern) {
         return NULL;
     }
 
-    printf("pattern at row %d\n", pattern->playing_row);
+    // printf("pattern at row %d\n", pattern->playing_row);
     return pattern->rows[pattern->playing_row++];
 }
 
