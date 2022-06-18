@@ -12,7 +12,7 @@ UINT8 pixel_color_b;
 
 UINT32 palette[256];
 
-#define SAMPLE_RES 6
+#define SAMPLE_RES 5
 #define MONITOR_BUFFER_SIZE 640*SAMPLE_RES
 INT16 *monitor_buffer;
 
