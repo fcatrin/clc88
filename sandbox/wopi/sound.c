@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "emu.h"
 #include "sound/wopi.h"
 
@@ -8,6 +9,10 @@
 INT16 wopi_buffer[WOPI_BUFFER_SIZE];
 INT16 sound_buffer_0[SOUND_BUFFER_SIZE];
 INT16 sound_buffer_1[SOUND_BUFFER_SIZE];
+
+INT16 *sound_buffer_monitor = NULL;
+UINT16 sound_buffer_monitor_size  = 0;
+UINT16 sound_buffer_monitor_index = 0;
 
 INT16 *sound_buffers[] = {sound_buffer_0, sound_buffer_1};
 bool sound_buffer_full[] = {0, 0};
@@ -45,6 +50,14 @@ void sound_process(float samples) {
 
 		sound_buffer[wopi_write_index++] = wopi_l;
 		sound_buffer[wopi_write_index++] = wopi_r;
+
+		if (sound_buffer_monitor && sound_buffer_monitor_index < sound_buffer_monitor_size) {
+		    sound_buffer_monitor[sound_buffer_monitor_index++] = wopi_l;
+		    sound_buffer_monitor[sound_buffer_monitor_index++] = wopi_r;
+		    if (sound_buffer_monitor_index >= sound_buffer_monitor_size) {
+		        sound_buffer_monitor_index = 0;
+		    }
+		}
 	}
 
 	buffer_write_index[active_sound_buffer] = wopi_write_index;
@@ -65,5 +78,15 @@ void sound_fill_buffer(INT16 **buffer, unsigned *size) {
 	active_sound_buffer = second_buffer;
 }
 
+INT16 *sound_get_monitor_buffer(unsigned size) {
+    if (size != sound_buffer_monitor_size) {
+        free(sound_buffer_monitor);
+        sound_buffer_monitor = malloc(size * 2 * sizeof(INT16));
+        sound_buffer_monitor_size = size;
+    }
+    return sound_buffer_monitor;
+}
+
 void sound_done() {
+    free(sound_buffer_monitor);
 }

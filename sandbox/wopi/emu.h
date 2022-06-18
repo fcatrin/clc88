@@ -74,4 +74,6 @@ typedef UINT8 bool;
 #define MAME_CLAMP_SAMPLE(a) ((void)0)
 #endif
 
+#define NEW(obj, type_t) type_t *obj = (type_t *)malloc(sizeof(type_t)); memset(obj, 0, sizeof(type_t))
+
 #endif
