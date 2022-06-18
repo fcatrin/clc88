@@ -39,15 +39,16 @@ void video_init(){
 
 void video_done(){}
 
-void video_start_frame() {}
-void video_run_frame(){
+void video_start_frame() {
     screen_clear();
+}
 
+void video_run_frame(){
     int center_y = 120;
     int last_y   = center_y;
     set_pixel_color(1);
     for(int x=0; x<640; x++) {
-        int sample = monitor_buffer[x*SAMPLE_RES] * 120.0f / 32767;
+        int sample = monitor_buffer[x*SAMPLE_RES] * 200.0f / 32767;
         int sample_y = center_y + sample;
         int dy = sample_y > last_y ? 1 : -1;
         for(int y = last_y; y!=sample_y; y += dy) {
