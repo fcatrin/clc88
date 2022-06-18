@@ -198,7 +198,7 @@ module chroni (
       reg[7:0]  attr_line_wrap;
       reg[3:0]  bit_first;
       reg[3:0]  bit_last;
-      reg[3:0]  row_wrap;
+      reg[7:0]  row_wrap;
    
       char_buffer_we <= 0;
       attr_buffer_we <= 0;
@@ -390,7 +390,7 @@ module chroni (
       reg[7:0]  tile_line_wrap;
       reg[3:0]  pixel_first;
       reg[3:0]  pixel_last;
-      reg[3:0]  row_wrap;
+      reg[7:0]  row_wrap;
 
       tile_buffer_we <= 0;
       tile_line_buffer_wr_en <= 0;
@@ -414,6 +414,7 @@ module chroni (
                tile_memory_addr <= dl_mode_tile_addr + dl_scroll_left;
 
                dl_mode_scanline <= 0;
+               row_wrap = dl_scroll ? (dl_scroll_height - dl_scroll_top - 1) : 8'hff;
             end else begin
                tile_memory_addr <= load_tile_addr;
             end
@@ -504,14 +505,19 @@ module chroni (
                   tile_decode_state <= TL_IDLE;
                   dl_mode_scanline <= dl_mode_scanline + 1'b1;
                   if (dl_mode_scanline == dl_mode_scanlines) begin
-                     tile_origin    <= tile_origin    + dl_mode_pitch;
-                     load_tile_addr <= load_tile_addr + dl_mode_pitch;
                      dl_mode_scanline <= 0;
+                     row_wrap <= row_wrap - 1'b1;
+                     if (row_wrap == 0) begin
+                        tile_origin    <= dl_lms;
+                        load_tile_addr <= dl_lms + dl_scroll_left;
+                        row_wrap       <= dl_scroll ? (dl_scroll_height-1) : 8'hff;
+                     end else begin
+                        tile_origin    <= tile_origin    + dl_mode_pitch;
+                        load_tile_addr <= load_tile_addr + dl_mode_pitch;
+                     end
                   end
                end else begin
-                  tile_decode_state         <= TL_TILE_READ;
-
-                  // tile_pixel_index          <= 0;
+                  tile_decode_state <= TL_TILE_READ;
                end
             endcase
          end
