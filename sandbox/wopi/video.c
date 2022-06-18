@@ -48,14 +48,14 @@ void video_run_frame(){
     int last_y   = center_y;
     set_pixel_color(1);
     for(int x=0; x<640; x++) {
-        int sample = monitor_buffer[x*SAMPLE_RES] * 200.0f / 32767;
+        int sample = monitor_buffer[x*SAMPLE_RES] * 160.0f / 32767;
         int sample_y = center_y + sample;
         int dy = sample_y > last_y ? 1 : -1;
         for(int y = last_y; y!=sample_y; y += dy) {
-            int offset = POINT(x + SCREEN_XBORDER, y);
+            int offset = POINT(x + SCREEN_XBORDER, y + SCREEN_YBORDER);
             put_pixel(offset);
         }
-        int offset = POINT(x + SCREEN_XBORDER, sample_y);
+        int offset = POINT(x + SCREEN_XBORDER, sample_y + SCREEN_YBORDER);
         put_pixel(offset);
         last_y = sample_y;
     }
