@@ -9,8 +9,7 @@
 #include "instrument.h"
 
 song_t *song_new() {
-    song_t *song = (song_t *)malloc(sizeof(song_t));
-    memset(song, 0, sizeof(song_t));
+    NEW(song, song_t);
     song->patterns_count = 0;
     return song;
 }

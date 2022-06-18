@@ -1,11 +1,12 @@
 #include <malloc.h>
+#include <string.h>
 #include "../emu.h"
 #include "tracker.h"
 #include "pattern.h"
 #include "pattern_row.h"
 
 pattern_t *pattern_new() {
-    pattern_t *pattern = (pattern_t *)malloc(sizeof(pattern_t));
+    NEW(pattern, pattern_t);
     pattern->rows_count = 0;
     return pattern;
 }
@@ -26,7 +27,7 @@ pattern_row_t *pattern_get_next_row(pattern_t *pattern) {
         return NULL;
     }
 
-    // printf("pattern at row %d\n", pattern->playing_row);
+    printf("pattern at row %d\n", pattern->playing_row);
     return pattern->rows[pattern->playing_row++];
 }
 

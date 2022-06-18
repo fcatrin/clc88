@@ -9,8 +9,7 @@
 #define CHANNEL_SIZE 7
 
 pattern_row_t *pattern_row_new(int channels) {
-    // printf("pattern_row_new channels:%d\n", channels);
-    pattern_row_t *pattern_row = (pattern_row_t *)malloc(sizeof(pattern_row_t));
+    NEW(pattern_row, pattern_row_t);
     pattern_row->channels = channels;
     return pattern_row;
 }

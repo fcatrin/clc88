@@ -7,7 +7,7 @@
 int note_table[] = {0, 2, 3, 5, 7, 8, 10};
 
 note_event_t *note_event_new() {
-    note_event_t *event = (note_event_t *)malloc(sizeof(note_event_t));
+    NEW(event, note_event_t);
     return event;
 }
 

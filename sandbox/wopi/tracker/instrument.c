@@ -6,7 +6,7 @@
 #include "instrument.h"
 
 instrument_t *instrument_new() {
-    instrument_t *instrument = (instrument_t *)malloc(sizeof(instrument_t));
+    NEW(instrument, instrument_t);
     return instrument;
 }
 
