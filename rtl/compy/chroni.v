@@ -413,7 +413,7 @@ module chroni (
                load_tile_addr   <= dl_mode_tile_addr + dl_scroll_left;
                tile_memory_addr <= dl_mode_tile_addr + dl_scroll_left;
 
-               dl_mode_scanline <= 0;
+               dl_mode_scanline <= dl_scroll_fine_y;
                row_wrap = dl_scroll ? (dl_scroll_height - dl_scroll_top - 1) : 8'hff;
             end else begin
                tile_memory_addr <= load_tile_addr;
