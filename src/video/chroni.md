@@ -3,65 +3,157 @@
 The name comes from *Chroni, partners in time* (with the CPU).  
 Suggested by Stuart Law from *Cronie, partners in crime* a popular english saying.
 
-## VRAM
+---
+Note: All the examples in this document use MADS macros for simplicity.
+You will find *mwa* or *mva*, instead of the *lda/sta* sequences
 
-There are 128KB reserved for video and accesed directly by Chroni.  
-The CPU can access this area by the bank paging mechanism at 0xA000 - 0xDFFF.
+## Video RAM
 
-There is no need for a memory map, but this is a suggested one:
+There are 128KB RAM for video ram or VRAM which accessed exclusively by
+Chroni. Any access from the CPU must be done through Chroni as it is 
+explained later in this document.
 
-    00000 - 1EFFF : Free area
-    1F000 - 1F3FF : Charset
-    1F800 - 1FFFF : Main Color palettes (256 * 2bytes RGB565)
-
-
-VRAM addressing needs 17 bits, but as the processors are only 16 bit, there is a special
-**page register** that is combined with the addresses given to build a 17 bit final address.
-
-Using the bank paging access, the CPU can read/write to VRAM using a 16KB window
-at 0xA000 - 0xDFFF, which is 0x00000 to 0x03FFF (16K) in VRAM. To access beyond
-that area the **page register** in Chroni moves that window in increments of 1KB.
-
-You can use this equation to solve VRAM or CPU addresses
-
-    VRAM = (CPU - 0xA000) + PAGE * 0x0400
-
-For example, to access VRAM 0x04000 - 0x7FFF the page register must be set at 0x10 (16KB).
-
-    VRAM = (0xA0000 - 0xA0000) + 0x10 * 0x0400
-    VRAM =          0          + 0x4000
-    VRAM = 0x4000
+There is no memory map for VRAM, Chroni has registers that hold the
+addresses for the required content like charsets, tiles or sprites.
 
 ## Addressing
 
-Inside Chroni, addresses are managed using 16 bit registers, they are just shifted one bit
-to allow using the 17 bit range (128KB).  This shift is the same than diviging the address
-by two.
+Chroni is a 16-bit processor for addresses and data. So the 128KB is
+organized in 65536 memory locations, each one holding a 16-bit value.
 
-For example, if your charset is at VRAM address 0x4002, the register must be set to 0x2001.
+The recommended and simplest way to access the VRAM is word aligned, but
+you can also access individual bytes if needed. Later in this document
+you will find the VADDR and VADDRW registers that you need to use
+to read from or write to VRAM
 
 ## Registers
 
 Chroni registers are mapped to 0x9000 - 0x907F on CPU system memory.
 
-You can find the names declared in asm/6502/os/symbols.asm
+You can find the names declared in asm/6502/os/include/symbols.asm
 
-    00 : VDLIST   WORD Display List pointer (absolute addr)
-    02 : VCHARSET WORD Charset pointer (absolute addr)
-    04 : VPALETTE WORD Palette pointer (absolute addr)
-    06 : VPAGE    BYTE 16KB page mapped on system memory. 1KB granularity
-    07 : VCOUNT   BYTE Vertical line count / 2
-    08 : WSYNC    BYTE Any write will halt the CPU until next HBLANK
-    09 : WSTATUS  BYTE
+    00 : VDLIST     WORD Display List pointer
+    02 : VCHARSET   WORD Charset pointer
+    04 : VPAL_INDEX BYTE Palette index register
+    05 : VPAL_VALUE BYTE Palette data register
+    06 : VADDR      WORD Byte address register (low 16-bit)
+    08 :            BYTE Byte address register (high 1-bit)
+    09 : VDATA      BYTE VRAM data read / write
+    06 : VADDR_AUX  WORD Byte auxiliar address register (low 16-bit)
+    08 :            BYTE Byte auxiliar address register (high 1-bit)
+    09 : VDATA_AUX  BYTE VRAM auxiliar data read / write
+
+
+    10 : VCOUNT     BYTE Vertical line count / 2
+    11 : WSYNC      BYTE Any write will halt the CPU until next HBLANK
+    12 : WSTATUS    BYTE
           XXXXXX??
                |----- Interrupts enabled
               |------ Sprites enabled
              |------- Chroni enabled
-            |-------- Is emulator 
+            |-------- 1 if this is an emulator 
            |---- HBLANK active (read only)
           |--- VBLANK active (read only)
-    0A : VSPRITES WORD Sprites base address (absolute addr)
-    10 : VCOLOR0  BYTE Border color
+    1a : VBORDER    WORD Border color in RGB565 format
+    22 : VLINEINT   BYTE Scanline interrupt register
+    26 : VADDRW     WORD Address register
+    28 : VADDRW_AUX WORD Auxiliar Address register
+    2a : VAUOTOINC  BYTE Autoincrement register
+
+## VRAM Access and addressing
+To read or write data to VRAM you need to use the VDATA register. The location to be
+read or write is set through the VADDR or VADDRW register.
+
+The VADDRW uses the native 16-bit addresses on the VRAM, which can be seen as
+word aligned from the CPU world. You only need to write the low and high parts
+of the address. Let's say you need to access VRAM $a34, the setup code is:
+
+        mwa #$0a34 VADDR
+
+Then you can read or write the data from VDATA
+
+        lda VDATA / sta VDATA
+
+You may think that this is more complex than using memory mapped VRAM, but
+Chroni supports auto increment / auto decrement address registers to make it
+even easier than using memory mapped VRAM
+
+For example, the following code uploads 20 bytes from SRC_ADDR to VRAM_ADDR
+
+        mwa #VRAM_ADDR VADDRW
+        ldx #0
+    upload:
+        lda (SRC_ADDR), x
+        sta VDATA
+        inx
+        cpx #20
+        bne upload
+
+### Auto increment / decrement address register
+By default, each time you read or write to VDATA, the internal address
+register will be incremented, but you can change that behaviour writing
+to register VAUOTOINC. The possible values (defined in symbols.asm) are:
+
+        AUTOINC_VADDR_KEEP     = $00
+        AUTOINC_VADDR_INC      = $01
+        AUTOINC_VADDR_DEC      = $03
+
+For example, to turn autoincrement off:
+
+        mva #AUTOINC_VADDR_KEEP VAUOTOINC
+
+### Auxiliary address register
+In some cases you may need to access two different VRAM addresses at the same
+time, for example when copying from VRAM to VRAM, or when writing char
+and attribute values. To avoid writing the new address each time, and keep
+taking advantage of the autoincrement feature, you can use the auxiliary 
+address register
+
+The following example use both the main address register and the auxiliary
+address register to copy 250 bytes of data from VRAM to VRAM
+
+        mwa SRC_ADDR VADDRW
+        mwa DST_ADDR VADDRW_AUX
+        ldx #250
+copy_vram_vram:
+        lda VDATA
+        sta VDATA_AUX
+        dex
+        bne copy_vram_vram
+        
+### VRAM byte / non-word aligned data
+Sometimes you will need to access an individual byte that is not word
+aligned, so you will need a 17 bit address. In that case you can use 
+the VADDR 17-bit register.
+
+The following example takes the address stored in VRAM_BYTE_ADDR*
+to set the VRAM address.
+
+        mwa VRAM_BYTE_ADDR_L VADDR
+        mva VRAM_BYTE_ADDR_H VADDR+2
+
+        ...
+
+        VRAM_BYTE_ADDR_L .word 0  ; low 16 bits of the address
+        VRAM_BYTE_ADDR_H .byte 0  ; hight 1 bit of the address
+
+As you can see, it's a bit little trickier than using plain word
+aligned addresses.
+
+Note that you also have the non-word aligned version of the auxiliary
+address register called VADDR_AUX
+
+#### Trick to access non-word aligned data in VRAM
+Another way to access non-word aligned data in VRAM is to use a simple trick.
+The autoincrement register goes byte by byte, so you can set the address as
+word aligned, then make the address register increment by one:
+
+        mwa #TARGET_ADDRESS VADDRW
+        lda VDATA
+        lda VDATA   ; this is the non-word aligned byte
+
+After reading VDATA, the address register will point to the next
+byte after TARGET_ADDRESS, thus you will get the non-word aligned byte
 
 ## Colors and Palettes
 
