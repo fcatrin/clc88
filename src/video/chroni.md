@@ -44,8 +44,8 @@ organized in 65536 memory locations, each one holding a 16-bit value.
 
 The recommended and simplest way to access the VRAM is word aligned, but
 you can also access individual bytes if needed. Later in this document
-you will find the VADDR and VADDRW registers that you need to use
-to read from or write to VRAM
+you will find the VADDR and VADDRB registers that you need to use
+to read from or write to VRAM.
 
 ## Registers
 
@@ -53,41 +53,63 @@ Chroni registers are mapped to 0x9000 - 0x907F on CPU system memory.
 
 You can find the names declared in asm/6502/os/include/symbols.asm
 
-    00 : VDLIST     WORD Display List pointer
-    02 : VCHARSET   WORD Charset pointer
-    04 : VPAL_INDEX BYTE Palette index register
-    05 : VPAL_VALUE BYTE Palette data register
-    06 : VADDR      WORD Byte address register (low 16-bit)
-    08 :            BYTE Byte address register (high 1-bit)
-    09 : VDATA      BYTE VRAM data read / write
-    06 : VADDR_AUX  WORD Byte auxiliar address register (low 16-bit)
-    08 :            BYTE Byte auxiliar address register (high 1-bit)
-    09 : VDATA_AUX  BYTE VRAM auxiliar data read / write
+    00 :  VDLIST      WORD  Display List pointer
+    02 :  VCHARSET    WORD  Charset pointer
+    04 :  VPAL_INDEX  BYTE  Palette index register
+    05 :  VPAL_VALUE  BYTE  Palette data register
+    06 :  VADDR       WORD  Address register
+    08 :  VADDR_AUX   WORD  Address register (auxiliary)
+    0a :  VDATA       BYTE  VRAM data read / write
+    0b :  VDATA_AUX   BYTE  VRAM data read / write (auxiliary)
+    10 :  VCOUNT      BYTE  Vertical line count / 2
+    11 :  WSYNC       BYTE  Any write will halt the CPU until next HBLANK
+    12 :  WSTATUS     BYTE  Status register
+    1a :  VBORDER     WORD  Border color in RGB565 format
+    22 :  VLINEINT    BYTE  Scanline interrupt register
+    26 :  VADDRB      WORD  Byte address register (low 16-bit)
+    28 :              BYTE  Byte address register (high 1-bit)
+    2a :  VADDRB_AUX  WORD  Byte auxiliary address register (low 16-bit)
+    2c :              BYTE  Byte auxiliary address register (high 1-bit)
+    2e :  VAUOTOINC   BYTE  Autoincrement register
 
+# Status register
+Writing to the status register you can enable or disable some features 
+of Chroni.
+Reading the status register you can get some info about the running state
+of Chroni.
 
-    10 : VCOUNT     BYTE Vertical line count / 2
-    11 : WSYNC      BYTE Any write will halt the CPU until next HBLANK
-    12 : WSTATUS    BYTE
-          XXXXXX??
-               |----- Interrupts enabled
-              |------ Sprites enabled
-             |------- Chroni enabled
-            |-------- 1 if this is an emulator 
-           |---- HBLANK active (read only)
-          |--- VBLANK active (read only)
-    1a : VBORDER    WORD Border color in RGB565 format
-    22 : VLINEINT   BYTE Scanline interrupt register
-    26 : VADDRW     WORD Address register
-    28 : VADDRW_AUX WORD Auxiliar Address register
-    2a : VAUOTOINC  BYTE Autoincrement register
+Following is the info that each bit of the status register holds, together
+with the read or write access allowed. Note that bit 1 and 0 are reserved
+and you must never write on them.
+
+    bits  7 6 5 4 3 2 1 0
+          | | | | | |----- Interrupts enabled    (r/w)
+          | | | | |------ Sprites enabled        (r/w)
+          | | | |------- Chroni enabled          (r/w)
+          | | |-------- 1 if this is an emulator (r) 
+          | |---- HBLANK active                  (r)
+          |--- VBLANK active                     (r)
+
+On hardware reset, Chroni and Chroni interrupts will be disabled. This
+will give you time to prepare the display list and interrupt handlers
+before Chroni start using them
+
+This is a simple example to enable Chroni and interrupts on startup
+
+        lda VSTATUS
+        ora #(VSTATUS_EN_INTS + VSTATUS_ENABLE)
+        sta VSTATUS
 
 ## VRAM Access and addressing
 To read or write data to VRAM you need to use the VDATA register. The location to be
-read or write is set through the VADDR or VADDRW register.
+read or write is set through the VADDR register.
 
-The VADDRW uses the native 16-bit addresses on the VRAM, which can be seen as
+The VADDR register uses the native 16-bit addresses on the VRAM, which can be seen as
 word aligned from the CPU world. You only need to write the low and high parts
-of the address. Let's say you need to access VRAM $a34, the setup code is:
+of the address to this register, and then read or write the value at that location
+using the VDATA register.
+
+Let's say you need to access VRAM $a34, the setup code is:
 
         mwa #$0a34 VADDR
 
@@ -96,12 +118,12 @@ Then you can read or write the data from VDATA
         lda VDATA / sta VDATA
 
 You may think that this is more complex than using memory mapped VRAM, but
-Chroni supports auto increment / auto decrement address registers to make it
-even easier than using memory mapped VRAM
+Chroni supports auto increment / auto decrement address registers. In practice
+it is even easier than using memory mapped VRAM
 
 For example, the following code uploads 20 bytes from SRC_ADDR to VRAM_ADDR
 
-        mwa #VRAM_ADDR VADDRW
+        mwa #VRAM_ADDR VADDR
         ldx #0
     upload:
         lda (SRC_ADDR), x
@@ -112,7 +134,7 @@ For example, the following code uploads 20 bytes from SRC_ADDR to VRAM_ADDR
 
 ### Auto increment / decrement address register
 By default, each time you read or write to VDATA, the internal address
-register will be incremented, but you can change that behaviour writing
+register will be incremented. You can change that behaviour writing
 to register VAUOTOINC. The possible values (defined in symbols.asm) are:
 
         AUTOINC_VADDR_KEEP     = $00
@@ -126,32 +148,36 @@ For example, to turn autoincrement off:
 ### Auxiliary address register
 In some cases you may need to access two different VRAM addresses at the same
 time, for example when copying from VRAM to VRAM, or when writing char
-and attribute values. To avoid writing the new address each time, and keep
-taking advantage of the autoincrement feature, you can use the auxiliary 
-address register
+and attribute values in text mode. To avoid writing the new address each time, 
+and keep taking advantage of the autoincrement feature, you can use the auxiliary 
+address register.
 
 The following example use both the main address register and the auxiliary
-address register to copy 250 bytes of data from VRAM to VRAM
+address register to copy 250 bytes of data from VRAM to VRAM. Locations are
+pointed by SRC_ADDR and DST_ADDR
 
-        mwa SRC_ADDR VADDRW
-        mwa DST_ADDR VADDRW_AUX
+        mwa SRC_ADDR VADDR
+        mwa DST_ADDR VADDR_AUX
         ldx #250
-copy_vram_vram:
+
+    copy:
         lda VDATA
         sta VDATA_AUX
         dex
-        bne copy_vram_vram
+        bne copy
         
 ### VRAM byte / non-word aligned data
 Sometimes you will need to access an individual byte that is not word
-aligned, so you will need a 17 bit address. In that case you can use 
-the VADDR 17-bit register.
+aligned, but byte aligned. This is an exceptional case, but if you need
+it, you must usa  a 17 bit address. 
+
+The address registers VADDRB and VADDRB_AUX can handle 17 bit addresses. 
 
 The following example takes the address stored in VRAM_BYTE_ADDR*
 to set the VRAM address.
 
-        mwa VRAM_BYTE_ADDR_L VADDR
-        mva VRAM_BYTE_ADDR_H VADDR+2
+        mwa VRAM_BYTE_ADDR_L VADDRB
+        mva VRAM_BYTE_ADDR_H VADDRB+2
 
         ...
 
@@ -160,9 +186,6 @@ to set the VRAM address.
 
 As you can see, it's a bit little trickier than using plain word
 aligned addresses.
-
-Note that you also have the non-word aligned version of the auxiliary
-address register called VADDR_AUX
 
 #### Trick to access non-word aligned data in VRAM
 Another way to access non-word aligned data in VRAM is to use a simple trick.
@@ -182,24 +205,48 @@ There is a global 256 color palette in RGB565 format (16 bit per entry).
 This palette defines the global 256 color scheme available at once,
 taken from a 64K color space.
 
-The pallete is a 256 16 bit RGB565 colors array (512 bytes)
+The palette is a 256 16 bit RGB565 colors array stored inside Chroni.
 
+To define a color within the palette you use the VPAL_INDEX and VPAL_VALUE
+registers. The index is a value between 0-255 to define which color index
+you want to access, then you write 2 bytes on the value register to define
+the 16-bit RGB565 color. Less significant byte goes first. 
+
+The following code set the color 5 to RGB656 #FF3A
+
+        mva #5  VPAL_INDEX
+        mva #3A VPAL_VALUE
+        mva #FF VPAL_VALUE       
+
+The VPAL_INDEX register supports autoincrement, so you can define several
+color entries with only one write to the VPAL_INDEX register.
+
+The following code sets the first 32 colors of the palette from te data
+on "palette"
+
+        mva #0 VPAL_INDEX
+        ldx #0
+    set_color:
+        lda (palette), x
+        sta VPAL_VALUE
+        inx
+        cpx #64
+        bne set_color
+
+### 16 color "sub palettes"
 Depending on the video mode, colors are not accessed directly, but through
-smaller 16 color palettes, acting as indexes into this 256 color palette.
+smaller 16 color palettes or sub palettes, taken from the whole 256 color palette.
 
-So, for each 16 bit color pixel, text, tile or sprite on the screen you can
-select which 16 color pallette to use. And each 16 color palette points to
-any 16 colors in the global palette.
+For example, a tile can use up to 16 colors, but which ones from the 256
+colors available? The tile definition includes a color index which select
+a group of 16 colors within the 256 colors available. For example:
 
-Using this method your 256 color palette will define the overall look of
-the screen, it is wide enough to make your screen use the Spectrum colors, 
-the Atari colors, C64 colors, Amstrad colors, MSX colors and of course your
-new favorite color scheme. Then your graphics use a subset of these colors
-per char block, per sprite, per tile, etc.
+        tile 0, color index 0 : uses color from 0 to 15
+        tile 2, color index 1 : uses color from 16 to 31
+        tile 5, color index 4 : uses color from 64 to 79
 
-As the global palette and the smaller 16 color palettes can be put anywhere
-on the vram, you only need to change a register to switch to a completely
-different palette at any time. 
+So, for each 16-bit color pixel, text, tile or sprite on the screen you can
+select which 16 color palette to use. 
 
 ## Display lists
 
@@ -207,33 +254,136 @@ The display list is a processing instruction set for Chroni. To draw a screen, C
 will read each entry in sequence to know which video mode to use and for how many
 scanlines long.
 
-The simplest display list will have tree entries, two defining the video mode and one
-declaring the end of the list.
+You can place a playlist anywhere on memory, then use the VDLIST register to set
+the starting address.  The following example uploads a playlist to VRAM and then 
+sets the VDLIST register to point to that address.
 
-More complex display lists can easily create screens with mixed content, mixed scrolling
-and mixed video modes. For example a screen with a score panel at the top and a playfield
-at the bottom, with only the playfield being scrolled is very easy to do with a display
-list without having to use the CPU.
+        mwa #dlist_on_vram VADDR
+        ldx #0
 
-Each entry is a 16 bit value. The basic entry is this:
+    upload_dl:
+        lda display_list, x
+        sta VDATA
+        inx
+        cpx #display_list_size
+        bne upload_dl
 
-    FEDCBA9876543210
-      |-----------------> scroll enabled
-       |----------------> 1 for narrow (256), 0 for normal (320) mode
-        ||||------------> video mode
-            |||||||| ---> number of scalines
+        mwa #dlist_on_vram VDLIST
+
+Now, which data you need to have in display_list to create a screen? You need...
+
+### Display list instructions
+
+A typical display list instruction contains a video mode and a number of scanlines 
+you want to use for that video mode. For example, a text mode has 8 scanlines for
+each row, so for a 24 rows text mode you need to specify 24*8 = 192 scanlines.
+
+The minimal instruction size is 16-bit (2 bytes), but one instruction can grow bigger
+than that depending on the features you want to enable. All instructions will always
+be word aligned.
+
+The simples display list will contain 2 instructions: One defining the video mode and 
+another one marking the end of the list. After this end of list marker Chroni will
+stop creating an image and will start the vertical blank process.
+
+More complex display lists can create screens with mixed content easily. You can
+mix video modes, scrolling and non-scrolling areas, multiple scrolling ares (parallax)
+and more.
+
+For example, you can create a screen with a score panel at the top
+and a playfield at the bottom, like this one:
+
+        |-----------------------------|
+        |            score            |
+        |-----------------------------|
+        |                             |
+        |                             |
+        |          playfield          |
+        |                             |
+        |                             |
+        |-----------------------------|
+
+You can also make that playfield scrollable without affecting the score
+section. Display lists makes it very easy to create these kind of screens
+without using much CPU code.
+
+### Display list instruction specification
+
+Each display list entry is a 16 bit value. The basic entry is this:
+
+    F E D C B A 9 8 7 6 5 4 3 2 1 0
+        | | | | | | + + + + + + + + ---> number of scalines
+        | | + + + + -------------------> video mode
+        | +----------------------------> narrow / normal mode
+        +------------------------------> scroll enabled
+
+#### Scanlines
+You are free to specify the number of scanlines per video mode, even if
+the video mode has a fixed number of scanlines per row, like text modes
+or tile mode which have 8 scanlines per row, you can specify any arbitrary
+number like 6 or 12. Using this method you can grow or shrink a section
+of the screen to create perspective effects.
+
+A good example of this kind of effects is found on the game Coryoon
+for the PC Engine (https://www.youtube.com/watch?v=SQySsSVTyjQ)
+
+#### Video Modes
+The video mode value specifies which one of the text/tiled/bitmap mode you want
+to use. At this stage of development, these are the valid video modes:
+
+    ID | Type     | Colors | Display                   |  Row Height
+    -----------------------------------------------------------------
+     0 | Blank    |    1   | Uses the background color |  1 scan
+     1 | Text     |   16   | 40 Chars per row          |  8 scans
+     2 | Text     |   16   | 80 Chars per row          |  8 scans
+     3 | Tiles    |   16   | 40 Tiles per row          |  8 scans
+     F | END      |    0   | End of display list       |  0 scan
 
 Video modes 0x0 and 0xF are special modes:
 - Video mode 0x0 is blank screen, the border/background color is used
 - Video mode 0xF is the end of the playlist / screen
 
-For each entry, optional entries may follow.
+The video mode 0 is useful for plain backgrounds without any content, just color.
+A smart use of this mode in some games is to modify the color for each scanline
+creating sunrise / sunset effect and more.
 
-If the entry defines a video mode (0x1-0xE), the following entry is the VRAM address
-of the screen buffer. The interpretation of this buffer depends on the video mode
+#### Narrow modes
+By default, Chroni uses 320 pixels wide, with the sole exception of the 80 
+columns mode which uses 640 pixels wide.
 
-If the video mode needs an attribute table, like the 16 color text mode, the following
-entry is the VRAM address of that attribute table.
+For example, text mode 1 and tiles mode 3 both use blocks of 8 pixels wide, so
+40 chars / tiles give us 40 * 8 = 320 pixels.
+
+Chroni is designed to bring games from other systems, so narrow modes are also supported.
+In narrow mode, the screen is set to 256 pixels wide instead of 320, or 512 pixels
+instead of 640 for text mode 2.
+
+Systems like the ZX Spectrum or PC Engine use just this kind of resolutions.
+
+#### Char/Attributes/Tile addresses 
+
+If the entry defines a video mode with data to be displayed (0x1-0xE), the 
+following entry is the VRAM address of the screen buffer.
+The interpretation of this buffer depends on the video mode.
+
+This is an example of a tiled video mode with 240 scanlines. The tiles data
+starts on VRAM address 0x8460
+
+        03F0 : Mode 3, 240 scanlines (0xf0)
+        8460 : VRAM address of the tiles data
+        0F00 : End of display list
+
+Text modes use char data and attribute data. Char data defines which characters
+will be displayed, while attribute data defines which colors will be used for
+background and foreground for each character.
+
+This is an example of a text video mode with 192 scanlines. The char data
+starts on VRAM address 0x0800, attribute data starts on VRAM address 0x2000
+
+        01C0 : Mode 1, 192 scanlines (0xc0)
+        0800 : VRAM address of the char data
+        2000 : VRAM address of the attribute data
+        0F00 : End of display list
 
 ### Scrolling
 
@@ -310,16 +460,7 @@ A spectrum like graphics mode (256x192)
     8800 : attributes at VRAM address $8800
     0F00 : end of display list
 
-## Video Modes
-
-Video modes are defined one per each line in a display list
-
-    ID | Type     | Colors | Bytes | Chars/Pixels  |  Height  | Extra
-    -----------------------------------------------------------------
-    01 | Text     |   16   | 40+40 |   40 Chars    |  8 scans | 1 attribute per char (see CHAR_ATTR)
-    02 | Text     |   16   | 80+80 |   80 Chars    |  8 scans | 1 attribute per char (see CHAR_ATTR)
-    03 | Tiles    |   16   | 80    |  320 Pixels   |  8 scans | See Tiles
-   
+  
 ### Text video modes
     
 Each screen byte is a char.  
