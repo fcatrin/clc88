@@ -126,7 +126,7 @@ For example, the following code uploads 20 bytes from SRC_ADDR to VRAM_ADDR
         mwa #VRAM_ADDR VADDR
         ldx #0
     upload:
-        lda (SRC_ADDR), x
+        lda SRC_ADDR, x
         sta VDATA
         inx
         cpx #20
@@ -227,7 +227,7 @@ on "palette"
         mva #0 VPAL_INDEX
         ldx #0
     set_color:
-        lda (palette), x
+        lda palette, x
         sta VPAL_VALUE
         inx
         cpx #64
