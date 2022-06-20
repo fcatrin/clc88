@@ -59,8 +59,8 @@ next_write:
 .endp
 
 .proc init_screen_addr
-   mwa DISPLAY_START  VADDRW
-   mwa ATTRIB_START   VADDRW_AUX
+   mwa DISPLAY_START  VADDR
+   mwa ATTRIB_START   VADDR_AUX
    rts  
 .endp
    

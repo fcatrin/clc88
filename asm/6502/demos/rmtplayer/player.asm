@@ -339,3 +339,6 @@ custom_subpal
    icl 'files.asm'
    icl 'loader.asm'
    icl '../../os/libs/stdlib.asm'
+
+    org EXECADDR
+    .word start

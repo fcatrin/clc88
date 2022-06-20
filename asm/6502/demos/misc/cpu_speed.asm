@@ -20,7 +20,7 @@ demo:
    mwa #BORDER_COLOR VBORDER
 
    mwa #dlist_addr VDLIST   
-   mwa #dlist_addr VADDRW
+   mwa #dlist_addr VADDR
    
    ldx #0
 copy_dl:

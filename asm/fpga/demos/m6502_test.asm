@@ -867,12 +867,12 @@ display_results:
    mwa #palette_dark SRC_ADDR
    jsr gfx_upload_palette
 
-   mwa #$0000 VADDRW
+   mwa #$0000 VADDR
    mwa #FONT_ROM_ADDR SRC_ADDR
    jsr gfx_upload_font
 
    mwa #dlist_addr VDLIST   
-   mwa #dlist_addr VADDRW
+   mwa #dlist_addr VADDR
    
    ldx #0
 copy_dl:
@@ -892,8 +892,8 @@ enable_chroni:
    sta VSTATUS
 
 update_results
-   mwa DISPLAY_START VADDRW
-   mwa ATTRIB_START  VADDRW_AUX
+   mwa DISPLAY_START VADDR
+   mwa ATTRIB_START  VADDR_AUX
 
    ldx #0
 next_result:   

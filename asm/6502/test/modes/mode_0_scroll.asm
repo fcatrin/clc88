@@ -12,7 +12,7 @@ start
     mwa #VRAM_SCREEN_CHAR_ADDR DISPLAY_START
     mwa #VRAM_SCREEN_ATTR_ADDR ATTRIB_START
     mwa #dlist_addr VDLIST
-    mwa #dlist_addr VADDRW
+    mwa #dlist_addr VADDR
 
     ldx #0
 copy_dl:
@@ -55,11 +55,11 @@ wait_frame:
     bne write_scroll_x
     ldx #0
 write_scroll_x:
-    mwa vram_scroll_left_addr VADDRW
+    mwa vram_scroll_left_addr VADDR
     stx VDATA
     stx dl_scroll_left
 write_fine_scroll_x
-    mwa vram_scroll_fine_x_addr VADDRW
+    mwa vram_scroll_fine_x_addr VADDR
     sty VDATA
 
     jmp main_loop

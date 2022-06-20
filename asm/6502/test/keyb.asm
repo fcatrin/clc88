@@ -23,7 +23,7 @@ keybscan:
 	sta KSTAT
 
 next_reg:
-   mwa DST_ADDR VADDRW
+   mwa DST_ADDR VADDR
 	ldy KSTAT
 	lda KEY_STATUS, y
 	ldx #0

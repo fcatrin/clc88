@@ -19,12 +19,12 @@ demo:
 
    mwa #BORDER_COLOR VBORDER
    
-   mwa #$0000 VADDRW
+   mwa #$0000 VADDR
    mwa #FONT_ROM_ADDR SRC_ADDR
    jsr gfx_upload_font
 
    mwa #dlist_addr VDLIST   
-   mwa #dlist_addr VADDRW
+   mwa #dlist_addr VADDR
    
    ldx #0
 copy_dl:

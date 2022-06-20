@@ -32,7 +32,7 @@ start
    ldx #OS_SET_VIDEO_MODE
    jsr OS_CALL
 	
-	mwa DISPLAY_START VADDRW
+	mwa DISPLAY_START VADDR
 	
 ;
 	ldx #<MODUL					;low byte of RMT module to X reg

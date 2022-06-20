@@ -11,7 +11,7 @@
    mwa #0 R4
    
 next_frame:   
-   mwa DISPLAY_START VADDRW
+   mwa DISPLAY_START VADDR
    
    lda R4
    and #$30

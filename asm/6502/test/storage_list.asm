@@ -32,7 +32,7 @@ read_next_entry:
    cmp #$FF      
    beq end_of_dir
 
-   mwa DST_ADDR VADDRW
+   mwa DST_ADDR VADDR
    mwa #ST_FILE_DATE SRC_ADDR
    mwa #8 SIZE
    jsr print

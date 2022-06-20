@@ -165,20 +165,20 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 
 	LOGV(LOGTAG, "chroni reg write: 0x%04X = 0x%02X", index, value);
 	switch (index) {
-	case 0:
+	case 0x00:
 		reg_low(&dl, value);
 		break;
-	case 1:
+	case 0x01:
 		reg_high(&dl, value);
 		break;
-	case 2:
+	case 0x02:
 		charset = value;
 		break;
-	case 4:
+	case 0x04:
 		palette_index = value;
 		palette_value_state = 0;
 		break;
-	case 5:
+	case 0x05:
 		if (palette_value_state == 0) {
 			palette_value = (palette_value & 0xFF00) | value;
 			palette_value_state = 1;
@@ -190,31 +190,25 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 		}
 		break;
 	case 0x06:
-		vram_write_address = (vram_write_address & 0x1FF00) | value;
+		vram_write_address = (vram_write_address & 0x1FE00) | (value << 1);
 		break;
 	case 0x07:
-		vram_write_address = (vram_write_address & 0x100FF) | (value << 8);
+		vram_write_address = (vram_write_address & 0x001FF) | (value << 9);
 		break;
 	case 0x08:
-		vram_write_address = (vram_write_address & 0x0FFFF) | ((value & 1) << 16);
+		vram_write_address_aux = (vram_write_address_aux & 0x1FE00) | (value << 1);
 		break;
 	case 0x09:
+		vram_write_address_aux = (vram_write_address_aux & 0x001FF) | (value << 9);
+		break;
+    case 0x0a:
 	    current_value = vram[vram_write_address>>1];
 		vram[vram_write_address>>1] = (vram_write_address & 1) ?
 		    ((current_value & 0x00ff) | ((value & 0xff) << 8)) :
 		    ((current_value & 0xff00) | (value & 0xff));
 		vaddr_autoinc();
 		break;
-	case 0x0a:
-		vram_write_address_aux = (vram_write_address_aux & 0x1FF00) | value;
-		break;
 	case 0x0b:
-		vram_write_address_aux = (vram_write_address_aux & 0x100FF) | (value << 8);
-		break;
-	case 0x0c:
-		vram_write_address_aux = (vram_write_address_aux & 0x0FFFF) | ((value & 1) << 16);
-		break;
-	case 0x0d:
 	    current_value = vram[vram_write_address_aux>>1];
 		vram[vram_write_address_aux>>1] = (vram_write_address_aux & 1) ?
 		    ((current_value & 0x00ff) | ((value & 0xff) << 8)) :
@@ -270,18 +264,24 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 		clock_multiplier = clock_multipliers[value & 0x03];
 		break;
 	case 0x26:
-		vram_write_address = (vram_write_address & 0x1FE00) | (value << 1);
+		vram_write_address = (vram_write_address & 0x1FF00) | value;
 		break;
 	case 0x27:
-		vram_write_address = (vram_write_address & 0x001FF) | (value << 9);
+		vram_write_address = (vram_write_address & 0x100FF) | (value << 8);
 		break;
 	case 0x28:
-		vram_write_address_aux = (vram_write_address_aux & 0x1FE00) | (value << 1);
-		break;
-	case 0x29:
-		vram_write_address_aux = (vram_write_address_aux & 0x001FF) | (value << 9);
+		vram_write_address = (vram_write_address & 0x0FFFF) | ((value & 1) << 16);
 		break;
 	case 0x2a:
+		vram_write_address_aux = (vram_write_address_aux & 0x1FF00) | value;
+		break;
+	case 0x2b:
+		vram_write_address_aux = (vram_write_address_aux & 0x100FF) | (value << 8);
+		break;
+	case 0x2c:
+		vram_write_address_aux = (vram_write_address_aux & 0x0FFFF) | ((value & 1) << 16);
+		break;
+	case 0x2e:
 		autoinc = value;
 		break;
 	}
@@ -289,18 +289,16 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 
 UINT8 chroni_register_read(UINT8 index) {
 	switch(index) {
-	case 0x06 : return (vram_write_address & 0x000FF);
-	case 0x07 : return (vram_write_address & 0x0FF00) >> 8;
-	case 0x08 : return (vram_write_address & 0x10000) >> 16;
-	case 0x09 : {
+	case 0x06 : return ((vram_write_address+1) & 0x001FF) >> 1;
+	case 0x07 : return ((vram_write_address+1) & 0x01E00) >> (8+1);
+	case 0x08 : return ((vram_write_address_aux+1) & 0x001FF) >> 1;
+	case 0x09 : return ((vram_write_address_aux+1) & 0x01E00) >> (8+1);
+	case 0x0a : {
 		UINT8 value = vram[vram_write_address];
 		vaddr_autoinc();
 		return value;
 	}
-	case 0x0a : return (vram_write_address_aux & 0x000FF);
-	case 0x0b : return (vram_write_address_aux & 0x0FF00) >> 8;
-	case 0x0c : return (vram_write_address_aux & 0x10000) >> 16;
-	case 0x0d : {
+	case 0x0b : {
 		UINT8 value = vram[vram_write_address_aux];
 		vaddr_aux_autoinc();
 		return value;
@@ -312,11 +310,13 @@ UINT8 chroni_register_read(UINT8 index) {
 	case 0x20 : return hscroll;
 	case 0x21 : return vscroll;
 	case 0x25 : return rand() & 0xFF;
-	case 0x26 : return ((vram_write_address+1) & 0x001FF) >> 1;
-	case 0x27 : return ((vram_write_address+1) & 0x01E00) >> (8+1);
-	case 0x28 : return ((vram_write_address_aux+1) & 0x001FF) >> 1;
-	case 0x29 : return ((vram_write_address_aux+1) & 0x01E00) >> (8+1);
-	case 0x2a : return autoinc;
+	case 0x26 : return (vram_write_address & 0x000FF);
+	case 0x27 : return (vram_write_address & 0x0FF00) >> 8;
+	case 0x28 : return (vram_write_address & 0x10000) >> 16;
+	case 0x2a : return (vram_write_address_aux & 0x000FF);
+	case 0x2b : return (vram_write_address_aux & 0x0FF00) >> 8;
+	case 0x2c : return (vram_write_address_aux & 0x10000) >> 16;
+	case 0x2e : return autoinc;
 	}
 	return 0;
 }

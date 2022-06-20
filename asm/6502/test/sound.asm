@@ -27,7 +27,7 @@
 	lda #$CF
 	sta POKEY0_AUDC1
 	
-	mwa DISPLAY_START VADDRW
+	mwa DISPLAY_START VADDR
 	ldy #0
 copy:
 	lda message, y

@@ -13,7 +13,7 @@ start:
     mwa #BORDER_COLOR VBORDER
 
     mwa #dlist_addr VDLIST
-    mwa #dlist_addr VADDRW
+    mwa #dlist_addr VADDR
    
     ldx #0
 copy_dl:
@@ -32,7 +32,7 @@ copy_dl:
 
     mwa #screen_data_size SIZE
     mwa #screen_data SRC_ADDR
-    mwa #VRAM_SCREEN_DATA_ADDR VADDRW
+    mwa #VRAM_SCREEN_DATA_ADDR VADDR
     ldy #0
 upload_screen_data:
     lda (SRC_ADDR), y
@@ -45,7 +45,7 @@ upload_screen_data:
 
     mwa tile_patterns_size SIZE
     mwa #tile_patterns SRC_ADDR
-    mwa tile_vram_address VADDRW
+    mwa tile_vram_address VADDR
     ldy #0
 upload_tiles_data:
     lda (SRC_ADDR), y
@@ -111,7 +111,7 @@ write_scroll_y
     stx dl_scroll_top
 
 send_scroll:
-    mwa vram_scroll_addr VADDRW
+    mwa vram_scroll_addr VADDR
     ldx #0
 next_scroll_value:
     lda dl_scroll_left, x

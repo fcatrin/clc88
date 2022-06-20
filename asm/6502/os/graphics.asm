@@ -69,7 +69,7 @@ set_video_mode_screen:
    mwa #SCREEN_LINES     DST_ADDR
    jsr copy_block
 
-   mwa #VRAM_ADDR_SCREEN VADDRW
+   mwa #VRAM_ADDR_SCREEN VADDR
 
    ; set video mode and scanlines word
    mva SCREEN_SCANLINES VDATA
@@ -92,19 +92,19 @@ set_video_mode_screen:
 ; calculate display, attribs and free addresses in words
 ; DISPLAY_START = current word address
 ; ATTRIB_START  = DISPLAY_START + SCREEN_SIZE / 2
-   mwa VADDRW DISPLAY_START
-   mwa SCREEN_SIZE VADDR ; use VADDR->VADDRW for simple division by 2
-   adw VADDRW DISPLAY_START ATTRIB_START
+   mwa VADDR DISPLAY_START
+   mwa SCREEN_SIZE VADDRB ; use VADDR->VADDRW for simple division by 2
+   adw VADDR DISPLAY_START ATTRIB_START
    
-   mwa ATTRIB_SIZE VADDR
-   adw VADDRW ATTRIB_START VRAM_FREE
+   mwa ATTRIB_SIZE VADDRB
+   adw VADDR ATTRIB_START VRAM_FREE
 
 ; set addresses for LMS and Atrribs on display list
-   mwa #VRAM_ADDR_SCREEN+1 VADDRW
+   mwa #VRAM_ADDR_SCREEN+1 VADDR
    mva DISPLAY_START   VDATA
    mva DISPLAY_START+1 VDATA
 
-   mwa #VRAM_ADDR_SCREEN+2 VADDRW
+   mwa #VRAM_ADDR_SCREEN+2 VADDR
    mva ATTRIB_START    VDATA
    mva ATTRIB_START+1  VDATA
 
@@ -125,12 +125,12 @@ set_video_mode_dl:
 .endp   
 
 gfx_display_clear:
-   mwa DISPLAY_START VADDRW
+   mwa DISPLAY_START VADDR
    mwa SCREEN_SIZE SIZE
    jmp gfx_vram_clear
 
 gfx_attrib_clear:
-   mwa ATTRIB_START VADDRW
+   mwa ATTRIB_START VADDR
    mwa SCREEN_SIZE SIZE
    lda ATTRIB_DEFAULT
    jmp gfx_vram_set
