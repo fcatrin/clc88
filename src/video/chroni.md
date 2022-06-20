@@ -387,34 +387,67 @@ starts on VRAM address 0x0800, attribute data starts on VRAM address 0x2000
 
 ### Scrolling
 
-If the scroll bit is set, there will be two more entries. First comes the size of
-the scrolling window. This should be larger than the screen size
+If the scroll bit is set, there will be three more entries. These entries define
+the virtual scrolling window size, the visible area position within this virtual
+window and finally the fine scrolling value to scroll the screen pixel by pixel.
 
-    FEDCBA9876543210
-    ||||||||------------> window width in bytes
-            ||||||||----> window height in bytes
+First comes the size of the scrolling window (or virtual window). 
+This should be larger than the screen size
+
+    F E D C B A 9 8 7 6 5 4 3 2 1 0
+    | | | | | | | | | | | | | | | |
+    | | | | | | | | + + + + + + + + ----> window width  in char/tiles elements 
+    + + + + + + + + --------------------> window height in char/tiles rows
 
 Then comes the current position into the scrolling window.
 
-    FEDCBA9876543210
-    ||||||||------------> left position
-            ||||||||----> top  position
+    F E D C B A 9 8 7 6 5 4 3 2 1 0
+    | | | | | | | | | | | | | | | |
+    | | | | | | | | + + + + + + + + ----> left position 
+    + + + + + + + + --------------------> top  position
 
-Note that the scrolling window wraps, so if the width is 130 and the left position is 129
-the first displayed element will be from memory position 129 and the next element will be from
+Following is an example of the scrolling window and the meaning of the top, left,
+width and height attributes.
+ 
+    <------------- width ---------------->
+    
+    * VRAM start address
+    +------------------------------------+   +
+    |                                    |   | 
+    |       top                          |   |
+    |       +------------------+         |   |
+    |  left |                  |         |   |
+    |       |   Visible Area   |         |   | height
+    |       |                  |         |   |
+    |       +------------------+         |   |
+    |                                    |   |
+    |                                    |   |
+    |          Virtual window            |   |
+    |                                    |   |
+    +------------------------------------+   +
+
+Note that the scrolling window wraps, so if the width is 132 and the left position is 129
+the first displayed element will be from memory position 129 and later will be reset to
 memory position 0, then 1, and so on. The same applies for vertical positions.
 
-Finally, comes the current fine scrolling position
+This is just that example using left = 129 and width = 130
 
-    FEDCBA9876543210
-        ||||------------> fine horizontal scrolling
-                ||||----> fine vertical scrolling
+    position  001 | 002 | 003 | 004 | 005 | 006 | ...
+    address   129 | 130 | 131 | 001 | 002 | 003 | ...
 
-Combining the display list with the scrolling entries you can manage several scroll/non scroll
-portions of the screen, with different scrolling values (parallax) without needing the use of
-interrupts neither CPU code
+Finally, comes the fine scrolling position.
 
-### Some display list examples
+The top and left values are measured in char / tile elements, so incrementing the value
+by 1 will move the screen 8 pixels. To move the screen by 1 pixel you can use
+the fine scrolling position.
+
+    F E D C B A 9 8 7 6 5 4 3 2 1 0
+    | | | | | | | | | | | | | | | |
+    | | | | | | | | + + + + + + + + ----> fine horizontal position 
+    + + + + + + + + --------------------> fine vertical position
+
+
+## Display list examples
 
 A simple text mode with attributes, 240 scanlines height (30 chars)
 
