@@ -1,20 +1,41 @@
-# Chroni - Video Processor Unit
+# Chroni - Video Processor Unit Reference Guide
+
+Chroni is the 16-bit video processor for CLC-88 Compy. It is designed
+to help the game programmer do common tasks like scrolling, sprites,
+multiplexing and others with the less amount of code.
+
+The main features of Chroni are:
+* 128KB of Video RAM
+* 256 color palette from a 65.536 color space (RGB565)
+* 40 and 80 columns text mode with 16 colors
+* 8x8 tiles mode with 16 colors per tile
+* Hardware coarse and fine scrolling
+* Virtual windows
+* Vertical and horizontal blank interrupts
+* Programmable video modes (display lists)
+
+The following content is a Reference Guide. If you are new to 8-bit
+computers/console programming, we recommend you to use the Chroni Tutorial
+together with this guide.
 
 The name comes from *Chroni, partners in time* (with the CPU).  
-Suggested by Stuart Law from *Cronie, partners in crime* a popular english saying.
+It was suggested by Stuart Law from *Cronie, partners in crime*, a popular english saying.
 
 ---
-Note: All the examples in this document use MADS macros for simplicity.
-You will find *mwa* or *mva*, instead of the *lda/sta* sequences
+Note: All the examples in this document use 6502 MADS macros for simplicity.
+You will find *mwa* or *mva* instructions, instead of the *lda/sta* sequences
+when applicable.
 
 ## Video RAM
 
-There are 128KB RAM for video ram or VRAM which accessed exclusively by
+There are 128KB RAM for Video RAM (VRAM) which accessed exclusively by
 Chroni. Any access from the CPU must be done through Chroni as it is 
 explained later in this document.
 
 There is no memory map for VRAM, Chroni has registers that hold the
 addresses for the required content like charsets, tiles or sprites.
+Just place the content in any area of the addressable space and then 
+point the Chroni register to that area.
 
 ## Addressing
 
