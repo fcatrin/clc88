@@ -66,12 +66,14 @@ module chroni (
                   palette_write_state   <= PAL_WRITE;
                end
             7'h06:
-               vram_address[7:0]  <= cpu_wr_data;
+               vram_address[8:0]  <= {cpu_wr_data, 1'b0};
             7'h07:
-               vram_address[15:8] <= cpu_wr_data;
+               vram_address[16:9] <= cpu_wr_data;
             7'h08:
-               vram_address[16] <= cpu_wr_data[0];
+               vram_address_aux[8:0]  <= {cpu_wr_data, 1'b0};
             7'h09:
+               vram_address_aux[16:9] <= cpu_wr_data;
+            7'h0a:
             begin
                vram_cpu_wr_en   <= 1;
                vram_cpu_wr_data <= {cpu_wr_data, cpu_wr_data};
@@ -79,13 +81,7 @@ module chroni (
                vram_cpu_byte_en <= vram_address[0] ? 2'b10 : 2'b01;
                vram_address     <= vram_address + 1'b1;
             end
-            7'h0a:
-               vram_address_aux[7:0]  <= cpu_wr_data;
             7'h0b:
-               vram_address_aux[15:8] <= cpu_wr_data;
-            7'h0c:
-               vram_address_aux[16]   <= cpu_wr_data[0];
-            7'h0d:
             begin
                vram_cpu_wr_en   <= 1;
                vram_cpu_wr_data <= {cpu_wr_data, cpu_wr_data};
@@ -95,22 +91,26 @@ module chroni (
             end
             7'h12:
             begin
-                status_chroni_enabled  <= cpu_wr_data[4];
-                status_sprites_enabled <= cpu_wr_data[3];
-                status_irq_enabled     <= cpu_wr_data[2];
+               status_chroni_enabled  <= cpu_wr_data[4];
+               status_sprites_enabled <= cpu_wr_data[3];
+               status_irq_enabled     <= cpu_wr_data[2];
             end
             7'h1a:
                border_color[7:0]  <= cpu_wr_data;
             7'h1b:
                border_color[15:8] <= cpu_wr_data;
             7'h26:
-               vram_address[8:0] <= {cpu_wr_data, 1'b0};
+               vram_address[7:0]  <= cpu_wr_data;
             7'h27:
-               vram_address[16:9] <= cpu_wr_data;
+               vram_address[15:8] <= cpu_wr_data;
             7'h28:
-               vram_address_aux[8:0] <= {cpu_wr_data, 1'b0};
-            7'h29:
-               vram_address_aux[16:9] <= cpu_wr_data;
+               vram_address[16] <= cpu_wr_data[0];
+            7'h2a:
+               vram_address_aux[7:0]  <= cpu_wr_data;
+            7'h2b:
+               vram_address_aux[15:8] <= cpu_wr_data;
+            7'h2c:
+               vram_address_aux[16]   <= cpu_wr_data[0];
          endcase
       end else if (palette_write_state == PAL_WRITE) begin
          palette_wr_en   <= 1;
@@ -135,17 +135,13 @@ module chroni (
             7'h02:
                cpu_rd_data_reg <= charset_base;
             7'h06:
-               cpu_rd_data_reg <= vram_address[7:0];
+               cpu_rd_data_reg <= vram_address[8:1];
             7'h07:
-               cpu_rd_data_reg <= vram_address[15:8];
+               cpu_rd_data_reg <= vram_address[16:9];
             7'h08:
-               cpu_rd_data_reg <= vram_address[16];
-            7'h0a:
-               cpu_rd_data_reg <= vram_address_aux[7:0];
-            7'h0b:
-               cpu_rd_data_reg <= vram_address_aux[15:8];
-            7'h0c:
-               cpu_rd_data_reg <= vram_address_aux[16];
+               cpu_rd_data_reg <= vram_address_aux[8:1];
+            7'h09:
+               cpu_rd_data_reg <= vram_address_aux[16:9];
             7'h12:
                cpu_rd_data_reg <= {vertical_irq_fired,
                                    scanline_irq_fired, 1'b0,
@@ -157,13 +153,17 @@ module chroni (
             7'h1b:
                cpu_rd_data_reg <= border_color[15:8];
             7'h26:
-               cpu_rd_data_reg <= vram_address[8:1];
+               cpu_rd_data_reg <= vram_address[7:0];
             7'h27:
-               cpu_rd_data_reg <= vram_address[16:9];
+               cpu_rd_data_reg <= vram_address[15:8];
             7'h28:
-               cpu_rd_data_reg <= vram_address_aux[8:1];
-            7'h29:
-               cpu_rd_data_reg <= vram_address_aux[16:9];
+               cpu_rd_data_reg <= vram_address[16];
+            7'h2a:
+               cpu_rd_data_reg <= vram_address_aux[7:0];
+            7'h2b:
+               cpu_rd_data_reg <= vram_address_aux[15:8];
+            7'h2c:
+               cpu_rd_data_reg <= vram_address_aux[16];
          endcase
       end
    end
