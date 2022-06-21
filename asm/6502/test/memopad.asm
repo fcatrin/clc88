@@ -5,15 +5,23 @@ POS_CAPS  = POS_BASE
 POS_SHIFT = POS_CAPS  + 6 
 POS_CTRL  = POS_SHIFT + 7
 POS_ALT   = POS_CTRL  + 6
+BORDER_COLOR = $2167
 
-    org BOOTADDR
+    org USERADDR
 
-    lda #1
-    sta ROS7
+    mwa #BORDER_COLOR VBORDER
+
+    mwa #palette_dark SRC_ADDR
+    jsr gfx_upload_palette
+
+    mva #01 ATTRIB_DEFAULT
     lda #0
     ldx #OS_SET_VIDEO_MODE
     jsr OS_CALL
 
+    lda VSTATUS
+    ora VSTATUS_EN_INTS
+    sta VSTATUS
 
     jsr calc_screen_offset
    
@@ -72,43 +80,43 @@ ignore_key:
     jmp next_frame
 	
 keybprint:
-    lda #$FF
+    lda #$ff
     sta R5
     lda caps
     beq no_caps
-    lda #$DF
+    lda #$df
     sta R5
 
 no_caps:
     jsr print_caps
 
-    lda #$FF
+    lda #$ff
     sta R5
     lda KEY_META
     and #KEY_META_SHIFT
     beq no_shift
-    lda #$DF
+    lda #$df
     sta R5
 	
 no_shift:
     jsr print_shift
 
-    lda #$FF
+    lda #$ff
     sta R5
     lda KEY_META
     and #KEY_META_CTRL
     beq no_ctrl
-    lda #$DF
+    lda #$df
     sta R5
 no_ctrl:
     jsr print_ctrl
 	
-    lda #$FF
+    lda #$ff
     sta R5
     lda KEY_META
     and #KEY_META_ALT
     beq no_alt
-    lda #$DF
+    lda #$df
     sta R5
 no_alt:
     jmp print_alt
@@ -134,16 +142,15 @@ print_alt:
     jmp print
 
 print:
-    mwa DISPLAY_START VRAM_TO_RAM
-    jsr lib_vramw_to_ram
-    adw RAM_TO_VRAM R2
+    mwa DISPLAY_START VADDR
+    adw VADDRB R2
 
     ldy #0
 print_c:
     lda (R0), y
     beq end_print
     and R5
-    sta (RAM_TO_VRAM), y
+    sta VDATA
     iny
     bne print_c
 end_print:
@@ -186,11 +193,9 @@ print_key_noctrl:
     cmp #47
     jeq caps_toggle
 
-    mwa DISPLAY_START VRAM_TO_RAM
-    jsr lib_vramw_to_ram
-
     jsr calc_screen_offset
-    adw RAM_TO_VRAM pos_offset
+    mwa DISPLAY_START VADDR
+    adw VADDRB pos_offset
 
     mwa #key_conversion_shift R0
     lda KEY_META
@@ -233,8 +238,7 @@ alpha_key:
     and #$DF
 
 normal_key:
-    ldy #0
-    sta (RAM_TO_VRAM), y
+    sta VDATA
     inc pos_x
     lda pos_x
     cmp #80
@@ -267,15 +271,20 @@ calc_screen_offset:
     sta pos_offset
 
     // pos_offset += y*16   => pos_offset = y*(64+16 from above)
+    mva #0 pos_offset_aux
     lda pos_y
     asl
+    rol pos_offset_aux
     asl
+    rol pos_offset_aux
     asl
+    rol pos_offset_aux
     asl
+    rol pos_offset_aux
     clc
     adc pos_offset
     sta pos_offset
-    lda #0
+    lda pos_offset_aux
     adc pos_offset+1
     sta pos_offset+1
 
@@ -303,15 +312,11 @@ backspace_wrap_left:
     sta pos_x
     dec pos_y
 backspace_del:
-    mwa DISPLAY_START VRAM_TO_RAM
-    jsr lib_vramw_to_ram
-
+    mwa DISPLAY_START VADDR
     jsr calc_screen_offset
-    adw RAM_TO_VRAM pos_offset
-    lda #0
-    ldy #0
-    sta (RAM_TO_VRAM), y
-backspace_abort:   
+    adw VADDRB pos_offset
+    mva #0 VDATA
+backspace_abort:
     rts
    
 line_feed:
@@ -371,29 +376,23 @@ cursor_wrap_down:
 cursor_on:
     lda #1
     sta is_cursor_on
-    lda #$f9
+    lda #$10
     jmp change_cursor_attr
 
 cursor_off:
     lda #0
     sta is_cursor_on
-    lda #$9f
+    lda #$01
 change_cursor_attr:
     pha
-    mwa ATTRIB_START VRAM_TO_RAM
-    jsr lib_vramw_to_ram
-
     jsr calc_screen_offset
-    adw RAM_TO_VRAM pos_offset
+    mwa ATTRIB_START VADDR
+    adw VADDRB pos_offset
     pla
-    ldy #0
-    sta (RAM_TO_VRAM), y
+    sta VDATA
     rts
 
 cursor_home:
-    mwa DISPLAY_START VRAM_TO_RAM
-    jsr lib_vramw_to_ram
-
     lda pos_x
     sta R0
     bne cursor_home_start
@@ -403,11 +402,11 @@ cursor_home_start:
     lda #0
     sta pos_x
     jsr calc_screen_offset
-    adw RAM_TO_VRAM pos_offset
+    adw VADDRB pos_offset
 
     ldy #0
 cursor_home_next:   
-    lda (RAM_TO_VRAM), y
+    lda VDATA
     bne cursor_home_found
     iny
     cpy R0
@@ -418,9 +417,7 @@ cursor_home_found:
     jmp calc_screen_offset
 
 cursor_end:
-    mwa DISPLAY_START VRAM_TO_RAM
-    jsr lib_vramw_to_ram
-
+    mwa DISPLAY_START VADDR
     lda pos_x
     sta R0
     cmp #79
@@ -431,11 +428,11 @@ cursor_end_start:
     lda #0
     sta pos_x
     jsr calc_screen_offset
-    adw RAM_TO_VRAM pos_offset
+    adw VADDRB pos_offset
 
     ldy #79
 cursor_end_next:   
-    lda (RAM_TO_VRAM), y
+    lda VDATA
     bne cursor_end_found
     dey
     cpy R0
@@ -446,13 +443,10 @@ cursor_end_found:
     jmp calc_screen_offset
 
 word_prev:
-    mwa DISPLAY_START VRAM_TO_RAM
-    jsr lib_vramw_to_ram
-    mwa RAM_TO_VRAM display_base
     ldx #1
 
 word_prev_next:
-    mwa display_base RAM_TO_VRAM
+    mwa DISPLAY_START VADDR
     mwa pos_x pos_save
 
     lda pos_x
@@ -471,9 +465,8 @@ word_prev_x:
 
 word_prev_start:
     jsr calc_screen_offset
-    adw RAM_TO_VRAM pos_offset
-    ldy #0
-    lda (RAM_TO_VRAM), y
+    adw VADDRB pos_offset
+    lda VDATA
     bne word_prev_next
     cpx #1
     bne word_prev_end
@@ -484,12 +477,10 @@ word_prev_end:
     rts
 
 word_next:
-    mwa DISPLAY_START VRAM_TO_RAM
-    jsr lib_vramw_to_ram
-    mwa RAM_TO_VRAM display_base
+    mwa DISPLAY_START display_base
       
 word_next_next:
-    mwa display_base RAM_TO_VRAM
+    mwa display_base VADDR
 
     lda pos_x
     cmp #79
@@ -509,9 +500,8 @@ word_next_x:
 
 word_next_start:
     jsr calc_screen_offset
-    adw RAM_TO_VRAM pos_offset
-    ldy #0
-    lda (RAM_TO_VRAM), y
+    adw VADDRB pos_offset
+    lda VDATA
     bne word_next_next
     rts
 
@@ -524,12 +514,19 @@ caps_toggle:
 last_key_pressed:
     .byte 0
 
+palette_dark:
+    .word $2104
+    .word $9C0A
+    .word $BC0E
+    .word $43B5
+
 is_cursor_on: .byte 0
    
 pos_x:  .byte 0
 pos_y:  .byte 0
-pos_offset: .word 0
-pos_save:   .word 0
+pos_offset:     .word 0
+pos_offset_aux: .byte 0
+pos_save:       .word 0
 
 in_auto_repeat: .byte 0
 auto_repeat_wait:  .byte 0
@@ -551,5 +548,10 @@ key_ctrl:
 key_alt:
     .byte 'alt', 0
 
+    icl '../os/graphics.asm'
+    icl '../os/ram_vram.asm'
     icl '../os/libs/keyboard.asm'
     icl '../os/libs/stdlib.asm'
+
+    org EXECADDR
+    .word USERADDR
