@@ -79,13 +79,6 @@ static UINT8 pixel_color_r;
 static UINT8 pixel_color_g;
 static UINT8 pixel_color_b;
 
-#define STATUS_VBLANK         0x80
-#define STATUS_HBLANK         0x40
-#define STATUS_IS_EMULATOR    0x20
-#define STATUS_ENABLE_CHRONI  0x10
-#define STATUS_ENABLE_SPRITES 0x08
-#define STATUS_ENABLE_INTS    0x04
-
 #define AUTOINC_VADDR_KEEP 0x00
 #define AUTOINC_VADDR_INC  0x01
 #define AUTOINC_VADDR_DEC  0x03
@@ -128,6 +121,18 @@ void chroni_reset() {
 
 UINT16 chroni_vram_read(UINT16 addr) {
 	return VRAM_DATA(addr);
+}
+
+UINT16 *chroni_registers_read() {
+    static UINT16 registers[7];
+    registers[0] = dl;
+    registers[1] = lms;
+    registers[2] = attribs;
+    registers[3] = vram_write_address >> 1;
+    registers[4] = vram_write_address_aux >> 1;
+    registers[5] = ((vram_write_address & 1) << 8 ) | (vram_write_address_aux & 1);
+    registers[6] = status;
+    return registers;
 }
 
 static void reg_low(UINT16 *reg, UINT8 value) {
@@ -511,7 +516,6 @@ static void do_scan_tile_4bpp(UINT16 width, UINT8 line) {
     }
 
 	UINT16 line_offset = (line & 7) << 1;
-	int tile_pixel_data_index = 0;
 	for(int i=0; i<width/2; i++) { // for each pixel
 		if (i == 0 || pixel_offset == 0) {
 		    UINT16 tile = VRAM_DATA(tile_addr);

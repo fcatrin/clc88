@@ -124,6 +124,35 @@ static unsigned dump_memory(unsigned addr, unsigned lines) {
 	return addr;
 }
 
+static void dump_chroni_registers() {
+    UINT16 *registers = chroni_registers_read();
+    UINT16 dl               = registers[0];
+    UINT16 lms              = registers[1];
+    UINT16 attr             = registers[2];
+    UINT16 vaddr            = registers[3];
+    UINT16 vaddr_aux        = registers[4];
+    bool vaddr_byte_set     = (registers[5] & 0x100) ? 1 : 0;
+    bool vaddr_aux_byte_set = registers[5] & 0x1;
+    UINT16 status_bits      = registers[6];
+
+    char status[16];
+    sprintf(status, "V%cH%cE%cI%cS%c",
+        status_bits & STATUS_VBLANK         ? '+' : '-',
+        status_bits & STATUS_HBLANK         ? '+' : '-',
+        status_bits & STATUS_ENABLE_CHRONI  ? '+' : '-',
+        status_bits & STATUS_ENABLE_INTS    ? '+' : '-',
+        status_bits & STATUS_ENABLE_SPRITES ? '+' : '-'
+    );
+
+    char vaddr_byte[5];
+    char vaddr_aux_byte[5];
+    sprintf(vaddr_byte,     "%s", vaddr_byte_set     ? "+1": "  ");
+    sprintf(vaddr_aux_byte, "%s", vaddr_aux_byte_set ? "+1": "  ");
+
+    printf("DL:%04x  LMS:%04x  ATTR:%04x  STATUS:%s\n", dl, lms, attr, status);
+    printf("VADDR:%04x%s  VADDR_AUX:%04x%s\n\n", vaddr, vaddr_byte, vaddr_aux, vaddr_aux_byte);
+}
+
 static UINT16 dump_vram(UINT16 addr, unsigned lines) {
 	for(int line=0; line < lines; line++) {
 		printf("%04X|", addr);
@@ -258,6 +287,7 @@ void monitor_help() {
 	printf("m addr        Memory dump from address\n");
 	printf("v             VRAM dump\n");
 	printf("v addr        VRAM dump from address\n");
+	printf("cr            Display Chroni Registers\n");
 	printf("s             Step one instruction\n");
 	printf("t             Step over one instruction\n");
 	printf("g             Run\n");
@@ -305,6 +335,9 @@ void monitor_enter() {
 			dump_registers();
 			dump_code(cpu->get_pc());
 			continue;
+		} else if (!strcmp(parts[0], "cr")) {
+		    dump_chroni_registers();
+		    continue;
 		} else if (!strcmp(parts[0], "d")) {
 			if (nparts == 1) {
 				dasm_start = disasm(dasm_start, 16);
