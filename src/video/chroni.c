@@ -299,12 +299,12 @@ UINT8 chroni_register_read(UINT8 index) {
 	case 0x08 : return ((vram_write_address_aux+1) & 0x001FF) >> 1;
 	case 0x09 : return ((vram_write_address_aux+1) & 0x01E00) >> (8+1);
 	case 0x0a : {
-		UINT8 value = vram[vram_write_address];
+		UINT8 value = VRAM_BYTE(vram_write_address);
 		vaddr_autoinc();
 		return value;
 	}
 	case 0x0b : {
-		UINT8 value = vram[vram_write_address_aux];
+		UINT8 value = VRAM_BYTE(vram_write_address_aux);
 		vaddr_aux_autoinc();
 		return value;
 	}
