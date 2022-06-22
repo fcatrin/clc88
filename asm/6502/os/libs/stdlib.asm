@@ -169,11 +169,13 @@ offset_string .word 0
    sta fill_x
    sta save_x
 
+   mwa VADDRB_AUX DST_ADDR
+
 fill_next_line:
    ldy #0
    lda screen_fill_byte
 fill_line:   
-   sta (RAM_TO_VRAM), y
+   sta VDATA_AUX
    iny
    dec fill_x
    bne fill_line
@@ -181,8 +183,10 @@ fill_line:
    dec fill_y
    sne
    rts
-   
-   adw RAM_TO_VRAM #40
+
+   adw DST_ADDR SCREEN_PITCH
+   mwa DST_ADDR VADDRB_AUX
+
    lda save_x
    sta fill_x
    jmp fill_next_line
