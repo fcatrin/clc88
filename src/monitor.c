@@ -134,6 +134,7 @@ static void dump_chroni_registers() {
     bool vaddr_byte_set     = (registers[5] & 0x100) ? 1 : 0;
     bool vaddr_aux_byte_set = registers[5] & 0x1;
     UINT16 status_bits      = registers[6];
+    UINT16 charset          = registers[7];
 
     char status[16];
     sprintf(status, "V%cH%cE%cI%cS%c",
@@ -149,7 +150,7 @@ static void dump_chroni_registers() {
     sprintf(vaddr_byte,     "%s", vaddr_byte_set     ? "+1": "  ");
     sprintf(vaddr_aux_byte, "%s", vaddr_aux_byte_set ? "+1": "  ");
 
-    printf("DL:%04x  LMS:%04x  ATTR:%04x  STATUS:%s\n", dl, lms, attr, status);
+    printf("DL:%04x  LMS:%04x  ATTR:%04x  CHARSET:%04x  STATUS:%s\n", dl, lms, attr, charset, status);
     printf("VADDR:%04x%s  VADDR_AUX:%04x%s\n\n", vaddr, vaddr_byte, vaddr_aux, vaddr_aux_byte);
 }
 

@@ -124,7 +124,7 @@ UINT16 chroni_vram_read(UINT16 addr) {
 }
 
 UINT16 *chroni_registers_read() {
-    static UINT16 registers[7];
+    static UINT16 registers[8];
     registers[0] = dl;
     registers[1] = lms;
     registers[2] = attribs;
@@ -132,6 +132,7 @@ UINT16 *chroni_registers_read() {
     registers[4] = vram_write_address_aux >> 1;
     registers[5] = ((vram_write_address & 1) << 8 ) | (vram_write_address_aux & 1);
     registers[6] = status;
+    registers[7] = charset << 9;
     return registers;
 }
 
