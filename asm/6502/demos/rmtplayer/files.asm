@@ -104,7 +104,8 @@ file_name  .word 0
 
    ldx #1
    ldy #1
-   jsr screen_position   
+   jsr screen_position
+   mwa VADDRB DST_ADDR
    
 copy_loop:   
    ldx file_index
@@ -115,7 +116,9 @@ copy_loop:
    cmp files_read
    beq display_end
    
-   adw RAM_TO_VRAM #40
+   adw DST_ADDR SCREEN_PITCH
+   mwa DST_ADDR VADDRB
+
    dec line
    bne copy_loop
    
@@ -136,8 +139,7 @@ file_index .byte 0
    tax
    
    mwa DIR_ENTRIES,x SRC_ADDR
-   mwa RAM_TO_VRAM   DST_ADDR
-   
+
    lda #23
    sta col
    
@@ -148,14 +150,13 @@ file_index .byte 0
    beq copy_name
    
    lda #'['
-   sta (DST_ADDR), y
-   inw DST_ADDR
+   sta VDATA
    inc col
    
 copy_name:
    lda (SRC_ADDR), y
    beq copy_name_done
-   sta (DST_ADDR), y
+   sta VDATA
    iny
    dec col
    bne copy_name
@@ -169,7 +170,7 @@ copy_name_done:
    beq print_end
    
    lda #']'
-   sta (DST_ADDR), y
+   sta VDATA
 
 print_end
    rts   

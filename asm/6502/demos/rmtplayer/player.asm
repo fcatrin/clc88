@@ -13,15 +13,10 @@ VLINE	equ 16					;screen line for synchronization
 
 start
 
-    lda #1
-    sta ROS7
+    mva #$12 ATTRIB_DEFAULT
+
     lda #1
     ldx #OS_SET_VIDEO_MODE
-    jsr OS_CALL
-
-    lda #$12
-    sta ATTRIB_DEFAULT
-    ldx #OS_ATTRIB_CLEAR
     jsr OS_CALL
 
     mwa #custom_palette SRC_ADDR
