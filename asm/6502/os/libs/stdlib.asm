@@ -1,6 +1,6 @@
 lib_vram_to_ram:
-   ldx #OS_VRAM_TO_RAM
-   jsr OS_CALL
+   ; ldx #OS_VRAM_TO_RAM
+   ; jsr OS_CALL
    lda VRAM_PAGE
    sta VPAGE
    rts
@@ -11,8 +11,9 @@ lib_vramw_to_ram
    jmp lib_vram_to_ram   
    
 lib_ram_to_vram:
-   ldx #OS_RAM_TO_VRAM
-   jmp OS_CALL
+   ; ldx #OS_RAM_TO_VRAM
+   ; jmp OS_CALL
+   rts
    
 
 lib_vram_set:
@@ -82,13 +83,17 @@ eos:
 .endp
 
 .proc screen_position
-   mwa DISPLAY_START VRAM_TO_RAM
-   jmp screen_position_offset
+   mwa DISPLAY_START VADDR
+   jsr screen_position_offset
+   adw VADDRB screen_offset
+   rts
 .endp
 
 .proc screen_position_attrib
-   mwa ATTRIB_START VRAM_TO_RAM
-   jmp screen_position_offset
+   mwa ATTRIB_START VADDR_AUX
+   jsr screen_position_offset
+   adw VADDRB_AUX screen_offset
+   rts
 .endp
 
 .proc screen_position_offset
@@ -99,7 +104,7 @@ eos:
    cpy #0
    beq calc_x
 calc_y:   
-   adw screen_offset #40
+   adw screen_offset SCREEN_PITCH
    dey
    bne calc_y
 calc_x:
@@ -110,11 +115,7 @@ calc_x:
    sta screen_offset
    scc
    inc screen_offset+1
-  
-   jsr lib_vramw_to_ram
-   adw RAM_TO_VRAM screen_offset
    rts
-screen_offset: .word 0   
 .endp
 
 .proc screen_print_at
@@ -285,6 +286,7 @@ scroll_width  .byte 0
 scroll_height .byte 0   
 .endp
 
+screen_offset: .word 0
 
 screen_fill_byte .byte 0
 
