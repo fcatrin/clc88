@@ -34,7 +34,6 @@ static UINT32 vram_write_address;
 static UINT32 vram_write_address_aux;
 
 static UINT16 scanline_interrupt;
-static UINT8  page;
 static UINT32 offset;
 
 static UINT16 dl;
@@ -70,9 +69,6 @@ static UINT16 border_color;
 static UINT8  charset;
 static UINT16 sprites;
 
-static UINT16 tileset_small;
-static UINT16 tileset_big;
-
 // this is an RGB565 -> RGB888 conversion array for emulation only
 static UINT8 rgb565[0x10000 * 3];
 static UINT8 pixel_color_r;
@@ -92,9 +88,6 @@ static UINT8 pixel_color_b;
 static UINT8 status;
 static UINT8 autoinc;
 
-static UINT8 vscroll;
-static UINT8 hscroll;
-
 static UINT8 clock_multiplier;
 static UINT8 clock_multipliers[] = {1, 2, 4, 8};
 
@@ -108,9 +101,6 @@ void chroni_reset() {
 	dl = 0;
 	charset = 0;
 	sprites = 0;
-	tileset_small = 0;
-	vscroll = 0;
-	hscroll = 0;
 	scanline_interrupt = 0;
 	clock_multiplier = clock_multipliers[0];
 
@@ -221,9 +211,6 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 		    ((current_value & 0xff00) | (value & 0xff));
 		vaddr_aux_autoinc();
 		break;
-	case 0x0e:
-		page = value & 0x07;
-		break;
 	case 0x11:
 		CPU_HALT();
 		break;
@@ -236,29 +223,11 @@ void chroni_register_write(UINT8 index, UINT8 value) {
 	case 0x15:
 		reg_high(&sprites, value);
 		break;
-	case 0x16:
-		reg_low(&tileset_small, value);
-		break;
-	case 0x17:
-		reg_high(&tileset_small, value);
-		break;
-	case 0x18:
-		reg_low(&tileset_big, value);
-		break;
-	case 0x19:
-		reg_high(&tileset_big, value);
-		break;
 	case 0x1a:
 		reg_low(&border_color, value);
 		break;
 	case 0x1b:
 		reg_high(&border_color, value);
-		break;
-	case 0x20:
-		hscroll = value;
-		break;
-	case 0x21:
-		vscroll = value;
 		break;
 	case 0x22:
 		reg_low(&scanline_interrupt, value);
@@ -313,8 +282,6 @@ UINT8 chroni_register_read(UINT8 index) {
 	case 0x1a : return (border_color & 0x00ff);
 	case 0x1b : return border_color >> 8;
 	case 0x12 : return status | STATUS_IS_EMULATOR;
-	case 0x20 : return hscroll;
-	case 0x21 : return vscroll;
 	case 0x25 : return rand() & 0xFF;
 	case 0x26 : return (vram_write_address & 0x000FF);
 	case 0x27 : return (vram_write_address & 0x0FF00) >> 8;
