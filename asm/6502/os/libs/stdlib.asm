@@ -102,15 +102,12 @@ calc_x:
 .proc screen_print
    lda #0
    sta offset_string
-   sta offset_vram
 next_char:
    ldy offset_string
    lda (SRC_ADDR), y
    beq print_end
    
-   ldy offset_vram
-   sta (RAM_TO_VRAM), y
-   inc offset_vram
+   sta VDATA
    inc offset_string
    
    inc screen_pos_x         ; check right margin for line wrap / stop
@@ -128,12 +125,11 @@ next_char:
    
    ldx screen_margin_left   ; recalculate vram address for next line inside margins
    jsr screen_position
-   mva #0 offset_vram
+
    beq next_char
 print_end
    rts
-offset_vram   .word 0
-offset_string .word 0    
+offset_string .word 0
 .endp
 
 .proc screen_clear
@@ -154,6 +150,7 @@ offset_string .word 0
    ldx screen_margin_left
    ldy screen_margin_top
    jsr screen_position_attrib
+   mwa VADDRB_AUX VADDRB
    jmp screen_fill_internal
 .endp
 
@@ -169,13 +166,13 @@ offset_string .word 0
    sta fill_x
    sta save_x
 
-   mwa VADDRB_AUX DST_ADDR
+   mwa VADDRB DST_ADDR
 
 fill_next_line:
    ldy #0
    lda screen_fill_byte
 fill_line:   
-   sta VDATA_AUX
+   sta VDATA
    iny
    dec fill_x
    bne fill_line
@@ -185,7 +182,7 @@ fill_line:
    rts
 
    adw DST_ADDR SCREEN_PITCH
-   mwa DST_ADDR VADDRB_AUX
+   mwa DST_ADDR VADDRB
 
    lda save_x
    sta fill_x
