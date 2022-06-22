@@ -199,9 +199,10 @@ fill_y: .byte 0
    ldx screen_margin_left
    ldy screen_margin_top
    jsr screen_position
-   
-   mwa RAM_TO_VRAM SRC_ADDR
-   adw SRC_ADDR #40
+
+   mwa VADDRB SRC_ADDR
+   mwa VADDRB DST_ADDR
+   adw SRC_ADDR SCREEN_PITCH
 
    lda screen_margin_right
    sec
@@ -215,14 +216,16 @@ fill_y: .byte 0
 
 copy_next_row
    ldy #0
-copy_row   
-   lda (SRC_ADDR), y
-   sta (RAM_TO_VRAM), y
+   mwa SRC_ADDR VADDRB
+   mwa DST_ADDR VADDRB_AUX
+copy_row
+   lda VDATA
+   sta VDATA_AUX
    iny
    cpy scroll_width
    bne copy_row
-   adw SRC_ADDR #40
-   adw RAM_TO_VRAM #40
+   adw SRC_ADDR SCREEN_PITCH
+   adw DST_ADDR SCREEN_PITCH
    dec scroll_height
    bne copy_next_row
    rts
@@ -236,8 +239,9 @@ scroll_height .byte 0
    dey
    jsr screen_position
    
-   mwa RAM_TO_VRAM SRC_ADDR
-   sbw SRC_ADDR #40
+   mwa VADDRB SRC_ADDR
+   mwa VADDRB DST_ADDR
+   sbw SRC_ADDR SCREEN_PITCH
 
    lda screen_margin_right
    sec
@@ -251,14 +255,16 @@ scroll_height .byte 0
 
 copy_next_row
    ldy #0
+   mwa SRC_ADDR VADDRB
+   mwa DST_ADDR VADDRB_AUX
 copy_row   
-   lda (SRC_ADDR), y
-   sta (RAM_TO_VRAM), y
+   lda VDATA
+   sta VDATA_AUX
    iny
    cpy scroll_width
    bne copy_row
-   sbw SRC_ADDR #40
-   sbw RAM_TO_VRAM #40
+   sbw SRC_ADDR SCREEN_PITCH
+   sbw DST_ADDR SCREEN_PITCH
    dec scroll_height
    bne copy_next_row
    rts
