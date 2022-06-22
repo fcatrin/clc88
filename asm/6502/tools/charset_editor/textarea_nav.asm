@@ -49,13 +49,12 @@
 
 
 .proc textarea_update
-   mwa textarea_attrib_last RAM_TO_VRAM
-   lda RAM_TO_VRAM
-   ora RAM_TO_VRAM+1
+   mwa textarea_attrib_last VADDRB
+   lda VADDRB
+   ora VADDRB+1
    beq not_reset_attrib
    
-   ldy #0
-   mva #$9f (RAM_TO_VRAM),y
+   mva #$01 VDATA
    
 not_reset_attrib
    adb textarea_x #TEXTAREA_POS_X screen_pos_x
@@ -64,10 +63,8 @@ not_reset_attrib
    ldy screen_pos_y
    jsr screen_position_attrib
    
-   mwa RAM_TO_VRAM textarea_attrib_last
-   
-   ldy #0
-   mva #$2f (RAM_TO_VRAM),y
+   mwa VADDRB_AUX textarea_attrib_last
+   mva #$10 VDATA_AUX
    rts
 .endp   
 

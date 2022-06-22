@@ -59,14 +59,13 @@
 
 
 .proc charset_char_update
-   mwa charset_char_attrib_last RAM_TO_VRAM
-   lda RAM_TO_VRAM
-   ora RAM_TO_VRAM+1
+   mwa charset_char_attrib_last VADDRB
+   lda VADDRB
+   ora VADDRB+1
    beq not_reset_attrib
    
-   ldy #0
-   mva #$9F (RAM_TO_VRAM),y
-   
+   mva #$01 VDATA
+
 not_reset_attrib
    adb charset_char_x #CHARSET_POS_X screen_pos_x
    adb charset_char_y #CHARSET_POS_Y screen_pos_y
@@ -74,10 +73,8 @@ not_reset_attrib
    ldy screen_pos_y
    jsr screen_position_attrib
    
-   mwa RAM_TO_VRAM charset_char_attrib_last
-   
-   ldy #0
-   mva #$2f (RAM_TO_VRAM),y
+   mwa VADDRB_AUX charset_char_attrib_last
+   mva #$10 VDATA_AUX
    rts
 .endp   
 
