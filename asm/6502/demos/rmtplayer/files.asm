@@ -100,7 +100,7 @@ file_name  .word 0
 
 .proc display_files
    mva #0  file_index
-   mva #17 line
+   mva #23 line
 
    ldx #1
    ldy #1
@@ -140,7 +140,7 @@ file_index .byte 0
    
    mwa DIR_ENTRIES,x SRC_ADDR
 
-   lda #23
+   lda #22
    sta col
    
    ldy #0
@@ -151,7 +151,7 @@ file_index .byte 0
    
    lda #'['
    sta VDATA
-   inc col
+   dec col
    
 copy_name:
    lda (SRC_ADDR), y
@@ -294,7 +294,7 @@ is_parent .byte 0
    mva #1  screen_margin_left
    mva #1  screen_margin_top
    mva #24 screen_margin_right
-   mva #18 screen_margin_bottom
+   mva #24 screen_margin_bottom
    rts
 .endp
 

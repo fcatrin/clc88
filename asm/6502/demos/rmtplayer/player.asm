@@ -28,8 +28,8 @@ start
     ; paint Song Info area
     mva #0  screen_margin_left
     mva #40 screen_margin_right
-    mva #19 screen_margin_top
-    mva #24 screen_margin_bottom
+    mva #25 screen_margin_top
+    mva #30 screen_margin_bottom
 
     lda #$34
     jsr screen_fill_attrib
@@ -38,7 +38,7 @@ start
     mva #25 screen_margin_left
     mva #40 screen_margin_right
     mva #0  screen_margin_top
-    mva #19 screen_margin_bottom
+    mva #25 screen_margin_bottom
 
     lda #$56
     jsr screen_fill_attrib
@@ -86,7 +86,7 @@ tabpp  dta 156,78,52,39			;line counter spacing table for instrument speed from 
 
     jsr clear_song_info
     ldx #12
-    ldy #21
+    ldy #26
     mwa #label_loading SRC_ADDR
     jsr screen_print_at
 
@@ -103,12 +103,12 @@ tabpp  dta 156,78,52,39			;line counter spacing table for instrument speed from 
     jsr clear_song_info
 
     ldx #1
-    ldy #20
+    ldy #26
     mwa #label_song SRC_ADDR
     jsr screen_print_at
 
     ldx #7
-    ldy #20
+    ldy #26
     mwa song_text SRC_ADDR
     jsr screen_print_at
 
@@ -132,7 +132,7 @@ tabpp  dta 156,78,52,39			;line counter spacing table for instrument speed from 
     mwa #label_stereo SRC_ADDR
 
     ldx #1
-    ldy #22
+    ldy #28
     jsr screen_position
     jsr screen_print
 
@@ -162,9 +162,9 @@ set_pokey_done:
     lda #39
     sta screen_margin_right
 
-    lda #20
+    lda #25
     sta screen_margin_top
-    lda #24
+    lda #29
     sta screen_margin_bottom
 
     jmp screen_clear
@@ -216,14 +216,14 @@ key_down:
     beq process_end
 
     lda selected_line
-    cmp #16
+    cmp #22
     bne line_down
 
     jsr files_scroll_up
     inc files_offset
 
     ldx #1
-    ldy #17
+    ldy #23
     jsr screen_position
 
     clc
@@ -313,7 +313,7 @@ player_info_4 .by 'Franco Catrin', 0
 
 player_info_strings .word  player_info_0, player_info_1, player_info_2, player_info_3, player_info_4, 0
 player_info_pos_x .byte 26, 26, 26, 26, 26
-player_info_pos_y .byte 6, 7, 8, 10, 11
+player_info_pos_y .byte 8, 9, 10, 12, 13
 
 custom_palette
     .word $0000 ; border default
@@ -325,9 +325,6 @@ custom_palette
     .word $EDE6 ; credits text
     .word $FE25 ; highlight text
     .word $640D ; player bars
-   
-custom_subpal
-    .byte 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
 
     icl 'files.asm'
     icl 'loader.asm'
