@@ -1,30 +1,6 @@
-lib_vram_to_ram:
-   ; ldx #OS_VRAM_TO_RAM
-   ; jsr OS_CALL
-   lda VRAM_PAGE
-   sta VPAGE
-   rts
-   
-lib_vramw_to_ram
-   mwa VRAM_TO_RAM VADDR  ; this will break crossing the 64KB boundary
-   mwa VADDRB VRAM_TO_RAM ; just good enough for simple examples
-   jmp lib_vram_to_ram   
-   
-lib_ram_to_vram:
-   ; ldx #OS_RAM_TO_VRAM
-   ; jmp OS_CALL
-   rts
-   
-
 lib_vram_set:
    ldx #OS_VRAM_SET_BYTES
    jmp OS_CALL
-
-.proc lib_copy_to_vram
-   jsr lib_vram_to_ram
-   mwa RAM_TO_VRAM DST_ADDR
-   jmp memcpy
-.endp
 
 .proc memcpy
   ldx #OS_COPY_BLOCK
