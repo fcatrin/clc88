@@ -1,0 +1,1 @@
+/home/fcatrin/git-as/clc88/tools/bitmap/output/16-color-320.data/image.asm

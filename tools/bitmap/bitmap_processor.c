@@ -38,15 +38,12 @@ bool load_bin(const char *filename, void *data, size_t size) {
 }
 
 INT8 get_value(int index, int nibble) {
-    if (index >= 20) {
+    if (index >= IMAGE_BYTE_SIZE) {
         return -1;
     }
-    UINT8 data = buffer[index];
-    if (nibble == 0) {
-        return data & 0xf;
-    } else {
-        return data >> 4;
-    }
+    UINT8 data = buffer[index * 2 + nibble];
+    // printf("data[%d] = %02x\n", index, data);
+    return data;
 }
 
 
@@ -63,44 +60,60 @@ INT8 get_value(int index, int nibble) {
 void compress_rle(int nibble) {
     INT8 prev = get_value(index_in, nibble);
     INT8 next = get_value(index_in+1, nibble);
+    printf("block start %02x == %02x on index %d\n", prev, next, index_in);
     if (prev != next) {
+        printf("using raw encoding...\n");
         UINT8 last = next;
         int equals = 0;
         int non_equals = 0;
         // step over random info until 3 equal nibbles are found
-        for(; non_equals<120; non_equals++) {
+        for(; non_equals<8; non_equals++) {
             INT8 current = get_value(index_in + non_equals, nibble);
+            printf("current = %02x on index %d\n", current, index_in + non_equals);
             if (current < 0) break;
             if (current == last) {
                 equals++;
-                if (equals == 3) break;
+                if (equals == 2) {
+                    printf("found 2 equals, stop\n");
+                    break;
+                }
             } else {
                 equals = 0;
             }
             last = current;
         }
         // transfer non-equal data
-        if (equals == 3) non_equals-=equals;
-        compressed[index_out++] = non_equals + 1;
-        UINT8 data = 0;
+        if (equals == 2) non_equals-=equals;
+        printf("raw data length: %d\n", non_equals);
+        // compressed[index_out++] = non_equals;
+        // printf("compressed[%d] = %02x\n", index_out-1, non_equals);
+        UINT8 data = (non_equals-1) << 4;
+        index_out++;
         for(int i=0; i<non_equals; i++) {
             INT8 value = get_value(index_in++, nibble);
+            printf("adding %02x from index %d\n", value, index_in-1);
             if (i % 2 == 0) {
-                data = value;
-                compressed[index_out++] = value;
+                data = data | value;
+                compressed[index_out-1] = value;
             } else {
-                data = data | (value << 4);
-                compressed[index_out-1] = data;
+                data = value << 4;
+                compressed[index_out++] = data;
             }
+            printf("compressed[%d] = %02x\n", index_out-1, data);
         }
     } else {
+        printf("using length encoding...\n");
         int equals = 0;
         for(; equals<8; equals++) {
-            INT8 current = get_value(index_in + equals, nibble);
+            INT8 current = get_value(index_in, nibble);
+            printf("current = %02x on index %d\n", current, index_in);
             if (current!=prev || current < 0) break;
+            index_in++;
         }
-        UINT8 block = 0x80 | ((equals-1) << 4) || prev;
+        printf("equals data length: %d\n", equals);
+        UINT8 block = 0x80 | ((equals-1) << 4) | prev;
         compressed[index_out++] = block;
+        printf("compressed[%d] = %02x\n", index_out-1, block);
     }
 }
 
@@ -115,12 +128,13 @@ int compress() {
     } while (current >= 0);
 
     int last_0 = index_out;
-/*
+    index_in = 0;
+
     do {
         compress_rle(1);
         current = get_value(index_in, 1);
     } while (current >= 0);
-*/
+
     int last_1 = index_out;
     compressed[0] = last_0 & 0xff;
     compressed[1] = last_0 >> 8;
@@ -139,7 +153,7 @@ void dump_asm_image(char *path) {
     fprintf(f, "pixel_data:");
     for(int i=0; i< size; i++) {
         UINT8 data = compressed[i];
-        if ((i % 20) == 0) fprintf(f, "\n    .byte ");
+        if ((i % 16) == 0) fprintf(f, "\n    .byte ");
         else fprintf(f, ", ");
         fprintf(f, "$%02x", data);
     }
