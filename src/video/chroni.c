@@ -54,6 +54,7 @@ bool   dl_scroll;
 UINT16 dl_mode_tile_addr;
 UINT16 dl_mode_char_addr;
 UINT16 dl_mode_attr_addr;
+UINT16 dl_mode_pixel_addr;
 UINT16 dl_row_wrap;
 
 UINT8 dl_scroll_width;
@@ -517,16 +518,41 @@ static void do_scan_tile_4bpp(UINT16 width, UINT8 line) {
 	}
 }
 
+static void do_scan_bitmap_4bpp(UINT16 width, UINT8 line) {
+    UINT8  pixel_offset = 0;
+    UINT16 pixel_addr = dl_mode_pixel_addr;
+	UINT16 pixel_data = 0;
+	UINT8  bitmap_color = 0;
+
+	for(int i=0; i<width/2; i++) { // for each pixel
+		if ((pixel_offset & 3) == 0) {
+		    pixel_data = VRAM_DATA(pixel_addr);
+		    pixel_addr++;
+		}
+
+        UINT8 pixel = (pixel_data & 0xF);
+	    pixel_data >>= 4;
+
+	    UINT8 color = (bitmap_color << 4) | pixel;
+
+		put_pixel(offset, color);
+		put_pixel(offset, color);
+
+		pixel_offset = (pixel_offset + 1) & 3;
+	}
+}
+
+
 static UINT8 words_per_scan[] = {
-		0, 40, 20, 32
+		0, 40, 20, 32, 80
 };
 
 static UINT8 words_per_scan_narrow[] = {
-		0, 32, 16, 32
+		0, 32, 16, 32, 64
 };
 
 static UINT8 lines_per_mode[] = {
-		0, 8, 8, 8
+		0, 8, 8, 8, 1
 };
 
 // scanlines are drawn as follows:
@@ -675,6 +701,7 @@ static void process_dl() {
                 UINT16 first_row_offset = dl_mode_pitch * dl_scroll_top;
                 dl_mode_tile_addr = lms     + first_row_offset;
                 dl_mode_char_addr = lms     + first_row_offset;
+                dl_mode_pixel_addr = lms   + first_row_offset;
                 dl_mode_attr_addr = attribs + first_row_offset;
                 dl_row_wrap = dl_scroll_height - dl_scroll_top - 1;
                 dl_mode_scanline = dl_scroll_fine_y;
@@ -682,6 +709,7 @@ static void process_dl() {
                 dl_row_wrap = 0xffff;
                 dl_mode_tile_addr = lms;
                 dl_mode_char_addr = lms;
+                dl_mode_pixel_addr = lms;
                 dl_mode_attr_addr = attribs;
                 dl_mode_pitch = dl_narrow ? words_per_scan_narrow[dl_mode] : words_per_scan[dl_mode];
             }
@@ -700,13 +728,15 @@ static void do_scanline(UINT16 width) {
 			case 0x1: do_scan_text_attribs(width, dl_mode_scanline, TRUE); break;
 			case 0x2: do_scan_text_attribs(width, dl_mode_scanline, FALSE); break;
 			case 0x3: do_scan_tile_4bpp(width, dl_mode_scanline); break;
+			case 0x4: do_scan_bitmap_4bpp(width, dl_mode_scanline); break;
 		}
 
         if (dl_mode_scanline++ == dl_mode_scanlines) {
             if (dl_row_wrap > 0) {
-                dl_mode_tile_addr += dl_mode_pitch;
-                dl_mode_char_addr += dl_mode_pitch;
-                dl_mode_attr_addr += dl_mode_pitch;
+                dl_mode_tile_addr  += dl_mode_pitch;
+                dl_mode_char_addr  += dl_mode_pitch;
+                dl_mode_attr_addr  += dl_mode_pitch;
+                dl_mode_pixel_addr += dl_mode_pitch;
                 dl_row_wrap--;
             } else {
                 dl_mode_tile_addr = lms;
