@@ -94,7 +94,7 @@ void compress_rle(int nibble) {
             printf("adding %02x from index %d\n", value, index_in-1);
             if (i % 2 == 0) {
                 data = data | value;
-                compressed[index_out-1] = value;
+                compressed[index_out-1] = data;
             } else {
                 data = value << 4;
                 compressed[index_out++] = data;
