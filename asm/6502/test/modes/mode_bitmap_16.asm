@@ -28,18 +28,24 @@ copy_dl:
     mwa #bitmap_palette SRC_ADDR
     jsr gfx_upload_palette
 
-    mwa pixel_data_size SIZE
-    mwa #pixel_data SRC_ADDR
-    mwa #VRAM_SCREEN_DATA_ADDR VADDR
     ldy #0
-upload_screen_data:
+    mwa #pixel_data SRC_ADDR
     lda (SRC_ADDR), y
+    sta rle_end_addr
+    iny
+    lda (SRC_ADDR), y
+    sta rle_end_addr + 1
+    adw rle_end_addr #pixel_data
+    adw SRC_ADDR #4
+
+    mwa #VRAM_SCREEN_DATA_ADDR VADDR
+upload_screen_data:
+    jsr rle_decode
+    cmp #$ff
+    beq halt
+
     sta VDATA
-    inw SRC_ADDR
-    dew SIZE
-    lda SIZE
-    ora SIZE+1
-    bne upload_screen_data
+    jmp upload_screen_data
 
 halt:
     jmp halt
@@ -51,6 +57,88 @@ display_list:
 
 display_list_size:
     .byte * - display_list + 1
+
+rle_decode
+    lda size_rle_raw
+    bne cont_rle_raw
+    lda size_rle
+    bne cont_rle
+
+    lda rle_raw_nibble
+    beq nibble_complete
+    mva #0 rle_raw_nibble
+    inw SRC_ADDR
+
+nibble_complete:
+    cpw SRC_ADDR rle_end_addr
+    bne next_rle_block
+    lda #$ff
+    rts
+
+next_rle_block:
+    ldy #0
+    lda (SRC_ADDR), y
+    bmi process_as_rle
+    tay
+    and #$70
+    lsr
+    lsr
+    lsr
+    lsr
+    sta size_rle_raw
+    mva #0 rle_raw_nibble
+    tya
+    and #$0f
+    jmp rle_inc_and_ret
+
+process_as_rle
+    tay
+    and #$70
+    lsr
+    lsr
+    lsr
+    lsr
+    sta size_rle
+    tya
+    and #$0f
+    sta data_rle
+
+rle_inc_and_ret
+    inw SRC_ADDR
+    rts
+
+cont_rle_raw:
+    dec size_rle_raw
+    ldy #0
+    lda (SRC_ADDR), y
+    tax
+    lda rle_raw_nibble
+    eor #$1
+    sta rle_raw_nibble
+    beq low_nibble
+    txa
+    lsr
+    lsr
+    lsr
+    lsr
+    rts
+low_nibble
+    inw SRC_ADDR
+    txa
+    and #$0f
+    rts
+
+cont_rle:
+    dec size_rle
+    lda data_rle
+    rts
+
+size_rle_raw   .byte 0
+size_rle       .byte 0
+data_rle       .byte 0
+rle_raw_nibble .byte 0
+rle_end_addr   .word 0
+
 
 bitmap_palette:
     .word $0000, $6a44, $b364, $9244, $2124, $4a49, $4a44, $9489, $0240, $0360, $0480, $06c0, $4fe0, $97e4, $b7e9, $fecd
