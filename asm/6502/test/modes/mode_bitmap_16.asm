@@ -59,7 +59,7 @@ odd_pixels:
 upload_screen_data_odd:
     jsr rle_decode
     cmp #$ff
-    beq halt
+    beq main_loop
 
     asl
     asl
@@ -69,8 +69,33 @@ upload_screen_data_odd:
     sta VDATA_AUX
     jmp upload_screen_data_odd
 
-halt:
-    jmp halt
+main_loop:
+    lda FRAMECOUNT
+wait_frame
+    cmp FRAMECOUNT
+    beq wait_frame
+
+    ldx #OS_KEYB_POLL
+    jsr OS_CALL
+
+    lda KEY_PRESSED
+    cmp last_key
+    beq wait_frame
+    sta last_key
+    cmp #0
+    beq wait_frame
+
+    lda palette_index
+    eor #1
+    sta palette_index
+    bne set_palette_natural
+    mwa #palette SRC_ADDR
+    jmp set_palette
+set_palette_natural
+    mwa #palette_natural SRC_ADDR
+set_palette:
+    jsr gfx_upload_palette
+    jmp main_loop
 
 display_list:
     .word $04F0
@@ -155,6 +180,8 @@ cont_rle:
     lda data_rle
     rts
 
+palette_index  .byte 0
+last_key       .byte 0
 size_rle_raw   .byte 0
 size_rle       .byte 0
 data_rle       .byte 0
@@ -162,6 +189,10 @@ rle_raw_nibble .byte 0
 rle_end_addr      .word 0
 rle_end_addr_even .word 0
 rle_end_addr_odd  .word 0
+
+palette_natural:
+    .word $0863, $7144, $2a0f, $712b, $a145, $99a5, $218c, $9964
+    .word $b2f2, $1af2, $ba2b, $dd6f, $74c7, $b352, $fdc6, $e6d7
 
 
     icl '../../os/graphics.asm'

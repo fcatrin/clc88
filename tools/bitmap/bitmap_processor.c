@@ -207,7 +207,7 @@ void dump_asm_palette(char *path) {
     printf("out %s\n", file_path);
     FILE *f = fopen(file_path, "w");
 
-    override_palette_keen();
+    // override_palette_keen();
 
     fprintf(f, "palette:");
     for(int i=0; i < 16; i++) {

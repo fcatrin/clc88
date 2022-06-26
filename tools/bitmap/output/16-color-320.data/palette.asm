@@ -1,3 +1,3 @@
 palette:
-    .word $0863, $7144, $2a0f, $712b, $a145, $99a5, $218c, $9964
-    .word $b2f2, $1af2, $ba2b, $dd6f, $74c7, $b352, $fdc6, $e6d7
+    .word $1061, $58c4, $410e, $a054, $a142, $6ae6, $434d, $f2aa
+    .word $f2be, $24f3, $d4af, $a534, $4e47, $ccf8, $eeea, $efbe
