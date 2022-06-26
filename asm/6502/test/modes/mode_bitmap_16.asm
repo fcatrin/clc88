@@ -25,7 +25,7 @@ copy_dl:
     ora #VSTATUS_ENABLE
     sta VSTATUS
 
-    mwa #bitmap_palette SRC_ADDR
+    mwa #palette SRC_ADDR
     jsr gfx_upload_palette
 
     ldy #0
@@ -164,19 +164,12 @@ rle_end_addr_even .word 0
 rle_end_addr_odd  .word 0
 
 
-bitmap_palette:
-    .word $0000, $6a44, $b364, $9244, $2124, $4a49, $4a44, $9489, $0240, $0360, $0480, $06c0, $4fe0, $97e4, $b7e9, $fecd
-    .word $0000, $4a44, $9364, $dc84, $b364, $6a44, $b364, $9244, $0004, $200d, $4a56, $6b6d, $9492, $f800, $249f, $ffff
-    .word $0000, $4a44, $9364, $dc84, $b364, $6a44, $b364, $9244, $0240, $2360, $4da0, $dda0, $4a40, $fec0, $fff2, $fffb
-    .word $0000, $4a40, $9364, $dc84, $b364, $6a44, $2124, $6a4d, $6b72, $b5bb, $dedf, $dfff, $0012, $0016, $001f, $ffff
-    .word $0000, $4a44, $9364, $dc84, $b364, $6a44, $b364, $9244, $4b76, $95bf, $b000, $f800, $ffff, $2124, $9240, $dc80
-    .word $0000, $9364, $dc84, $b364, $2124, $4a49, $4a44, $9489, $0240, $0360, $0480, $06c0, $4fe0, $97e4, $b7e9, $fecd
-
     icl '../../os/graphics.asm'
     icl '../../os/ram_vram.asm'
     icl '../../os/libs/stdlib.asm'
 
     icl '../include/gfx/bitmap/image.asm'
+    icl '../include/gfx/bitmap/palette.asm'
 
     org EXECADDR
     .word start

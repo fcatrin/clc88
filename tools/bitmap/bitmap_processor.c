@@ -161,6 +161,69 @@ void dump_asm_image(char *path) {
     fclose(f);
 }
 
+
+UINT16 rgb2rgb565(UINT8 r, UINT8 g, UINT8 b) {
+
+    r >>= 3;
+    g >>= 2;
+    b >>= 3;
+
+    return (r << 11) | (g << 5) | b;
+}
+
+void override_palette(int index, int rgb) {
+    UINT8 r = (rgb & 0x00ff0000) >> 16;
+    UINT8 g = (rgb & 0x0000ff00) >> 8;
+    UINT8 b = (rgb & 0x000000ff);
+
+    int base = index*3;
+    buffer[base] = r;
+    buffer[base+1] = g;
+    buffer[base+2] = b;
+}
+
+void override_palette_keen() {
+    override_palette(0, 0x0D0D18);  // black space
+    override_palette(1, 0x772925);  // robot and logo shadows
+    override_palette(2, 0x2E407F);  // background behind the robot / eyes
+    override_palette(3, 0x77275F);  // shirt dark
+    override_palette(4, 0xA22B29);  // robot red top
+    override_palette(5, 0x9B372F);  // hair dark color
+    override_palette(6, 0x223067);  // dark dither on background
+    override_palette(7, 0x9D2D24);  // robot light red
+    override_palette(8, 0xB65E91);  // shirt highlight
+    override_palette(9, 0x195F90);  // blue background
+    override_palette(10, 0xB94659); // robot highlights
+    override_palette(11, 0xDBAC7A); // face shadows
+    override_palette(12, 0x739939); // helmet bars
+    override_palette(13, 0xB76994); // robot buttons highlights
+    override_palette(14, 0xFDB933); // main helmet color
+    override_palette(15, 0xE6DBBA); // face
+}
+
+void dump_asm_palette(char *path) {
+    char file_path[2048];
+    sprintf(file_path, "%s/palette.asm", path);
+    printf("out %s\n", file_path);
+    FILE *f = fopen(file_path, "w");
+
+    override_palette_keen();
+
+    fprintf(f, "palette:");
+    for(int i=0; i < 16; i++) {
+        UINT8 data_r = buffer[i*3];
+        UINT8 data_g = buffer[i*3+1];
+        UINT8 data_b = buffer[i*3+2];
+        UINT16 value = rgb2rgb565(data_r, data_g, data_b);
+
+        if ((i % 8) == 0) fprintf(f, "\n    .word ");
+        else fprintf(f, ", ");
+        fprintf(f, "$%04x", value);
+    }
+    fprintf(f, "\n");
+    fclose(f);
+}
+
 int main(int argc, const char *argv[]) {
     if (argc < 2) {
         printf("Usage: %s image_name\n", argv[0]);
@@ -180,6 +243,12 @@ int main(int argc, const char *argv[]) {
     mkdir(path, 0755);
 
     dump_asm_image(path);
+
+    sprintf(path, "input/%s.pal", image_name);
+    if (!load_bin(path, buffer, sizeof(buffer))) return EXIT_FAILURE;
+
+    sprintf(path, "output/%s", image_name);
+    dump_asm_palette(path);
 
     return EXIT_SUCCESS;
 }
