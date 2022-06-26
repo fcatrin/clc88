@@ -30,22 +30,44 @@ copy_dl:
 
     ldy #0
     mwa #pixel_data SRC_ADDR
+
+copy_limits:
     lda (SRC_ADDR), y
-    sta rle_end_addr
+    sta rle_end_addr_even, y
     iny
-    lda (SRC_ADDR), y
-    sta rle_end_addr + 1
-    adw rle_end_addr #pixel_data
+    cpy #4
+    bne copy_limits
+
+    adw rle_end_addr_even #pixel_data
+    adw rle_end_addr_odd  #pixel_data
     adw SRC_ADDR #4
 
+    mwa rle_end_addr_even rle_end_addr
     mwa #VRAM_SCREEN_DATA_ADDR VADDR
-upload_screen_data:
+upload_screen_data_even:
+    jsr rle_decode
+    cmp #$ff
+    beq odd_pixels
+
+    sta VDATA
+    jmp upload_screen_data_even
+
+odd_pixels:
+    mwa rle_end_addr_odd rle_end_addr
+    mwa #VRAM_SCREEN_DATA_ADDR VADDR
+    mwa #VRAM_SCREEN_DATA_ADDR VADDR_AUX
+upload_screen_data_odd:
     jsr rle_decode
     cmp #$ff
     beq halt
 
-    sta VDATA
-    jmp upload_screen_data
+    asl
+    asl
+    asl
+    asl
+    ora VDATA
+    sta VDATA_AUX
+    jmp upload_screen_data_odd
 
 halt:
     jmp halt
@@ -137,7 +159,9 @@ size_rle_raw   .byte 0
 size_rle       .byte 0
 data_rle       .byte 0
 rle_raw_nibble .byte 0
-rle_end_addr   .word 0
+rle_end_addr      .word 0
+rle_end_addr_even .word 0
+rle_end_addr_odd  .word 0
 
 
 bitmap_palette:
