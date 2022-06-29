@@ -468,15 +468,15 @@ static void do_scan_text_attribs(UINT16 width, UINT8 line, bool cols80) {
 }
 
 static void do_scan_tile_4bpp(UINT16 width, UINT8 line) {
-	LOGV(LOGTAG, "do_scan_tile_4bpp line %d", line);
+    LOGV(LOGTAG, "do_scan_tile_4bpp line %d", line);
 
-	UINT8  tile_color;
-	UINT16 tile_data;
+    UINT8  tile_color;
+    UINT16 tile_data;
 
     UINT8  pixel_offset = dl_scroll_fine_x;
-	UINT16 pixel_data = 0;
-	UINT32 tile_origin = dl_mode_tile_addr;
-	UINT16 tile_addr   = dl_mode_tile_addr;
+    UINT16 pixel_data = 0;
+    UINT32 tile_origin = dl_mode_tile_addr;
+    UINT16 tile_addr   = dl_mode_tile_addr;
 
     UINT8  line_wrap = 0;
     if (dl_scroll) {
@@ -484,38 +484,38 @@ static void do_scan_tile_4bpp(UINT16 width, UINT8 line) {
         line_wrap  = dl_scroll_width - dl_scroll_left - 1;
     }
 
-	UINT16 line_offset = (line & 7) << 1;
-	for(int i=0; i<width/2; i++) { // for each pixel
-		if (i == 0 || pixel_offset == 0) {
-		    UINT16 tile = VRAM_DATA(tile_addr);
+    UINT16 line_offset = (line & 7) << 1;
+    for(int i=0; i<width/2; i++) { // for each pixel
+        if (i == 0 || pixel_offset == 0) {
+            UINT16 tile = VRAM_DATA(tile_addr);
 
-		    tile_color = (tile & 0xf000) >> 12;
-		    tile_data  = (tile & 0x0fff) << 4;
+            tile_color = (tile & 0xf000) >> 12;
+            tile_data  = (tile & 0x0fff) << 4;
 
-			if (line_wrap > 0) {
+            if (line_wrap > 0) {
                 tile_addr++;
                 line_wrap--;
             } else {
                 tile_addr = tile_origin;
                 line_wrap = dl_scroll_width - 1;
             }
-		}
+        }
 
-		if (i == 0 || (pixel_offset & 3) == 0) {
-			pixel_data = VRAM_DATA(tile_data + (pixel_offset >> 2) + line_offset);
-			pixel_data >>= 4 * (pixel_offset & 3);
-		} else {
-		    pixel_data >>= 4;
-		}
+        if (i == 0 || (pixel_offset & 3) == 0) {
+            pixel_data = VRAM_DATA(tile_data + (pixel_offset >> 2) + line_offset);
+            pixel_data >>= 4 * (pixel_offset & 3);
+        } else {
+            pixel_data >>= 4;
+        }
 
         UINT8 pixel = (pixel_data & 0xF);
-		UINT8 color = (tile_color << 4) | pixel;
+        UINT8 color = (tile_color << 4) | pixel;
 
-		put_pixel(offset, color);
-		put_pixel(offset, color);
+        put_pixel(offset, color);
+        put_pixel(offset, color);
 
-		pixel_offset = (pixel_offset + 1) & 7;
-	}
+        pixel_offset = (pixel_offset + 1) & 7;
+    }
 }
 
 static void do_scan_bitmap_4bpp(UINT16 width, UINT8 line) {
