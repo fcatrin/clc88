@@ -521,38 +521,38 @@ static void do_scan_tile_4bpp(UINT16 width, UINT8 line) {
 static void do_scan_bitmap_4bpp(UINT16 width, UINT8 line) {
     UINT8  pixel_offset = 0;
     UINT16 pixel_addr = dl_mode_pixel_addr;
-	UINT16 pixel_data = 0;
-	UINT8  bitmap_color = 0;
+    UINT16 pixel_data = 0;
+    UINT8  bitmap_color = 0;
 
-	for(int i=0; i<width/2; i++) { // for each pixel
-		if ((pixel_offset & 3) == 0) {
-		    pixel_data = VRAM_DATA(pixel_addr);
-		    pixel_addr++;
-		}
+    for(int i=0; i<width/2; i++) { // for each pixel
+        if ((pixel_offset & 3) == 0) {
+            pixel_data = VRAM_DATA(pixel_addr);
+            pixel_addr++;
+        }
 
         UINT8 pixel = (pixel_data & 0xF);
-	    pixel_data >>= 4;
+        pixel_data >>= 4;
 
-	    UINT8 color = (bitmap_color << 4) | pixel;
+        UINT8 color = (bitmap_color << 4) | pixel;
 
-		put_pixel(offset, color);
-		put_pixel(offset, color);
+        put_pixel(offset, color);
+        put_pixel(offset, color);
 
-		pixel_offset = (pixel_offset + 1) & 3;
-	}
+        pixel_offset = (pixel_offset + 1) & 3;
+    }
 }
 
 
 static UINT8 words_per_scan[] = {
-		0, 40, 20, 32, 80
+    0, 40, 20, 32, 80
 };
 
 static UINT8 words_per_scan_narrow[] = {
-		0, 32, 16, 32, 64
+    0, 32, 16, 32, 64
 };
 
 static UINT8 lines_per_mode[] = {
-		0, 8, 8, 8, 1
+    0, 8, 8, 8, 1
 };
 
 // scanlines are drawn as follows:
@@ -570,13 +570,13 @@ static UINT8 lines_per_mode[] = {
 int output_scanline;
 
 void chroni_frame_start() {
-	status |= STATUS_VBLANK; // make sure to start first frame with vblank flag on
-	output_scanline = 0;
-	memscan = 0;
-	ypos = 0;
+    status |= STATUS_VBLANK; // make sure to start first frame with vblank flag on
+    output_scanline = 0;
+    memscan = 0;
+    ypos = 0;
 
-	dl_pos = 0;
-	dl_scanlines = 0;
+    dl_pos = 0;
+    dl_scanlines = 0;
 }
 
 void chroni_frame_end() {
@@ -584,94 +584,94 @@ void chroni_frame_end() {
 }
 
 bool chroni_frame_is_complete() {
-	return output_scanline == SCANLINES_TOTAL;
+    return output_scanline == SCANLINES_TOTAL;
 }
 
 bool is_output_scanline_visible() {
-	return output_scanline >= SCANLINES_BLANK_TOP && output_scanline < (SCANLINES_TOTAL - SCANLINES_BLANK_TOP);
+    return output_scanline >= SCANLINES_BLANK_TOP && output_scanline < (SCANLINES_TOTAL - SCANLINES_BLANK_TOP);
 }
 
 bool is_output_scanline_border() {
-	return output_scanline < SCANLINES_BLANK || output_scanline > (SCANLINES_TOTAL - SCANLINES_BLANK);
+    return output_scanline < SCANLINES_BLANK || output_scanline > (SCANLINES_TOTAL - SCANLINES_BLANK);
 }
 
 void chroni_scanline_back_porch() {
-	do_scan_start();
+    do_scan_start();
 
-	status |= STATUS_HBLANK; // make sure to start first scanline with hblank flag on
+    status |= STATUS_HBLANK; // make sure to start first scanline with hblank flag on
 
-	offset = memscan * screen_pitch;
-	xpos = 0;
-	if (!is_output_scanline_border()) {
-	    process_dl();
-	}
-	if (is_output_scanline_visible()) {
-		do_border(offset, dl_narrow ? SCREEN_XBORDER_NARROW : SCREEN_XBORDER);
-	}
-	LOGV(LOGTAG, "chroni_scanline_back_porch complete output_scanline:%d ypos:%d", output_scanline, ypos);
+    offset = memscan * screen_pitch;
+    xpos = 0;
+    if (!is_output_scanline_border()) {
+        process_dl();
+    }
+    if (is_output_scanline_visible()) {
+        do_border(offset, dl_narrow ? SCREEN_XBORDER_NARROW : SCREEN_XBORDER);
+    }
+    LOGV(LOGTAG, "chroni_scanline_back_porch complete output_scanline:%d ypos:%d", output_scanline, ypos);
 }
 
 void chroni_scanline_display() {
-	status &= (255 - STATUS_HBLANK);
-	cpuexec_nmi(0);
+    status &= (255 - STATUS_HBLANK);
+    cpuexec_nmi(0);
 
     LOGV(LOGTAG, "display scanline:%d mode_scanline:%d\n", output_scanline, dl_mode_scanline);
 
-	if (is_output_scanline_visible()) {
-	    UINT16 width = dl_narrow ? SCREEN_XRES_NARROW : SCREEN_XRES;
-		if (is_output_scanline_border()) {
-			do_border(offset, width);
-		} else {
-			do_scanline(width);
-		}
-	}
-	LOGV(LOGTAG, "chroni_scanline_display complete output_scanline:%d ypos:%d", output_scanline, ypos);
+    if (is_output_scanline_visible()) {
+        UINT16 width = dl_narrow ? SCREEN_XRES_NARROW : SCREEN_XRES;
+        if (is_output_scanline_border()) {
+            do_border(offset, width);
+        } else {
+            do_scanline(width);
+        }
+    }
+    LOGV(LOGTAG, "chroni_scanline_display complete output_scanline:%d ypos:%d", output_scanline, ypos);
 }
 
 void chroni_scanline_front_porch() {
-	if (is_output_scanline_visible()) {
-		do_border(offset, dl_narrow ? SCREEN_XBORDER_NARROW : SCREEN_XBORDER);
+    if (is_output_scanline_visible()) {
+        do_border(offset, dl_narrow ? SCREEN_XBORDER_NARROW : SCREEN_XBORDER);
 
-		if (!is_output_scanline_border()) ypos++;
-		memscan++;
-	}
+        if (!is_output_scanline_border()) ypos++;
+        memscan++;
+    }
 
-	bool is_vblank_start = output_scanline == (SCANLINES_BLANK + SCANLINES_DISPLAY);
-	if (is_vblank_start) {
-		status |= STATUS_VBLANK;
-	} else {
-		status |= STATUS_HBLANK;
-	}
+    bool is_vblank_start = output_scanline == (SCANLINES_BLANK + SCANLINES_DISPLAY);
+    if (is_vblank_start) {
+        status |= STATUS_VBLANK;
+    } else {
+        status |= STATUS_HBLANK;
+    }
 
-	bool is_hblank_interrupt = output_scanline == (SCANLINES_BLANK + scanline_interrupt);
+    bool is_hblank_interrupt = output_scanline == (SCANLINES_BLANK + scanline_interrupt);
 
-	CPU_RESUME();
-	if ((is_hblank_interrupt || is_vblank_start) && (status & STATUS_ENABLE_INTS)) {
-		if (is_vblank_start) {
-			LOGV(LOGTAG, "fire VBI at output_scanline:%d ypos:%d", output_scanline, ypos);
-		} else {
-			LOGV(LOGTAG, "fire DLI at output_scanline:%d ypos:%d", output_scanline, ypos);
-		}
-		cpuexec_nmi(1);
-	}
+    CPU_RESUME();
+    if ((is_hblank_interrupt || is_vblank_start) && (status & STATUS_ENABLE_INTS)) {
+        if (is_vblank_start) {
+            LOGV(LOGTAG, "fire VBI at output_scanline:%d ypos:%d", output_scanline, ypos);
+        } else {
+            LOGV(LOGTAG, "fire DLI at output_scanline:%d ypos:%d", output_scanline, ypos);
+        }
+        cpuexec_nmi(1);
+    }
 
-	do_scan_end();
+    do_scan_end();
 
-	LOGV(LOGTAG, "chroni_scanline_front_porch complete output_scanline:%d ypos:%d", output_scanline, ypos);
+    LOGV(LOGTAG, "chroni_scanline_front_porch complete output_scanline:%d ypos:%d", output_scanline, ypos);
 
-	output_scanline++;
+    output_scanline++;
 }
 
 static void process_dl() {
-	if (dl_scanlines > 0) {
-		dl_scanlines--;
-	} else {
-		dl_instruction = VRAM_DATA(dl + dl_pos);
-		dl_scroll      = (dl_instruction & 0x2000) ? 1 : 0;
-		dl_narrow      = (dl_instruction & 0x1000) ? 1 : 0;
+    if (dl_scanlines > 0) {
+        dl_scanlines--;
+    } else {
+        dl_instruction = VRAM_DATA(dl + dl_pos);
+        dl_scroll      = (dl_instruction & 0x2000) ? 1 : 0;
+        dl_narrow      = (dl_instruction & 0x1000) ? 1 : 0;
         dl_mode        = (dl_instruction & 0x0f00) >> 8;
         dl_scanlines   = (dl_instruction & 0x00ff) - 1;
-	    LOGV(LOGTAG, "read dl mode:%02x scanlines:%d scroll:%s\n", dl_mode, dl_scanlines, dl_scroll ? "true" : "false");
+        LOGV(LOGTAG, "read dl mode:%02x scanlines:%d scroll:%s\n", dl_mode, dl_scanlines, dl_scroll ? "true" : "false");
         if (dl_mode == 0x0f) {
             dl_scanlines = 0;
         } else if (dl_mode != 0) {
@@ -714,22 +714,22 @@ static void process_dl() {
                 dl_mode_pitch = dl_narrow ? words_per_scan_narrow[dl_mode] : words_per_scan[dl_mode];
             }
         }
-	}
+    }
 }
 
 static void do_scanline(UINT16 width) {
-	if (!(status & STATUS_ENABLE_CHRONI)) return;
+    if (!(status & STATUS_ENABLE_CHRONI)) return;
 
     LOGV(LOGTAG, "do scanline:%d of %d\n", dl_mode_scanline, dl_mode_scanlines);
-	if (dl_mode == 0 || dl_mode == 0xf) {
-		do_border(offset, width);
-	} else {
-		switch(dl_mode) {
-			case 0x1: do_scan_text_attribs(width, dl_mode_scanline, TRUE); break;
-			case 0x2: do_scan_text_attribs(width, dl_mode_scanline, FALSE); break;
-			case 0x3: do_scan_tile_4bpp(width, dl_mode_scanline); break;
-			case 0x4: do_scan_bitmap_4bpp(width, dl_mode_scanline); break;
-		}
+    if (dl_mode == 0 || dl_mode == 0xf) {
+        do_border(offset, width);
+    } else {
+        switch(dl_mode) {
+        case 0x1: do_scan_text_attribs(width, dl_mode_scanline, TRUE); break;
+        case 0x2: do_scan_text_attribs(width, dl_mode_scanline, FALSE); break;
+        case 0x3: do_scan_tile_4bpp(width, dl_mode_scanline); break;
+        case 0x4: do_scan_bitmap_4bpp(width, dl_mode_scanline); break;
+        }
 
         if (dl_mode_scanline++ == dl_mode_scanlines) {
             if (dl_row_wrap > 0) {
@@ -746,24 +746,24 @@ static void do_scanline(UINT16 width) {
             }
             dl_mode_scanline = 0;
         }
-	}
+    }
 }
 
 static void init_rgb565_table() {
-	for(int c=0; c<0x10000; c++) {
-		UINT8 r = ((c & 0xF800) >> 11) * (256 / 32);
-		UINT8 g = ((c & 0X07E0) >> 5)  * (256 / 64);
-		UINT8 b = (c & 0X001F) * (256 / 32);
+    for(int c=0; c<0x10000; c++) {
+        UINT8 r = ((c & 0xF800) >> 11) * (256 / 32);
+        UINT8 g = ((c & 0X07E0) >> 5)  * (256 / 64);
+        UINT8 b = (c & 0X001F) * (256 / 32);
 
-		rgb565[c*3 + 0] = b;
-		rgb565[c*3 + 1] = g;
-		rgb565[c*3 + 2] = r;
-	}
+        rgb565[c*3 + 0] = b;
+        rgb565[c*3 + 1] = g;
+        rgb565[c*3 + 2] = r;
+    }
 }
 
 void chroni_init() {
-	trace_enabled = TRUE;
-	init_rgb565_table();
-	chroni_reset();
+    trace_enabled = TRUE;
+    init_rgb565_table();
+    chroni_reset();
 }
 
