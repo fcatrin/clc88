@@ -65,6 +65,7 @@ You can find the names declared in asm/6502/os/include/symbols.asm
     11 :  WSYNC       BYTE  Any write will halt the CPU until next HBLANK
     12 :  WSTATUS     BYTE  Status register
     1a :  VBORDER     WORD  Border color in RGB565 format
+    20 :  VSPRITES    WORD  Address of the Sprite definition table
     22 :  VLINEINT    BYTE  Scanline interrupt register
     26 :  VADDRB      WORD  Byte address register (low 16-bit)
     28 :              BYTE  Byte address register (high 1-bit)
@@ -526,41 +527,71 @@ The 256 color palette is divided in 16 sub-palettes
 
 ## Sprites
 
-* 32 sprites
-* 16x16 pixels
+* 64 sprites
+* Sprite size can be
+  * 16, 32, 64 pixels wide
+  * 16, 32, 64 pixels tall
 * 15 colors from the global 256 color palette
 * 0 is transparent
-* X range: from 0 to 384.
-    * 24 is start of left border, 32 is start of display screen
-    * 352 is start of right border
-    * 340 is out of the visible screen
-* Y range: from 0 to 262
-    * 16 is the first scan line
-    * 246 is out of the visible screen
+* X range: from 0 to 448.
+    * When using normal mode, visible coordinates are 64-384
+    * When using narrow mode, visible coordinates are 96-352
+* Y range: from 0 to 368
+    * 64 is the first scan line
+    * 304 is the last scan line
 
-### Sprite memory
+Example using normal mode
 
-* 64 bytes sprite pointer. 2 bytes per sprite. Location is pointer*2
-* 64 bytes x position. 2 bytes per sprite
-* 64 bytes y position. 2 bytes per sprite
-* 64 attribute bytes. 2 byte per sprite:
+          0                                448
+          +----------------------------------+ 
+          |                                  |
+          |       64               384       |
+          |    64 +------------------+       |
+          |       |                  |       |
+          |       |   Visible Area   |       |
+          |       |                  |       |
+          |   304 +------------------+       |
+          |                                  |
+      368 +----------------------------------+
 
-      xxxxxxxxXXXXXXXX
-                  ||||---- color palette index
-                 |-------- visible
-      |||||||||||--------. reserved for future use (scaling? rotating?)
-    
- * 32*16 bytes: 32 palettes of 16 indexed colors
-     * Each index point to the global palette entries
- 
-**Sprite memory map**
+### Sprite definition table
 
-    0000 Sprite pointers
-    0040 X position
-    0080 Y position
-    00C0 attributes
-    0100 color palette
-    01FF end of sprite memory
+There are 64 entries in this table, one per sprite.
+
+Each sprite is defined by 4 WORDs (8 bytes):
+
+    Y-POS   WORD   Y position (bits 8-0)
+    X-POS   WORD   X position (bits 8-0)
+    ADDR    WORD   High 12 bits of the sprite data address on VRAM
+    ATTR    WORD   Sprite attributes
+
+Sprite attributes is:
+
+    F E D C B A 9 8 7 6 5 4 3 2 1 0
+    | | | | | | | |         | | | |
+    | | | | | | | |         + + + + ----> sprite color
+    | | | | | | | + --------------------> sprite priority
+    | | | | | | + ----------------------> sprite enabled
+    | | | | + +-------------------------> vertical size
+    | | + +-----------------------------> horizontal size
+    | + --------------------------------> invert y
+    + ----------------------------------> invert x
+
+Sprite color is similar to tile color, the 256 color palette is divided
+in 16 sub palettes of 16 colors each, the sprite color is the index
+into one of those 16 sub palettes
+
+Sprite priority is 1 is the sprite is over the background, 0 otherwise.
+
+Sprite enabled is a quick way to turn on/off sprites. The sprite is
+enabled / visible if this bit is 1.
+
+Vertical and horizontal size bits are:
+
+    00 : 16 pixels
+    01 : 32 pixels
+    10 : 64 pixels
+    11 : 64 pixels
  
 ## Timings
 Using Atari800 as a reference
