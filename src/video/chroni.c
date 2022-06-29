@@ -51,10 +51,8 @@ UINT8  dl_mode;
 bool   dl_narrow;
 bool   dl_scroll;
 
-UINT16 dl_mode_tile_addr;
-UINT16 dl_mode_char_addr;
+UINT16 dl_mode_data_addr;
 UINT16 dl_mode_attr_addr;
-UINT16 dl_mode_pixel_addr;
 UINT16 dl_row_wrap;
 
 UINT8 dl_scroll_width;
@@ -324,7 +322,7 @@ static void do_scan_start() {
     * assume that the sprite will not be drawn
     */
     for(int s=0; s < SPRITES_MAX; s++) {
-        sprite_scanlines[s] = SPRITE_SCAN_INVALID; // asume invalid sprite for this scan
+        sprite_scanlines[s] = SPRITE_SCAN_INVALID; // assume invalid sprite for this scan
         if (!(status & STATUS_ENABLE_SPRITES)) continue;
 
         UINT16 sprite_attrib = VRAM_BYTE(sprites + SPRITES_ATTR + s*2);
@@ -421,7 +419,7 @@ static void do_scan_text_attribs(UINT16 width, UINT8 line, bool cols80) {
     int scan_width = cols80 ? width : (width/2);
     int pixel_offset = dl_scroll_fine_x;
 
-    UINT32 char_origin = dl_mode_char_addr << 1;
+    UINT32 char_origin = dl_mode_data_addr << 1;
     UINT32 attr_origin = dl_mode_attr_addr << 1;
 
     UINT32 char_addr = char_origin;
@@ -475,8 +473,8 @@ static void do_scan_tile_4bpp(UINT16 width, UINT8 line) {
 
     UINT8  pixel_offset = dl_scroll_fine_x;
     UINT16 pixel_data = 0;
-    UINT32 tile_origin = dl_mode_tile_addr;
-    UINT16 tile_addr   = dl_mode_tile_addr;
+    UINT32 tile_origin = dl_mode_data_addr;
+    UINT16 tile_addr   = dl_mode_data_addr;
 
     UINT8  line_wrap = 0;
     if (dl_scroll) {
@@ -520,7 +518,7 @@ static void do_scan_tile_4bpp(UINT16 width, UINT8 line) {
 
 static void do_scan_bitmap_4bpp(UINT16 width, UINT8 line) {
     UINT8  pixel_offset = 0;
-    UINT16 pixel_addr = dl_mode_pixel_addr;
+    UINT16 pixel_addr = dl_mode_data_addr;
     UINT16 pixel_data = 0;
     UINT8  bitmap_color = 0;
 
@@ -699,17 +697,13 @@ static void process_dl() {
                 dl_mode_pitch = dl_scroll_width / (dl_mode == 3 ? 1 : 2);
 
                 UINT16 first_row_offset = dl_mode_pitch * dl_scroll_top;
-                dl_mode_tile_addr = lms     + first_row_offset;
-                dl_mode_char_addr = lms     + first_row_offset;
-                dl_mode_pixel_addr = lms   + first_row_offset;
+                dl_mode_data_addr = lms     + first_row_offset;
                 dl_mode_attr_addr = attribs + first_row_offset;
                 dl_row_wrap = dl_scroll_height - dl_scroll_top - 1;
                 dl_mode_scanline = dl_scroll_fine_y;
             } else {
                 dl_row_wrap = 0xffff;
-                dl_mode_tile_addr = lms;
-                dl_mode_char_addr = lms;
-                dl_mode_pixel_addr = lms;
+                dl_mode_data_addr = lms;
                 dl_mode_attr_addr = attribs;
                 dl_mode_pitch = dl_narrow ? words_per_scan_narrow[dl_mode] : words_per_scan[dl_mode];
             }
@@ -733,14 +727,11 @@ static void do_scanline(UINT16 width) {
 
         if (dl_mode_scanline++ == dl_mode_scanlines) {
             if (dl_row_wrap > 0) {
-                dl_mode_tile_addr  += dl_mode_pitch;
-                dl_mode_char_addr  += dl_mode_pitch;
+                dl_mode_data_addr  += dl_mode_pitch;
                 dl_mode_attr_addr  += dl_mode_pitch;
-                dl_mode_pixel_addr += dl_mode_pitch;
                 dl_row_wrap--;
             } else {
-                dl_mode_tile_addr = lms;
-                dl_mode_char_addr = lms;
+                dl_mode_data_addr = lms;
                 dl_mode_attr_addr = attribs;
                 dl_row_wrap = dl_scroll_height - 1;
             }
