@@ -64,8 +64,8 @@ You can find the names declared in asm/6502/os/include/symbols.asm
     10 :  VCOUNT      BYTE  Vertical line count / 2
     11 :  WSYNC       BYTE  Any write will halt the CPU until next HBLANK
     12 :  WSTATUS     BYTE  Status register
+    14 :  VSPRITES    WORD  Address of the Sprite definition table
     1a :  VBORDER     WORD  Border color in RGB565 format
-    20 :  VSPRITES    WORD  Address of the Sprite definition table
     22 :  VLINEINT    BYTE  Scanline interrupt register
     26 :  VADDRB      WORD  Byte address register (low 16-bit)
     28 :              BYTE  Byte address register (high 1-bit)

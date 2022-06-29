@@ -308,78 +308,109 @@ static inline void set_pixel_color(UINT8 color) {
 #define SPRITE_ATTR_ENABLED 0x10
 #define SPRITE_SCAN_INVALID 0xFF
 
-#define SPRITES_MAX   32
-#define SPRITES_X     (SPRITES_MAX * 2)
-#define SPRITES_Y     (SPRITES_MAX * 2 + SPRITES_X)
-#define SPRITES_ATTR  (SPRITES_MAX * 2 + SPRITES_Y)
-#define SPRITES_COLOR (SPRITES_MAX * 2 + SPRITES_ATTR)
+#define SPRITES_MAX      64
+#define SPRITES_PER_LINE 16
+#define SPRITE_Y      0
+#define SPRITE_X      1
+#define SPRITE_ADDR   2
+#define SPRITE_ATTR   3
+#define SPRITE_DATA_SIZE 4
+#define SPRITE_LEFT_NORMAL 64
+#define SPRITE_LEFT_NARROW 96
+#define SPRITE_TOP 64
+
 
 static UINT8 sprite_scanlines[SPRITES_MAX];
+static UINT8 sprite_sizes[] = {16, 32, 64, 64};
+static UINT8 sprite_pitches[] = {4, 8, 32, 32};
+
+static UINT8 sprite_width_cache[SPRITES_MAX];
+static UINT8 sprite_pitches_cache[SPRITES_MAX];
+static UINT8 sprite_color_cache[SPRITES_MAX];
+static UINT8 sprite_prior_cache[SPRITES_MAX];
 
 static void do_scan_start() {
     /*
     * check all sprites and write the scan to be drawn
     * assume that the sprite will not be drawn
+    *
+    * Sprite will be drawn if:
+    *   - sprites are enabled
+    *   - max sprites per line has not been reached
+    *   - the sprite is enabled
+    *   - the sprite crosses the scanline
+    *
     */
-    for(int s=0; s < SPRITES_MAX; s++) {
+    UINT8 visible_sprites = 0;
+    UINT16 sprite_base = sprites;
+    for(int s=0; s < SPRITES_MAX; s++, sprite_base +=SPRITE_DATA_SIZE) {
         sprite_scanlines[s] = SPRITE_SCAN_INVALID; // assume invalid sprite for this scan
-        if (!(status & STATUS_ENABLE_SPRITES)) continue;
+        if (!(status & STATUS_ENABLE_SPRITES) || visible_sprites >= SPRITES_PER_LINE) continue;
 
-        UINT16 sprite_attrib = VRAM_BYTE(sprites + SPRITES_ATTR + s*2);
+        UINT16 sprite_attrib = VRAM_DATA(sprite_base + SPRITE_ATTR);
         if ((sprite_attrib & SPRITE_ATTR_ENABLED) == 0) continue;
 
-        int sprite_y = VRAM_DATA(sprites + SPRITES_Y + s*2) - 16;
+        UINT8 sprite_height_attrib = (sprite_attrib & 0x0300) >> 8;
+        UINT8 sprite_height = sprite_sizes[sprite_height_attrib];
 
-        int sprite_scanline = ypos - sprite_y;
-        if (sprite_scanline< 0 || sprite_scanline >=16) continue;
-        sprite_scanlines[s] = sprite_scanline;
+        INT16 sprite_y = VRAM_DATA(sprite_base + SPRITE_Y) - SPRITE_TOP;
+        INT16 sprite_scanline = ypos - sprite_y;
+        if (sprite_scanline >= 0 && sprite_scanline < sprite_height) {
+            sprite_scanlines[s] = sprite_scanline;
+
+            UINT8 sprite_width_attrib = (sprite_attrib & 0xC000) >> 12;
+            UINT8 sprite_width = sprite_sizes[sprite_width_attrib];
+            sprite_width_cache[s] = sprite_width;
+
+            sprite_pitches_cache[s] = sprite_pitches[sprite_width_attrib];
+            sprite_color_cache[s] = sprite_attrib & 0x0f;
+            sprite_prior_cache[s] = (sprite_attrib & 0x10) >> 8;
+
+            visible_sprites++;
+        }
     }
 }
 
 static void do_scan_end() {}
 
-static inline PAIR do_sprites() {
-    UINT8 dot_color   = 0;
-    UINT8 sprite_data = 0;
-    for(int s=SPRITES_MAX-1; s>=0 && (status & STATUS_ENABLE_SPRITES); s--) {
+static inline UINT8 apply_sprites(UINT8 color) {
+    UINT8 result = color;
+    if (!(status & STATUS_ENABLE_SPRITES)) return result;
+
+    UINT16 sprite_base = sprites;
+    UINT16 offset_x = dl_narrow ? SPRITE_LEFT_NARROW : SPRITE_LEFT_NORMAL;
+    for(int s=0; s<SPRITES_MAX; s++, sprite_base +=SPRITE_DATA_SIZE) {
         UINT8 sprite_scanline = sprite_scanlines[s];
         if (sprite_scanline == SPRITE_SCAN_INVALID) continue;
 
-        int sprite_x = (VRAM_DATA(sprites + SPRITES_X + s*2) - 24) * 2;
+        UINT16 sprite_x = VRAM_DATA(sprite_base + SPRITE_X) - offset_x;
 
-        int sprite_pixel_x = xpos/2 - sprite_x;
+        int sprite_pixel_x = (xpos >> 2) - sprite_x;
         if (sprite_pixel_x < 0) continue; // not yet
-        if (sprite_pixel_x >=16) { // not anymore
+        if (sprite_pixel_x >= sprite_width_cache[s]) { // not anymore
             sprite_scanlines[s] = SPRITE_SCAN_INVALID;
             continue;
         }
 
-        int sprite_pointer = VRAM_PTR(sprites + s*2);
+        if (color != 0 && !sprite_prior_cache[s]) continue;
 
-        sprite_data = VRAM_BYTE(sprite_pointer
-                        + (sprite_scanline << 3)
-                        + (sprite_pixel_x  >> 1));
-        sprite_data = (sprite_pixel_x & 1) == 0 ?
-        sprite_data >> 4 :
-        sprite_data & 0xF;
+        UINT16 sprite_addr = VRAM_DATA(sprite_base + SPRITE_ADDR);
+        UINT16 sprite_data_offset = sprite_pitches_cache[s] + (sprite_pixel_x >> 2);
+
+        UINT8 sprite_data = VRAM_DATA(sprite_addr + sprite_data_offset);
+        sprite_data >>= (sprite_pixel_x & 0x03) * 4;
+        sprite_data &= 0xF;
         if (sprite_data == 0) continue;
 
-        UINT16 sprite_attrib = VRAM_BYTE(sprites + SPRITES_ATTR + s*2);
-        int sprite_palette = sprite_attrib & 0x0F;
-
-        dot_color = VRAM_BYTE(sprites + SPRITES_COLOR + sprite_palette*16 + sprite_data);
+        result = sprite_color_cache[s] << 4 | sprite_data;
         break;
     }
 
-    PAIR result;
-    result.b.l = dot_color;
-    result.b.h = sprite_data;
     return result;
 }
 
 static void inline put_pixel(int offset, UINT8 color) {
-    PAIR sprite = do_sprites();
-    UINT8 dot_color = sprite.b.h == 0 ? color : sprite.b.l;
+    UINT8 dot_color = apply_sprites(color);
 
     set_pixel_color(dot_color);
     screen[offset + xpos*3 + 0] = pixel_color_r;
@@ -389,12 +420,7 @@ static void inline put_pixel(int offset, UINT8 color) {
 }
 
 static void inline put_pixel_rgb(int offset, UINT16 rgb_color) {
-    PAIR sprite = do_sprites();
-    if (sprite.b.h == 0) {
-        set_pixel_color_rgb(rgb_color);
-    } else {
-        set_pixel_color(sprite.b.l);
-    }
+    set_pixel_color_rgb(rgb_color);
     screen[offset + xpos*3 + 0] = pixel_color_r;
     screen[offset + xpos*3 + 1] = pixel_color_g;
     screen[offset + xpos*3 + 2] = pixel_color_b;
