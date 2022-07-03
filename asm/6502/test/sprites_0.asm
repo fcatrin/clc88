@@ -12,6 +12,13 @@ start
     mwa #sprite_patterns SRC_ADDR
     jsr gfx_upload_data
 
+    ldx #(4*4*2)
+    lda #$40
+    sta sprite_data, x
+    inx
+    inx
+    sta sprite_data, x
+
     mwa sprite_data_size SIZE
     mwa #sprite_data SRC_ADDR
     mwa #$b000 VADDR
