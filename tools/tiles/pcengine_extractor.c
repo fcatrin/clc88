@@ -24,10 +24,9 @@
 #define SPRITE_HEIGHT 16
 #define SPRITE_MAX_X 2
 #define SPRITE_MAX_Y 4
-#define SPRITE_BYTES_PER_ROW (SPRITE_WIDTH/2)
-#define SPRITE_BYTES_PER_SCAN (SPRITE_BYTES_PER_ROW * SPRITE_MAX_X)
+#define SPRITE_WORDS_PER_ROW (SPRITE_WIDTH/4)
+#define SPRITE_WORDS_PER_SCAN (SPRITE_WORDS_PER_ROW * SPRITE_MAX_X)
 #define SPRITE_SCANS (SPRITE_MAX_Y * SPRITE_HEIGHT)
-#define SPRITE_SIZE_BYTES (SPRITE_BYTES_PER_SCAN * SPRITE_SCANS)
 
 UINT16 vram[VRAM_SIZE];
 UINT16 sat[SAT_SIZE];
@@ -42,6 +41,7 @@ UINT8  tiles_palette_size;
 UINT32 sprites_palette_final[PALETTE_SIZE / 2];
 UINT8  sprites_palette_codes[COLOR_CODES];
 UINT8  sprites_palette_size;
+UINT8  sprite_size_table[] = {0, 1, 0, 2};
 
 UINT16 tiles_index[MAX_TILES];
 UINT16 tiles_size;
@@ -65,7 +65,7 @@ sprite_info_t *sprites_info[MAX_SPRITES];
 sprite_data_t *sprites_data[MAX_SPRITES];
 UINT16 sprites_info_size;
 UINT16 sprites_data_size;
-UINT8  sprites_patterns[VRAM_SIZE];
+UINT16 sprites_patterns[VRAM_SIZE];
 
 void init() {
     tiles_palette_size   = 0;
@@ -123,13 +123,18 @@ void register_tile(UINT8 *tile, UINT16 address) {
 }
 
 void register_sprite(UINT8 *sprite, UINT16 address, int col, int row) {
-    int offset = row * SPRITE_BYTES_PER_SCAN * SPRITE_HEIGHT + col * SPRITE_BYTES_PER_ROW;
+    int offset = row * SPRITE_WORDS_PER_SCAN * SPRITE_HEIGHT + col * SPRITE_WORDS_PER_ROW;
     for(int y=0; y<SPRITE_HEIGHT; y++) {
         int offset_row = y * SPRITE_WIDTH;
-        for(int x=0; x<SPRITE_BYTES_PER_ROW; x++) {
-            UINT8 pixel_0 = sprite[x*2 + offset_row + 0];
-            UINT8 pixel_1 = sprite[x*2 + offset_row + 1];
-            sprites_patterns[address + offset + x + y*SPRITE_BYTES_PER_ROW] = (pixel_0 & 0x0f) | (pixel_1 << 4);
+        for(int x=0; x<SPRITE_WORDS_PER_ROW; x++) {
+            UINT8 pixel_0 = sprite[x*4 + offset_row + 0];
+            UINT8 pixel_1 = sprite[x*4 + offset_row + 1];
+            UINT8 pixel_2 = sprite[x*4 + offset_row + 2];
+            UINT8 pixel_3 = sprite[x*4 + offset_row + 3];
+            sprites_patterns[address + offset + x + y*SPRITE_WORDS_PER_ROW] =
+                (pixel_0 << 12) |
+                (pixel_1 << 8)  |
+                (pixel_2 << 4)  | pixel_3;
         }
     }
 }
@@ -430,9 +435,20 @@ void dump_asm_sprites(char *path, UINT16 sprites_address) {
     char file_path[2048];
     sprintf(file_path, "%s/sprites.asm", path);
     FILE *f = fopen(file_path, "w");
-    fprintf(f, "sprite_patterns_size:\n    .word $%04x", sprites_info_size);
-    fprintf(f, "sprite_vram_address:\n     .word $%04x", sprites_address);
-    fprintf(f, "\n\nsprite_patterns:");
+
+    UINT16 sprites_patterns_size = 0;
+    for(int sprite=0; sprite < sprites_info_size; sprite++) {
+        sprite_info_t *info = sprites_info[sprite];
+
+        int cols = info->max_cols;
+        int rows = info->max_rows;
+        int size = cols * SPRITE_WORDS_PER_ROW * rows * SPRITE_HEIGHT;
+        sprites_patterns_size += size*2;
+    }
+
+    fprintf(f, "sprite_patterns_size: .word $%04x\n", sprites_patterns_size);
+    fprintf(f, "sprite_vram_address:  .word $%04x\n", sprites_address);
+    fprintf(f, "sprite_patterns:");
 
     int base_address = 0;
     for(int sprite=0; sprite < sprites_info_size; sprite++) {
@@ -441,41 +457,38 @@ void dump_asm_sprites(char *path, UINT16 sprites_address) {
 
         int cols = info->max_cols;
         int rows = info->max_rows;
-        int size = cols * SPRITE_BYTES_PER_ROW * rows * SPRITE_HEIGHT;
+        int size = cols * SPRITE_WORDS_PER_ROW * rows * SPRITE_HEIGHT;
         base_address += size;
 
-        fprintf(f, "\n    // sprite %d size:%dx%d", sprite, cols, rows);
+        fprintf(f, "\n    ; sprite %d size:%dx%d", sprite, cols, rows);
         for(int i=0; i<size; i++) {
-            if (i % 8 == 0) {
-                fprintf(f, "\n    .byte ");
+            if (i % 4 == 0) {
+                fprintf(f, "\n    .word ");
             } else {
                 fprintf(f, ", ");
             }
-            fprintf(f, "$%02x", sprites_patterns[info->address + i]);
+            fprintf(f, "$%04x", sprites_patterns[info->address + i]);
         }
         fprintf(f, "\n");
     }
 
-    fprintf(f, "\nsprite_data_size:\n    .word $%04x", sprites_data_size);
-    fprintf(f, "\nsprite_data:");
+    fprintf(f, "\nsprite_data_size:\n    .word $%04x\n", sprites_data_size * 8);
+    fprintf(f, "\nsprite_data:\n");
 
     for(int i=0; i<sprites_data_size; i++) {
         sprite_data_t *data = sprites_data[i];
         sprite_info_t *info = get_sprite_info(data->address);
 
-        UINT8 color = data->color;
-        UINT8 cols = data->cols;
-        UINT8 rows = data->rows;
+        UINT8 color  = data->color;
+        UINT8 width  = sprite_size_table[data->cols-1];
+        UINT8 height = sprite_size_table[data->rows-1];
         UINT16 address = info->vram_address + sprites_address;
 
-        UINT16 mixed = (color << 4) | (((cols-1) & 3) << 2) | ((rows-1) & 3);
+        UINT16 prior   = 1 << 8;
+        UINT16 enabled = 1 << 9;
+        UINT16 attr = (width << 12) | (height << 10) | enabled | prior | color;
 
-        if (i % 8 == 0) {
-            fprintf(f, "\n    .word ");
-        } else {
-            fprintf(f, ", ");
-        }
-        fprintf(f, "$%04x, $%04x", address, mixed);
+        fprintf(f, "    .word $%04x, $%04x, $%04x, $%04x\n", 0, 0, address, attr);
     }
 
 
