@@ -37,18 +37,20 @@ set_palette:
    rts
 .endp   
 
-.proc gfx_upload_font
-   ldx #4
-   ldy #0
-upload_next:   
-   lda (SRC_ADDR), y
-   sta VDATA
-   iny
-   bne upload_next
-   inc SRC_ADDR+1
-   dex
-   bne upload_next
-   rts
+gfx_upload_font:
+    mwa #400 SIZE
+
+.proc gfx_upload_data
+    ldy #0
+upload:
+    lda (SRC_ADDR), y
+    sta VDATA
+    inw SRC_ADDR
+    dew SIZE
+    lda SIZE
+    ora SIZE+1
+    bne upload
+    rts
 .endp
 
 .proc gfx_set_video_mode

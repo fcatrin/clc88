@@ -33,28 +33,12 @@ copy_dl:
     mwa #screen_data_size SIZE
     mwa #screen_data SRC_ADDR
     mwa #VRAM_SCREEN_DATA_ADDR VADDR
-    ldy #0
-upload_screen_data:
-    lda (SRC_ADDR), y
-    sta VDATA
-    inw SRC_ADDR
-    dew SIZE
-    lda SIZE
-    ora SIZE+1
-    bne upload_screen_data
+    jsr gfx_upload_data
 
     mwa tile_patterns_size SIZE
     mwa #tile_patterns SRC_ADDR
     mwa tile_vram_address VADDR
-    ldy #0
-upload_tiles_data:
-    lda (SRC_ADDR), y
-    sta VDATA
-    inw SRC_ADDR
-    dew SIZE
-    lda SIZE
-    ora SIZE+1
-    bne upload_tiles_data
+    jsr gfx_upload_data
 
     mwa #dlist_addr vram_scroll_addr
     adw vram_scroll_addr #3
