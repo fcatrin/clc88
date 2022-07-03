@@ -482,7 +482,7 @@ void dump_asm_sprites(char *path, UINT16 sprites_address) {
         UINT8 color  = data->color;
         UINT8 width  = sprite_size_table[data->cols-1];
         UINT8 height = sprite_size_table[data->rows-1];
-        UINT16 address = info->vram_address + sprites_address;
+        UINT16 address = (info->vram_address + sprites_address) >> 4;
 
         UINT16 prior   = 1 << 8;
         UINT16 enabled = 1 << 9;
