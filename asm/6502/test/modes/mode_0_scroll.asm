@@ -14,13 +14,9 @@ start
     mwa #dlist_addr VDLIST
     mwa #dlist_addr VADDR
 
-    ldx #0
-copy_dl:
-    lda display_list, x
-    sta VDATA
-    inx
-    cpx display_list_size
-    bne copy_dl
+    mwa #display_list SRC_ADDR
+    ldx display_list_size
+    jsr gfx_upload_short
 
     jsr text_test
 

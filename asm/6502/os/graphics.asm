@@ -38,7 +38,7 @@ set_palette:
 .endp   
 
 gfx_upload_font:
-    mwa #400 SIZE
+    mwa #$400 SIZE
 
 .proc gfx_upload_data
     ldy #0
@@ -49,6 +49,17 @@ upload:
     dew SIZE
     lda SIZE
     ora SIZE+1
+    bne upload
+    rts
+.endp
+
+.proc gfx_upload_short
+    ldy #0
+upload:
+    lda (SRC_ADDR), y
+    sta VDATA
+    iny
+    dex
     bne upload
     rts
 .endp
