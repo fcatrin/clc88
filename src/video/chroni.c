@@ -305,8 +305,7 @@ static inline void set_pixel_color(UINT8 color) {
     set_pixel_color_rgb(pixel_color_rgb565);
 }
 
-#define SPRITE_ATTR_ENABLED 0x10
-#define SPRITE_SCAN_INVALID 0xFF
+#define SPRITE_ATTR_ENABLED 0x200
 
 #define SPRITES_MAX      64
 #define SPRITES_PER_LINE 16
@@ -362,6 +361,7 @@ static void do_scan_start() {
 
             INT16 sprite_y = VRAM_DATA(sprite_base + SPRITE_Y) - SPRITE_TOP;
             INT16 sprite_scanline = ypos - sprite_y;
+            printf("sprite %d y:%d ypos:%d scanline:%d\n", s, sprite_y, ypos, sprite_scanline);
             if (sprite_scanline < 0 || sprite_scanline >= sprite_height) continue;
 
             UINT8 sprite_width_attrib = (sprite_attrib & 0x3000) >> 12;
@@ -380,7 +380,7 @@ static void do_scan_start() {
             sprite_cache_start[visible_sprites] = sprite_x_start;
 
             // get the base scanline address without considering X
-            UINT16 sprite_addr = VRAM_DATA(sprite_base + SPRITE_ADDR);
+            UINT16 sprite_addr = VRAM_DATA(sprite_base + SPRITE_ADDR) << 4;
             sprite_addr += sprite_scanline << sprite_pitches_shift[sprite_width_attrib];
             sprite_addr += sprite_x_pixel >> 2; // 4 pixels per word
             sprite_cache_addr[visible_sprites] = sprite_addr;
