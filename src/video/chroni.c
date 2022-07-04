@@ -436,7 +436,7 @@ static void render_sprites(UINT16 scan_width) {
             UINT16 sprite_data;
             if (sprite_start == 0 || sprite_rotate_bits) {
                 UINT16 sprite_addr = sprite_cache_addr[s];
-                sprite_data = 0xffff; // VRAM_DATA(sprite_addr);
+                sprite_data = VRAM_DATA(sprite_addr);
                 sprite_cache_data[s] = sprite_data;
                 sprite_cache_addr[s] = sprite_addr + 1;
             } else {
@@ -807,7 +807,7 @@ static void do_scanline(UINT16 width) {
         *      1           *       0  background // never happens
         *      1           *      !0  sprite
         *
-        *    sprite if !A*!B | A => !(A | B) | A => !A | !B | A => !B
+        *    sprite if !A*!B | A
         */
 
         for(int i=0, s=0; i<scan_width; i++) {
