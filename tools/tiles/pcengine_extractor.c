@@ -52,6 +52,7 @@ typedef struct {
     UINT8 max_cols;
     UINT8 max_rows;
     UINT16 vram_address;
+    UINT8 index;
 } sprite_info_t;
 
 typedef struct {
@@ -104,9 +105,10 @@ sprite_info_t *get_sprite_info(UINT16 address) {
     }
 
     sprite_info_t *info = malloc(sizeof(sprite_info_t));
-    info->address = address;
+    info->address  = address;
     info->max_cols = 0;
     info->max_rows = 0;
+    info->index = sprites_info_size;
 
     sprites_info[sprites_info_size++] = info;
     return info;
@@ -131,6 +133,7 @@ void register_sprite(UINT8 *sprite, UINT16 address, int col, int row) {
             UINT8 pixel_1 = sprite[x*4 + offset_row + 1];
             UINT8 pixel_2 = sprite[x*4 + offset_row + 2];
             UINT8 pixel_3 = sprite[x*4 + offset_row + 3];
+            printf("write pixel data at address %04x (%d, %d)\n", address, x, y);
             sprites_patterns[address + offset + x + y*SPRITE_WORDS_PER_ROW] =
                 (pixel_0 << 12) |
                 (pixel_1 << 8)  |
@@ -139,10 +142,12 @@ void register_sprite(UINT8 *sprite, UINT16 address, int col, int row) {
     }
 }
 
-void register_sprite_info(UINT16 address, int cols, int rows) {
+sprite_info_t * register_sprite_info(UINT16 address, int cols, int rows) {
     sprite_info_t *info = get_sprite_info(address);
+    printf("register sprite info %d\n", info->index);
     info->max_rows = (int)fmax(info->max_rows, rows);
     info->max_cols = (int)fmax(info->max_cols, cols);
+    return info;
 }
 
 void register_sprite_data(UINT16 address, UINT8 color, UINT8 cols, UINT8 rows) {
@@ -207,8 +212,9 @@ void save_sprite(char *out_dir, UINT16 color, UINT16 address, UINT32* tile, UINT
     mkdir(out_dir, 0755);
 
     char filename[1024];
-    sprintf(filename, "%s/sprite_%04x_%02x_%dx%d.rgb", out_dir, address >> 5, color, cols, rows);
+    sprintf(filename, "%s/sprite_%04x_%02x_%dx%d.rgb", out_dir, address, color, cols, rows);
     save_rgb(filename, tile, 256*sizeof(UINT32)*cols*rows);
+    printf("sprite saved as %s\n", filename);
 }
 
 void save_screen(char *out_dir) {
@@ -256,7 +262,7 @@ UINT32 *dump_screen_tile(char *out_dir, UINT16 color, UINT16 address) {
 UINT32 *dump_screen_sprite(char *out_dir, UINT16 color, UINT16 address, UINT16 base_address, int col, int row) {
     register_palette(sprites_palette_final, sprites_palette_codes, &sprites_palette_size, color, 0x100);
 
-    UINT8 sprite[256];
+    UINT8 sprite_block[256];
     for(int row=0; row<16; row++) {
         UINT16 sg0 = vram[address + row];
         UINT16 sg1 = vram[address + row + 16];
@@ -265,7 +271,7 @@ UINT32 *dump_screen_sprite(char *out_dir, UINT16 color, UINT16 address, UINT16 b
 
         UINT32 bitmask = 32768;
         for(int bit=0; bit<16; bit++) {
-            sprite[row*16 + bit] =
+            sprite_block[row*16 + bit] =
                 ((sg0 & bitmask) ? 1 : 0) * 1 +
                 ((sg1 & bitmask) ? 1 : 0) * 2 +
                 ((sg2 & bitmask) ? 1 : 0) * 4 +
@@ -276,12 +282,12 @@ UINT32 *dump_screen_sprite(char *out_dir, UINT16 color, UINT16 address, UINT16 b
 
     static UINT32 rgb[256];
     for(int i=0; i<256; i++) {
-        UINT8  pixel     = sprite[i];
+        UINT8  pixel     = sprite_block[i];
         UINT32 pixel_rgb = palette[color * 16 + pixel + 0x100];
         rgb[i] = pixel == 0 ? 0 : pixel_rgb;
     }
 
-    register_sprite(sprite, base_address, col, row);
+    register_sprite(sprite_block, address, col, row);
 
     return rgb;
 }
@@ -332,7 +338,7 @@ void dump_screen_tiles(char *out_dir) {
 }
 
 void dump_screen_sprites(char *out_dir) {
-    for(int i=0; i<64; i++) {
+    for(int i=0; i<1; i++) {
         UINT16 y = sat[i*4 + 0];
         UINT16 x = sat[i*4 + 1];
         UINT16 address = (sat[i*4 + 2] >> 1) & 0x3ff;
@@ -340,7 +346,7 @@ void dump_screen_sprites(char *out_dir) {
         UINT16 color   = flags & 0x0f;
         UINT8 cgx = (flags >> 8) & 1;
         UINT8 cgy = (flags >> 12) & 3;
-        printf("sprite %04x  x:%04x y:%04x color:%02x address:%04x cgx:%x gcy:%x\n", i, x, y, color, address, cgx, cgy);
+        printf("\n\nsprite %04x  x:%04x y:%04x color:%02x address:%04x cgx:%x gcy:%x\n", i, x, y, color, address, cgx, cgy);
         UINT16 cols = cgx == 0 ? 1 : 2;
         UINT16 rows = cgy == 0 ? 1 : (cgy == 1 ? 2 : 4);
 
@@ -467,7 +473,8 @@ void dump_asm_sprites(char *path, UINT16 sprites_address) {
             } else {
                 fprintf(f, ", ");
             }
-            fprintf(f, "$%04x", sprites_patterns[info->address + i]);
+            printf("output data from address %04x\n", (info->address <<6) + i);
+            fprintf(f, "$%04x", sprites_patterns[(info->address << 6) + i]);
         }
         fprintf(f, "\n");
     }
