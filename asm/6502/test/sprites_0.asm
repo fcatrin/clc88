@@ -15,11 +15,12 @@ start
     mwa #sprite_patterns SRC_ADDR
     jsr gfx_upload_data
 
-    ldx #(0 *4*2)
-    lda #$40
+    ldx #(4*4*2)
+    lda #$44
     sta sprite_data, x
     inx
     inx
+    lda #$40
     sta sprite_data, x
 
     mwa sprite_data_size SIZE
@@ -33,8 +34,23 @@ start
     sta VSTATUS
 
     jsr text_test
-halt:
-    jmp halt
+main_loop:
+    lda FRAMECOUNT
+wait_frame:
+    cmp FRAMECOUNT
+    beq wait_frame
+
+    ldx #(4*4*2)+2
+    inc sprite_data, x
+
+    ; brute force for now
+    mwa sprite_data_size SIZE
+    mwa #sprite_data SRC_ADDR
+    mwa #$b000 VADDR
+    jsr gfx_upload_data
+
+
+    jmp main_loop
 
     icl '../test/include/text_test.asm'
     icl '../os/graphics.asm'
