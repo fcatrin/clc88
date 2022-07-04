@@ -24,6 +24,8 @@
 
 UINT16 vram[VRAM_MAX];
 UINT16 palette[PALETTE_SIZE];
+UINT8  line_buffer_background[640];
+UINT8  line_buffer_sprites[320];
 
 #define PAGE_SIZE       0x4000
 #define PAGE_SHIFT      14
@@ -474,7 +476,7 @@ static void inline do_border(int offset, int size) {
     }
 }
 
-static void do_scan_text_attribs(UINT16 width, UINT8 line, bool cols80) {
+static void do_scan_text_attribs(UINT16 scan_width, UINT8 line) {
     LOGV(LOGTAG, "do_scan_text_attribs lms:%04x attr:%04x line:%d\n", lms, attribs, line);
 
     UINT8 row;
@@ -482,7 +484,6 @@ static void do_scan_text_attribs(UINT16 width, UINT8 line, bool cols80) {
     UINT8 foreground, background;
 
     int line_offset  = line & 7;
-    int scan_width = cols80 ? width : (width/2);
     int pixel_offset = dl_scroll_fine_x;
 
     UINT32 char_origin = dl_mode_data_addr << 1;
@@ -521,17 +522,14 @@ static void do_scan_text_attribs(UINT16 width, UINT8 line, bool cols80) {
             }
         }
 
-        put_pixel(offset, row & bit ? foreground : background);
-        if (!cols80) {
-            put_pixel(offset, row & bit ? foreground : background);
-        }
+        line_buffer_background[i] = row & bit ? foreground : background;
 
         pixel_offset = (pixel_offset + 1) & 7;
         bit >>= 1;
     }
 }
 
-static void do_scan_tile_4bpp(UINT16 width, UINT8 line) {
+static void do_scan_tile_4bpp(UINT16 scan_width, UINT8 line) {
     LOGV(LOGTAG, "do_scan_tile_4bpp line %d", line);
 
     UINT8  tile_color;
@@ -549,7 +547,7 @@ static void do_scan_tile_4bpp(UINT16 width, UINT8 line) {
     }
 
     UINT16 line_offset = (line & 7) << 1;
-    for(int i=0; i<width/2; i++) { // for each pixel
+    for(int i=0; i<scan_width; i++) { // for each pixel
         if (i == 0 || pixel_offset == 0) {
             UINT16 tile = VRAM_DATA(tile_addr);
 
@@ -575,8 +573,7 @@ static void do_scan_tile_4bpp(UINT16 width, UINT8 line) {
         UINT8 pixel = (pixel_data & 0xF);
         UINT8 color = (tile_color << 4) | pixel;
 
-        put_pixel(offset, color);
-        put_pixel(offset, color);
+        line_buffer_background[i] = color;
 
         pixel_offset = (pixel_offset + 1) & 7;
     }
@@ -784,11 +781,22 @@ static void do_scanline(UINT16 width) {
     if (dl_mode == 0 || dl_mode == 0xf) {
         do_border(offset, width);
     } else {
+        bool double_pixel = dl_mode != 1;
+        int scan_width = double_pixel ? (width/2) : width;
+
         switch(dl_mode) {
-        case 0x1: do_scan_text_attribs(width, dl_mode_scanline, TRUE); break;
-        case 0x2: do_scan_text_attribs(width, dl_mode_scanline, FALSE); break;
-        case 0x3: do_scan_tile_4bpp(width, dl_mode_scanline); break;
-        case 0x4: do_scan_bitmap_4bpp(width, dl_mode_scanline); break;
+        case 0x1:
+        case 0x2: do_scan_text_attribs(scan_width, dl_mode_scanline); break;
+        case 0x3: do_scan_tile_4bpp(scan_width, dl_mode_scanline); break;
+        case 0x4: do_scan_bitmap_4bpp(scan_width, dl_mode_scanline); break;
+        }
+
+        for(int i=0; i<scan_width; i++) {
+            UINT8 color = line_buffer_background[i];
+            put_pixel(offset, color);
+            if (double_pixel) {
+                put_pixel(offset, color);
+            }
         }
 
         if (dl_mode_scanline++ == dl_mode_scanlines) {
