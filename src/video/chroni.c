@@ -363,7 +363,6 @@ static void do_scan_start() {
 
             INT16 sprite_y = VRAM_DATA(sprite_base + SPRITE_Y) - SPRITE_TOP;
             INT16 sprite_scanline = ypos - sprite_y;
-            printf("sprite %d y:%d ypos:%d scanline:%d\n", s, sprite_y, ypos, sprite_scanline);
             if (sprite_scanline < 0 || sprite_scanline >= sprite_height) continue;
 
             UINT8 sprite_width_attrib = (sprite_attrib & 0x3000) >> 12;
@@ -372,6 +371,8 @@ static void do_scan_start() {
             UINT16 sprite_x_left = VRAM_DATA(sprite_base + SPRITE_X);
             UINT16 sprite_x_right = sprite_x_left + sprite_width;
             if (sprite_x_right < left_x || sprite_x_left > right_x) continue;
+
+            printf("sprite %d y:%d ypos:%d scanline:%d\n", s, sprite_y, ypos, sprite_scanline);
 
             sprite_cache_visible[visible_sprites] = TRUE;
 
@@ -393,7 +394,9 @@ static void do_scan_start() {
             sprite_cache_width[visible_sprites] = sprite_width - sprite_x_offset;
 
             sprite_cache_color[visible_sprites] = sprite_attrib & 0x0f;
-            sprite_cache_prior[visible_sprites] = (sprite_attrib & 0x10) >> 8;
+            sprite_cache_prior[visible_sprites] = (sprite_attrib & 0x100) >> 8;
+
+            printf("sprite %d prior:%d\n", s, sprite_cache_prior[visible_sprites]);
 
             visible_sprites++;
         }
@@ -433,7 +436,7 @@ static void render_sprites(UINT16 scan_width) {
             UINT16 sprite_data;
             if (sprite_start == 0 || sprite_rotate_bits) {
                 UINT16 sprite_addr = sprite_cache_addr[s];
-                sprite_data = VRAM_DATA(sprite_addr);
+                sprite_data = 0xffff; // VRAM_DATA(sprite_addr);
                 sprite_cache_data[s] = sprite_data;
                 sprite_cache_addr[s] = sprite_addr + 1;
             } else {
@@ -811,9 +814,9 @@ static void do_scanline(UINT16 width) {
             UINT8  background_color = line_buffer_background[i];
             UINT16 sprite           = line_buffer_sprites[s];
             UINT8  sprite_color     = sprite & 0xff;
-            // bool   sprite_prior     = sprite & 0100 ? 1 : 0;
+            bool   sprite_prior     = sprite & 0x100 ? 1 : 0;
 
-            bool use_sprite = background_color == 0;
+            bool use_sprite = sprite_prior || background_color == 0;
             UINT8 color = use_sprite ? sprite_color : background_color;
 
             put_pixel(offset, color);
