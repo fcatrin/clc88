@@ -583,13 +583,13 @@ static void do_scan_tile_4bpp(UINT16 scan_width, UINT8 line) {
     }
 }
 
-static void do_scan_bitmap_4bpp(UINT16 width, UINT8 line) {
+static void do_scan_bitmap_4bpp(UINT16 scan_width, UINT8 line) {
     UINT8  pixel_offset = 0;
     UINT16 pixel_addr = dl_mode_data_addr;
     UINT16 pixel_data = 0;
     UINT8  bitmap_color = 0;
 
-    for(int i=0; i<width/2; i++) { // for each pixel
+    for(int i=0; i<scan_width; i++) { // for each pixel
         if ((pixel_offset & 3) == 0) {
             pixel_data = VRAM_DATA(pixel_addr);
             pixel_addr++;
@@ -600,8 +600,7 @@ static void do_scan_bitmap_4bpp(UINT16 width, UINT8 line) {
 
         UINT8 color = (bitmap_color << 4) | pixel;
 
-        put_pixel(offset, color);
-        put_pixel(offset, color);
+        line_buffer_background[i] = color;
 
         pixel_offset = (pixel_offset + 1) & 3;
     }
