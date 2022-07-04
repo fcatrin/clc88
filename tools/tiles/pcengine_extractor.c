@@ -338,7 +338,7 @@ void dump_screen_tiles(char *out_dir) {
 }
 
 void dump_screen_sprites(char *out_dir) {
-    for(int i=0; i<1; i++) {
+    for(int i=0; i<64; i++) {
         UINT16 y = sat[i*4 + 0];
         UINT16 x = sat[i*4 + 1];
         UINT16 address = (sat[i*4 + 2] >> 1) & 0x3ff;
