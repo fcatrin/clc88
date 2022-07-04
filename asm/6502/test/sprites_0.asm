@@ -16,12 +16,14 @@ start
     jsr gfx_upload_data
 
     ldx #(4*4*2)
-    lda #$44
-    sta sprite_data, x
-    inx
-    inx
     lda #$40
     sta sprite_data, x
+    inx
+    inx
+    lda #$31
+    sta sprite_data, x
+    lda #$00
+    sta sprite_data+1, x
 
     mwa sprite_data_size SIZE
     mwa #sprite_data SRC_ADDR
@@ -35,6 +37,7 @@ start
 
     jsr text_test
 main_loop:
+    ; jmp main_loop
     lda FRAMECOUNT
 wait_frame:
     cmp FRAMECOUNT
@@ -42,6 +45,13 @@ wait_frame:
 
     ldx #(4*4*2)+2
     inc sprite_data, x
+    sne
+    inc sprite_data+1, x
+    lda sprite_data+1, x
+    cmp #2
+    sne
+    lda #0
+    sta sprite_data+1, x
 
     ; brute force for now
     mwa sprite_data_size SIZE
