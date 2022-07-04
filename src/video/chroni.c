@@ -343,7 +343,6 @@ static bool   sprite_cache_visible[SPRITES_PER_LINE];
 static UINT8  sprite_cache_width[SPRITES_PER_LINE];
 static UINT16 sprite_cache_addr[SPRITES_PER_LINE];
 static UINT16 sprite_cache_data[SPRITES_PER_LINE];
-static UINT8  sprite_cache_rotate_bits[SPRITES_PER_LINE];
 static UINT8  sprite_cache_rotate[SPRITES_PER_LINE];
 static INT16  sprite_cache_start[SPRITES_PER_LINE];
 static UINT8  sprite_cache_color[SPRITES_PER_LINE];
@@ -384,7 +383,7 @@ static void do_scan_start() {
 
             UINT16 sprite_x_left = VRAM_DATA(sprite_base + SPRITE_X);
             UINT16 sprite_x_right = sprite_x_left + sprite_width;
-            if (sprite_x_right < left_x || sprite_x_left > right_x) continue;
+            if (sprite_x_right <= left_x || sprite_x_left > right_x) continue;
 
             printf("sprite %d y:%d ypos:%d scanline:%d\n", s, sprite_y, ypos, sprite_scanline);
 
@@ -405,7 +404,7 @@ static void do_scan_start() {
             UINT8 sprite_rotate = (sprite_x_pixel & 0x3);
             sprite_cache_rotate[visible_sprites] = sprite_rotate;
 
-            sprite_cache_width[visible_sprites] = sprite_width - sprite_x_offset;
+            sprite_cache_width[visible_sprites] = sprite_width - sprite_x_pixel;
 
             sprite_cache_color[visible_sprites] = sprite_attrib & 0x0f;
             sprite_cache_prior[visible_sprites] = (sprite_attrib & 0x100) >> 8;
@@ -446,23 +445,23 @@ static void render_sprites(UINT16 scan_width) {
                 sprite_cache_width[s] = sprite_width;
             }
 
-            UINT8 sprite_rotate_bits = sprite_cache_rotate_bits[s];
+            UINT8 sprite_rotate = sprite_cache_rotate[s];
             UINT16 sprite_data;
-            if (sprite_start == 0 || sprite_rotate_bits == 0) {
+            if (sprite_start == 0 || sprite_rotate == 0) {
                 UINT16 sprite_addr = sprite_cache_addr[s];
                 sprite_data = VRAM_DATA(sprite_addr);
                 sprite_cache_data[s] = sprite_data;
                 sprite_cache_addr[s] = sprite_addr + 1;
+                printf("load from vram[%04x]=%04x start:%d rotate:%d\n", sprite_addr, sprite_data, sprite_start, sprite_rotate);
             } else {
                 sprite_data = sprite_cache_data[s];
             }
 
-            printf("sprite data %4x\n", sprite_data);
-            sprite_data <<= (sprite_rotate_bits << 2);
-            sprite_cache_rotate_bits[s] = (sprite_rotate_bits + 1) & 0x3;
+            sprite_data <<= (sprite_rotate << 2);
+            sprite_cache_rotate[s] = (sprite_rotate + 1) & 0x3;
 
             UINT8 sprite_pixel = (sprite_data & 0xf000) >> 12;
-            printf("sprite data %4x pixel:%02x\n", sprite_data, sprite_pixel);
+            printf("sprite data %04x pixel:%02x\n", sprite_data, sprite_pixel);
             if (sprite_pixel == 0) continue;
 
             bool sprite_prior = sprite_cache_prior[s];
