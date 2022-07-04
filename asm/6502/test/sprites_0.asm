@@ -7,12 +7,15 @@ start
     ldx #OS_SET_VIDEO_MODE
     jsr OS_CALL
 
+    mwa #sprites_palette SRC_ADDR
+    jsr gfx_upload_palette_sprites
+
     mwa sprite_vram_address VADDR
     mwa sprite_patterns_size SIZE
     mwa #sprite_patterns SRC_ADDR
     jsr gfx_upload_data
 
-    ldx #(4*4*2)
+    ldx #(0 *4*2)
     lda #$40
     sta sprite_data, x
     inx

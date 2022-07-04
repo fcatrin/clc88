@@ -37,6 +37,21 @@ set_palette:
    rts
 .endp   
 
+.proc gfx_upload_palette_sprites
+   lda #0
+   sta VPAL_SPR_INDEX
+   ldx #2
+   ldy #0
+set_palette:
+   lda (SRC_ADDR), y
+   sta VPAL_SPR_VALUE
+   iny
+   bne set_palette
+   dex
+   bne set_palette
+   rts
+.endp
+
 gfx_upload_font:
     mwa #$400 SIZE
 

@@ -23,7 +23,8 @@
 #define PALETTE_SIZE 256
 
 UINT16 vram[VRAM_MAX];
-UINT16 palette[PALETTE_SIZE];
+UINT16 palette_background[PALETTE_SIZE];
+UINT16 palette_sprites[PALETTE_SIZE];
 UINT8  line_buffer_background[640];
 UINT16 line_buffer_sprites[320];
 
@@ -154,9 +155,13 @@ void vaddr_aux_autoinc() {
 }
 
 void chroni_register_write(UINT8 index, UINT8 value) {
-    static int    palette_value_state;
-    static UINT8  palette_index;
-    static UINT16 palette_value;
+    static int    palette_background_value_state;
+    static UINT8  palette_background_index;
+    static UINT16 palette_background_value;
+
+    static int    palette_sprites_value_state;
+    static UINT8  palette_sprites_index;
+    static UINT16 palette_sprites_value;
 
     UINT16 current_value;
 
@@ -172,18 +177,18 @@ void chroni_register_write(UINT8 index, UINT8 value) {
         charset = value;
         break;
     case 0x04:
-        palette_index = value;
-        palette_value_state = 0;
+        palette_background_index = value;
+        palette_background_value_state = 0;
         break;
     case 0x05:
-        if (palette_value_state == 0) {
-            palette_value = (palette_value & 0xFF00) | value;
-            palette_value_state = 1;
+        if (palette_background_value_state == 0) {
+            palette_background_value = (palette_background_value & 0xFF00) | value;
+            palette_background_value_state = 1;
         } else {
-            palette_value = (palette_value & 0x00FF) | (value << 8);
+            palette_background_value = (palette_background_value & 0x00FF) | (value << 8);
 
-            palette[palette_index++] = palette_value;
-            palette_value_state = 0;
+            palette_background[palette_background_index++] = palette_background_value;
+            palette_background_value_state = 0;
         }
         break;
     case 0x06:
@@ -260,6 +265,21 @@ void chroni_register_write(UINT8 index, UINT8 value) {
     case 0x2e:
         autoinc = value;
         break;
+    case 0x16:
+        palette_sprites_index = value;
+        palette_sprites_value_state = 0;
+        break;
+    case 0x17:
+        if (palette_sprites_value_state == 0) {
+            palette_sprites_value = (palette_sprites_value & 0xFF00) | value;
+            palette_sprites_value_state = 1;
+        } else {
+            palette_sprites_value = (palette_sprites_value & 0x00FF) | (value << 8);
+
+            palette_sprites[palette_sprites_index++] = palette_sprites_value;
+            palette_sprites_value_state = 0;
+        }
+        break;
     }
 }
 
@@ -295,16 +315,10 @@ UINT8 chroni_register_read(UINT8 index) {
     return 0;
 }
 
-
 static inline void set_pixel_color_rgb(UINT16 pixel_color_rgb565) {
     pixel_color_r = rgb565[pixel_color_rgb565*3 + 0];
     pixel_color_g = rgb565[pixel_color_rgb565*3 + 1];
     pixel_color_b = rgb565[pixel_color_rgb565*3 + 2];
-}
-
-static inline void set_pixel_color(UINT8 color) {
-    UINT16 pixel_color_rgb565 = palette[color];
-    set_pixel_color_rgb(pixel_color_rgb565);
 }
 
 #define SPRITE_ATTR_ENABLED 0x200
@@ -434,7 +448,7 @@ static void render_sprites(UINT16 scan_width) {
 
             UINT8 sprite_rotate_bits = sprite_cache_rotate_bits[s];
             UINT16 sprite_data;
-            if (sprite_start == 0 || sprite_rotate_bits) {
+            if (sprite_start == 0 || sprite_rotate_bits == 0) {
                 UINT16 sprite_addr = sprite_cache_addr[s];
                 sprite_data = VRAM_DATA(sprite_addr);
                 sprite_cache_data[s] = sprite_data;
@@ -443,10 +457,12 @@ static void render_sprites(UINT16 scan_width) {
                 sprite_data = sprite_cache_data[s];
             }
 
-            sprite_data >>= (sprite_rotate_bits << 2);
+            printf("sprite data %4x\n", sprite_data);
+            sprite_data <<= (sprite_rotate_bits << 2);
             sprite_cache_rotate_bits[s] = (sprite_rotate_bits + 1) & 0x3;
 
-            UINT8 sprite_pixel = sprite_data & 0xf;
+            UINT8 sprite_pixel = (sprite_data & 0xf000) >> 12;
+            printf("sprite data %4x pixel:%02x\n", sprite_data, sprite_pixel);
             if (sprite_pixel == 0) continue;
 
             bool sprite_prior = sprite_cache_prior[s];
@@ -458,14 +474,6 @@ static void render_sprites(UINT16 scan_width) {
         }
         line_buffer_sprites[i] = (sprite_found_prior ? 0x100 : 0) | sprite_color;
     }
-}
-
-static void inline put_pixel(int offset, UINT8 dot_color) {
-    set_pixel_color(dot_color);
-    screen[offset + xpos*3 + 0] = pixel_color_r;
-    screen[offset + xpos*3 + 1] = pixel_color_g;
-    screen[offset + xpos*3 + 2] = pixel_color_b;
-    xpos++;
 }
 
 static void inline put_pixel_rgb(int offset, UINT16 rgb_color) {
@@ -816,12 +824,12 @@ static void do_scanline(UINT16 width) {
             UINT8  sprite_color     = sprite & 0xff;
             bool   sprite_prior     = sprite & 0x100 ? 1 : 0;
 
-            bool use_sprite = sprite_prior || background_color == 0;
-            UINT8 color = use_sprite ? sprite_color : background_color;
+            bool use_sprite = sprite_color && (sprite_prior || background_color == 0);
+            UINT16 color = use_sprite ? palette_sprites[sprite_color] : palette_background[background_color];
 
-            put_pixel(offset, color);
+            put_pixel_rgb(offset, color);
             if (double_pixel) {
-                put_pixel(offset, color);
+                put_pixel_rgb(offset, color);
             }
             s = s + (double_pixel || (i & 1) ? 1 : 0);
         }
