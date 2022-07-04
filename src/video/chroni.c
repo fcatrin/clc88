@@ -801,19 +801,19 @@ static void do_scanline(UINT16 width) {
         *      A           B       C
         *      0           0       *  sprite
         *      0          !0       *  background
-        *      1           *       0  background
+        *      1           *       0  background // never happens
         *      1           *      !0  sprite
         *
-        *    sprite if !A*!B | A*!C
+        *    sprite if !A*!B | A => !(A | B) | A => !A | !B | A => !B
         */
 
         for(int i=0, s=0; i<scan_width; i++) {
             UINT8  background_color = line_buffer_background[i];
             UINT16 sprite           = line_buffer_sprites[s];
             UINT8  sprite_color     = sprite & 0xff;
-            bool   sprite_prior     = sprite & 0100 ? 1 : 0;
+            // bool   sprite_prior     = sprite & 0100 ? 1 : 0;
 
-            bool use_sprite = (!sprite_prior && !background_color) || (sprite_prior && sprite);
+            bool use_sprite = background_color == 0;
             UINT8 color = use_sprite ? sprite_color : background_color;
 
             put_pixel(offset, color);
