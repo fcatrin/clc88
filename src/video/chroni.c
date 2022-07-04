@@ -25,7 +25,7 @@
 UINT16 vram[VRAM_MAX];
 UINT16 palette[PALETTE_SIZE];
 UINT8  line_buffer_background[640];
-UINT8  line_buffer_sprites[320];
+UINT16 line_buffer_sprites[320];
 
 #define PAGE_SIZE       0x4000
 #define PAGE_SHIFT      14
@@ -405,55 +405,59 @@ static void do_scan_start() {
 
 static void do_scan_end() {}
 
-static inline UINT8 apply_sprites(UINT8 color) {
-    UINT8 result = color;
-    if (!(status & STATUS_ENABLE_SPRITES)) return result;
+static void render_sprites(UINT16 scan_width) {
+    bool sprites_enabled = (status & STATUS_ENABLE_SPRITES);
 
-    for(int s=0; s<SPRITES_PER_LINE; s++) {
-        if (!sprite_cache_visible[s]) continue;
+    for(int i=0; i<scan_width; i++) {
+        bool  sprite_found_prior = FALSE;
+        bool  sprite_found = FALSE;
+        UINT8 sprite_color = 0;
+        for(int s=0; s<SPRITES_PER_LINE && sprites_enabled; s++) {
+            if (!sprite_cache_visible[s]) continue;
 
-        // wait until this sprite starts
-        INT16 sprite_start = sprite_cache_start[s];
-        sprite_cache_start[s] = sprite_start - 1;
-        if (sprite_start > 0) {
-            continue;
+            // wait until this sprite starts
+            INT16 sprite_start = sprite_cache_start[s];
+            sprite_cache_start[s] = sprite_start - 1;
+            if (sprite_start > 0) {
+                continue;
+            }
+
+            UINT8 sprite_width = sprite_cache_width[s] - 1;
+            if (sprite_width == 0) {
+                sprite_cache_visible[s] = FALSE;
+            } else {
+                sprite_cache_width[s] = sprite_width;
+            }
+
+            UINT8 sprite_rotate_bits = sprite_cache_rotate_bits[s];
+            UINT16 sprite_data;
+            if (sprite_start == 0 || sprite_rotate_bits) {
+                UINT16 sprite_addr = sprite_cache_addr[s];
+                sprite_data = VRAM_DATA(sprite_addr);
+                sprite_cache_data[s] = sprite_data;
+                sprite_cache_addr[s] = sprite_addr + 1;
+            } else {
+                sprite_data = sprite_cache_data[s];
+            }
+
+            sprite_data >>= (sprite_rotate_bits << 2);
+            sprite_cache_rotate_bits[s] = (sprite_rotate_bits + 1) & 0x3;
+
+            UINT8 sprite_pixel = sprite_data & 0xf;
+            if (sprite_pixel == 0) continue;
+
+            bool sprite_prior = sprite_cache_prior[s];
+            if ((!sprite_found_prior && sprite_prior) || !sprite_found) {
+                sprite_color = (sprite_cache_color[s] << 4) | sprite_pixel;
+                sprite_found = TRUE; // TODO is this good for sprite collision detection?
+                if (!sprite_found_prior) sprite_found_prior = sprite_prior;
+            }
         }
-
-        UINT8 sprite_width = sprite_cache_width[s] - 1;
-        if (sprite_width == 0) {
-            sprite_cache_visible[s] = FALSE;
-        } else {
-            sprite_cache_width[s] = sprite_width;
-        }
-
-        UINT8 sprite_rotate_bits = sprite_cache_rotate_bits[s];
-        UINT16 sprite_data;
-        if (sprite_start == 0 || sprite_rotate_bits) {
-            UINT16 sprite_addr = sprite_cache_addr[s];
-            sprite_data = VRAM_DATA(sprite_addr);
-            sprite_cache_data[s] = sprite_data;
-            sprite_cache_addr[s] = sprite_addr + 1;
-        } else {
-            sprite_data = sprite_cache_data[s];
-        }
-
-        sprite_data >>= (sprite_rotate_bits << 2);
-        sprite_cache_rotate_bits[s] = (sprite_rotate_bits + 1) & 0x3;
-
-        UINT8 sprite_pixel = sprite_data & 0xf;
-        if (sprite_pixel == 0) continue;
-        if (color != 0 && !sprite_cache_prior[s]) continue;
-
-        result = (sprite_cache_color[s] << 4) | sprite_pixel;
-        break;
+        line_buffer_sprites[i] = (sprite_found_prior ? 0x100 : 0) | sprite_color;
     }
-
-    return result;
 }
 
-static void inline put_pixel(int offset, UINT8 color) {
-    UINT8 dot_color = apply_sprites(color);
-
+static void inline put_pixel(int offset, UINT8 dot_color) {
     set_pixel_color(dot_color);
     screen[offset + xpos*3 + 0] = pixel_color_r;
     screen[offset + xpos*3 + 1] = pixel_color_g;
@@ -791,12 +795,33 @@ static void do_scanline(UINT16 width) {
         case 0x4: do_scan_bitmap_4bpp(scan_width, dl_mode_scanline); break;
         }
 
-        for(int i=0; i<scan_width; i++) {
-            UINT8 color = line_buffer_background[i];
+        render_sprites(scan_width);
+
+        /* sprite priority over background
+        *  prior  background  sprite  result
+        *      A           B       C
+        *      0           0       *  sprite
+        *      0          !0       *  background
+        *      1           *       0  background
+        *      1           *      !0  sprite
+        *
+        *    sprite if !A*!B | A*!C
+        */
+
+        for(int i=0, s=0; i<scan_width; i++) {
+            UINT8  background_color = line_buffer_background[i];
+            UINT16 sprite           = line_buffer_sprites[s];
+            UINT8  sprite_color     = sprite & 0xff;
+            bool   sprite_prior     = sprite & 0100 ? 1 : 0;
+
+            bool use_sprite = (!sprite_prior && !background_color) || (sprite_prior && sprite);
+            UINT8 color = use_sprite ? sprite_color : background_color;
+
             put_pixel(offset, color);
             if (double_pixel) {
                 put_pixel(offset, color);
             }
+            s = s + (double_pixel || (i & 1) ? 1 : 0);
         }
 
         if (dl_mode_scanline++ == dl_mode_scanlines) {
