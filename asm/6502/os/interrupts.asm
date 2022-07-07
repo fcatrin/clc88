@@ -41,6 +41,15 @@ nmi_done:
 
 ; IRQ is not used for now
 irq_os:
+   cld
+   pha
+   lda IRQ_VECTOR
+   ora IRQ_VECTOR+1
+   beq no_user_interrupt
+   pla
+   jmp (IRQ_VECTOR)
+no_user_interrupt:
+   pla
    rti
 
 ; OS HBLANK handler
