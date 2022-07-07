@@ -13,6 +13,10 @@ VLINE	equ 16					;screen line for synchronization
 
 start
 
+    sei
+    mwa #timer_irq IRQ_VECTOR
+    cli
+
     mva #$12 ATTRIB_DEFAULT
 
     lda #1
@@ -57,16 +61,15 @@ loop
     beq skip_player
 
 acpapx1	lda #$ff				;parameter overwrite (sync line counter value)
-    clc
-acpapx2	adc #$ff				;parameter overwrite (sync line counter spacing)
-    cmp #156
-    bcc lop4
-    sbc #156
-lop4
-    sta acpapx1+1
+    sta SYS_TIMER_VL
+acpapx2	lda #$ff				;parameter overwrite (sync line counter spacing)
+    sta SYS_TIMER_VH
+    sta SYS_TIMER_WR_EN
+    sta SYS_TIMER_EN
+    lda timer_flag
 waipap
-    cmp VCOUNT					;vertical line counter synchro
-    bne waipap
+    cmp timer_flag
+    beq waipap
 
     lda #8
     sta VBORDER
@@ -122,11 +125,15 @@ tabpp  dta 156,78,52,39			;line counter spacing table for instrument speed from 
     lda #0                  ;starting song line 0-255 to A reg
     jsr RASTERMUSICTRACKER     ;Init
 ;Init returns instrument speed (1..4 => from 1/screen to 4/screen)
+    sec
+    sbc #1
+    asl
     tay
-    lda tabpp-1,y
-    sta acpapx2+1           ;sync counter spacing
-    lda #16+0
-    sta acpapx1+1           ;sync counter init
+    lda timer_speed_table, y
+    sta acpapx1+1
+    iny
+    lda timer_speed_table, y
+    sta acpapx2+1
 
 ; Display MONO / STEREO label
     mwa #label_mono SRC_ADDR
@@ -296,8 +303,26 @@ info_string_ndx .byte 0
     jmp display_file_row
 .endp   
 
+timer_irq:
+   pha
+   lda SYS_TIMER_IRQ ; // just read the value on the debugger
+   mva #1 SYS_TIMER_ACK
+   inc timer_flag
+not_yet
+   pla
+   rti
+
+timer_flag .byte 0
+
+timer_speed_table:
+    .word 20000
+    .word 10000
+    .word 6666
+    .word 5000
+
 files_offset  .byte 0
 selected_line .byte 0
+
 
 song_text:
    .word 0
