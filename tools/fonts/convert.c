@@ -76,4 +76,8 @@ int main(int argc, char *argv[]) {
 	atascii2ascii(0xD000, 0xE000);
 	save_bin("binary/charset_ascrnet.bin", 0xE000);
 
+	load_bin("source/charset_tims.bin", 0xE000, 0);
+	atascii2ascii(0xD000, 0xE000);
+	save_bin("binary/charset_tims.bin", 0xE000);
+
 }
