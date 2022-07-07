@@ -19,6 +19,10 @@ start
     ldx #OS_SET_VIDEO_MODE
     jsr OS_CALL
 
+    mwa #font SRC_ADDR
+    mwa #0 VADDR
+    jsr gfx_upload_font
+
     mwa #custom_palette SRC_ADDR
     ldx #OS_SET_VIDEO_PALETTE
     jsr OS_CALL
@@ -329,6 +333,11 @@ custom_palette
     icl 'files.asm'
     icl 'loader.asm'
     icl '../../os/libs/stdlib.asm'
+    icl '../../os/graphics.asm'
+    icl '../../os/ram_vram.asm'
+
+font:
+    ins '../../../../res/fonts/charset_tims.bin'
 
     org EXECADDR
     .word start
