@@ -13,6 +13,7 @@
 #include "monitor.h"
 #include "video/chroni.h"
 #include "sound.h"
+#include "system.h"
 
 #define LOGTAG "COMPY"
 #ifdef TRACE_COMPY
@@ -102,6 +103,11 @@ void compy_init(int argc, char *argv[]) {
  As for sound samples: 44100 samples per second / 60 frames per second = 735 samples per frame
  samples per scanline = 735/262
 
+ real time is:
+ 60 frames per second  (16666 microseconds)
+ 240 scanlines per frame (69 microseconds)
+
+
 */
 
 float samples_per_scanline = 735.0f / 262;
@@ -109,6 +115,8 @@ int cpu_cycles_multiplier = 1;
 int cpu_cycles_front_porch = 20;
 int cpu_cycles_back_porch = 20;
 int cpu_cycles_display = 160;
+
+float microseconds_per_scanline = 1000000.0f / 60.0f / 240.0f;
 
 void compy_run_frame() {
 	chroni_frame_start();
@@ -125,6 +133,8 @@ void compy_run_frame() {
 		CPU_GO(cpu_cycles);
 
 		sound_process(samples_per_scanline);
+		system_run((UINT32)microseconds_per_scanline);
+		cpuexec_irq(system_has_irq() ? 1 : 0);
 	} while (!chroni_frame_is_complete());
 	chroni_frame_end();
 }

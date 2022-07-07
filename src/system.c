@@ -59,11 +59,13 @@ UINT8 system_register_read(UINT8 index) {
 }
 
 void system_run(UINT32 microseconds) {
+    UINT8 sys_timer_irq_flag = 0;
 	for(int i=0; i<MAX_TIMERS; i++) {
 		sys_timer *timer = &timers[i];
 		sys_timer_run(timer, microseconds);
-		sys_timer_irq = (sys_timer_irq << 1) | (sys_timer_is_triggered(timer) ? 1 : 0);
+		sys_timer_irq_flag = (sys_timer_irq_flag << 1) | (sys_timer_is_triggered(timer) ? 1 : 0);
 	}
+	sys_timer_irq = sys_timer_irq_flag;
 }
 
 bool system_has_irq() {
