@@ -27,7 +27,7 @@ TARGET_BASE_NAME = clc88
 FINALTARGET = $(TARGET_BASE_NAME)
 TARGET = $(FINALTARGET)
 
-CFLAGS = -g -Wall
+CFLAGS = -g -Wall -O2
 
 OBJDIR= ../bin/emulator
 
