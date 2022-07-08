@@ -17,8 +17,6 @@
 #endif
 #include "trace.h"
 
-#define FILENAME_MAX_SIZE 1000
-
 #define RET_SUCCESS             0x00
 #define ERR_INVALID_OPERATION   0x80
 #define ERR_FILE_NOT_FOUND      0x81
@@ -51,7 +49,7 @@
 #define MAX_OPEN_FILES 128
 FILE *file_handles[MAX_OPEN_FILES];
 
-char root[FILENAME_MAX_SIZE];
+char root[PATH_MAX];
 
 typedef struct dir_entry {
 	char *name;
@@ -143,18 +141,18 @@ UINT8 storage_register_read(UINT8 index) {
 }
 
 static void build_path(char *fullpath, char *path) {
-	strncpy(fullpath, root, FILENAME_MAX_SIZE);
+	strncpy(fullpath, root, PATH_MAX);
 
 	if (path[0]) {
 		if (path[0] != '/') {
 			strcat(fullpath, "/");
 		}
-		strncat(fullpath, path, FILENAME_MAX_SIZE - strlen(fullpath));
+		strncat(fullpath, path, PATH_MAX - strlen(fullpath));
 	}
 }
 
 static void cmd_storage_open() {
-	char filename[FILENAME_MAX_SIZE+1];
+	char filename[PATH_MAX+1];
 	char *mode = (cmd[1] == 0) ? "rb":"wb";
 
 	build_path(filename, (char *)(cmd+2));
@@ -255,7 +253,7 @@ static int get_new_dir_handle() {
 }
 
 static void stat_dir_entry(char *dirname, dir_entry *entry) {
-	static char name[FILENAME_MAX_SIZE];
+	static char name[PATH_MAX];
 	strcpy(name, dirname);
 	strcat(name, "/");
 	strcat(name, entry->name);
@@ -279,7 +277,7 @@ static void cmd_read_dir() {
 
 	int mode = cmd[1];
 
-	char dirname[FILENAME_MAX_SIZE];
+	char dirname[PATH_MAX];
 	build_path(dirname, (char *)(&cmd[2]));
 
 	bool is_root = !strcmp(root, dirname);
@@ -461,7 +459,7 @@ void storage_init(int argc, char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 
-	getcwd(root, FILENAME_MAX_SIZE);
+	getcwd(root, PATH_MAX);
 
 	for(int i=0; i<argc-1; i++) {
 		if (!strcmp(argv[i], "-storage")) {
