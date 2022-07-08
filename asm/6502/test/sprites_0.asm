@@ -15,15 +15,11 @@ start
     mwa #sprite_patterns SRC_ADDR
     jsr gfx_upload_data
 
-    ldx #(4*4*2)
-    lda #$40
-    sta sprite_data, x
+    ldx #(2*4*2)
+    mva #$40 sprite_data,x
     inx
     inx
-    lda #$31
-    sta sprite_data, x
-    lda #$00
-    sta sprite_data+1, x
+    mva #$40 sprite_data,x
 
     mwa sprite_data_size SIZE
     mwa #sprite_data SRC_ADDR
