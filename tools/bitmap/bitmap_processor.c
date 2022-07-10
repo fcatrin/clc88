@@ -285,7 +285,7 @@ void dump_asm_palette(char *path, int colors) {
         UINT8 data_b = buffer[i*3+2];
         UINT16 value = rgb2rgb565(data_r, data_g, data_b);
 
-        if ((i % 8) == 0) fprintf(f, "\n    .word ");
+        if ((i % 16) == 0) fprintf(f, "\n    .word ");
         else fprintf(f, ", ");
         fprintf(f, "$%04x", value);
     }
