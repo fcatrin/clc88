@@ -77,8 +77,8 @@ palette_natural:
     icl '../../os/libs/stdlib.asm'
 
     icl '../include/rle_16.asm'
-    icl '../include/gfx/bitmap/image.asm'
-    icl '../include/gfx/bitmap/palette.asm'
+    icl '../include/gfx/bitmap_01/image.asm'
+    icl '../include/gfx/bitmap_01/palette.asm'
 
     org EXECADDR
     .word start
