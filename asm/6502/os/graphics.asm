@@ -32,6 +32,7 @@ set_palette:
    sta VPAL_VALUE
    iny
    bne set_palette
+   inc SRC_ADDR+1
    dex
    bne set_palette
    rts
@@ -47,6 +48,7 @@ set_palette:
    sta VPAL_SPR_VALUE
    iny
    bne set_palette
+   inc SRC_ADDR+1
    dex
    bne set_palette
    rts
