@@ -616,17 +616,38 @@ static void do_scan_bitmap_4bpp(UINT16 scan_width, UINT8 line) {
     }
 }
 
+static void do_scan_bitmap_8bpp(UINT16 scan_width, UINT8 line) {
+    UINT8  pixel_offset = 0;
+    UINT16 pixel_addr = dl_mode_data_addr;
+    UINT16 pixel_data = 0;
+    UINT8  bitmap_color = 0;
+
+    for(int i=0; i<scan_width; i++) { // for each pixel
+        if ((pixel_offset & 1) == 0) {
+            pixel_data = VRAM_DATA(pixel_addr);
+            pixel_addr++;
+        }
+
+        UINT8 pixel = (pixel_data & 0xFF);
+        pixel_data >>= 8;
+
+        line_buffer_background[i] = pixel;
+
+        pixel_offset = (pixel_offset + 1) & 1;
+    }
+}
+
 
 static UINT8 words_per_scan[] = {
-    0, 40, 20, 32, 80
+    0, 40, 20, 32, 80, 160
 };
 
 static UINT8 words_per_scan_narrow[] = {
-    0, 32, 16, 32, 64
+    0, 32, 16, 32, 64, 128
 };
 
 static UINT8 lines_per_mode[] = {
-    0, 8, 8, 8, 1
+    0, 8, 8, 8, 1, 1
 };
 
 // scanlines are drawn as follows:
@@ -802,6 +823,7 @@ static void do_scanline(UINT16 width) {
         case 0x2: do_scan_text_attribs(scan_width, dl_mode_scanline); break;
         case 0x3: do_scan_tile_4bpp(scan_width, dl_mode_scanline); break;
         case 0x4: do_scan_bitmap_4bpp(scan_width, dl_mode_scanline); break;
+        case 0x5: do_scan_bitmap_8bpp(scan_width, dl_mode_scanline); break;
         }
 
         render_sprites(scan_width);
