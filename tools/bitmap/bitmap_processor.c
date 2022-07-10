@@ -37,11 +37,11 @@ bool load_bin(const char *filename, void *data, size_t size) {
     return TRUE;
 }
 
-INT8 get_value(int index, int nibble) {
+INT8 get_value(int index, int field) {
     if (index >= IMAGE_BYTE_SIZE) {
         return -1;
     }
-    UINT8 data = buffer[index * 2 + nibble];
+    UINT8 data = buffer[index * 2 + field];
     // printf("data[%d] = %02x\n", index, data);
     return data;
 }
@@ -57,9 +57,9 @@ INT8 get_value(int index, int nibble) {
  *    Example $3, $3, $3, $3, $3 will be written as $d3
  */
 
-void compress_rle(int nibble) {
-    INT8 prev = get_value(index_in, nibble);
-    INT8 next = get_value(index_in+1, nibble);
+void compress_rle16(int field) {
+    INT8 prev = get_value(index_in, field);
+    INT8 next = get_value(index_in+1, field);
     printf("block start %02x == %02x on index %d\n", prev, next, index_in);
     if (prev != next) {
         printf("using raw encoding...\n");
@@ -68,7 +68,7 @@ void compress_rle(int nibble) {
         int non_equals = 0;
         // step over random info until 3 equal nibbles are found
         for(; non_equals<8; non_equals++) {
-            INT8 current = get_value(index_in + non_equals, nibble);
+            INT8 current = get_value(index_in + non_equals, field);
             printf("current = %02x on index %d\n", current, index_in + non_equals);
             if (current < 0) break;
             if (current == last) {
@@ -90,7 +90,7 @@ void compress_rle(int nibble) {
         UINT8 data = (non_equals-1) << 4;
         index_out++;
         for(int i=0; i<non_equals; i++) {
-            INT8 value = get_value(index_in++, nibble);
+            INT8 value = get_value(index_in++, field);
             printf("adding %02x from index %d\n", value, index_in-1);
             if (i % 2 == 0) {
                 data = data | value;
@@ -105,7 +105,7 @@ void compress_rle(int nibble) {
         printf("using length encoding...\n");
         int equals = 0;
         for(; equals<8; equals++) {
-            INT8 current = get_value(index_in, nibble);
+            INT8 current = get_value(index_in, field);
             printf("current = %02x on index %d\n", current, index_in);
             if (current!=prev || current < 0) break;
             index_in++;
@@ -117,13 +117,13 @@ void compress_rle(int nibble) {
     }
 }
 
-int compress() {
+int compress16() {
     index_in = 0;
     index_out = 4;
 
     INT8 current;
     do {
-        compress_rle(0);
+        compress_rle16(0);
         current = get_value(index_in, 0);
     } while (current >= 0);
 
@@ -131,7 +131,7 @@ int compress() {
     index_in = 0;
 
     do {
-        compress_rle(1);
+        compress_rle16(1);
         current = get_value(index_in, 1);
     } while (current >= 0);
 
@@ -143,12 +143,12 @@ int compress() {
     return last_1;
 }
 
-void dump_asm_image(char *path) {
+void dump_asm_image(char *path, int colors) {
     char file_path[2048];
     sprintf(file_path, "%s/image.asm", path);
     FILE *f = fopen(file_path, "w");
 
-    int size = compress();
+    int size = colors == 16 ? compress16() : 0;
 
     fprintf(f, "pixel_data:");
     for(int i=0; i< size; i++) {
@@ -225,15 +225,20 @@ void dump_asm_palette(char *path) {
 }
 
 int main(int argc, const char *argv[]) {
-    if (argc < 2) {
-        printf("Usage: %s image_name\n", argv[0]);
+    if (argc < 3) {
+        printf("Usage: %s 16|256 image_name\n", argv[0]);
         return EXIT_FAILURE;
     }
 
     init();
 
     char path[1024];
-    const char *image_name = argv[1];
+    const char *image_name = argv[2];
+    int colors = atoi(argv[1]);
+    if (colors != 16 && colors != 256) {
+        printf("Invalid number of colors. Must be 16 or 256");
+        return EXIT_FAILURE;
+    }
 
     sprintf(path, "input/%s", image_name);
     if (!load_bin(path, buffer, sizeof(buffer))) return EXIT_FAILURE;
@@ -242,7 +247,7 @@ int main(int argc, const char *argv[]) {
     printf("mkdir %s", path);
     mkdir(path, 0755);
 
-    dump_asm_image(path);
+    dump_asm_image(path, colors);
 
     sprintf(path, "input/%s.pal", image_name);
     if (!load_bin(path, buffer, sizeof(buffer))) return EXIT_FAILURE;
