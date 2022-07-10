@@ -58,12 +58,12 @@ UINT16 dl_mode_data_addr;
 UINT16 dl_mode_attr_addr;
 UINT16 dl_row_wrap;
 
-UINT8 dl_scroll_width;
-UINT8 dl_scroll_height;
-UINT8 dl_scroll_left;
-UINT8 dl_scroll_top;
-UINT8 dl_scroll_fine_x;
-UINT8 dl_scroll_fine_y;
+UINT16 dl_scroll_width;
+UINT16 dl_scroll_height;
+UINT16 dl_scroll_left;
+UINT16 dl_scroll_top;
+UINT8  dl_scroll_fine_x;
+UINT8  dl_scroll_fine_y;
 
 static UINT16 border_color;
 
@@ -617,15 +617,32 @@ static void do_scan_bitmap_4bpp(UINT16 scan_width, UINT8 line) {
 }
 
 static void do_scan_bitmap_8bpp(UINT16 scan_width, UINT8 line) {
-    UINT8  pixel_offset = 0;
-    UINT16 pixel_addr = dl_mode_data_addr;
+    UINT32 pixel_origin = dl_mode_data_addr;
+    UINT16 pixel_addr   = dl_mode_data_addr;
     UINT16 pixel_data = 0;
     UINT8  bitmap_color = 0;
 
+    UINT16  line_wrap = 0xffff;
+    if (dl_scroll) {
+        pixel_addr += (dl_scroll_left + dl_scroll_fine_x) / 2;
+        line_wrap   = dl_scroll_width - dl_scroll_left - 1;
+    }
+
+    UINT8 pixel_offset = dl_scroll_fine_x;
+
     for(int i=0; i<scan_width; i++) { // for each pixel
-        if ((pixel_offset & 1) == 0) {
+        if ((i == 0) || ((pixel_offset & 1) == 0)) {
             pixel_data = VRAM_DATA(pixel_addr);
-            pixel_addr++;
+
+            if (line_wrap > 0) {
+                line_wrap -= 2;
+                pixel_addr++;
+            } else {
+                pixel_addr = pixel_origin;
+                line_wrap  = dl_scroll_width - 1;
+            }
+
+            if (pixel_offset & 1) pixel_data >>= 8;
         }
 
         UINT8 pixel = (pixel_data & 0xFF);
@@ -791,13 +808,30 @@ static void process_dl() {
                 dl_scroll_fine_x = BYTE_L(scroll_fine) & 7;
                 dl_scroll_fine_y = BYTE_H(scroll_fine) & 7;
 
-                dl_mode_pitch = dl_scroll_width / (dl_mode == 3 ? 1 : 2);
+                if (dl_mode == 4 || dl_mode == 5) {  // bitmap modes use 8 pixels resolution for scroll window
+                    dl_scroll_width  <<= dl_mode == 4 ? 2 : 3;
+                    dl_scroll_height <<= 3;
+
+                    dl_scroll_left <<= dl_mode == 4 ? 2 : 3;
+                    dl_scroll_top  <<= 3;
+                    dl_scroll_top += dl_scroll_fine_y;
+                    if (dl_scroll_top > dl_scroll_height) dl_scroll_top -= dl_scroll_height;
+
+                    dl_mode_pitch = dl_scroll_width / (dl_mode == 4 ? 4 : 2);
+                    dl_mode_scanline = 0;
+                } else {
+                    dl_mode_pitch = dl_scroll_width / (dl_mode == 3 ? 1 : 2);
+                    dl_mode_scanline = dl_scroll_fine_y;
+                }
 
                 UINT16 first_row_offset = dl_mode_pitch * dl_scroll_top;
                 dl_mode_data_addr = lms     + first_row_offset;
                 dl_mode_attr_addr = attribs + first_row_offset;
                 dl_row_wrap = dl_scroll_height - dl_scroll_top - 1;
-                dl_mode_scanline = dl_scroll_fine_y;
+
+                // printf("scroll %d,%d %dx%d x:%d y:%d\n", dl_scroll_left, dl_scroll_top, dl_scroll_width, dl_scroll_height,
+                //     dl_scroll_fine_x, dl_scroll_fine_y);
+
             } else {
                 dl_row_wrap = 0xffff;
                 dl_mode_data_addr = lms;
