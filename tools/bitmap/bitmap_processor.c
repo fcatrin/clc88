@@ -38,12 +38,11 @@ bool load_bin(const char *filename, void *data, size_t size, size_t *size_read) 
 }
 
 INT16 get_value(int index, int field) {
-    if (index >= image_size) {
+    if (index*2 >= image_size) {
         return -1;
     }
     INT8 data = buffer[index * 2 + field];
     INT16 result = data < 0 ? (data+256) : data;
-    printf("data[%d] = %02x => %02x\n", index, data, result);
     return result;
 }
 
