@@ -59,16 +59,37 @@ fill_bottom:
     jsr rle_uncompress_256
 
 main_loop:
+    lda FRAMECOUNT
+wait_frame:
+    cmp FRAMECOUNT
+    beq wait_frame
+    inc dl_scroll_fine_x
+    lda dl_scroll_fine_x
+    cmp #8
+    bne push_scroll
+    mva #0 dl_scroll_fine_x
+    inc dl_scroll_left
+    lda dl_scroll_left
+    cmp dl_scroll_width
+    bne push_scroll
+    mva #0 dl_scroll_left
+
+push_scroll:
+    mwa #(DLIST_ADDR+3) VADDR
+    mva dl_scroll_left VDATA
+    lda VDATA
+    mva dl_scroll_fine_x VDATA
     jmp main_loop
+
 
 display_list:
     .word $25F0
     .word VRAM_SCREEN_DATA_ADDR
 dl_scroll_width  .byte 60
 dl_scroll_height .byte 30
-dl_scroll_left   .byte 0
+dl_scroll_left   .byte 59
 dl_scroll_top    .byte 0
-dl_scroll_fine_x .byte 0
+dl_scroll_fine_x .byte 3
 dl_scroll_fine_y .byte 0
     .word $0f00
 
