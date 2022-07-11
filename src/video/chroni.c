@@ -617,7 +617,7 @@ static void do_scan_bitmap_4bpp(UINT16 scan_width, UINT8 line) {
 }
 
 static void do_scan_bitmap_8bpp(UINT16 scan_width, UINT8 line) {
-    UINT32 pixel_origin = dl_mode_data_addr;
+    UINT16 pixel_origin = dl_mode_data_addr;
     UINT16 pixel_addr   = dl_mode_data_addr;
     UINT16 pixel_data = 0;
     UINT8  bitmap_color = 0;
@@ -625,23 +625,27 @@ static void do_scan_bitmap_8bpp(UINT16 scan_width, UINT8 line) {
     UINT16  line_wrap = 0xffff;
     if (dl_scroll) {
         pixel_addr += (dl_scroll_left + dl_scroll_fine_x) / 2;
-        line_wrap   = dl_scroll_width - dl_scroll_left - 1;
+        line_wrap   = dl_scroll_width - dl_scroll_left - dl_scroll_fine_x - 1;
     }
 
-    UINT8 pixel_offset = dl_scroll_fine_x;
+    UINT8 pixel_offset = dl_scroll_left + dl_scroll_fine_x ;
+
+    // if (dl_scanlines == 0) printf("pixel_origin:%04x pixel_addr:%04x wrap:%d w:%d l:%d x:%d offset:%d\n",
+    //    pixel_origin, pixel_addr, line_wrap, dl_scroll_width, dl_scroll_left, dl_scroll_fine_x, pixel_offset);
 
     for(int i=0; i<scan_width; i++) { // for each pixel
         if ((i == 0) || ((pixel_offset & 1) == 0)) {
             pixel_data = VRAM_DATA(pixel_addr);
 
-            if (line_wrap > 0) {
+            // if (dl_scanlines == 0) printf("%04x pre  pixel_origin:%04x pixel_addr:%04x wrap:%d\n", i, pixel_origin, pixel_addr, line_wrap);
+            if (line_wrap > 1) {
                 line_wrap -= 2;
                 pixel_addr++;
             } else {
                 pixel_addr = pixel_origin;
                 line_wrap  = dl_scroll_width - 1;
             }
-
+            // if (dl_scanlines == 0) printf("%04x post pixel_origin:%04x pixel_addr:%04x wrap:%d\n", i, pixel_origin, pixel_addr, line_wrap);
             if (pixel_offset & 1) pixel_data >>= 8;
         }
 
@@ -829,7 +833,7 @@ static void process_dl() {
                 dl_mode_attr_addr = attribs + first_row_offset;
                 dl_row_wrap = dl_scroll_height - dl_scroll_top - 1;
 
-                // printf("scroll %d,%d %dx%d x:%d y:%d\n", dl_scroll_left, dl_scroll_top, dl_scroll_width, dl_scroll_height,
+                //printf("scroll %d,%d %dx%d x:%d y:%d\n", dl_scroll_left, dl_scroll_top, dl_scroll_width, dl_scroll_height,
                 //     dl_scroll_fine_x, dl_scroll_fine_y);
 
             } else {
