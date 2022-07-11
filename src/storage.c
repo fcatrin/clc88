@@ -445,7 +445,7 @@ static void *processor_thread_function(void *data) {
 			process_command();
 			process_command_enable = FALSE;
 		} else {
-			usleep(5000);
+			usleep(100);
 		}
 	}
 	return NULL;
