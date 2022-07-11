@@ -161,7 +161,7 @@ void compress_rle256(int field) {
         for(int i=0; i<non_equals; i++) {
             INT16 value = get_value(index_in++, field);
             compressed[index_out++] = value;
-            printf("compressed[%d] = %02x\n", index_out-1, data);
+            printf("compressed[%d] = %02x\n", index_out-1, value);
         }
     } else {
         printf("using length encoding...\n");
@@ -229,6 +229,24 @@ void dump_asm_image(char *path, int colors) {
     fclose(f);
 }
 
+void dump_bin_image(char *path, int colors) {
+    char file_path[2048];
+    sprintf(file_path, "%s/image.bin", path);
+    FILE *f = fopen(file_path, "w");
+
+    if (colors == 256) {
+        fwrite(buffer, 1, image_size, f);
+    } else {
+        for(int i=0; i<image_size; i+=2) {
+            UINT8 value = (buffer[i] << 4) | buffer[i+1];
+            compressed[i/2] = value;
+        }
+        fwrite(buffer, 1, image_size/2, f);
+    }
+
+    fclose(f);
+}
+
 
 UINT16 rgb2rgb565(UINT8 r, UINT8 g, UINT8 b) {
 
@@ -292,6 +310,22 @@ void dump_asm_palette(char *path, int colors) {
     fclose(f);
 }
 
+void dump_bin_palette(char *path, int colors) {
+    char file_path[2048];
+    sprintf(file_path, "%s/palette.bin", path);
+    printf("out %s\n", file_path);
+    FILE *f = fopen(file_path, "w");
+
+    for(int i=0; i < colors; i++) {
+        UINT8 data_r = buffer[i*3];
+        UINT8 data_g = buffer[i*3+1];
+        UINT8 data_b = buffer[i*3+2];
+        UINT16 value = rgb2rgb565(data_r, data_g, data_b);
+        fwrite(&value, 1, sizeof(UINT16), f);
+    }
+    fclose(f);
+}
+
 int main(int argc, const char *argv[]) {
     if (argc < 3) {
         printf("Usage: %s 16|256 image_name\n", argv[0]);
@@ -316,12 +350,15 @@ int main(int argc, const char *argv[]) {
     mkdir(path, 0755);
 
     dump_asm_image(path, colors);
+    dump_bin_image(path, colors);
 
     sprintf(path, "input/%s.pal", image_name);
     if (!load_bin(path, buffer, sizeof(buffer), &palette_size)) return EXIT_FAILURE;
 
     sprintf(path, "output/%s", image_name);
     dump_asm_palette(path, colors);
+    dump_bin_palette(path, colors);
+
 
     return EXIT_SUCCESS;
 }
