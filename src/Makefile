@@ -78,6 +78,7 @@ XEX = $(addprefix $(XEXDIR)/, \
 	6502/test/modes/mode_tiles_scroll_multi.xex \
 	6502/test/modes/mode_bitmap_16.xex \
 	6502/test/modes/mode_bitmap_256.xex \
+	6502/test/modes/mode_bitmap_256_scroll.xex \
 	6502/test/sprites_0.xex \
 	6502/test/storage.xex \
 	6502/test/storage_block.xex \
