@@ -40,7 +40,7 @@ The general command to run the emulator is:
 Example
 
 ```sh
- ./clc88 ../bin/asm/6502/test/mode_0
+ ./clc88 ../bin/asm/6502/test/modes/mode_0
 ```
 
 The flags are:
