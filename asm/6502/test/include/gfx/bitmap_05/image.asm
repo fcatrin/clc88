@@ -1,0 +1,1 @@
+../../../../../../tools/bitmap/output/16-color-480x120.data/image.asm
