@@ -65,6 +65,8 @@ UINT16 dl_scroll_top;
 UINT8  dl_scroll_fine_x;
 UINT8  dl_scroll_fine_y;
 
+int output_scanline;
+
 static UINT16 border_color;
 
 #define CHARSET_PAGE 1024
@@ -594,15 +596,30 @@ static void do_scan_tile_4bpp(UINT16 scan_width, UINT8 line) {
 }
 
 static void do_scan_bitmap_4bpp(UINT16 scan_width, UINT8 line) {
-    UINT8  pixel_offset = 0;
-    UINT16 pixel_addr = dl_mode_data_addr;
+    UINT16 pixel_origin = dl_mode_data_addr;
+    UINT16 pixel_addr   = dl_mode_data_addr;
     UINT16 pixel_data = 0;
     UINT8  bitmap_color = 0;
 
+    UINT16  line_wrap = 0xffff;
+    if (dl_scroll) {
+        pixel_addr += (dl_scroll_left + dl_scroll_fine_x) / 4;
+        line_wrap   = dl_scroll_width - dl_scroll_left - dl_scroll_fine_x - 1;
+    }
+
+    UINT8 pixel_offset = dl_scroll_left + dl_scroll_fine_x ;
+
     for(int i=0; i<scan_width; i++) { // for each pixel
-        if ((pixel_offset & 3) == 0) {
+        if (i == 0 || (pixel_offset & 3) == 0) {
             pixel_data = VRAM_DATA(pixel_addr);
-            pixel_addr++;
+            if (line_wrap > 3) {
+                line_wrap -= 4;
+                pixel_addr++;
+            } else {
+                pixel_addr = pixel_origin;
+                line_wrap  = dl_scroll_width - 1;
+            }
+            pixel_data >>= (4 * (pixel_offset & 3));
         }
 
         UINT8 pixel = (pixel_data & 0xF);
@@ -630,14 +647,10 @@ static void do_scan_bitmap_8bpp(UINT16 scan_width, UINT8 line) {
 
     UINT8 pixel_offset = dl_scroll_left + dl_scroll_fine_x ;
 
-    // if (dl_scanlines == 0) printf("pixel_origin:%04x pixel_addr:%04x wrap:%d w:%d l:%d x:%d offset:%d\n",
-    //    pixel_origin, pixel_addr, line_wrap, dl_scroll_width, dl_scroll_left, dl_scroll_fine_x, pixel_offset);
-
     for(int i=0; i<scan_width; i++) { // for each pixel
         if ((i == 0) || ((pixel_offset & 1) == 0)) {
             pixel_data = VRAM_DATA(pixel_addr);
 
-            // if (dl_scanlines == 0) printf("%04x pre  pixel_origin:%04x pixel_addr:%04x wrap:%d\n", i, pixel_origin, pixel_addr, line_wrap);
             if (line_wrap > 1) {
                 line_wrap -= 2;
                 pixel_addr++;
@@ -645,7 +658,6 @@ static void do_scan_bitmap_8bpp(UINT16 scan_width, UINT8 line) {
                 pixel_addr = pixel_origin;
                 line_wrap  = dl_scroll_width - 1;
             }
-            // if (dl_scanlines == 0) printf("%04x post pixel_origin:%04x pixel_addr:%04x wrap:%d\n", i, pixel_origin, pixel_addr, line_wrap);
             if (pixel_offset & 1) pixel_data >>= 8;
         }
 
@@ -657,7 +669,6 @@ static void do_scan_bitmap_8bpp(UINT16 scan_width, UINT8 line) {
         pixel_offset = (pixel_offset + 1) & 1;
     }
 }
-
 
 static UINT8 words_per_scan[] = {
     0, 40, 20, 32, 80, 160
@@ -682,8 +693,6 @@ static UINT8 lines_per_mode[] = {
 #define SCANLINES_DISPLAY 240
 #define SCANLINES_BLANK ((SCANLINES_TOTAL - SCANLINES_DISPLAY) / 2)
 #define SCANLINES_BLANK_TOP (SCANLINES_BLANK - SCREEN_YBORDER)
-
-int output_scanline;
 
 void chroni_frame_start() {
     status |= STATUS_VBLANK; // make sure to start first frame with vblank flag on
@@ -813,10 +822,10 @@ static void process_dl() {
                 dl_scroll_fine_y = BYTE_H(scroll_fine) & 7;
 
                 if (dl_mode == 4 || dl_mode == 5) {  // bitmap modes use 8 pixels resolution for scroll window
-                    dl_scroll_width  <<= dl_mode == 4 ? 2 : 3;
+                    dl_scroll_width  <<= 3;
                     dl_scroll_height <<= 3;
 
-                    dl_scroll_left <<= dl_mode == 4 ? 2 : 3;
+                    dl_scroll_left <<= 3;
                     dl_scroll_top  <<= 3;
                     dl_scroll_top += dl_scroll_fine_y;
                     if (dl_scroll_top > dl_scroll_height) dl_scroll_top -= dl_scroll_height;
