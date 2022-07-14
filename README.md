@@ -40,7 +40,7 @@ The general command to run the emulator is:
 Example
 
 ```sh
- ./clc88 ../asm/6502/test/mode_4
+ ./clc88 ../bin/asm/6502/test/modes/mode_0
 ```
 
 The flags are:
@@ -51,7 +51,7 @@ The flags are:
  
 Here is another example running the RMT player demo
 ```sh
- ./clc88 ../asm/6502/demos/rmtplayer/player -storage ../asm/6502/demos/rmt/songs
+ ./clc88 ../bin/asm/6502/demos/rmtplayer/player -storage ../asm/6502/demos/rmt/songs
 ```
 
 ## Credits:
