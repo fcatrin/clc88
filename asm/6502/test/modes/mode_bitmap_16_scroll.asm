@@ -4,7 +4,7 @@ BORDER_COLOR = $0000
 DLIST_ADDR = $0200
 
 pixels_width = 240
-pitch        = pixels_width / 4
+pitch        = pixels_width / 2
 top_lines    = 100
 image_height = 120
 bottom_lines = 20
