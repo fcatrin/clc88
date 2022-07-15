@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <stdarg.h>
 #include <time.h>
+#include <sys/time.h>
 #include "../../compy.h"
 #include "../../emu.h"
 #include "../../cpu.h"
@@ -30,6 +31,12 @@ static SDL_AudioDeviceID dev;
 #ifdef DUMP_AUDIO
 FILE *sdebug;
 #endif
+
+static UINT64 get_time_micro_sec() {
+    struct timeval tv;
+    gettimeofday(&tv,NULL);
+    return 1000000 * tv.tv_sec + tv.tv_usec;
+}
 
 int  frontend_start_audio_stream(int stereo) {
 	SDL_AudioSpec want, have;
@@ -83,11 +90,11 @@ void frontend_sleep(int seconds) {
 /* This is called from the emulator thread */
 void frontend_update_screen(void *pixels) {
 	while (buffer_next == buffer_post) {
-		SDL_Delay(2);
+		usleep(10);
 	}
 	memcpy(screen_buffers[buffer_next], pixels, screen_data_size);
 	while (buffer_post>=0) {
-		SDL_Delay(2);
+		usleep(10);
 	}
 	buffer_post = buffer_next;
 	buffer_next++;
@@ -112,6 +119,8 @@ static void update_screen(void *pixels) {
 
 	SDL_RenderClear(renderer);
 	SDL_RenderCopy(renderer, texture, NULL, NULL);
+
+    buffer_post = -1;
 	SDL_RenderPresent(renderer);
 
 	SDL_DestroyTexture(texture);
@@ -293,13 +302,12 @@ int main(int argc, char *argv[]) {
 
 	while (frontend_running()) {
 		if (buffer_post>=0) {
+    		frontend_update_audio_stream();
 			update_screen(screen_buffers[buffer_post]);
-			buffer_post = -1;
 		} else {
-			SDL_Delay(2);
+			usleep(10);
 		}
 		frontend_process_events();
-		frontend_update_audio_stream();
 	}
 
 	frontend_done();
