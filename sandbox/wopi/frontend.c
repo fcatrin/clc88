@@ -127,8 +127,9 @@ static void update_screen(void *pixels) {
 
 	SDL_RenderClear(renderer);
 	SDL_RenderCopy(renderer, texture, NULL, NULL);
-	SDL_RenderPresent(renderer);
+	buffer_post = -1;
 
+	SDL_RenderPresent(renderer);
 	SDL_DestroyTexture(texture);
 }
 
@@ -247,15 +248,14 @@ int main(int argc, char *argv[]) {
 	while (frontend_running()) {
         LOGV(LOGTAG, "main loop run");
 		if (buffer_post>=0) {
+            LOGV(LOGTAG, "main loop update audio stream");
+            frontend_update_audio_stream();
             update_screen(screen_buffers[buffer_post]);
-			buffer_post = -1;
 		} else {
-			SDL_Delay(2);
+			usleep(10);
 		}
 		LOGV(LOGTAG, "main loop process events");
 		frontend_process_events();
-		LOGV(LOGTAG, "main loop update audio stream");
-		frontend_update_audio_stream();
 	}
     LOGV(LOGTAG, "main loop end");
 	frontend_done();
