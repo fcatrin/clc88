@@ -116,7 +116,7 @@ int cpu_cycles_front_porch = 20;
 int cpu_cycles_back_porch = 20;
 int cpu_cycles_display = 160;
 
-float microseconds_per_scanline = 1000000.0f / 60.0f / 240.0f;
+float microseconds_per_scanline = 1000000.0f / 60.0f / 262.0f;
 
 void compy_run_frame() {
 	chroni_frame_start();
