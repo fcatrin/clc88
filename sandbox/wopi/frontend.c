@@ -85,11 +85,11 @@ void frontend_sleep(int seconds) {
 /* This is called from the emulator thread */
 void frontend_update_screen(void *pixels) {
 	while (buffer_next == buffer_post) {
-		SDL_Delay(2);
+		usleep(10);
 	}
 	memcpy(screen_buffers[buffer_next], pixels, screen_data_size);
 	while (buffer_post>=0) {
-		SDL_Delay(2);
+		usleep(10);
 	}
 	buffer_post = buffer_next;
 	buffer_next++;

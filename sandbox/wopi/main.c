@@ -39,38 +39,24 @@ unsigned long get_time() {
     return 1000000 * tv.tv_sec + tv.tv_usec; // tine in microseconds
 }
 
-static unsigned long t0;
-void sync_start() {
-    if (frame == 0) t0 = get_time();
-    frame++;
-}
-
-// this is awful but this test doesn't need anything more advanced
-void sync_end() {
-    unsigned long now = get_time() - t0;
-    unsigned long time_target = frame * (1000000.0 / 60);
-    long delta = time_target - now - 2000; // just make a bit of room to avoid clicks
-    // printf("target:%lu now:%lu\n", time_target, now);
-    if (delta > 0) {
-        // printf("usleep %lu\n", delta);
-        usleep(delta);
-    }
-}
+int skip_initial_frames = 60;
 
 void main_run_frame() {
     video_start_frame();
-    sync_start();
 
     video_run_frame();
 
     int samples_per_frame = 44100.0 / 60;
     sound_process(samples_per_frame);
 
-    // 1 frame = 1 tick. Simple enough for this test
-    // https://modarchive.org/forums/index.php?topic=2709.0
-    tracker_play();
+    if (skip_initial_frames > 0 ) {
+        skip_initial_frames--;
+    } else {
+        // 1 frame = 1 tick. Simple enough for this test
+        // https://modarchive.org/forums/index.php?topic=2709.0
+        tracker_play();
+    }
 
-    sync_end();
     video_end_frame();
 }
 
