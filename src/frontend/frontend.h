@@ -15,6 +15,7 @@ void frontend_shutdown();
 int  frontend_running();
 
 void frontend_sleep(int seconds);
+UINT64 frontend_get_time_micro_sec();
 
 void frontend_trace_msg(char *tag, ...);
 void frontend_trace_err(char *tag, ...);

@@ -32,7 +32,7 @@ static SDL_AudioDeviceID dev;
 FILE *sdebug;
 #endif
 
-static UINT64 get_time_micro_sec() {
+UINT64 frontend_get_time_micro_sec() {
     struct timeval tv;
     gettimeofday(&tv,NULL);
     return 1000000 * tv.tv_sec + tv.tv_usec;
@@ -105,6 +105,9 @@ static void update_screen(void *pixels) {
 	SDL_Surface *surface = SDL_CreateRGBSurfaceFrom(
 			pixels, screen_width, screen_height, 24,
 			screen_width*3, 0, 0, 0, 0);
+
+    buffer_post = -1;
+
 	if (surface == NULL) {
 		printf("SDL_CreateRGBSurfaceFrom Error: %s", SDL_GetError());
 		return;
@@ -120,7 +123,6 @@ static void update_screen(void *pixels) {
 	SDL_RenderClear(renderer);
 	SDL_RenderCopy(renderer, texture, NULL, NULL);
 
-    buffer_post = -1;
 	SDL_RenderPresent(renderer);
 
 	SDL_DestroyTexture(texture);
