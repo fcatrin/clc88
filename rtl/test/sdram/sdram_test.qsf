@@ -56,7 +56,47 @@ set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_RO
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "3.3-V LVTTL"
 set_location_assignment PIN_T2 -to clk50
-set_location_assignment PIN_W13 -to key_reset
+set_location_assignment PIN_W13 -to reset_n
+set_location_assignment PIN_AB4 -to S_NWE
+; set_location_assignment PIN_W7 -to DRAM_UDQM
+set_location_assignment PIN_AB3 -to S_NRAS
+; set_location_assignment PIN_AA5 -to DRAM_LDQM
+set_location_assignment PIN_AA10 -to S_DB[0]
+set_location_assignment PIN_AB9 -to S_DB[1]
+set_location_assignment PIN_AA9 -to S_DB[2]
+set_location_assignment PIN_AB8 -to S_DB[3]
+set_location_assignment PIN_AA8 -to S_DB[4]
+set_location_assignment PIN_AB7 -to S_DB[5]
+set_location_assignment PIN_AA7 -to S_DB[6]
+set_location_assignment PIN_AB5 -to S_DB[7]
+set_location_assignment PIN_Y7 -to S_DB[8]
+set_location_assignment PIN_W8 -to S_DB[9]
+set_location_assignment PIN_Y8 -to S_DB[10]
+set_location_assignment PIN_V9 -to S_DB[11]
+set_location_assignment PIN_V10 -to S_DB[12]
+set_location_assignment PIN_Y10 -to S_DB[13]
+set_location_assignment PIN_W10 -to S_DB[14]
+set_location_assignment PIN_V11 -to S_DB[15]
+set_location_assignment PIN_AA3 -to S_NCS
+set_location_assignment PIN_Y6 -to S_CLK
+set_location_assignment PIN_W6 -to S_CKE
+set_location_assignment PIN_AA4 -to S_NCAS
+set_location_assignment PIN_Y1 -to S_BA[0]
+set_location_assignment PIN_W2 -to S_BA[1]
+set_location_assignment PIN_V2 -to S_A[0]
+set_location_assignment PIN_V1 -to S_A[1]
+set_location_assignment PIN_U2 -to S_A[2]
+set_location_assignment PIN_U1 -to S_A[3]
+set_location_assignment PIN_V3 -to S_A[4]
+set_location_assignment PIN_V4 -to S_A[5]
+set_location_assignment PIN_Y2 -to S_A[6]
+set_location_assignment PIN_AA1 -to S_A[7]
+set_location_assignment PIN_Y3 -to S_A[8]
+set_location_assignment PIN_V5 -to S_A[9]
+set_location_assignment PIN_W1 -to S_A[10]
+set_location_assignment PIN_Y4 -to S_A[11]
+set_location_assignment PIN_V6 -to S_A[12]
+
 set_global_assignment -name USE_CONFIGURATION_DEVICE OFF
 set_global_assignment -name CRC_ERROR_OPEN_DRAIN OFF
 set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"

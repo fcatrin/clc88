@@ -1,5 +1,5 @@
 module sdram_test(
-   input clk_50m,
+   input clk50,
 	input reset_n,
 
 	//sdram control
@@ -23,7 +23,7 @@ wire sys_rst_n;
 wire clk_ref;
 system_ctrl	u_system_ctrl
 (
-	.clk				   (clk_50m),		//global clock  50MHZ
+	.clk				   (clk50),		//global clock  50MHZ
 	.rst_n				(reset_n),		//external reset
 
 	.sys_rst_n			(sys_rst_n),	//global reset
