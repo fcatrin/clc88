@@ -127,14 +127,14 @@ push_scroll:
 
 .proc dli
     pha
-    mwa #COLOR_GROUND VBORDER
+    ; mwa #COLOR_GROUND VBORDER
     pla
     rts
 .endp
 
 .proc vblank
     pha
-    mwa #COLOR_SKY VBORDER
+    ; mwa #COLOR_SKY VBORDER
     pla
     rts
 .endp
