@@ -229,6 +229,8 @@ void dump_asm_image(char *path, int colors) {
     fclose(f);
 }
 
+int debug_lines = 5;
+
 void dump_bin_image(char *path, int colors) {
     char file_path[2048];
     sprintf(file_path, "%s/image.bin", path);
@@ -238,10 +240,10 @@ void dump_bin_image(char *path, int colors) {
         fwrite(buffer, 1, image_size, f);
     } else {
         for(int i=0; i<image_size; i+=2) {
-            UINT8 value = (buffer[i] << 4) | buffer[i+1];
+            UINT8 value = (buffer[i+1] << 4) | buffer[i];
             compressed[i/2] = value;
         }
-        fwrite(buffer, 1, image_size/2, f);
+        fwrite(compressed, 1, image_size/2, f);
     }
 
     fclose(f);
