@@ -3,7 +3,8 @@
 BORDER_COLOR = $0000
 DLIST_ADDR = $0200
 
-SKY_COLOR = $3947
+COLOR_SKY = $3947
+COLOR_GROUND = $B5B3
 
 pixels_width = 360
 pitch        = pixels_width / 2
@@ -29,6 +30,8 @@ start:
     ora #VSTATUS_ENABLE
     sta VSTATUS
 
+    jsr set_scanline_interrupt
+
     ; read palette from storage
     mwa #file_name_palette SRC_ADDR
     lda #ST_MODE_READ
@@ -50,9 +53,8 @@ start:
 
     ; patch sky color
     mva #5 VPAL_INDEX
-    mva #<SKY_COLOR VPAL_VALUE
-    mva #>SKY_COLOR VPAL_VALUE
-    mwa #SKY_COLOR VBORDER
+    mva #<COLOR_SKY VPAL_VALUE
+    mva #>COLOR_SKY VPAL_VALUE
 
     ; read image from storage
     mwa #VRAM_SCREEN_DATA_ADDR VADDR
@@ -108,6 +110,34 @@ push_scroll:
     lda VDATA
     mva dl_scroll_fine_x VDATA
     jmp main_loop
+
+
+.proc set_scanline_interrupt
+    mwa #dli    HBLANK_VECTOR_USER
+    mwa #vblank VBLANK_VECTOR_USER
+
+    lda #21*8
+    sta VLINEINT
+
+    lda VSTATUS
+    ora #VSTATUS_EN_INTS
+    sta VSTATUS
+    rts
+.endp
+
+.proc dli
+    pha
+    mwa #COLOR_GROUND VBORDER
+    pla
+    rts
+.endp
+
+.proc vblank
+    pha
+    mwa #COLOR_SKY VBORDER
+    pla
+    rts
+.endp
 
 
 display_list:
