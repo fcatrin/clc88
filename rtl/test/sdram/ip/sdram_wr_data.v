@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 ////////////////////////////////////////////////////////////////////////////////
-// Description	: SDRAM数据读写模块
+// Description	: SDRAM data read and write module
 ////////////////////////////////////////////////////////////////////////////////
 module sdram_wr_data(
 					clk,rst_n,
@@ -8,36 +8,36 @@ module sdram_wr_data(
 					sys_data_in,sys_data_out,
 					work_state,cnt_clk
 				);
-	//系统信号
-input clk;		//系统时钟，100MHz
-input rst_n;	//复位信号，低电平有效
-	// SDRAM硬件接口
-//output sdram_clk;			// SDRAM时钟信号
-inout[15:0] sdram_data;		// SDRAM数据总线
-	// SDRAM封装接口
-input[15:0] sys_data_in;	//写SDRAM时数据暂存器
-output[15:0] sys_data_out;	//读SDRAM时数据暂存器
+// system signal
+input clk;		// System clock, 100MHz
+input rst_n;	// Reset signal, active low
+// SDRAM hardware interface
+//output sdram_clk;			// SDRAM clock signal
+inout[15:0] sdram_data;		// SDRAM data bus
+// SDRAM package interface
+input[15:0] sys_data_in;	// Data scratchpad when writing to SDRAM
+output[15:0] sys_data_out;	// Data scratchpad when reading SDRAM
 
-	// SDRAM内部接口
-input[3:0] work_state;	//读写SDRAM时数据状态寄存器
-input[8:0] cnt_clk;		//时钟计数
+// SDRAM internal interface
+input[3:0] work_state;	// Data status register when reading and writing SDRAM
+input[8:0] cnt_clk;		// clock count
 
-`include "sdram_para.v"		// 包含SDRAM参数定义模块
+`include "sdram_para.v"		// Contains SDRAM parameter definition module
 
-//assign sdram_clk = ~clk;	// SDRAM时钟信号
+//assign sdram_clk = ~clk;	// SDRAM clock signal
 
 //------------------------------------------------------------------------------
-//数据写入控制
+// data write control
 //------------------------------------------------------------------------------
-reg[15:0] sdr_din;	//突发数据写寄存器
-reg sdr_dlink;		// SDRAM数据总线输入输出控制
+reg[15:0] sdr_din;	// Burst Data Write Register
+reg sdr_dlink;		// SDRAM data bus input and output control
 
-	//将待写入数据送到SDRAM数据总线上
+// Send the data to be written to the SDRAM data bus
 always @ (posedge clk or negedge rst_n) 
-	if(!rst_n) sdr_din <= 16'd0;	//突发数据写寄存器复位
-	else if((work_state == `W_WRITE) | (work_state == `W_WD)) sdr_din <= sys_data_in;	//连续写入存储在wrFIFO中的256个16bit数据
+	if(!rst_n) sdr_din <= 16'd0;	// Burst data write register reset
+	else if((work_state == `W_WRITE) | (work_state == `W_WD)) sdr_din <= sys_data_in;	// Continuously write 256 16bit data stored in wrFIFO
 
-	//产生双向数据线方向控制逻辑
+// Generate bidirectional data line direction control logic
 always @ (posedge clk or negedge rst_n) 
 	if(!rst_n) sdr_dlink <= 1'b0;
    else if((work_state == `W_WRITE) | (work_state == `W_WD)) sdr_dlink <= 1'b1;
@@ -46,17 +46,15 @@ always @ (posedge clk or negedge rst_n)
 assign sdram_data = sdr_dlink ? sdr_din:16'hzzzz;
 
 //------------------------------------------------------------------------------
-//数据读出控制
+// Data read control
 //------------------------------------------------------------------------------
-reg[15:0] sdr_dout;	//突发数据读寄存器	
+reg[15:0] sdr_dout;	// Burst Data Read Register
 
-	//将数据从SDRAM读出
+// read data from SDRAM
 always @ (posedge clk or negedge rst_n)
-	if(!rst_n) sdr_dout <= 16'd0;	//突发数据读寄存器复位
-	else if((work_state == `W_RD)/* & (cnt_clk > 9'd0) & (cnt_clk < 9'd10)*/) sdr_dout <= sdram_data;	//连续读出8B的16bit数据存储到rdFIFO中
+	if(!rst_n) sdr_dout <= 16'd0;	// Burst data read register reset
+	else if((work_state == `W_RD)/* & (cnt_clk > 9'd0) & (cnt_clk < 9'd10)*/) sdr_dout <= sdram_data;	// Continuously read 8B of 16bit data and store it in rdFIFO
 
 assign sys_data_out = sdr_dout;
-
-//------------------------------------------------------------------------------
 
 endmodule
