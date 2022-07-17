@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 ////////////////////////////////////////////////////////////////////////////////
-// Description	: SDRAM状态控制模块
-//							SDRAM初始化以及定时刷新、读写控制
+// Description	: SDRAM state control module
+//                SDRAM initialization and timing refresh, read and write control
 // Revision		: V1.0
 // Additional Comments	:  
 // 
@@ -16,54 +16,54 @@ module sdram_ctrl(
 				sdram_init_done,
 				init_state,work_state,cnt_clk,sys_r_wn
 			);
-	//系统信号接口
-input clk;				//系统时钟，50MHz
-input rst_n;			//复位信号，低电平有效
+// System signal interface
+input clk;				// System clock, 100MHz
+input rst_n;			// Reset signal, active low
 
-	// SDRAM硬件接口
-//output sdram_udqm;	// SDRAM高字节屏蔽
-//output sdram_ldqm;	// SDRAM低字节屏蔽
-	// SDRAM封装接口
-input sdram_wr_req;			//系统写SDRAM请求信号
-input sdram_rd_req;			//系统读SDRAM请求信号
-input[8:0] sdwr_byte;		//突发写SDRAM字节数（1-256个）
-input[8:0] sdrd_byte;		//突发读SDRAM字节数（1-256个）
-output sdram_wr_ack;		//系统写SDRAM响应信号,作为wrFIFO的输出有效信号
-output sdram_rd_ack;		//系统读SDRAM响应信号	
+// SDRAM hardware interface
+//output sdram_udqm;	// SDRAM high byte mask
+//output sdram_ldqm;	// SDRAM low byte mask
+// SDRAM package interface
+input sdram_wr_req;			// System write SDRAM request signal
+input sdram_rd_req;			// System read SDRAM request signal
+input[8:0] sdwr_byte;		// Burst write SDRAM bytes (1-256)
+input[8:0] sdrd_byte;		// Burst read SDRAM bytes (1-256)
+output sdram_wr_ack;		// The system writes the SDRAM response signal as the output valid signal of wrFIFO
+output sdram_rd_ack;		// System read SDRAM response signal
 
-output	sdram_init_done;		//系统初始化完毕信号
-//output sdram_busy;		// SDRAM忙标志位，高表示忙
+output	sdram_init_done;    //System initialization complete signal
+//output sdram_busy;		// SDRAM busy flag, high means busy
 
-	// SDRAM内部接口
-output[3:0] init_state;	// SDRAM初始化寄存器
-output[3:0] work_state;	// SDRAM工作状态寄存器
-output[8:0] cnt_clk;	//时钟计数
-output sys_r_wn;		// SDRAM读/写控制信号
+// SDRAM internal interface
+output[3:0] init_state;	// SDRAM initialization register
+output[3:0] work_state;	// SDRAM working status register
+output[8:0] cnt_clk;	// clock count
+output sys_r_wn;		// SDRAM read/write control signal
 
-wire done_200us;		//上电后200us输入稳定期结束标志位
-//wire sdram_init_done;	// SDRAM初始化完成标志，高表示完成
-wire sdram_busy;		// SDRAM忙标志，高表示SDRAM处于工作中
-reg sdram_ref_req;		// SDRAM自刷新请求信号
-wire sdram_ref_ack;		// SDRAM自刷新请求应答信号
+wire done_200us;		// 200us input stable period end flag after power-on
+//wire sdram_init_done;	// SDRAM initialization complete flag, high indicates completion
+wire sdram_busy;		// SDRAM busy flag, high indicates that SDRAM is working
+reg sdram_ref_req;		// SDRAM self-refresh request signal
+wire sdram_ref_ack;		// SDRAM self-refresh request response signal
 
-`include "sdram_para.v"		// 包含SDRAM参数定义模块
+`include "sdram_para.v"		// Contains SDRAM parameter definition module
 
-	// SDRAM时序延时参数
-parameter		TRP_CLK		= 9'd4,//1,	//TRP=18ns预充电有效周期
-				TRFC_CLK	= 9'd6,//3,	//TRC=60ns自动预刷新周期
-				TMRD_CLK	= 9'd6,//2,	//模式寄存器设置等待时钟周期
-				TRCD_CLK	= 9'd2,//1,	//TRCD=18ns行选通周期
-				TCL_CLK		= 9'd3,		//潜伏期TCL_CLK=3个CLK，在初始化模式寄存器中可设置
-				//TREAD_CLK	= 9'd256,//8,		//突发读数据周期8CLK
-				//TWRITE_CLK	= 9'd256,//8,  	//突发写数据8CLK
-				TDAL_CLK	= 9'd3;		//写入等待
-
-//------------------------------------------------------------------------------
-//assign sdram_udqm = 1'b0;	// SDRAM数据高字节有效
-//assign sdram_ldqm = 1'b0;	// SDRAM数据低字节有效
+// SDRAM timing delay parameters
+parameter		TRP_CLK		= 9'd4,//1,	// TRP=18ns precharge effective period
+				TRFC_CLK	= 9'd6,//3,	// TRC=60ns automatic pre-refresh cycle
+				TMRD_CLK	= 9'd6,//2,	// The mode register sets the wait clock cycle
+				TRCD_CLK	= 9'd2,//1,	// TRCD=18ns row strobe period
+				TCL_CLK		= 9'd3,		// Latency TCL_CLK=3 CLKs, which can be set in the initialization mode register
+				//TREAD_CLK	= 9'd256,//8,		// Burst read data cycle 8CLK
+				//TWRITE_CLK	= 9'd256,//8,  	// Burst write data 8CLK
+				TDAL_CLK	= 9'd3;		// write wait
 
 //------------------------------------------------------------------------------
-//上电后200us计时,计时时间到,则done_200us=1
+//assign sdram_udqm = 1'b0;	// SDRAM data high byte valid
+//assign sdram_ldqm = 1'b0;	// SDRAM data low byte valid
+
+//------------------------------------------------------------------------------
+// 200us timing after power-on, when the timing is up, done_200us=1
 //------------------------------------------------------------------------------
 reg[14:0] cnt_200us; 
 always @ (posedge clk or negedge rst_n) 
@@ -73,50 +73,50 @@ always @ (posedge clk or negedge rst_n)
 assign done_200us = (cnt_200us == 15'd20_000);
 
 //------------------------------------------------------------------------------
-//SDRAM的初始化操作状态机
+// SDRAM initialization operation state machine
 //------------------------------------------------------------------------------
-reg[3:0] init_state_r;	// SDRAM初始化状态
+reg[3:0] init_state_r;	// SDRAM initialization status
 
 always @ (posedge clk or negedge rst_n)
 	if(!rst_n) init_state_r <= `I_NOP;
 	else 
 		case (init_state_r)
-				`I_NOP: 	init_state_r <= done_200us ? `I_PRE:`I_NOP;		//上电复位后200us结束则进入下一状态
-				`I_PRE: 	init_state_r <= `I_TRP;		//预充电状态
-				`I_TRP: 	init_state_r <= (`end_trp) ? `I_AR1:`I_TRP;			//预充电等待TRP_CLK个时钟周期
-				`I_AR1: 	init_state_r <= `I_TRF1;	//第1次自刷新
-				`I_TRF1:	init_state_r <= (`end_trfc) ? `I_AR2:`I_TRF1;			//等待第1次自刷新结束,TRFC_CLK个时钟周期
-				`I_AR2: 	init_state_r <= `I_TRF2; 	//第2次自刷新	
-				`I_TRF2:	init_state_r <= (`end_trfc) ? `I_MRS:`I_TRF2; 		//等待第2次自刷新结束,TRFC_CLK个时钟周期
-				`I_MRS:		init_state_r <= `I_TMRD;//模式寄存器设置（MRS）	
-				`I_TMRD:	init_state_r <= (`end_tmrd) ? `I_DONE:`I_TMRD;		//等待模式寄存器设置完成,TMRD_CLK个时钟周期
-				`I_DONE:	init_state_r <= `I_DONE;		// SDRAM的初始化设置完成标志
+				`I_NOP: 	init_state_r <= done_200us ? `I_PRE:`I_NOP;    // After 200us after power-on reset, it will enter the next state
+				`I_PRE: 	init_state_r <= `I_TRP;                        // Precharge state
+				`I_TRP: 	init_state_r <= (`end_trp) ? `I_AR1:`I_TRP;    // Precharge waits for TRP_CLK clock cycles
+				`I_AR1: 	init_state_r <= `I_TRF1;                       // 1st self-refresh
+				`I_TRF1:	init_state_r <= (`end_trfc) ? `I_AR2:`I_TRF1;  // Wait for the end of the first self-refresh, TRFC_CLK clock cycles
+				`I_AR2: 	init_state_r <= `I_TRF2;                       // 2nd self-refresh
+				`I_TRF2:	init_state_r <= (`end_trfc) ? `I_MRS:`I_TRF2;  // Wait for the end of the second self-refresh, TRFC_CLK clock cycles
+				`I_MRS:		init_state_r <= `I_TMRD;                       // Mode Register Set (MRS)
+				`I_TMRD:	init_state_r <= (`end_tmrd) ? `I_DONE:`I_TMRD; // Wait for the mode register setting to complete, TMRD_CLK clock cycles
+				`I_DONE:	init_state_r <= `I_DONE;                       // SDRAM initialization set complete flag
 				default: init_state_r <= `I_NOP;
-				endcase
+		endcase
 
 
 assign init_state = init_state_r;
-assign sdram_init_done = (init_state_r == `I_DONE);		// SDRAM初始化完成标志
+assign sdram_init_done = (init_state_r == `I_DONE);		// SDRAM initialization complete flag
 //------------------------------------------------------------------------------
-//7.5us计时，每64ms全部8,192行存储区进行一次自刷新
-// ( 存储体中电容的数据有效保存期上限是64ms )
+// 7.5us timing, self-refresh every 64ms for all 8,192 rows of memory
+// ( The upper limit of the valid data retention period of the capacitor in the memory bank is 64ms )
 //------------------------------------------------------------------------------	 
-reg[10:0] cnt_7_5us;	//计数寄存器
+reg[10:0] cnt_7_5us;
 always @ (posedge clk or negedge rst_n)
 	if(!rst_n) cnt_7_5us <= 11'd0;
-	else if(cnt_7_5us < 11'd749) cnt_7_5us <= cnt_7_5us+1'b1;	// 60ms(64ms)/8192=7.5us循环计数
+	else if(cnt_7_5us < 11'd749) cnt_7_5us <= cnt_7_5us+1'b1; // 60ms(64ms)/8192=7.5us loop count
 	else cnt_7_5us <= 11'd0;	
 
 always @ (posedge clk or negedge rst_n)
 	if(!rst_n) sdram_ref_req <= 1'b0;
-	else if(cnt_7_5us == 11'd749) sdram_ref_req <= 1'b1;	//产生自刷新请求
-	else if(sdram_ref_ack) sdram_ref_req <= 1'b0;		//已响应自刷新 
+	else if(cnt_7_5us == 11'd749) sdram_ref_req <= 1'b1; // Generate self-refresh request
+	else if(sdram_ref_ack) sdram_ref_req <= 1'b0;        // Responded to self-refresh
 
 //------------------------------------------------------------------------------
-//SDRAM的读写以及自刷新操作状态机
+// SDRAM read and write and self-refresh operation state machine
 //------------------------------------------------------------------------------
-reg[3:0] work_state_r;	// SDRAM读写状态
-reg sys_r_wn;			// SDRAM读/写控制信号
+reg[3:0] work_state_r;	// SDRAM read and write status
+reg sys_r_wn;			// SDRAM read/write control signal
 
 always @ (posedge clk or negedge rst_n) begin
 	if(!rst_n) 
@@ -124,20 +124,20 @@ always @ (posedge clk or negedge rst_n) begin
 	else
 		begin
 		case (work_state_r)
-		//初始化空闲状态
+		// Initialize idle state
 		`W_IDLE:	if(sdram_ref_req & sdram_init_done) 
 						begin
-						work_state_r <= `W_AR; 		//定时自刷新请求
+						work_state_r <= `W_AR;      // Timed self-refresh request
 						sys_r_wn <= 1'b1;
 						end 		
 					else if(sdram_wr_req & sdram_init_done) 
 						begin
-						work_state_r <= `W_ACTIVE;	//写SDRAM
+						work_state_r <= `W_ACTIVE;  // write SDRAM
 						sys_r_wn <= 1'b0;	
 						end											
 					else if(sdram_rd_req && sdram_init_done) 
 						begin
-						work_state_r <= `W_ACTIVE;	//读SDRAM
+						work_state_r <= `W_ACTIVE;  // read SDRAM
 						sys_r_wn <= 1'b1;	
 						end
 					else 
@@ -146,39 +146,39 @@ always @ (posedge clk or negedge rst_n) begin
 						sys_r_wn <= 1'b1;
 						end
 		/*************************************************************/
-		//行有效状态
+		// row valid status
 		`W_ACTIVE: 	if(TRCD_CLK == 0)
 						 if(sys_r_wn) work_state_r <= `W_READ;
 						 else work_state_r <= `W_WRITE;
 					else work_state_r <= `W_TRCD;
-		//行有效等待
+		// row valid wait
 		`W_TRCD:	 if(`end_trcd)
 						 if(sys_r_wn) work_state_r <= `W_READ;
 						 else work_state_r <= `W_WRITE;
 					else work_state_r <= `W_TRCD;
 					
 		/*************************************************************/
-		//读数据状态
+		// read data status
 		`W_READ:	work_state_r <= `W_CL;	
-		//等待潜伏期
+		// waiting incubation period
 		`W_CL:		work_state_r <= (`end_tcl) ? `W_RD:`W_CL;	
-		//读数据
+		// read data
 		`W_RD:		work_state_r <= (`end_tread) ? `W_IDLE:`W_RD;
-		//读完成后的预充电等待状态	
+		// Precharge wait state after read completion
 		`W_RWAIT:	work_state_r <= (`end_trwait) ? `W_IDLE:`W_RWAIT;
 		
 		/*************************************************************/
-		//写数据状态
+		// write data status
 		`W_WRITE:	work_state_r <= `W_WD;
-		//写数据
+		// write data
 		`W_WD:		work_state_r <= (`end_twrite) ? `W_TDAL:`W_WD;
-		//等待写数据并自刷新结束
+		// Waiting to write data and self-refresh is over
 		`W_TDAL:	work_state_r <= (`end_tdal) ? `W_IDLE:`W_TDAL;
 		
 		/*************************************************************/
-		//自动刷新状态
+		// Auto refresh status
 		`W_AR:		work_state_r <= `W_TRFC; 
-		//自刷新等待
+		// Self refresh wait
 		`W_TRFC:	work_state_r <= (`end_trfc) ? `W_IDLE:`W_TRFC;
 		/*************************************************************/
 		default: 	work_state_r <= `W_IDLE;
@@ -186,46 +186,46 @@ always @ (posedge clk or negedge rst_n) begin
 		end
 end
 
-assign work_state = work_state_r;		// SDRAM工作状态寄存器
-assign sdram_ref_ack = (work_state_r == `W_AR);		// SDRAM自刷新应答信号
+assign work_state = work_state_r;               // SDRAM working status register
+assign sdram_ref_ack = (work_state_r == `W_AR); // SDRAM self-refresh response signal
 
 
-//要提前一个时钟才能写入
-//写SDRAM响应信号
+// One clock ahead to write
+// Write SDRAM response signal
 assign sdram_wr_ack = 	((work_state == `W_TRCD) & ~sys_r_wn) | 
 						(work_state == `W_WRITE)|
 						((work_state == `W_WD) & (cnt_clk_r < sdwr_byte -2'd2));		
-//读SDRAM响应信号
+// Read SDRAM response signal
 assign sdram_rd_ack = 	(work_state_r == `W_RD) & 
 						(cnt_clk_r >= 9'd1) & (cnt_clk_r < sdrd_byte + 2'd1);		
 
-//assign sdram_busy = (sdram_init_done && work_state_r == `W_IDLE) ? 1'b0:1'b1;	// SDRAM忙标志位
+//assign sdram_busy = (sdram_init_done && work_state_r == `W_IDLE) ? 1'b0:1'b1;	// SDRAM busy flag
 
 //------------------------------------------------------------------------------
-//产生SDRAM时序操作的延时
+// Generate delays for SDRAM sequential operations
 //------------------------------------------------------------------------------
-reg[8:0] cnt_clk_r;	//时钟计数
-reg cnt_rst_n;		//时钟计数复位信号	
+reg[8:0] cnt_clk_r;	// clock count
+reg cnt_rst_n;		// Clock count reset signal
 
 always @ (posedge clk or negedge rst_n) 
-	if(!rst_n) cnt_clk_r <= 9'd0;			//计数寄存器复位
-	else if(!cnt_rst_n) cnt_clk_r <= 9'd0;	//计数寄存器清零
-	else cnt_clk_r <= cnt_clk_r+1'b1;		//启动计数延时
+	if(!rst_n) cnt_clk_r <= 9'd0;          // count register reset
+	else if(!cnt_rst_n) cnt_clk_r <= 9'd0; // Clear the count register
+	else cnt_clk_r <= cnt_clk_r+1'b1;      // Start count delay
 	
-assign cnt_clk = cnt_clk_r;			//计数寄存器引出，内部`define中使用 
+assign cnt_clk = cnt_clk_r;	// Count register is exported, used in internal `define
 
-	//计数器控制逻辑
+// Counter Control Logic
 always @ (init_state_r or work_state_r or cnt_clk_r or sdwr_byte or sdrd_byte) begin
 	case (init_state_r)
 	    	`I_NOP:	cnt_rst_n <= 1'b0;
-	   		`I_PRE:	cnt_rst_n <= 1'b1;	//预充电延时计数启动	
-	   		`I_TRP:	cnt_rst_n <= (`end_trp) ? 1'b0:1'b1;	//等待预充电延时计数结束后，清零计数器
+	   		`I_PRE:	cnt_rst_n <= 1'b1;                        // Precharge delay count start
+	   		`I_TRP:	cnt_rst_n <= (`end_trp) ? 1'b0:1'b1;      // After waiting for the end of the precharge delay count, clear the counter
 	    	`I_AR1,`I_AR2:
-	         		cnt_rst_n <= 1'b1;			//自刷新延时计数启动
+	         		cnt_rst_n <= 1'b1;                        // Self-refresh delay count start
 	    	`I_TRF1,`I_TRF2:
-	         		cnt_rst_n <= (`end_trfc) ? 1'b0:1'b1;	//等待自刷新延时计数结束后，清零计数器
-			`I_MRS:	cnt_rst_n <= 1'b1;			//模式寄存器设置延时计数启动
-			`I_TMRD:	cnt_rst_n <= (`end_tmrd) ? 1'b0:1'b1;	//等待自刷新延时计数结束后，清零计数器
+	         		cnt_rst_n <= (`end_trfc) ? 1'b0:1'b1;     // After waiting for the self-refresh delay count to end, clear the counter
+			`I_MRS:	cnt_rst_n <= 1'b1;                        // Mode register setting delay count start
+			`I_TMRD:	cnt_rst_n <= (`end_tmrd) ? 1'b0:1'b1; // After waiting for the self-refresh delay count to end, clear the counter
 		   	`I_DONE:
 				begin
 				case (work_state_r)
