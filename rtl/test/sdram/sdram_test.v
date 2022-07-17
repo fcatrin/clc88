@@ -20,17 +20,13 @@ module sdram_test(
 
 //PLL时钟
 wire sys_rst_n;
-wire clk_ref;
 system_ctrl	u_system_ctrl
 (
 	.clk				   (clk50),		//global clock  50MHZ
 	.rst_n				(reset_n),		//external reset
 
-	.sys_rst_n			(sys_rst_n),	//global reset
-	.clk_c0				(),	         //50MHz clock
-	.clk_c1				(clk_ref),		//100MHz
-	.clk_c2				(S_CLK),	      //100MHz
-	.clk_c3			   ()             //25Mhz clock
+	.sys_rst_n			(sys_rst_n)	//global reset
+	.pll_locked(pll1_locked)
 );
 
 
@@ -54,7 +50,7 @@ wire				 sdram_init_done;	       //sdram init done
 
 
 
-always @ ( negedge clk_ref or negedge sys_rst_n )
+always @ ( negedge sys_clk )
 begin
     if( !sys_rst_n ) begin
 			i <= 4'd0;
@@ -114,12 +110,15 @@ begin
 	      endcase
 end
 
+wire[22:0] sdram_wraddr = wr_addr;
+wire[22:0] sdram_rdaddr = rd_addr;
+
 //SDR读写控制部分
 //----------------------------------------------
 sdram_top		u_sdramtop
 (
 	//global clock
-	.clk				   (clk_ref),			//sdram reference clock
+	.clk				   (sys_clk),			//sdram reference clock
 	.rst_n				(sys_rst_n),			//global reset
 
 	//internal interface
@@ -151,6 +150,17 @@ sdram_top		u_sdramtop
 //	.sdram_ldqm			(sdram_ldqm)		//sdram data
 );
 
+wire sys_clk;
+wire pll1_locked;
+
+   pll1 pll1_inst (
+      .inclk0(clk50),      // IN
+      .c0(sys_clk),      // 100Mhz    (system)
+      .c1(CLK_OUT1),     // 25.17Mhz  (640x480)
+      .c2(CLK_OUT2),     // 40Mhz     (800x600)
+      .areset(1'b0),
+      .locked(pll1_locked)
+   );
 
 
 
