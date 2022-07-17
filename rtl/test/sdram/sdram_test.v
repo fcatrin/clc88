@@ -47,71 +47,69 @@ wire        sdram_init_done; // SDRAM init done
 
 always @ ( negedge sys_clk ) begin
     if( !sys_rst_n ) begin
-        i <= 4'd0;
-        counter <= 0;
-        wr_length <= 9'd0;
-        rd_length <= 9'd0;
-        sdram_wr_req <= 1'b0;
-        sdram_rd_req <= 1'b0;
-        wr_addr <= 23'd0;
-        rd_addr <= 23'd0;
-        sdram_din <= 16'd0;
+        i <=  4'd0;
+        counter      <=     0;
+        wr_length    <=  9'd0;
+        rd_length    <=  9'd0;
+        sdram_wr_req <=  1'b0;
+        sdram_rd_req <=  1'b0;
+        wr_addr      <= 23'd0;
+        rd_addr      <= 23'd0;
+        sdram_din    <= 16'd0;
     end else case( i )
         4'd0:       // Wait for SDRAM initialization to complete
             if( sdram_init_done ) i<=i+1'b1;
             else i<=4'd0;
 
         4'd1: begin // Send burst write command, write 512 data to SDRAM address 0
-            sdram_wr_req<=1'b1;
-            wr_addr<=23'd0;
-            wr_length<=9'd256;
-            sdram_din<=16'd0;
-            i<=i+1'b1;
+            sdram_wr_req <=  1'b1;
+            wr_addr      <= 23'd0;
+            wr_length    <=  9'd256;
+            sdram_din    <= 16'd0;
+            i <= i + 1'b1;
         end
 
         4'd2: // Waiting for the reply signal written by burst
             if( sdram_wr_ack==1'b1) begin
-                i<=i+1'b1;
-                counter<=counter+1'b1;
+                i <= i + 1'b1;
+                counter <= counter + 1'b1;
             end
 
-        4'd3: begin//Write 256 data to SDRAM, add 1 to the data
-            sdram_wr_req<=1'b0;
-            if( counter==9'd256 ) begin
-                counter <= 9'd0;
-                sdram_din <=sdram_din+1'b1;
+        4'd3: begin // Write 256 data to SDRAM, add 1 to the data
+            sdram_wr_req <= 1'b0;
+            if( counter == 9'd256 ) begin
+                counter   <= 9'd0;
+                sdram_din <= sdram_din + 1'b1;
                 i <= i + 1'b1;
-            end else if (sdram_wr_ack==1'b1) begin
-                sdram_din <=sdram_din+1'b1;
-                counter<=counter+1'b1;
+            end else if (sdram_wr_ack == 1'b1) begin
+                sdram_din <= sdram_din + 1'b1;
+                counter   <= counter + 1'b1;
             end else begin
-                sdram_din<=sdram_din;
-                counter<=counter;
+                sdram_din <= sdram_din;
+                counter   <= counter;
             end;
         end
 
         4'd4: begin // Send burst read command, read 256 data from Sdram address 0 to Sdram address 0
-            sdram_rd_req<=1'b1;
-            rd_addr<=23'd0;
-            rd_length<=9'd256;
-            i<=i+1'b1;
+            sdram_rd_req <=  1'b1;
+            rd_addr      <= 23'd0;
+            rd_length    <=  9'd256;
+            i <= i + 1'b1;
         end
 
         4'd5: // Waiting for the response signal of burst read
-            if( sdram_rd_ack==1'b1 ) begin
-                i<=i+1'b1;
-                sdram_rd_req<=1'b0;
-                counter<=counter+1'b1;
+            if( sdram_rd_ack == 1'b1 ) begin
+                i <= i + 1'b1;
+                sdram_rd_req <= 1'b0;
+                counter      <= counter + 1'b1;
             end
 
         4'd6: // Read 256 data from SDRAM
-            if( counter==9'd256 ) begin
-                i<=i+1'b1; // finish state machine
-                counter<=9'd0;
-            end else if (sdram_rd_ack==1'b1) begin
-                counter<=counter+1'b1;
-            end else begin
-                counter<=counter;
+            if( counter == 9'd256 ) begin
+                i <= i + 1'b1; // finish state machine
+                counter <= 9'd0;
+            end else if (sdram_rd_ack == 1'b1) begin
+                counter <= counter + 1'b1;
             end
         endcase
 end
