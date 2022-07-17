@@ -1,18 +1,18 @@
 `timescale 1ns / 1ps
 ////////////////////////////////////////////////////////////////////////////////
-// Description	: SDRAM封装控制顶层模块
+// Description	: SDRAM Package control top-level module
 // Revision		: V1.0
 // Additional Comments	:  
 // 
 ////////////////////////////////////////////////////////////////////////////////
 /*-----------------------------------------------------------------------------
-SDRAM接口说明：
-	上电复位时，SDRAM会自动等待200us然后进行初始化，具体模式寄存器的
-设置参看sdram_ctrl模块。
-	SDRAM的操作：
-		控制sys_en=1,sys_r_wn=0,sys_addr,sys_data_in进行SDRAM数据写入
-	操作；控制sys_en=1,sys_r_wn=1,sys_addr即可从sys_data_out读出数据。
-	同时可以通过查询sdram_busy的状态查看读写是否完成。	
+SDRAM Interface Description
+	During power-on reset, SDRAM will automatically wait for 200us and then initialize.
+    See the sdram_ctrl module for settings
+	Operation of SDRAM：
+		Control sys_en=1, sys_r_wn=0, sys_addr, sys_data_in to write SDRAM data Operation;
+		Control sys_en=1, sys_r_wn=1, sys_addr can read data from sys_data_out.
+        At the same time, you can check whether the read and write is completed by querying the status of sdram_busy.
 -----------------------------------------------------------------------------*/
 module sdram_top(
 				clk,rst_n,
@@ -24,44 +24,44 @@ module sdram_top(
 				sdram_init_done
 			);
 
-input clk;		//系统时钟，100MHz
-input rst_n;	//复位信号，低电平有效
+input clk;		// System clock, 100MHz
+input rst_n;	// Reset signal, active low
 
-	// SDRAM的封装接口
-input sdram_wr_req;			//系统写SDRAM请求信号
-input sdram_rd_req;			//系统读SDRAM请求信号
-output sdram_wr_ack;		//系统写SDRAM响应信号,作为wrFIFO的输出有效信号
-output sdram_rd_ack;		//系统读SDRAM响应信号
-input[22:0] sys_wraddr;		// 写SDRAM时地址暂存器，(bit22-21)L-Bank地址:(bit20-8)为行地址，(bit7-0)为列地址 
-input[22:0] sys_rdaddr;		// 读SDRAM时地址暂存器，(bit22-21)L-Bank地址:(bit20-8)为行地址，(bit7-0)为列地址 
-input[15:0] sys_data_in;	//写SDRAM时数据暂存器，4个突发读写字数据，默认为00地址bit15-0;01地址bit31-16;10地址bit47-32;11地址bit63-48
-output[15:0] sys_data_out;	//读SDRAM时数据暂存器,(格式同上)
-input[8:0] sdwr_byte;		//突发写SDRAM字节数（1-256个）
-input[8:0] sdrd_byte;		//突发读SDRAM字节数（1-256个）
-//output sdram_busy;			// SDRAM忙标志，高表示SDRAM处于工作中
-//output sys_dout_rdy;		// SDRAM数据输出完成标志
-output	sdram_init_done;	//系统初始化完毕信号
+// SDRAM package interface
+input sdram_wr_req;			// System write SDRAM request signal
+input sdram_rd_req;			// System read SDRAM request signal
+output sdram_wr_ack;		// The system writes the SDRAM response signal as the output valid signal of wrFIFO
+output sdram_rd_ack;		// System read SDRAM response signal
+input[22:0] sys_wraddr;		// Address register when writing SDRAM, (bit22-21) L-Bank address: (bit20-8) is the row address, (bit7-0) is the column address
+input[22:0] sys_rdaddr;		// When reading SDRAM, the address register, (bit22-21) L-Bank address: (bit20-8) is the row address, (bit7-0) is the column address
+input[15:0] sys_data_in;	// When writing SDRAM, the data temporary register, 4 burst read and write word data, the default is 00 address bit15-0; 01 address bit31-16; 10 address bit47-32; 11 address bit63-48
+output[15:0] sys_data_out;	// Data register when reading SDRAM, (the format is the same as above)
+input[8:0] sdwr_byte;		// Burst write SDRAM bytes (1-256)
+input[8:0] sdrd_byte;		// Burst read SDRAM bytes (1-256)
+//output sdram_busy;        // SDRAM busy flag, high indicates that SDRAM is working
+//output sys_dout_rdy;		// SDRAM data output completion flag
+output	sdram_init_done;	// System initialization complete signal
 
-	// FPGA与SDRAM硬件接口
-//output sdram_clk;			// SDRAM时钟信号
-output sdram_cke;			// SDRAM时钟有效信号
-output sdram_cs_n;			// SDRAM片选信号
-output sdram_ras_n;			// SDRAM行地址选通脉冲
-output sdram_cas_n;			// SDRAM列地址选通脉冲
-output sdram_we_n;			// SDRAM写允许位
-output[1:0] sdram_ba;		// SDRAM的L-Bank地址线
-output[12:0] sdram_addr;	// SDRAM地址总线
-inout[15:0] sdram_data;		// SDRAM数据总线
-//output sdram_udqm;		// SDRAM高字节屏蔽
-//output sdram_ldqm;		// SDRAM低字节屏蔽
+// FPGA and SDRAM hardware interface
+//output sdram_clk;			// SDRAM clock signal
+output sdram_cke;			// SDRAM clock valid signal
+output sdram_cs_n;			// SDRAM chip select signal
+output sdram_ras_n;			// SDRAM row address strobe
+output sdram_cas_n;			// SDRAM column address strobe
+output sdram_we_n;			// SDRAM write enable bit
+output[1:0] sdram_ba;		// L-Bank address line of SDRAM
+output[12:0] sdram_addr;	// SDRAM address bus
+inout[15:0] sdram_data;		// SDRAM data bus
+//output sdram_udqm;		// SDRAM high byte mask
+//output sdram_ldqm;		// SDRAM low byte mask
 
-	// SDRAM内部接口
-wire[3:0] init_state;	// SDRAM初始化寄存器
-wire[3:0] work_state;	// SDRAM工作状态寄存器
-wire[8:0] cnt_clk;		//时钟计数	
-wire sys_r_wn;			// SDRAM读/写控制信号
+// SDRAM internal interface
+wire[3:0] init_state;	// SDRAM initialization register
+wire[3:0] work_state;	// SDRAM working status register
+wire[8:0] cnt_clk;		// clock count
+wire sys_r_wn;			// SDRAM read/write control signal
 				
-sdram_ctrl		module_001(		// SDRAM状态控制模块
+sdram_ctrl		module_001(		// SDRAM state control module
 									.clk(clk),						
 									.rst_n(rst_n),
 							//		.sdram_udqm(sdram_udqm),
@@ -82,7 +82,7 @@ sdram_ctrl		module_001(		// SDRAM状态控制模块
 									.sys_r_wn(sys_r_wn)
 								);
 
-sdram_cmd		module_002(		// SDRAM命令模块
+sdram_cmd		module_002(		// SDRAM command module
 									.clk(clk),
 									.rst_n(rst_n),
 									.sdram_cke(sdram_cke),		
@@ -102,7 +102,7 @@ sdram_cmd		module_002(		// SDRAM命令模块
 									.cnt_clk(cnt_clk)
 								);
 
-sdram_wr_data	module_003(		// SDRAM数据读写模块
+sdram_wr_data	module_003(		// SDRAM data read and write module
 									.clk(clk),
 									.rst_n(rst_n),
 							//		.sdram_clk(sdram_clk),
