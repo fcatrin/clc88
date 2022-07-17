@@ -60,9 +60,9 @@ wire sdram_ref_ack;      // SDRAM self-refresh request response signal
 
 // SDRAM timing delay parameters
 parameter TRP_CLK       = 9'd4,//1,   // TRP=18ns precharge effective period
-          TRFC_CLK	    = 9'd6,//3,   // TRC=60ns automatic pre-refresh cycle
-          TMRD_CLK	    = 9'd6,//2,   // The mode register sets the wait clock cycle
-          TRCD_CLK	    = 9'd2,//1,   // TRCD=18ns row strobe period
+          TRFC_CLK      = 9'd6,//3,   // TRC=60ns automatic pre-refresh cycle
+          TMRD_CLK      = 9'd6,//2,   // The mode register sets the wait clock cycle
+          TRCD_CLK      = 9'd2,//1,   // TRCD=18ns row strobe period
           TCL_CLK       = 9'd3,       // Latency TCL_CLK=3 CLKs, which can be set in the initialization mode register
           // TREAD_CLK  = 9'd256,//8, // Burst read data cycle 8CLK
           // TWRITE_CLK = 9'd256,//8, // Burst write data 8CLK
@@ -123,18 +123,18 @@ always @ (posedge clk or negedge rst_n)
         cnt_7_5us <= 11'd0;
 
 always @ (posedge clk or negedge rst_n)
-	if (!rst_n)
-	    sdram_ref_req <= 1'b0;
-	else if (cnt_7_5us == 11'd749)
-	    sdram_ref_req <= 1'b1;       // Generate self-refresh request
-	else if (sdram_ref_ack)
-	    sdram_ref_req <= 1'b0;       // Responded to self-refresh
+    if (!rst_n)
+        sdram_ref_req <= 1'b0;
+    else if (cnt_7_5us == 11'd749)
+        sdram_ref_req <= 1'b1;       // Generate self-refresh request
+    else if (sdram_ref_ack)
+        sdram_ref_req <= 1'b0;       // Responded to self-refresh
 
 //------------------------------------------------------------------------------
 // SDRAM read and write and self-refresh operation state machine
 //------------------------------------------------------------------------------
-reg[3:0] work_state_r;	// SDRAM read and write status
-reg sys_r_wn;			// SDRAM read/write control signal
+reg[3:0] work_state_r; // SDRAM read and write status
+reg sys_r_wn;          // SDRAM read/write control signal
 
 always @ (posedge clk or negedge rst_n) begin
     if (!rst_n)
@@ -154,14 +154,14 @@ always @ (posedge clk or negedge rst_n) begin
                 work_state_r <= `W_IDLE;
                 sys_r_wn <= 1'b1;
             end
-		// row valid status
+        // row valid status
         `W_ACTIVE:
             if (TRCD_CLK == 0)
                 if (sys_r_wn) work_state_r <= `W_READ;
                 else          work_state_r <= `W_WRITE;
             else              work_state_r <= `W_TRCD;
 
-		// row valid wait
+        // row valid wait
         `W_TRCD:
             if (`end_trcd)
                 if (sys_r_wn) work_state_r <= `W_READ;
@@ -193,7 +193,7 @@ always @ (posedge clk or negedge rst_n) begin
     endcase
 end
 
-assign work_state    = work_state_r;               // SDRAM working status register
+assign work_state    = work_state_r;            // SDRAM working status register
 assign sdram_ref_ack = (work_state_r == `W_AR); // SDRAM self-refresh response signal
 
 // One clock ahead to write
@@ -236,18 +236,18 @@ always @ (init_state_r or work_state_r or cnt_clk_r or sdwr_byte or sdrd_byte) b
         `I_MRS:	 cnt_rst_n <= 1'b1;                      // Mode register setting delay count start
         `I_TMRD: cnt_rst_n <= (`end_tmrd) ? 1'b0 : 1'b1; // After waiting for the self-refresh delay count to end, clear the counter
         `I_DONE: case (work_state_r)
-            `W_IDLE:	cnt_rst_n <= 1'b0;
-            `W_ACTIVE: 	cnt_rst_n <= 1'b1;
-            `W_TRCD:	cnt_rst_n <= (`end_trcd)   ? 1'b0 : 1'b1;
-            `W_CL:		cnt_rst_n <= (`end_tcl)    ? 1'b0 : 1'b1;
-            `W_RD:		cnt_rst_n <= (`end_tread)  ? 1'b0 : 1'b1;
-            `W_RWAIT:	cnt_rst_n <= (`end_trwait) ? 1'b0 : 1'b1;
-            `W_WD:		cnt_rst_n <= (`end_twrite) ? 1'b0 : 1'b1;
-            `W_TDAL:	cnt_rst_n <= (`end_tdal)   ? 1'b0 : 1'b1;
-            `W_TRFC:	cnt_rst_n <= (`end_trfc)   ? 1'b0 : 1'b1;
-            default:    cnt_rst_n <= 1'b0;
+            `W_IDLE:   cnt_rst_n <= 1'b0;
+            `W_ACTIVE: cnt_rst_n <= 1'b1;
+            `W_TRCD:   cnt_rst_n <= (`end_trcd)   ? 1'b0 : 1'b1;
+            `W_CL:     cnt_rst_n <= (`end_tcl)    ? 1'b0 : 1'b1;
+            `W_RD:     cnt_rst_n <= (`end_tread)  ? 1'b0 : 1'b1;
+            `W_RWAIT:  cnt_rst_n <= (`end_trwait) ? 1'b0 : 1'b1;
+            `W_WD:     cnt_rst_n <= (`end_twrite) ? 1'b0 : 1'b1;
+            `W_TDAL:   cnt_rst_n <= (`end_tdal)   ? 1'b0 : 1'b1;
+            `W_TRFC:   cnt_rst_n <= (`end_trfc)   ? 1'b0 : 1'b1;
+            default:   cnt_rst_n <= 1'b0;
         endcase
-		default: cnt_rst_n <= 1'b0;
+        default: cnt_rst_n <= 1'b0;
     endcase
 end
 
