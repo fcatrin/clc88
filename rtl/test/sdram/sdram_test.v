@@ -23,7 +23,7 @@ assign S_CLK = sys_clk;
 wire sys_rst_n;
 system_ctrl	u_system_ctrl
 (
-	.clk				   (clk50),		//global clock  50MHZ
+	.clk				   (sys_clk),		//global clock  50MHZ
 	.rst_n				(reset_n),		//external reset
 
 	.sys_rst_n			(sys_rst_n),	//global reset

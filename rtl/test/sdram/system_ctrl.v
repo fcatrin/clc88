@@ -20,7 +20,7 @@ always @(posedge clk) begin
     if(!rst_n || !pll_locked) begin
         delay_cnt <= 0;
         delay_done <= 1'b0;
-    end else if (delay_cnt== 22'd2000000)
+    end else if (delay_cnt== 22'd4000000)
         delay_done <= 1'b1;
     else
         delay_cnt <= delay_cnt +1'b1;
