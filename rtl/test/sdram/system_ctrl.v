@@ -5,11 +5,10 @@ Description			:		generate system reset and clock for sdram.
 --------------------------------------------------------------------------*/
 `timescale 1 ns / 1 ns
 module system_ctrl (
-    input 		clk,		// 50MHz
-    input 		rst_n,		// global reset
-    input       pll_locked,
-
-    output 		sys_rst_n	// system reset
+    input  clk,        // 50MHz
+    input  rst_n,      // global reset
+    input  pll_locked,
+    output sys_rst_n   // system reset
 );
 
 //----------------------------------------------
