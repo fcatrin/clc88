@@ -19,14 +19,14 @@ module sdram_test(
 assign S_DQM = 2'b11;
 assign S_CLK = sys_clk;
 
-//PLL时钟
+// PLL clock
 wire sys_rst_n;
 system_ctrl	u_system_ctrl
 (
-	.clk				   (sys_clk),		//global clock  50MHZ
-	.rst_n				(reset_n),		//external reset
+	.clk				   (sys_clk),	// global clock  50MHZ
+	.rst_n				(reset_n),		// external reset
 
-	.sys_rst_n			(sys_rst_n),	//global reset
+	.sys_rst_n			(sys_rst_n),	// global reset
 	.pll_locked(pll1_locked)
 );
 
@@ -37,19 +37,17 @@ system_ctrl	u_system_ctrl
 reg [3:0] i;
 reg [8:0] counter;
 
-reg             sdram_wr_req;           //sdram burst写请求
-reg             sdram_rd_req;           //sdram burst读请求
-wire            sdram_wr_ack;           //sdram burst写应答
-wire            sdram_rd_ack;           //sdram burst读应答
-reg		[8:0]	 wr_length;			       //user interface sdram write burst length
-reg		[8:0]	 rd_length;			       //user interface sdram read burst length
-reg		[22:0] wr_addr;			       //user interface sdram start write address
-reg		[22:0] rd_addr;			       //user interface sdram start read address
-reg	   [15:0] sdram_din;					 //user interface sdram data input
-wire	   [15:0] sdram_dout;				 //user interface sdram data output
-wire				 sdram_init_done;	       //sdram init done
-
-
+reg         sdram_wr_req;    // sdram burst write request
+reg         sdram_rd_req;    // sdram burst read request
+wire        sdram_wr_ack;    // sdram burst write response
+wire        sdram_rd_ack;    // sdram burst read response
+reg	  [8:0] wr_length;       // user interface sdram write burst length
+reg	  [8:0] rd_length;       // user interface sdram read burst length
+reg	 [22:0] wr_addr;         // user interface sdram start write address
+reg	 [22:0] rd_addr;         // user interface sdram start read address
+reg	 [15:0] sdram_din;       // user interface sdram data input
+wire [15:0] sdram_dout;      // user interface sdram data output
+wire        sdram_init_done; // sdram init done
 
 always @ ( negedge sys_clk )
 begin
@@ -66,11 +64,11 @@ begin
 	 end
 	 else
 	     case( i )
-	      4'd0://等待SDRAM初始化完成
+	      4'd0: // Wait for SDRAM initialization to complete
 			if( sdram_init_done ) begin i<=i+1'b1; end
 			else begin i<=4'd0; end
 
-	      4'd1: begin//发送burst写命令，写512个数据到Sdram地址0
+	      4'd1: begin //S end burst write command, write 512 data to SDRAM address 0
 			   sdram_wr_req<=1'b1;
             wr_addr<=23'd0;
 			   wr_length<=9'd256;
@@ -78,32 +76,32 @@ begin
 			   i<=i+1'b1;
 	      end
 
-			4'd2: //等待burst写的应答信号
+			4'd2: // Waiting for the reply signal written by burst
 			if( sdram_wr_ack==1'b1) begin i<=i+1'b1; counter<=counter+1'b1; end
 			else begin  i<=i; end
 
-	      4'd3: begin//写256个数据到SDRAM,数据加1
+	      4'd3: begin//Write 256 data to SDRAM, add 1 to the data
 				sdram_wr_req<=1'b0;
 				if( counter==9'd256 ) begin i <= i + 1'b1; counter <= 9'd0; sdram_din <=sdram_din+1'b1;end
 				else if (sdram_wr_ack==1'b1)begin sdram_din <=sdram_din+1'b1; counter<=counter+1'b1; i<=i; end
 				else begin sdram_din<=sdram_din; counter<=counter; i<= i; end //保持
          end
 
-			4'd4: begin//发送burst读命令，从Sdram地址0读256个数据到Sdram地址0
+			4'd4: begin//Send burst read command, read 256 data from Sdram address 0 to Sdram address 0
 			   sdram_rd_req<=1'b1;
             rd_addr<=23'd0;
 			   rd_length<=9'd256;
 				i<=i+1'b1;
 	      end
 
-			4'd5: //等待burst读的应答信号
+			4'd5: // Waiting for the response signal of burst read
 			if( sdram_rd_ack==1'b1 ) begin i<=i+1'b1; sdram_rd_req<=1'b0; counter<=counter+1'b1;end
 			else begin  i<=i; end
 
-			4'd6: //从SDRAM读256个数据
+			4'd6: // Read 256 data from SDRAM
 			if( counter==9'd256 ) begin i<=i+1'b1; counter<=9'd0;end
 			else if (sdram_rd_ack==1'b1)begin  counter<=counter+1'b1; i <= i;end
-			else begin counter<=counter; i<= i; end //保持
+			else begin counter<=counter; i<= i; end //Keep
 
 			4'd7: //finish
 			i<=i;
