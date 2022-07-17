@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 ////////////////////////////////////////////////////////////////////////////////
-// Description	: SDRAM命令模块
+// Description	: SDRAM command module
 //				
 // Revision		: V1.0
 // Additional Comments	:  
@@ -12,35 +12,34 @@ module sdram_cmd(
 				sys_wraddr,sys_rdaddr,sdwr_byte,sdrd_byte,
 				init_state,work_state,sys_r_wn,cnt_clk
 			);
-	//系统信号
-input clk;					//50MHz
-input rst_n;				//低电平复位信号
-	// SDRAM硬件接口
-output sdram_cke;			// SDRAM时钟有效信号
-output sdram_cs_n;			//	SDRAM片选信号
-output sdram_ras_n;			//	SDRAM行地址选通脉冲
-output sdram_cas_n;			//	SDRAM列地址选通脉冲
-output sdram_we_n;			//	SDRAM写允许位
-output[1:0] sdram_ba;		//	SDRAM的L-Bank地址线
-output[12:0] sdram_addr;	// SDRAM地址总线
-	// SDRAM封装接口
-input[22:0] sys_wraddr;		// 写SDRAM时地址暂存器，(bit21-20)L-Bank地址:(bit19-8)为行地址，(bit7-0)为列地址 
-input[22:0] sys_rdaddr;		// 读SDRAM时地址暂存器，(bit21-20)L-Bank地址:(bit19-8)为行地址，(bit7-0)为列地址 
-input[8:0] sdwr_byte;		//突发写SDRAM字节数（1-256个）
-input[8:0] sdrd_byte;		//突发读SDRAM字节数（1-256个）
-	// SDRAM内部接口
-input[3:0] init_state;		// SDRAM初始化状态寄存器
-input[3:0] work_state;		// SDRAM读写状态寄存器
-input sys_r_wn;			// SDRAM读/写控制信号
-input[8:0] cnt_clk;		//时钟计数	
+// system signal
+input clk;					// 100MHz
+input rst_n;				// low level reset signal
+// SDRAM hardware interface
+output sdram_cke;			// SDRAM clock valid signal
+output sdram_cs_n;			// SDRAM chip select signal
+output sdram_ras_n;			// SDRAM row address strobe
+output sdram_cas_n;			// SDRAM column address strobe
+output sdram_we_n;			// SDRAM write enable bit
+output[1:0] sdram_ba;		// L-Bank address line of SDRAM
+output[12:0] sdram_addr;	// SDRAM address bus
+// SDRAM package interface
+input[22:0] sys_wraddr;		// Address register when writing SDRAM, (bit21-20) L-Bank address: (bit19-8) is the row address, (bit7-0) is the column address
+input[22:0] sys_rdaddr;		// When reading SDRAM, the address register, (bit21-20) L-Bank address: (bit19-8) is the row address, (bit7-0) is the column address
+input[8:0] sdwr_byte;		// Burst write SDRAM bytes (1-256)
+input[8:0] sdrd_byte;		// Burst read SDRAM bytes (1-256)
+// SDRAM internal interface
+input[3:0] init_state;		// SDRAM initialization status register
+input[3:0] work_state;		// SDRAM read and write status register
+input sys_r_wn;			// SDRAM read/write control signal
+input[8:0] cnt_clk;		// clock count
 
-
-`include "sdram_para.v"		// 包含SDRAM参数定义模块
+`include "sdram_para.v"		// Contains SDRAM parameter definition module
 
 
 //-------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------
-reg[4:0] sdram_cmd_r;	//	SDRAM操作命令
+reg[4:0] sdram_cmd_r;	// SDRAM Operation Commands
 reg[1:0] sdram_ba_r;
 reg[12:0] sdram_addr_r;
 
@@ -49,9 +48,9 @@ assign sdram_ba = sdram_ba_r;
 assign sdram_addr = sdram_addr_r;
 
 //-------------------------------------------------------------------------------
-	//SDRAM命令参数赋值
-wire[22:0] sys_addr;		// 读写SDRAM时地址暂存器，(bit22-21)L-Bank地址:(bit20-8)为行地址，(bit7-0)为列地址 	
-assign sys_addr = sys_r_wn ? sys_rdaddr:sys_wraddr;		//读/写地址总线切换控制
+// SDRAM command parameter assignment
+wire[22:0] sys_addr; // Address register when reading and writing SDRAM, (bit22-21) L-Bank address: (bit20-8) is the row address, (bit7-0) is the column address
+assign sys_addr = sys_r_wn ? sys_rdaddr:sys_wraddr; // Read/Write Address Bus Switch Control
 	
 always @ (posedge clk or negedge rst_n) begin
 	if(!rst_n) begin
@@ -76,16 +75,16 @@ always @ (posedge clk or negedge rst_n) begin
 						sdram_ba_r <= 2'b11;
 						sdram_addr_r <= 13'h1fff;						
 					end 			 	
-				`I_MRS: begin	//模式寄存器设置，可根据实际需要进行设置
+				`I_MRS: begin	// Mode register setting, can be set according to actual needs
 						sdram_cmd_r <= `CMD_LMR;
-						sdram_ba_r <= 2'b00;	//操作模式设置
+						sdram_ba_r <= 2'b00;	// Operation Mode Settings
 						sdram_addr_r <= {
-                            3'b000,			//操作模式设置
-                            1'b0,			//操作模式设置(这里设置为A9=0,即突发读/突发写)
-                            2'b00,			//操作模式设置({A8,A7}=00),当前操作为模式寄存器设置
-                            3'b011,			// CAS潜伏期设置(这里设置为3，{A6,A5,A4}=011)()
-                            1'b0,			//突发传输方式(这里设置为顺序，A3=b0)
-                            3'b111			//突发长度(这里设置为256，{A2,A1,A0}=111)
+                            3'b000,			// Operation Mode Settings
+                            1'b0,			// Operation mode setting (set here as A9=0, that is, burst read/burst write)
+                            2'b00,			// Operation mode setting ({A8,A7}=00), the current operation is the mode register setting
+                            3'b011,			// CAS latency setting (set to 3 here, {A6,A5,A4}=011)()
+                            1'b0,			// Burst transmission mode (set as sequence here, A3=b0)
+                            3'b111			// Burst length (set to 256 here, {A2,A1,A0}=111)
 								};
 					end	
 				`I_DONE:
@@ -97,15 +96,15 @@ always @ (posedge clk or negedge rst_n) begin
 								end
 							`W_ACTIVE: begin
 									sdram_cmd_r <= `CMD_ACTIVE;
-									sdram_ba_r <= sys_addr[22:21];	//L-Bank地址
-									sdram_addr_r <= sys_addr[20:8];	//行地址
+									sdram_ba_r <= sys_addr[22:21];	// L-Bank address
+									sdram_addr_r <= sys_addr[20:8];	// line address
 								end
 							`W_READ: begin
 									sdram_cmd_r <= `CMD_READ;
-									sdram_ba_r <= sys_addr[22:21];	//L-Bank地址
+									sdram_ba_r <= sys_addr[22:21];	// L-Bank地址
 									sdram_addr_r <= {
-													5'b00100,		// A10=1,设置写完成允许预充电
-													sys_addr[7:0]	//列地址  
+													5'b00100,		// A10=1, set write completion to allow precharge
+													sys_addr[7:0]	// column address
 												};
 								end
 							`W_RD: begin
@@ -118,10 +117,10 @@ always @ (posedge clk or negedge rst_n) begin
 								end								
 							`W_WRITE: begin
 									sdram_cmd_r <= `CMD_WRITE;
-									sdram_ba_r <= sys_addr[22:21];	//L-Bank地址
+									sdram_ba_r <= sys_addr[22:21];	// L-Bank address
 									sdram_addr_r <= {
-													5'b00100,		// A10=1,设置写完成允许预充电
-													sys_addr[7:0]	//列地址  
+													5'b00100,		// A10=1, set write completion to allow precharge
+													sys_addr[7:0]	// column address
 												};
 								end		
 							`W_WD: begin
