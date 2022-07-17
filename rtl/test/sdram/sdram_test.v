@@ -16,7 +16,8 @@ module sdram_test(
 
     );
 
-
+assign S_DQM = 2'b11;
+assign S_CLK = sys_clk;
 
 //PLL时钟
 wire sys_rst_n;
@@ -25,7 +26,7 @@ system_ctrl	u_system_ctrl
 	.clk				   (clk50),		//global clock  50MHZ
 	.rst_n				(reset_n),		//external reset
 
-	.sys_rst_n			(sys_rst_n)	//global reset
+	.sys_rst_n			(sys_rst_n),	//global reset
 	.pll_locked(pll1_locked)
 );
 
@@ -34,7 +35,7 @@ system_ctrl	u_system_ctrl
 //SDRAM读写测试程序
 /*******************************/
 reg [3:0] i;
-reg [9:0] counter;
+reg [8:0] counter;
 
 reg             sdram_wr_req;           //sdram burst写请求
 reg             sdram_rd_req;           //sdram burst读请求
@@ -83,7 +84,7 @@ begin
 
 	      4'd3: begin//写256个数据到SDRAM,数据加1
 				sdram_wr_req<=1'b0;
-				if( counter==16'd256 ) begin i <= i + 1'b1; counter <= 16'd0; sdram_din <=sdram_din+1'b1;end
+				if( counter==9'd256 ) begin i <= i + 1'b1; counter <= 9'd0; sdram_din <=sdram_din+1'b1;end
 				else if (sdram_wr_ack==1'b1)begin sdram_din <=sdram_din+1'b1; counter<=counter+1'b1; i<=i; end
 				else begin sdram_din<=sdram_din; counter<=counter; i<= i; end //保持
          end
@@ -100,7 +101,7 @@ begin
 			else begin  i<=i; end
 
 			4'd6: //从SDRAM读256个数据
-			if( counter==16'd256 ) begin i<=i+1'b1; counter<=16'd0;end
+			if( counter==9'd256 ) begin i<=i+1'b1; counter<=9'd0;end
 			else if (sdram_rd_ack==1'b1)begin  counter<=counter+1'b1; i <= i;end
 			else begin counter<=counter; i<= i; end //保持
 
@@ -152,6 +153,8 @@ sdram_top		u_sdramtop
 
 wire sys_clk;
 wire pll1_locked;
+wire CLK_OUT1;
+wire CLK_OUT2;
 
    pll1 pll1_inst (
       .inclk0(clk50),      // IN
