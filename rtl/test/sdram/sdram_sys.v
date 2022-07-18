@@ -22,7 +22,7 @@ wire pll_locked;
 reg boot_reset = 1;
 reg user_reset = 0;
 
-assign sys_reset = boot_reset || user_reset;
+wire sys_reset = boot_reset || user_reset;
 
 // keep reset until pll locks
 always @ (posedge clk50) begin
@@ -45,7 +45,7 @@ always @ (posedge clk50) begin
 end
 
 sdram_test sdram_test_inst (
-  .clk(clk50),
+  .clk50(clk50),
   .reset_n(!sys_reset),
   .pll_locked(pll_locked),
   .S_CLK(S_CLK),

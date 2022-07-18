@@ -17,8 +17,6 @@ module sdram_test(
     );
 
 assign S_DQM = 2'b11;
-assign S_CLK = sys_clk;
-
 
 /*******************************/
 // SDRAM read and write test program
@@ -146,16 +144,12 @@ sdram_top u_sdramtop (
 );
 
 wire sys_clk;
-wire CLK_OUT1;
-wire CLK_OUT2;
 
-    pll1 pll1_inst (
-        .inclk0(clk50),    // IN
-        .c0(sys_clk),      // 100Mhz    (system)
-        .c1(CLK_OUT1),     // 25.17Mhz  (640x480)
-        .c2(CLK_OUT2),     // 40Mhz     (800x600)
-        .areset(1'b0),
-        .locked(pll_locked)
-    );
+pll	pll_inst (
+	.inclk0(clk50),
+	.c0(sys_clk),        // 100Mhz    (system)
+	.c1(S_CLK),          // 100Mhz    (SDRAM clock)
+	.locked(pll_locked)
+	);
 
 endmodule

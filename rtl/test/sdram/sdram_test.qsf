@@ -38,7 +38,7 @@
 
 set_global_assignment -name FAMILY "Cyclone IV E"
 set_global_assignment -name DEVICE EP4CE55F23C8
-set_global_assignment -name TOP_LEVEL_ENTITY sdram_top
+set_global_assignment -name TOP_LEVEL_ENTITY sdram_sys
 set_global_assignment -name NUM_PARALLEL_PROCESSORS ALL
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 12.1
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "20:42:36  AUGUST 19, 2015"
@@ -117,7 +117,7 @@ set_global_assignment -name VERILOG_FILE ip/sdram_ctrl.v
 set_global_assignment -name VERILOG_FILE ip/sdram_top.v
 set_global_assignment -name VERILOG_FILE ip/sdram_wr_data.v
 set_global_assignment -name VERILOG_FILE ../../common/debouncer.v
-set_global_assignment -name QIP_FILE pll/pll1.qip
+set_global_assignment -name QIP_FILE pll/pll.qip
 set_global_assignment -name CDF_FILE output_files/sdram_test.cdf
 set_global_assignment -name SIGNALTAP_FILE signaltap.stp
 set_global_assignment -name SMART_RECOMPILE OFF

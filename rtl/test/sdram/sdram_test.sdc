@@ -42,7 +42,7 @@ create_clock -name {clk50} -period 20.000 -waveform { 0.000 10.000 } [get_ports 
 #**************************************************************
 # Create Generated Clock
 #**************************************************************
-derive_pll_clocks
+derive_pll_clocks -create_base_clocks
 derive_clock_uncertainty
 
 
@@ -68,18 +68,23 @@ derive_clock_uncertainty
 # Set Clock Groups
 #**************************************************************
 
+
 #**************************************************************
 # Set False Path
 #**************************************************************
 # set_false_path -from [get_ports altera_reserved_*]
 # set_false_path -to   [get_ports altera_reserved_*]
-set_false_path -from [get_ports reset_n]
+set_false_path -from [get_ports key_reset]
 set_false_path -from [get_ports S_*]
 set_false_path -to   [get_ports S_*]
 
 #**************************************************************
 # Set Multicycle Path
 #**************************************************************
+set_multicycle_path -setup -from user_reset   -to *sdram_test* 2
+set_multicycle_path -hold  -from user_reset   -to *sdram_test* 1
+set_multicycle_path -setup -from boot_reset   -to *sdram_test* 2
+set_multicycle_path -hold  -from boot_reset   -to *sdram_test* 1
 
 #**************************************************************
 # Set Maximum Delay
@@ -89,7 +94,6 @@ set_false_path -to   [get_ports S_*]
 #**************************************************************
 # Set Minimum Delay
 #**************************************************************
-
 
 
 #**************************************************************
