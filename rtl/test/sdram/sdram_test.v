@@ -1,6 +1,7 @@
 module sdram_test(
-    input clk50,
-    input reset_n,
+    input  clk50,
+    input  reset_n,
+    output pll_locked,
     
     // SDRAM control
     output        S_CLK,  // SDRAM clock
@@ -18,14 +19,6 @@ module sdram_test(
 assign S_DQM = 2'b11;
 assign S_CLK = sys_clk;
 
-// PLL clock
-wire sys_rst_n;
-system_ctrl	u_system_ctrl (
-    .clk(sys_clk),	         // System clock 100MHZ
-    .rst_n(reset_n),		 // External reset
-    .sys_rst_n(sys_rst_n),	 // Global reset
-    .pll_locked(pll1_locked)
-);
 
 /*******************************/
 // SDRAM read and write test program
@@ -46,7 +39,7 @@ wire [15:0] sdram_dout;      // user interface SDRAM data output
 wire        sdram_init_done; // SDRAM init done
 
 always @ ( negedge sys_clk ) begin
-    if( !sys_rst_n ) begin
+    if( !reset_n ) begin
         i <=  4'd0;
         counter      <=     0;
         wr_length    <=  9'd0;
@@ -121,7 +114,7 @@ wire[22:0] sdram_rdaddr = rd_addr;
 //----------------------------------------------
 sdram_top u_sdramtop (
     .clk   (sys_clk),   // SDRAM reference clock
-    .rst_n (sys_rst_n), // global reset
+    .rst_n (reset_n),   // global reset
 
     // Internal interface
     .sdram_wr_req    (sdram_wr_req),    // SDRAM write request
@@ -153,7 +146,6 @@ sdram_top u_sdramtop (
 );
 
 wire sys_clk;
-wire pll1_locked;
 wire CLK_OUT1;
 wire CLK_OUT2;
 
@@ -163,7 +155,7 @@ wire CLK_OUT2;
         .c1(CLK_OUT1),     // 25.17Mhz  (640x480)
         .c2(CLK_OUT2),     // 40Mhz     (800x600)
         .areset(1'b0),
-        .locked(pll1_locked)
+        .locked(pll_locked)
     );
 
 endmodule

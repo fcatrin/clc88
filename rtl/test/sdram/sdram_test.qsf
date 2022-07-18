@@ -38,7 +38,7 @@
 
 set_global_assignment -name FAMILY "Cyclone IV E"
 set_global_assignment -name DEVICE EP4CE55F23C8
-set_global_assignment -name TOP_LEVEL_ENTITY sdram_test
+set_global_assignment -name TOP_LEVEL_ENTITY sdram_top
 set_global_assignment -name NUM_PARALLEL_PROCESSORS ALL
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 12.1
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "20:42:36  AUGUST 19, 2015"
@@ -56,7 +56,7 @@ set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_RO
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "3.3-V LVTTL"
 set_location_assignment PIN_T2 -to clk50
-set_location_assignment PIN_W13 -to reset_n
+set_location_assignment PIN_W13 -to key_reset
 set_location_assignment PIN_AB4 -to S_NWE
 # set_location_assignment PIN_W7 -to DRAM_UDQM
 # set_location_assignment PIN_AA5 -to DRAM_LDQM
@@ -110,12 +110,13 @@ set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -
 set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -fall
 set_global_assignment -name ENABLE_SIGNALTAP ON
 set_global_assignment -name USE_SIGNALTAP_FILE signaltap.stp
+set_global_assignment -name VERILOG_FILE sdram_sys.v
 set_global_assignment -name VERILOG_FILE sdram_test.v
-set_global_assignment -name VERILOG_FILE system_ctrl.v
 set_global_assignment -name VERILOG_FILE ip/sdram_cmd.v
 set_global_assignment -name VERILOG_FILE ip/sdram_ctrl.v
 set_global_assignment -name VERILOG_FILE ip/sdram_top.v
 set_global_assignment -name VERILOG_FILE ip/sdram_wr_data.v
+set_global_assignment -name VERILOG_FILE ../../common/debouncer.v
 set_global_assignment -name QIP_FILE pll/pll1.qip
 set_global_assignment -name CDF_FILE output_files/sdram_test.cdf
 set_global_assignment -name SIGNALTAP_FILE signaltap.stp

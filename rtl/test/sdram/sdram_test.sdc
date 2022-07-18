@@ -68,52 +68,22 @@ derive_clock_uncertainty
 # Set Clock Groups
 #**************************************************************
 
-# set_clock_groups -asynchronous -group [get_clocks {altera_reserved_tck}] 
-set_clock_groups -logically_exclusive \
-   -group {system_inst|pll1_inst|altpll_component|auto_generated|pll1|clk[0]} \
-   -group {system_inst|pll1_inst|altpll_component|auto_generated|pll1|clk[1]} \
-   -group {system_inst|pll1_inst|altpll_component|auto_generated|pll1|clk[2]} \
-   -group {system_inst|pll2_inst|altpll_component|auto_generated|pll1|clk[0]}
-
 #**************************************************************
 # Set False Path
 #**************************************************************
-set_false_path -from [get_ports altera_reserved_*]
-set_false_path -to   [get_ports altera_reserved_*]
-set_false_path -from [get_ports key_*]
-set_false_path -to   [get_ports vga_*]
-set_false_path -to   [get_ports led_*]
-set_false_path -from [get_ports buttons*]
-set_false_path -from [get_ports uart_*]
-set_false_path -to   [get_ports uart_*]
+# set_false_path -from [get_ports altera_reserved_*]
+# set_false_path -to   [get_ports altera_reserved_*]
+set_false_path -from [get_ports reset_n]
+set_false_path -from [get_ports S_*]
+set_false_path -to   [get_ports S_*]
 
 #**************************************************************
 # Set Multicycle Path
 #**************************************************************
-set_multicycle_path -setup -from *|frame_start_req    -to *_crossclock|pipe* 2
-set_multicycle_path -hold  -from *|frame_start_req    -to *_crossclock|pipe* 1
-set_multicycle_path -setup -from *|scanline_start_req -to *_crossclock|pipe* 2
-set_multicycle_path -hold  -from *|scanline_start_req -to *_crossclock|pipe* 1
-set_multicycle_path -setup -from *|mode_changed_req   -to *_crossclock|pipe* 2
-set_multicycle_path -hold  -from *|mode_changed_req   -to *_crossclock|pipe* 1
-set_multicycle_path -setup -from *|render_start_req   -to *_crossclock|pipe* 2
-set_multicycle_path -hold  -from *|render_start_req   -to *_crossclock|pipe* 1
-set_multicycle_path -setup -from *|pixel_scale_pipe   -to *_crossclock|pipe* 2
-set_multicycle_path -hold  -from *|pixel_scale_pipe   -to *_crossclock|pipe* 1
-
-set_multicycle_path -setup -from *_crossclock|signal  -to *chroni_inst* 2
-set_multicycle_path -hold  -from *_crossclock|signal  -to *chroni_inst* 1
-
-set_multicycle_path -setup -from user_reset   -to *system_inst* 2
-set_multicycle_path -hold  -from user_reset   -to *system_inst* 1
-set_multicycle_path -setup -from boot_reset   -to *system_inst* 2
-set_multicycle_path -hold  -from boot_reset   -to *system_inst* 1
-
 
 #**************************************************************
 # Set Maximum Delay
 #**************************************************************
-
 
 
 #**************************************************************
