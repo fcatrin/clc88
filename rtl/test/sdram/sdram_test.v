@@ -71,14 +71,10 @@ always @ ( negedge sys_clk ) begin
             sdram_wr_req <= 1'b0;
             if( counter == 9'd256 ) begin
                 counter   <= 9'd0;
-                sdram_din <= sdram_din + 1'b1;
                 i <= i + 1'b1;
             end else if (sdram_wr_ack == 1'b1) begin
                 sdram_din <= sdram_din + 1'b1;
                 counter   <= counter + 1'b1;
-            end else begin
-                sdram_din <= sdram_din;
-                counter   <= counter;
             end;
         end
 
@@ -99,7 +95,6 @@ always @ ( negedge sys_clk ) begin
         4'd6: // Read 256 data from SDRAM
             if( counter == 9'd256 ) begin
                 i <= i + 1'b1; // finish state machine
-                counter <= 9'd0;
             end else if (sdram_rd_ack == 1'b1) begin
                 counter <= counter + 1'b1;
             end
@@ -131,7 +126,6 @@ sdram_top u_sdramtop (
     .sdrd_byte (rd_length), // SDRAM read burst length
 
     // SDRAM interface
-    // .sdram_clk   (sdram_clk),  // SDRAM clock
     .sdram_cke   (S_CKE),         // SDRAM clock enable
     .sdram_cs_n  (S_NCS),         // SDRAM chip select
     .sdram_we_n  (S_NWE),         // SDRAM write enable
@@ -140,8 +134,6 @@ sdram_top u_sdramtop (
     .sdram_ba    (S_BA),          // SDRAM data enable (H:8)
     .sdram_addr  (S_A),           // SDRAM data enable (L:8)
     .sdram_data  (S_DB)           // SDRAM bank address
-    // .sdram_udqm  (sdram_udqm), // SDRAM address
-    // .sdram_ldqm  (sdram_ldqm)  // SDRAM data
 );
 
 wire sys_clk;

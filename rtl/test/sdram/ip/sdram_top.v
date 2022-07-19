@@ -53,16 +53,12 @@ wire sys_r_wn;         // SDRAM read/write control signal
 sdram_ctrl module_001 ( // SDRAM state control module
     .clk   (clk),
     .rst_n (rst_n),
-    // .sdram_udqm   (sdram_udqm),
-    // .sdram_ldqm   (sdram_ldqm)
     .sdram_wr_req    (sdram_wr_req),
     .sdram_rd_req    (sdram_rd_req),
     .sdram_wr_ack    (sdram_wr_ack),
     .sdram_rd_ack    (sdram_rd_ack),
     .sdwr_byte       (sdwr_byte),
     .sdrd_byte       (sdrd_byte),
-    // .sdram_busy   (sdram_busy),
-    // .sys_dout_rdy (sys_dout_rdy),
     .sdram_init_done (sdram_init_done),
     .init_state      (init_state),
     .work_state      (work_state),
@@ -93,7 +89,6 @@ sdram_cmd module_002 ( // SDRAM command module
 sdram_wr_data module_003 ( // SDRAM data read and write module
     .clk   (clk),
     .rst_n (rst_n),
-    // .sdram_clk (sdram_clk),
     .sdram_data   (sdram_data),
     .sys_data_in  (sys_data_in),
     .sys_data_out (sys_data_out),
