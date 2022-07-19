@@ -77,7 +77,7 @@ always @ (posedge clk or negedge rst_n) begin
                 2'b00,   // Operation mode setting ({A8,A7}=00), the current operation is the mode register setting
                 3'b011,  // CAS latency setting (set to 3 here, {A6,A5,A4}=011)()
                 1'b0,    // Burst transmission mode (set as sequence here, A3=b0)
-                3'b111   // Burst length (set to 256 here, {A2,A1,A0}=111)
+                3'b011   // Burst length (set to 8 here)
             };
         end
         `I_DONE: case (work_state)

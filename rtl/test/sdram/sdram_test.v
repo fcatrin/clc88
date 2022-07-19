@@ -56,7 +56,7 @@ always @ ( negedge sys_clk ) begin
         4'd1: begin // Send burst write command, write 512 data to SDRAM address 0
             sdram_wr_req <=  1'b1;
             wr_addr      <= 23'd0;
-            wr_length    <=  9'd256;
+            wr_length    <=  9'd8;
             sdram_din    <= 16'd0;
             i <= i + 1'b1;
         end
@@ -69,7 +69,7 @@ always @ ( negedge sys_clk ) begin
 
         4'd3: begin // Write 256 data to SDRAM, add 1 to the data
             sdram_wr_req <= 1'b0;
-            if( counter == 9'd256 ) begin
+            if( counter == 9'd8 ) begin
                 counter   <= 9'd0;
                 i <= i + 1'b1;
             end else if (sdram_wr_ack == 1'b1) begin
@@ -81,7 +81,7 @@ always @ ( negedge sys_clk ) begin
         4'd4: begin // Send burst read command, read 256 data from Sdram address 0 to Sdram address 0
             sdram_rd_req <=  1'b1;
             rd_addr      <= 23'd0;
-            rd_length    <=  9'd256;
+            rd_length    <=  9'd8;
             i <= i + 1'b1;
         end
 
@@ -93,7 +93,7 @@ always @ ( negedge sys_clk ) begin
             end
 
         4'd6: // Read 256 data from SDRAM
-            if( counter == 9'd256 ) begin
+            if( counter == 9'd8 ) begin
                 i <= i + 1'b1; // finish state machine
             end else if (sdram_rd_ack == 1'b1) begin
                 counter <= counter + 1'b1;
