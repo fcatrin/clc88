@@ -1,57 +1,33 @@
 `timescale 1ns / 1ps
+
 ////////////////////////////////////////////////////////////////////////////////
-// Description	: SDRAM state control module
-//                SDRAM initialization and timing refresh, read and write control
-// Revision		: V1.0
-// Additional Comments	:  
-// 
+// SDRAM state control module
+// SDRAM initialization and timing refresh, read and write control
 ////////////////////////////////////////////////////////////////////////////////
-module sdram_ctrl(
-    clk,
-    rst_n,
-    // sdram_udqm,
-    // sdram_ldqm,
-    sdram_wr_req,
-    sdram_rd_req,
-    sdwr_byte,
-    sdrd_byte,
-    sdram_wr_ack,
-    sdram_rd_ack,
-    // sdram_busy,
-    sdram_init_done,
-    init_state,
-    work_state,
-    cnt_clk,
-    sys_r_wn
+
+module sdram_ctrl (
+    // System signal interface
+    input clk,   // System clock, 100MHz
+    input rst_n, // Reset signal, active low
+
+    // SDRAM package interface
+    input      sdram_wr_req, // System write SDRAM request signal
+    input      sdram_rd_req, // System read SDRAM request signal
+    input[8:0] sdwr_byte,    // Burst write SDRAM bytes (1-256)
+    input[8:0] sdrd_byte,    // Burst read SDRAM bytes (1-256)
+    output     sdram_wr_ack, // System write SDRAM response signal
+    output     sdram_rd_ack, // System read SDRAM response signal
+
+    // SDRAM internal interface
+    output[3:0] init_state,	 // SDRAM initialization register
+    output[3:0] work_state,	 // SDRAM working status register
+    output[8:0] cnt_clk,     // clock count
+    output reg  sys_r_wn,    // SDRAM read/write control signal
+
+    output sdram_init_done   // System initialization complete signal
     );
 
-// System signal interface
-input clk;   // System clock, 100MHz
-input rst_n; // Reset signal, active low
-
-// SDRAM hardware interface
-// output sdram_udqm;	// SDRAM high byte mask
-// output sdram_ldqm;	// SDRAM low byte mask
-
-// SDRAM package interface
-input      sdram_wr_req; // System write SDRAM request signal
-input      sdram_rd_req; // System read SDRAM request signal
-input[8:0] sdwr_byte;    // Burst write SDRAM bytes (1-256)
-input[8:0] sdrd_byte;    // Burst read SDRAM bytes (1-256)
-output     sdram_wr_ack; // The system writes the SDRAM response signal as the output valid signal of wrFIFO
-output     sdram_rd_ack; // System read SDRAM response signal
-
-output	sdram_init_done; // System initialization complete signal
-// output sdram_busy;    // SDRAM busy flag, high means busy
-
-// SDRAM internal interface
-output[3:0] init_state;	 // SDRAM initialization register
-output[3:0] work_state;	 // SDRAM working status register
-output[8:0] cnt_clk;     // clock count
-output      sys_r_wn;    // SDRAM read/write control signal
-
 wire done_200us;         // 200us input stable period end flag after power-on
-// wire sdram_init_done; // SDRAM initialization complete flag, high indicates completion
 wire sdram_busy;         // SDRAM busy flag, high indicates that SDRAM is working
 reg  sdram_ref_req;      // SDRAM self-refresh request signal
 wire sdram_ref_ack;      // SDRAM self-refresh request response signal
@@ -61,9 +37,9 @@ wire sdram_ref_ack;      // SDRAM self-refresh request response signal
 // SDRAM timing delay parameters
 parameter TRP_CLK       = 9'd4,//1,   // TRP=18ns precharge effective period
           TRFC_CLK      = 9'd6,//3,   // TRC=60ns automatic pre-refresh cycle
-          TMRD_CLK      = 9'd6,//2,   // The mode register sets the wait clock cycle
+          TMRD_CLK      = 9'd6,//2,   // Mode register set wait cycles
           TRCD_CLK      = 9'd2,//1,   // TRCD=18ns row strobe period
-          TCL_CLK       = 9'd3,       // Latency TCL_CLK=3 CLKs, which can be set in the initialization mode register
+          TCL_CLK       = 9'd3,       // Activation wait cycles
           // TREAD_CLK  = 9'd256,//8, // Burst read data cycle 8CLK
           // TWRITE_CLK = 9'd256,//8, // Burst write data 8CLK
           TDAL_CLK      = 9'd3;	      // write wait
@@ -134,7 +110,6 @@ always @ (posedge clk or negedge rst_n)
 // SDRAM read and write and self-refresh operation state machine
 //------------------------------------------------------------------------------
 reg[3:0] work_state_r; // SDRAM read and write status
-reg sys_r_wn;          // SDRAM read/write control signal
 
 always @ (posedge clk or negedge rst_n) begin
     if (!rst_n)
@@ -170,7 +145,7 @@ always @ (posedge clk or negedge rst_n) begin
 					
         // read data status
         `W_READ:    work_state_r <= `W_CL;
-        // waiting incubation period
+        // waiting activation period
         `W_CL:      work_state_r <= (`end_tcl) ? `W_RD:`W_CL;
         // read data
         `W_RD:      work_state_r <= (`end_tread) ? `W_IDLE:`W_RD;

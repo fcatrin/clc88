@@ -1,57 +1,37 @@
 `timescale 1ns / 1ps
+
 ////////////////////////////////////////////////////////////////////////////////
 // Description	: SDRAM command module
-//				
-// Revision		: V1.0
-// Additional Comments	:  
-// 
 ////////////////////////////////////////////////////////////////////////////////
-module sdram_cmd(
-    clk,
-    rst_n,
-    sdram_cke,
-    sdram_cs_n,
-    sdram_ras_n,
-    sdram_cas_n,
-    sdram_we_n,
-    sdram_ba,
-    sdram_addr,
-    sys_wraddr,
-    sys_rdaddr,
-    sdwr_byte,
-    sdrd_byte,
-    init_state,
-    work_state,
-    sys_r_wn,
-    cnt_clk
+
+module sdram_cmd (
+    // System signals
+    input clk,                  // System clock, 100MHz
+    input rst_n,                // Reset signal, active low
+
+    // SDRAM hardware interface
+    output       sdram_cke,     // SDRAM clock valid signal
+    output       sdram_cs_n,    // SDRAM chip select signal
+    output       sdram_ras_n,   // SDRAM row address strobe
+    output       sdram_cas_n,   // SDRAM column address strobe
+    output       sdram_we_n,    // SDRAM write enable bit
+    output [1:0] sdram_ba,      // L-Bank address line of SDRAM
+    output[12:0] sdram_addr,    // SDRAM address bus
+
+    // SDRAM package interface
+    input[22:0] sys_wraddr,	    // Address register when writing SDRAM
+    input[22:0] sys_rdaddr,	    // Address register when reading from SDRAM
+    input [8:0] sdwr_byte,	    // Burst write SDRAM bytes (1-256)
+    input [8:0] sdrd_byte,	    // Burst read SDRAM bytes (1-256)
+
+    // SDRAM internal interface
+    input [3:0] init_state,	    // SDRAM initialization status register
+    input [3:0] work_state,	    // SDRAM read and write status register
+    input       sys_r_wn,       // SDRAM read/write control signal
+    input [8:0] cnt_clk         // clock count
     );
 
-// System signals
-input clk;                  // 100MHz
-input rst_n;                // Low level reset signal
-
-// SDRAM hardware interface
-output       sdram_cke;     // SDRAM clock valid signal
-output       sdram_cs_n;    // SDRAM chip select signal
-output       sdram_ras_n;   // SDRAM row address strobe
-output       sdram_cas_n;   // SDRAM column address strobe
-output       sdram_we_n;    // SDRAM write enable bit
-output [1:0] sdram_ba;      // L-Bank address line of SDRAM
-output[12:0] sdram_addr;    // SDRAM address bus
-
-// SDRAM package interface
-input[22:0] sys_wraddr;	    // Address register when writing SDRAM, (bit21-20) L-Bank address: (bit19-8) is the row address, (bit7-0) is the column address
-input[22:0] sys_rdaddr;	    // When reading SDRAM, the address register, (bit21-20) L-Bank address: (bit19-8) is the row address, (bit7-0) is the column address
-input [8:0] sdwr_byte;	    // Burst write SDRAM bytes (1-256)
-input [8:0] sdrd_byte;	    // Burst read SDRAM bytes (1-256)
-
-// SDRAM internal interface
-input [3:0] init_state;	    // SDRAM initialization status register
-input [3:0] work_state;	    // SDRAM read and write status register
-input       sys_r_wn;       // SDRAM read/write control signal
-input [8:0] cnt_clk;        // clock count
-
-`include "sdram_para.v"     // Contains SDRAM parameter definition module
+`include "sdram_para.v" // Contains SDRAM parameter definition module
 
 //-------------------------------------------------------------------------------
 reg [4:0] sdram_cmd_r; // SDRAM Operation Commands
