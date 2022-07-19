@@ -3,6 +3,7 @@
 module sdram_sys (
     input clk50,
     input key_reset,
+    input key_start,
 
     // SDRAM control
     output        S_CLK,  // SDRAM clock
@@ -47,6 +48,7 @@ end
 sdram_test sdram_test_inst (
   .clk50(clk50),
   .reset_n(!sys_reset),
+  .start_n(key_start_pressed),
   .pll_locked(pll_locked),
   .S_CLK(S_CLK),
   .S_CKE(S_CKE),
@@ -65,6 +67,13 @@ debouncer debounce_key_reset (
   .clk(clk50),
   .in(key_reset),
   .out(key_reset_pressed)
+);
+
+wire key_start_pressed;
+debouncer debounce_key_start (
+  .clk(clk50),
+  .in(key_start),
+  .out(key_start_pressed)
 );
 
 endmodule

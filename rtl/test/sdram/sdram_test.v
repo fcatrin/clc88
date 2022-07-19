@@ -1,6 +1,7 @@
 module sdram_test(
     input  clk50,
     input  reset_n,
+    input  start_n,
     output pll_locked,
     
     // SDRAM control
@@ -49,7 +50,7 @@ always @ ( negedge sys_clk ) begin
         sdram_din    <= 16'd0;
     end else case( i )
         4'd0:       // Wait for SDRAM initialization to complete
-            if( sdram_init_done ) i<=i+1'b1;
+            if( sdram_init_done & !start_n) i<=i+1'b1;
             else i<=4'd0;
 
         4'd1: begin // Send burst write command, write 512 data to SDRAM address 0

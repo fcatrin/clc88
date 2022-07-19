@@ -75,6 +75,7 @@ derive_clock_uncertainty
 # set_false_path -from [get_ports altera_reserved_*]
 # set_false_path -to   [get_ports altera_reserved_*]
 set_false_path -from [get_ports key_reset]
+set_false_path -from [get_ports key_start]
 set_false_path -from [get_ports S_*]
 set_false_path -to   [get_ports S_*]
 

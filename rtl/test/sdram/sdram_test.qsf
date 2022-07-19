@@ -57,6 +57,7 @@ set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "3.3-V LVTTL"
 set_location_assignment PIN_T2 -to clk50
 set_location_assignment PIN_W13 -to key_reset
+set_location_assignment PIN_Y13 -to key_start
 set_location_assignment PIN_AB4 -to S_NWE
 set_location_assignment PIN_W7 -to S_DQM[1]
 set_location_assignment PIN_AA5 -to S_DQM[0]
