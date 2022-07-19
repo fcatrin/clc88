@@ -37,7 +37,7 @@ reg	 [15:0] sdram_din;       // user interface SDRAM data input
 wire [15:0] sdram_dout;      // user interface SDRAM data output
 wire        sdram_init_done; // SDRAM init done
 
-always @ ( negedge sys_clk ) begin
+always @ ( posedge sys_clk ) begin
     if( !reset_n ) begin
         i <=  4'd0;
         counter      <=     0;
@@ -57,7 +57,7 @@ always @ ( negedge sys_clk ) begin
             sdram_wr_req <=  1'b1;
             wr_addr      <= 23'd0;
             wr_length    <=  9'd8;
-            sdram_din    <= 16'd0;
+            sdram_din    <= 16'h5500;
             i <= i + 1'b1;
         end
 
@@ -67,7 +67,7 @@ always @ ( negedge sys_clk ) begin
                 counter <= counter + 1'b1;
             end
 
-        4'd3: begin // Write 256 data to SDRAM, add 1 to the data
+        4'd3: begin // Write 8 data to SDRAM, add 1 to the data
             sdram_wr_req <= 1'b0;
             if( counter == 9'd8 ) begin
                 counter   <= 9'd0;
@@ -78,7 +78,7 @@ always @ ( negedge sys_clk ) begin
             end;
         end
 
-        4'd4: begin // Send burst read command, read 256 data from Sdram address 0 to Sdram address 0
+        4'd4: begin // Send burst read command, read 9 data from SDRAM
             sdram_rd_req <=  1'b1;
             rd_addr      <= 23'd0;
             rd_length    <=  9'd8;
@@ -92,7 +92,7 @@ always @ ( negedge sys_clk ) begin
                 counter      <= counter + 1'b1;
             end
 
-        4'd6: // Read 256 data from SDRAM
+        4'd6: // Read 8 data from SDRAM
             if( counter == 9'd8 ) begin
                 i <= i + 1'b1; // finish state machine
             end else if (sdram_rd_ack == 1'b1) begin
