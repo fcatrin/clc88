@@ -23,8 +23,8 @@ module sdram_top (
     output sdram_wr_ack,  // System write SDRAM response signal
     output sdram_rd_ack,  // System read SDRAM response signal
 
-    input [22:0] sys_wraddr,   // Address register when writing SDRAM
-    input [22:0] sys_rdaddr,   // Address register when reading SDRAM
+    input [23:0] sys_wraddr,   // Address register when writing SDRAM
+    input [23:0] sys_rdaddr,   // Address register when reading SDRAM
     input [15:0] sys_data_in,  // System to SDRAM data
     output[15:0] sys_data_out, // SDRAM to System data
     input  [8:0] sdwr_byte,    // Burst write SDRAM bytes (1-256)

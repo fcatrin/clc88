@@ -35,13 +35,13 @@ wire sdram_ref_ack;      // SDRAM self-refresh request response signal
 `include "sdram_para.v"	 // Contains SDRAM parameter definition module
 
 // SDRAM timing delay parameters
-parameter TRP_CLK       = 9'd4,//1,   // TRP=18ns precharge effective period
-          TRFC_CLK      = 9'd6,//3,   // TRC=60ns automatic pre-refresh cycle
-          TMRD_CLK      = 9'd6,//2,   // Mode register set wait cycles
-          TRCD_CLK      = 9'd2,//1,   // TRCD=18ns row strobe period
+parameter TRP_CLK       = 9'd4,       // TRP=18ns precharge effective period
+          TRFC_CLK      = 9'd6,       // TRC=60ns automatic pre-refresh cycle
+          TMRD_CLK      = 9'd6,       // Mode register set wait cycles
+          TRCD_CLK      = 9'd2,       // TRCD=18ns row strobe period
           TCL_CLK       = 9'd3,       // Activation wait cycles
-          // TREAD_CLK  = 9'd256,//8, // Burst read data cycle 8CLK
-          // TWRITE_CLK = 9'd256,//8, // Burst write data 8CLK
+          // TREAD_CLK  = 9'd256,     // Burst read data cycle 8CLK
+          // TWRITE_CLK = 9'd256,     // Burst write data 8CLK
           TDAL_CLK      = 9'd3;	      // write wait
 
 //------------------------------------------------------------------------------

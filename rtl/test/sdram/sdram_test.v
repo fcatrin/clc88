@@ -31,8 +31,8 @@ wire        sdram_wr_ack;    // SDRAM burst write response
 wire        sdram_rd_ack;    // SDRAM burst read response
 reg	  [8:0] wr_length;       // user interface SDRAM write burst length
 reg	  [8:0] rd_length;       // user interface SDRAM read burst length
-reg	 [22:0] wr_addr;         // user interface SDRAM start write address
-reg	 [22:0] rd_addr;         // user interface SDRAM start read address
+reg	 [23:0] wr_addr;         // user interface SDRAM start write address
+reg	 [23:0] rd_addr;         // user interface SDRAM start read address
 reg	 [15:0] sdram_din;       // user interface SDRAM data input
 wire [15:0] sdram_dout;      // user interface SDRAM data output
 wire        sdram_init_done; // SDRAM init done
@@ -45,8 +45,8 @@ always @ ( posedge sys_clk ) begin
         rd_length    <=  9'd0;
         sdram_wr_req <=  1'b0;
         sdram_rd_req <=  1'b0;
-        wr_addr      <= 23'd0;
-        rd_addr      <= 23'd0;
+        wr_addr      <= 24'd0;
+        rd_addr      <= 24'd0;
         sdram_din    <= 16'd0;
     end else case( i )
         4'd0:       // Wait for SDRAM initialization to complete
@@ -55,7 +55,7 @@ always @ ( posedge sys_clk ) begin
 
         4'd1: begin // Send burst write command, write 512 data to SDRAM address 0
             sdram_wr_req <=  1'b1;
-            wr_addr      <= 23'd0;
+            wr_addr      <= 24'd0;
             wr_length    <=  9'd8;
             sdram_din    <= 16'h5500;
             i <= i + 1'b1;
@@ -80,7 +80,7 @@ always @ ( posedge sys_clk ) begin
 
         4'd4: begin // Send burst read command, read 9 data from SDRAM
             sdram_rd_req <=  1'b1;
-            rd_addr      <= 23'd0;
+            rd_addr      <= 24'd0;
             rd_length    <=  9'd8;
             i <= i + 1'b1;
         end
@@ -101,8 +101,8 @@ always @ ( posedge sys_clk ) begin
         endcase
 end
 
-wire[22:0] sdram_wraddr = wr_addr;
-wire[22:0] sdram_rdaddr = rd_addr;
+wire[23:0] sdram_wraddr = wr_addr;
+wire[23:0] sdram_rdaddr = rd_addr;
 
 // SDRAM read and write control section
 //----------------------------------------------

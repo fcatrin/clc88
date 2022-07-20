@@ -19,8 +19,8 @@ module sdram_cmd (
     output[12:0] sdram_addr,    // SDRAM address bus
 
     // SDRAM package interface
-    input[22:0] sys_wraddr,	    // Address register when writing SDRAM
-    input[22:0] sys_rdaddr,	    // Address register when reading from SDRAM
+    input[23:0] sys_wraddr,	    // Address register when writing SDRAM
+    input[23:0] sys_rdaddr,	    // Address register when reading from SDRAM
     input [8:0] sdwr_byte,	    // Burst write SDRAM bytes (1-256)
     input [8:0] sdrd_byte,	    // Burst read SDRAM bytes (1-256)
 
@@ -44,7 +44,7 @@ assign sdram_addr = sdram_addr_r;
 
 //-------------------------------------------------------------------------------
 // SDRAM command parameter assignment
-wire[22:0] sys_addr; // Address register when reading and writing SDRAM, (bit22-21) L-Bank address: (bit20-8) is the row address, (bit7-0) is the column address
+wire[23:0] sys_addr; // Address register when reading and writing SDRAM, (bit22-21) L-Bank address: (bit20-8) is the row address, (bit7-0) is the column address
 assign sys_addr = sys_r_wn ? sys_rdaddr : sys_wraddr; // Read/Write Address Bus Switch Control
 	
 always @ (posedge clk or negedge rst_n) begin
@@ -88,15 +88,15 @@ always @ (posedge clk or negedge rst_n) begin
             end
             `W_ACTIVE: begin
                 sdram_cmd_r  <= `CMD_ACTIVE;
-                sdram_ba_r   <= sys_addr[22:21]; // L-Bank address
-                sdram_addr_r <= sys_addr[20:8];  // line address
+                sdram_ba_r   <= sys_addr[23:22]; // L-Bank address
+                sdram_addr_r <= sys_addr[21:9];  // row address
             end
             `W_READ: begin
                 sdram_cmd_r  <= `CMD_READ;
-                sdram_ba_r   <= sys_addr[22:21]; // L-Bank address
+                sdram_ba_r   <= sys_addr[23:22]; // L-Bank address
                 sdram_addr_r <= {
-                    5'b00100,      // A10=1, set write completion to allow precharge
-                    sys_addr[7:0]  // column address
+                    4'b0010,       // A10=1, set write completion to allow precharge
+                    sys_addr[8:0]  // column address
                 };
             end
             `W_RD: if(`end_rdburst) begin
@@ -108,10 +108,10 @@ always @ (posedge clk or negedge rst_n) begin
             end
             `W_WRITE: begin
                 sdram_cmd_r  <= `CMD_WRITE;
-                sdram_ba_r   <= sys_addr[22:21]; // L-Bank address
+                sdram_ba_r   <= sys_addr[23:22]; // L-Bank address
                 sdram_addr_r <= {
-                    5'b00100,      // A10=1, set write completion to allow precharge
-                    sys_addr[7:0]  // column address
+                    4'b0010,       // A10=1, set write completion to allow precharge
+                    sys_addr[8:0]  // column address
                 };
             end
             `W_WD: if(`end_wrburst) begin
