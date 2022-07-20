@@ -137,13 +137,11 @@ sdram_top u_sdramtop (
 );
 
 wire sys_clk;
-wire clk_disconnected;
 assign S_CLK = sys_clk;
 
 pll	pll_inst (
 	.inclk0(clk50),
 	.c0(sys_clk),        // 100Mhz    (system)
-	.c1(clk_disconnected),          // 100Mhz    (SDRAM clock)
 	.locked(pll_locked)
 	);
 
