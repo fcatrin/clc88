@@ -113,10 +113,10 @@ set_global_assignment -name ENABLE_SIGNALTAP ON
 set_global_assignment -name USE_SIGNALTAP_FILE signaltap.stp
 set_global_assignment -name VERILOG_FILE sdram_sys.v
 set_global_assignment -name VERILOG_FILE sdram_test.v
-set_global_assignment -name VERILOG_FILE ip/sdram_cmd.v
-set_global_assignment -name VERILOG_FILE ip/sdram_ctrl.v
-set_global_assignment -name VERILOG_FILE ip/sdram_top.v
-set_global_assignment -name VERILOG_FILE ip/sdram_wr_data.v
+set_global_assignment -name VERILOG_FILE ../../common/sdram/sdram_cmd.v
+set_global_assignment -name VERILOG_FILE ../../common/sdram/sdram_ctrl.v
+set_global_assignment -name VERILOG_FILE ../../common/sdram/sdram_top.v
+set_global_assignment -name VERILOG_FILE ../../common/sdram/sdram_wr_data.v
 set_global_assignment -name VERILOG_FILE ../../common/debouncer.v
 set_global_assignment -name QIP_FILE pll/pll.qip
 set_global_assignment -name CDF_FILE output_files/sdram_test.cdf
