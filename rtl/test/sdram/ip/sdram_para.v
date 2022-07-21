@@ -55,6 +55,8 @@
 `define end_trwait   cnt_clk_r == TRP_CLK
 
 // SDRAM control signal command
+//           cke | cs_n | ras_n | cas_n | we_n
+//                      esrcn
 `define CMD_INIT     5'b01111 // Power-on initialization command port
 `define CMD_NOP      5'b10111 // NOP COMMAND
 `define CMD_ACTIVE   5'b10011 // ACTIVE COMMAND
