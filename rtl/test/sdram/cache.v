@@ -70,6 +70,13 @@ reg               line_valid  [0:CACHE_MD-1];
                       -> READ SDRAM -> WRITE DONE
                       -> EVICT -> READ SRAM -> READ DONE
 
+    Evict / Replace logic:
+    * Avoid replacing a dirty line
+    * replace_w1 if neither line is candidate
+
+    replace_w0 = dirty_w1 | !lru;
+    replace_w1 = dirty_w0 | lru | !replace_w0;
+
 */
 
 localparam CA_IDLE       = 0;
@@ -81,9 +88,13 @@ localparam CA_EVICT      = 6;
 localparam CA_WRITE_REQ  = 7;
 localparam CA_WRITE_DONE = 8;
 
+reg[3:0] index;
+wire lru = line_lru[index];
+wire[4:0] index_0 = {index, 1'b0};
+wire[4:0] index_1 = {index, 1'b1};
+
 always @ (posedge sys_clk or negedge reset_n) begin
     reg[3:0] ca_state;
-    reg[3:0] index;
     reg[TAG_SIZE-1:0] tag;
     reg valid_w0;
     reg valid_w1;
@@ -92,6 +103,8 @@ always @ (posedge sys_clk or negedge reset_n) begin
     reg[15:0] data;
     reg cache_way;
     reg[4:0]  fetch_count;
+    reg replace_w0;
+    reg replace_w1;
 
     read_ack <= 0;
     write_ack <= 0;
@@ -102,8 +115,11 @@ always @ (posedge sys_clk or negedge reset_n) begin
             if (read_req | write_req) begin
                 index = address[8:5];
                 tag   = address[16:9];
-                valid_w0 <= line_valid[{index, 0}] && line_tag[{index, 0}] == tag;
-                valid_w1 <= line_valid[{index, 1}] && line_tag[{index, 1}] == tag;
+                valid_w0 <= line_valid[index_0] && line_tag[index_0] == tag;
+                valid_w1 <= line_valid[index_1] && line_tag[index_1] == tag;
+
+                replace_w0 = line_dirty[index_0] | !lru;
+                replace_w1 = line_dirty[index_1] | lru | !replace_w0;
 
                 // optimistic read
                 cache_address <= {index, address[4:1]};
@@ -116,10 +132,12 @@ always @ (posedge sys_clk or negedge reset_n) begin
                 line_lru[index] <= !valid_w0;
                 ca_state <= CA_READ_DONE;
                 read_ack <= 1'b1;
+            end else if ((replace_w0 && line_dirty[index_0]) || (replace_w1 && line_dirty[index_1])) begin
+                ca_state <= CA_EVICT;
             end else begin
                 sdram_address <= {tag, index};
                 sdram_read_req <= 1'b1;
-                cache_way <= line_lru[index];
+                cache_way <= lru;
                 ca_state <= CA_READ_SDRAM;
             end
         CA_READ_DONE: begin
