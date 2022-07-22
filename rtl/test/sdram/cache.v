@@ -14,12 +14,12 @@ module cache (
     output reg  write_ack,
 
     // SDRAM interface
-    output[23:0] sdram_address,
-    output[15:0] sdram_data_write,
-    output[15:0] sdram_data_read,
-    output[1:0]  sdram_byte_mask,
-    output       sdram_read_req,
-    output       sdram_write_req,
+    output reg[23:0] sdram_address,
+    output reg[15:0] sdram_data_write,
+    output reg[15:0] sdram_data_read,
+    output reg[1:0]  sdram_byte_mask,
+    output reg   sdram_read_req,
+    output reg   sdram_write_req,
     input        sdram_read_ack,
     input        sdram_write_ack
 );
@@ -76,12 +76,13 @@ localparam CA_IDLE       = 0;
 localparam CA_READ_REQ   = 1;
 localparam CA_READ_DONE  = 2;
 localparam CA_READ_SDRAM = 3;
-localparam CA_EVICT      = 4;
-localparam CA_WRITE_REQ  = 6;
-localparam CA_WRITE_DONE = 7;
+localparam CA_FETCH      = 5;
+localparam CA_EVICT      = 6;
+localparam CA_WRITE_REQ  = 7;
+localparam CA_WRITE_DONE = 8;
 
 always @ (posedge sys_clk or negedge reset_n) begin
-    reg[2:0] ca_state;
+    reg[3:0] ca_state;
     reg[3:0] index;
     reg[TAG_SIZE-1:0] tag;
     reg valid_w0;
@@ -89,6 +90,8 @@ always @ (posedge sys_clk or negedge reset_n) begin
     reg[INDEX_SIZE + LINE_SIZE - 1:0] cache_addr_0;
     reg[INDEX_SIZE + LINE_SIZE - 1:0] cache_addr_1;
     reg[15:0] data;
+    reg cache_way;
+    reg[4:0]  fetch_count;
 
     read_ack <= 0;
     write_ack <= 0;
@@ -110,16 +113,41 @@ always @ (posedge sys_clk or negedge reset_n) begin
         end
         CA_READ_REQ:
             if (valid_w0 || valid_w1) begin
+                line_lru[index] <= !valid_w0;
                 ca_state <= CA_READ_DONE;
                 read_ack <= 1'b1;
             end else begin
+                sdram_address <= {tag, index};
+                sdram_read_req <= 1'b1;
+                cache_way <= line_lru[index];
+                ca_state <= CA_READ_SDRAM;
             end
         CA_READ_DONE: begin
             data = valid_w0 ? q0 : q1;
             data_read <= address[0] ? data[7:0] : data[15:8];
             ca_state <= CA_IDLE;
         end
+        CA_READ_SDRAM: if (sdram_read_ack) begin
+            ca_state <= CA_FETCH;
+            cache_address <= {index, 0};
+            fetch_count <= 0;
+        end
+        CA_FETCH: if (fetch_count != 8) begin
+            cache_data_write <= sdram_data_read;
+            cache_wr_en_w0 <= cache_way == 0;
+            cache_wr_en_w1 <= cache_way == 1;
+            fetch_count <= fetch_count + 1'b1;
 
+            // output data as soon as it arrives
+            if (fetch_count == address[4:1]) begin
+                data_read <= address[0] ? sdram_data_read[7:0] : sdram_data_read[15:8];
+                read_ack <= 1'b1;
+            end
+        end else begin
+            valid_w0 = cache_wr_en_w0;
+            valid_w1 = cache_wr_en_w1;
+            ca_state <= CA_IDLE;
+        end
     endcase
 end
 
