@@ -1,5 +1,7 @@
 `timescale 1ns / 1ps
 
+//`define ALTSYNCRAM
+
 module cache (
     input sys_clk,
     input reset_n,
@@ -200,10 +202,13 @@ always @ (posedge sys_clk or negedge reset_n) begin
     endcase
 end
 
-reg[15:0] cache_address;
+reg[7:0]  cache_address;
 reg[15:0] cache_data_write;
 reg cache_wr_en_w0;
 reg cache_wr_en_w1;
+
+`ifdef ALTSYNCRAM
+
 wire[15:0] q0;
 wire[15:0] q1;
 
@@ -223,5 +228,26 @@ spram #(256, 8, 16) cache_w1 (
     .q(q1)
     );
 
+`else
 
+reg[15:0] mem0[0:255];
+reg[15:0] mem1[0:255];
+reg[15:0] q0;
+reg[15:0] q1;
+
+always @(posedge sys_clk) begin
+    if (cache_wr_en_w0) begin
+        mem0[cache_address] <= cache_data_write;
+    end
+    q0 <= mem0[cache_address];
+end
+
+always @(posedge sys_clk) begin
+    if (cache_wr_en_w1) begin
+        mem1[cache_address] <= cache_data_write;
+    end
+    q1 <= mem1[cache_address];
+end
+
+`endif
 endmodule
