@@ -79,14 +79,17 @@ reg               line_valid  [0:CACHE_MD-1];
 
 */
 
-localparam CA_IDLE       = 0;
-localparam CA_READ_REQ   = 1;
-localparam CA_READ_DONE  = 2;
-localparam CA_READ_SDRAM = 3;
-localparam CA_FETCH      = 5;
-localparam CA_EVICT      = 6;
-localparam CA_WRITE_REQ  = 7;
-localparam CA_WRITE_DONE = 8;
+localparam CA_IDLE        =  0;
+localparam CA_READ_REQ    =  1;
+localparam CA_READ_DONE   =  2;
+localparam CA_READ_SDRAM  =  3;
+localparam CA_FETCH       =  5;
+localparam CA_EVICT       =  6;
+localparam CA_WRITE_REQ   =  7;
+localparam CA_WRITE_DONE  =  8;
+localparam CA_WRITE_START =  9;
+localparam CA_WRITE_BACK  = 10;
+localparam CA_WAIT_BRAM   = 11;
 
 reg[3:0] index;
 wire lru = line_lru[index];
@@ -103,6 +106,7 @@ always @ (posedge sys_clk or negedge reset_n) begin
     reg[15:0] data;
     reg cache_way;
     reg[4:0]  fetch_count;
+    reg[4:0]  write_count;
     reg replace_w0;
     reg replace_w1;
 
@@ -127,7 +131,8 @@ always @ (posedge sys_clk or negedge reset_n) begin
                 ca_state <= read_req ? CA_READ_REQ : CA_WRITE_REQ;
             end
         end
-        CA_READ_REQ:
+        CA_READ_REQ: begin
+            cache_way <= replace_w0 ? 0 : 1;
             if (valid_w0 || valid_w1) begin
                 line_lru[index] <= !valid_w0;
                 ca_state <= CA_READ_DONE;
@@ -135,11 +140,11 @@ always @ (posedge sys_clk or negedge reset_n) begin
             end else if ((replace_w0 && line_dirty[index_0]) || (replace_w1 && line_dirty[index_1])) begin
                 ca_state <= CA_EVICT;
             end else begin
-                sdram_address <= {tag, index};
+                sdram_address <= {tag, index, 4'b0};
                 sdram_read_req <= 1'b1;
-                cache_way <= lru;
                 ca_state <= CA_READ_SDRAM;
             end
+        end
         CA_READ_DONE: begin
             data = valid_w0 ? q0 : q1;
             data_read <= address[0] ? data[7:0] : data[15:8];
@@ -147,7 +152,7 @@ always @ (posedge sys_clk or negedge reset_n) begin
         end
         CA_READ_SDRAM: if (sdram_read_ack) begin
             ca_state <= CA_FETCH;
-            cache_address <= {index, 0};
+            cache_address <= {index, 4'b0};
             fetch_count <= 0;
         end
         CA_FETCH: if (fetch_count != 8) begin
@@ -155,6 +160,7 @@ always @ (posedge sys_clk or negedge reset_n) begin
             cache_wr_en_w0 <= cache_way == 0;
             cache_wr_en_w1 <= cache_way == 1;
             fetch_count <= fetch_count + 1'b1;
+            cache_address <= cache_address + 1'b1;
 
             // output data as soon as it arrives
             if (fetch_count == address[4:1]) begin
@@ -162,9 +168,34 @@ always @ (posedge sys_clk or negedge reset_n) begin
                 read_ack <= 1'b1;
             end
         end else begin
-            valid_w0 = cache_wr_en_w0;
-            valid_w1 = cache_wr_en_w1;
+            line_valid[cache_way ? index_0 : index_1] = 1'b1;
             ca_state <= CA_IDLE;
+        end
+        CA_EVICT: begin
+            cache_way <= replace_w0 ? 0 : 1;
+            cache_address <= {index, 0};
+            ca_state <= CA_WAIT_BRAM;
+        end
+        CA_WAIT_BRAM: begin
+            ca_state <= CA_WRITE_START;
+        end
+        CA_WRITE_START: begin
+            sdram_address <= {line_tag[replace_w0 ? index_0 : index_1], index, 4'b0};
+            sdram_data_write <= cache_way ? q1 : q0;
+            sdram_write_req <= 1'b1;
+            write_count <= 0;
+            ca_state <= CA_WRITE_BACK;
+        end
+        CA_WRITE_BACK: if (sdram_write_ack) begin
+            sdram_address <= sdram_address + 1'b1;
+            sdram_data_write <= cache_way ? q1 : q0;
+            sdram_write_req <= 1'b1;
+            if (write_count == 7) begin
+                line_dirty[cache_way ? index_1 : index_0] = 1'b0;
+                ca_state <= CA_READ_REQ;
+            end else begin
+                write_count <= write_count + 1'b1;
+            end
         end
     endcase
 end
