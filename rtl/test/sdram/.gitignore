@@ -2,3 +2,7 @@ db
 incremental_db
 output_files
 greybox_tmp
+obj_dir
+waveform.vcd
+.stamp.verilate
+*.qws

@@ -13,3 +13,6 @@ obj_dir/Vcache
 # check results
 gtkwave waveform.vcd
 
+
+Tutorial from: https://www.itsembedded.com/dhd/verilator_1/
+
