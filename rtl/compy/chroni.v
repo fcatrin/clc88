@@ -793,6 +793,7 @@ module chroni (
          .address(tile_buffer_addr),
          .clock(sys_clk),
          .data(tile_buffer_data_wr),
+         .byte_en(2'b11),
          .wren(tile_buffer_we),
          .q(tile_buffer_data_rd)
       );

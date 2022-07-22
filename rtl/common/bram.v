@@ -10,12 +10,14 @@ module spram
          clock,
          data,
          wren,
+         byte_en,
          q);
 
    input [addr_width-1:0]  address;
    input   clock;
    input [data_width-1:0]  data;
    input   wren;
+   input [1:0] byte_en;
    output   [data_width-1:0]  q;
    `ifndef ALTERA_RESERVED_QIS
       // synopsys translate_off
@@ -39,8 +41,8 @@ module spram
          .address_b (1'b1),
          .addressstall_a (1'b0),
          .addressstall_b (1'b0),
-         .byteena_a (1'b1),
-         .byteena_b (1'b1),
+         .byteena_a (data_width == 8 | byte_en),
+         .byteena_b (data_width == 8 | byte_en),
          .clock1 (1'b1),
          .clocken0 (1'b1),
          .clocken1 (1'b1),
