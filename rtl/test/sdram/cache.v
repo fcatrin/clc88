@@ -84,13 +84,13 @@ localparam CA_IDLE        =  0;
 localparam CA_READ_REQ    =  1;
 localparam CA_READ_DONE   =  2;
 localparam CA_READ_SDRAM  =  3;
-localparam CA_FETCH       =  5;
-localparam CA_EVICT       =  6;
-localparam CA_WRITE_REQ   =  7;
-localparam CA_WRITE_DONE  =  8;
-localparam CA_WRITE_START =  9;
-localparam CA_WRITE_BACK  = 10;
-localparam CA_WAIT_BRAM   = 11;
+localparam CA_FETCH       =  4;
+localparam CA_EVICT       =  5;
+localparam CA_WRITE_REQ   =  6;
+localparam CA_WRITE_DONE  =  7;
+localparam CA_WRITE_START =  8;
+localparam CA_WRITE_BACK  =  9;
+localparam CA_WAIT_BRAM   = 10;
 
 reg[3:0] index;
 wire lru = line_lru[index];
@@ -113,8 +113,6 @@ always @ (posedge sys_clk or negedge reset_n) begin : cache_rw
 
     read_ack <= 0;
     write_ack <= 0;
-    cache_wr_en_w0 <= 0;
-    cache_wr_en_w1 <= 0;
     if (!reset_n) begin
         ca_state <= CA_IDLE;
     end else case(ca_state)
@@ -186,17 +184,20 @@ always @ (posedge sys_clk or negedge reset_n) begin : cache_rw
             ca_state <= CA_IDLE;
         end
         CA_READ_SDRAM: if (sdram_read_ack) begin
-            cache_data_mask <= 2'b11;
             ca_state <= CA_FETCH;
-            cache_address <= {index, 4'b0};
+            cache_data_mask <= 2'b11;
+            cache_wr_en_w0 <= cache_way == 0;
+            cache_wr_en_w1 <= cache_way == 1;
             fetch_count <= 0;
         end
         CA_FETCH: begin
+            if (fetch_count == 0) begin
+                cache_address <= {index, 4'b0};
+            end else begin
+                cache_address <= cache_address + 1'b1;
+            end
             cache_data_write <= sdram_data_read;
-            cache_wr_en_w0 <= cache_way == 0;
-            cache_wr_en_w1 <= cache_way == 1;
             fetch_count <= fetch_count + 1'b1;
-            cache_address <= cache_address + 1'b1;
 
             // output data as soon as it arrives
             if (fetch_count == address[4:1]) begin
@@ -205,6 +206,8 @@ always @ (posedge sys_clk or negedge reset_n) begin : cache_rw
             end
 
             if (fetch_count == 4'd7) begin
+                cache_wr_en_w0 <= 0;
+                cache_wr_en_w1 <= 0;
                 line_valid[cache_way ? index_0 : index_1] <= 1'b1;
                 line_tag[cache_way ? index_0 : index_1]   <= tag;
                 ca_state <= ca_back;

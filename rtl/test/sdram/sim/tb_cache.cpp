@@ -81,6 +81,7 @@ void dut_update_device_sim(Vcache *dut, vluint64_t &sim_time){
         break;
         case DEV_WAIT_READ_0: if (device.read_ack) {
             device_status = DEV_IDLE;
+            device.read_req = 0;
         }
         break;
     }
