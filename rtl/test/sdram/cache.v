@@ -110,14 +110,18 @@ always @ (posedge sys_clk or negedge reset_n) begin : cache_rw
     reg[3:0]  write_count;
     reg replace_w0;
     reg replace_w1;
+    reg cache_read_wait;
 
     read_ack <= 0;
     write_ack <= 0;
+    cache_wr_en_w0 <= 0;
+    cache_wr_en_w1 <= 0;
+
     if (!reset_n) begin
         ca_state <= CA_IDLE;
     end else case(ca_state)
         CA_IDLE: begin
-            if (read_req | write_req) begin
+            if ((read_req | write_req) && !read_ack) begin
                 /* verilator lint_off BLKSEQ */
                 index = address[8:5];
                 tag   = address[16:9];
@@ -139,9 +143,10 @@ always @ (posedge sys_clk or negedge reset_n) begin : cache_rw
             ca_back   <= CA_IDLE;
             cache_way <= replace_w0 ? 0 : 1;
             if (valid_w0 || valid_w1) begin
+                cache_way <= valid_w0 ? 0 : 1;
                 line_lru[index] <= !valid_w0;
                 ca_state <= CA_READ_DONE;
-                read_ack <= 1'b1;
+                cache_read_wait <= 1;
             end else if ((replace_w0 && line_dirty[index_0]) || (replace_w1 && line_dirty[index_1])) begin
                 ca_state <= CA_EVICT;
             end else begin
@@ -169,9 +174,13 @@ always @ (posedge sys_clk or negedge reset_n) begin : cache_rw
             end
         end
         CA_READ_DONE: begin
-            data = valid_w0 ? q0 : q1;
-            data_read <= byte_low ? data[7:0] : data[15:8];
-            ca_state <= CA_IDLE;
+            if (cache_read_wait == 0) begin
+                data = valid_w0 ? q0 : q1;
+                data_read <= byte_low ? data[7:0] : data[15:8];
+                read_ack <= 1'b1;
+                ca_state <= CA_IDLE;
+            end
+            cache_read_wait <= 0;
         end
         CA_WRITE_DONE: begin
             if (byte_low)
@@ -184,10 +193,9 @@ always @ (posedge sys_clk or negedge reset_n) begin : cache_rw
             ca_state <= CA_IDLE;
         end
         CA_READ_SDRAM: if (sdram_read_ack) begin
+            sdram_read_req <= 0;
             ca_state <= CA_FETCH;
             cache_data_mask <= 2'b11;
-            cache_wr_en_w0 <= cache_way == 0;
-            cache_wr_en_w1 <= cache_way == 1;
             fetch_count <= 0;
         end
         CA_FETCH: begin
@@ -199,6 +207,9 @@ always @ (posedge sys_clk or negedge reset_n) begin : cache_rw
             cache_data_write <= sdram_data_read;
             fetch_count <= fetch_count + 1'b1;
 
+            cache_wr_en_w0 <= cache_way == 0;
+            cache_wr_en_w1 <= cache_way == 1;
+
             // output data as soon as it arrives
             if (fetch_count == address[4:1]) begin
                 data_read <= byte_low ? sdram_data_read[7:0] : sdram_data_read[15:8];
@@ -206,10 +217,10 @@ always @ (posedge sys_clk or negedge reset_n) begin : cache_rw
             end
 
             if (fetch_count == 4'd7) begin
-                cache_wr_en_w0 <= 0;
-                cache_wr_en_w1 <= 0;
-                line_valid[cache_way ? index_0 : index_1] <= 1'b1;
-                line_tag[cache_way ? index_0 : index_1]   <= tag;
+                line_valid[cache_way ? index_1 : index_0] <= 1'b1;
+                line_tag[cache_way ? index_1 : index_0]   <= tag;
+                valid_w0 <= cache_way == 0 ? 1 : 0;
+                valid_w1 <= cache_way == 1 ? 1 : 0;
                 ca_state <= ca_back;
             end
         end
@@ -279,24 +290,32 @@ reg[15:0] mem1[0:255];
 reg[15:0] q0;
 reg[15:0] q1;
 
-always @(posedge sys_clk) begin
+always @(posedge sys_clk) begin : cache_mem_0
+    reg[7:0] last_address;
     /* verilator lint_off CASEINCOMPLETE */
     if (cache_wr_en_w0) case(cache_data_mask)
         2'b01 : mem0[cache_address][7:0]  <= cache_data_write[7:0];
         2'b10 : mem0[cache_address][15:8] <= cache_data_write[15:8];
         2'b11 : mem0[cache_address]       <= cache_data_write;
     endcase
-    q0 <= mem0[cache_address];
+    if (cache_address != last_address) begin
+        last_address <= cache_address;
+    end
+    q0 <= mem0[last_address];
 end
 
-always @(posedge sys_clk) begin
+always @(posedge sys_clk) begin : cache_mem_1
+    reg[7:0] last_address;
     /* verilator lint_off CASEINCOMPLETE */
     if (cache_wr_en_w1) case(cache_data_mask)
         2'b01 : mem1[cache_address][7:0]  <= cache_data_write[7:0];
         2'b10 : mem1[cache_address][15:8] <= cache_data_write[15:8];
         2'b11 : mem1[cache_address]       <= cache_data_write;
     endcase
-    q1 <= mem1[cache_address];
+    if (cache_address != last_address) begin
+        last_address <= cache_address;
+    end
+    q1 <= mem1[last_address];
 end
 
 `endif

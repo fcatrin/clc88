@@ -72,11 +72,13 @@ void dut_update_sdram_ports(Vcache *dut, vluint64_t &sim_time){
 }
 
 void dut_update_device_sim(Vcache *dut, vluint64_t &sim_time){
+    static int delta = 0;
     switch(device_status) {
-        case DEV_IDLE: if (posedge_cnt == 4) {
+        case DEV_IDLE: if (posedge_cnt == 4 || posedge_cnt == 15) {
             device.read_req = 1;
-            device.address = 0x21;
+            device.address = 0x21 + delta;
             device_status = DEV_WAIT_READ_0;
+            delta++;
         }
         break;
         case DEV_WAIT_READ_0: if (device.read_ack) {
@@ -94,7 +96,6 @@ void dut_update_sdram_sim(Vcache *dut, vluint64_t &sim_time){
     static vluint8_t  burst_count;
 
     sdram.read_ack = 0;
-    printf("sdram status: %d count:%d sdram_read_req:%d\n", sdram_status, count, sdram.read_req);
     switch(sdram_status) {
         case SDRAM_IDLE:
             if (sdram.read_req) {
