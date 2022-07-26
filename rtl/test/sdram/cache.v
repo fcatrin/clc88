@@ -100,8 +100,7 @@ wire[4:0] index_1 = {index, 1'b1};
 reg valid_w0;
 reg valid_w1;
 reg byte_low;
-reg data_from_sdram;
-wire[15:0] data = data_from_sdram ? sdram_data_read : (valid_w0 ? q0 : q1);
+wire[15:0] data = valid_w0 ? q0 : q1;
 assign data_read = byte_low ? data[7:0] : data[15:8];
 
 always @ (posedge sys_clk or negedge reset_n) begin : cache_rw
@@ -114,7 +113,6 @@ always @ (posedge sys_clk or negedge reset_n) begin : cache_rw
     reg replace_w0;
     reg replace_w1;
 
-    data_from_sdram <= 0;
     read_ack <= 0;
     write_ack <= 0;
     cache_wr_en_w0 <= 0;
@@ -149,6 +147,8 @@ always @ (posedge sys_clk or negedge reset_n) begin : cache_rw
                 cache_way <= valid_w0 ? 0 : 1;
                 line_lru[index] <= !valid_w0;
                 ca_state <= CA_READ_DONE;
+                ca_back  <= CA_READ_REQ;
+                read_ack <= 1'b1;
             end else if ((replace_w0 && line_dirty[index_0]) || (replace_w1 && line_dirty[index_1])) begin
                 ca_state <= CA_EVICT;
             end else begin
@@ -176,7 +176,6 @@ always @ (posedge sys_clk or negedge reset_n) begin : cache_rw
             end
         end
         CA_READ_DONE: begin
-            read_ack <= 1'b1;
             ca_state <= CA_IDLE;
         end
         CA_WRITE_DONE: begin
@@ -206,12 +205,6 @@ always @ (posedge sys_clk or negedge reset_n) begin : cache_rw
 
             cache_wr_en_w0 <= cache_way == 0;
             cache_wr_en_w1 <= cache_way == 1;
-
-            // output data as soon as it arrives
-            if (fetch_count == address[4:1]) begin
-                data_from_sdram <= 1;
-                read_ack <= 1'b1;
-            end
 
             if (fetch_count == 4'd7) begin
                 line_valid[cache_way ? index_1 : index_0] <= 1'b1;

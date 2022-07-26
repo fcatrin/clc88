@@ -31,7 +31,8 @@ typedef struct {
 
 enum DEVICE_STATUS {
     DEV_IDLE,
-    DEV_WAIT_READ_0
+    DEV_WAIT_READ_0,
+    DEV_READ
 };
 
 enum SDRAM_STATUS {
@@ -74,17 +75,24 @@ void dut_update_sdram_ports(Vcache *dut, vluint64_t &sim_time){
 
 void dut_update_device_sim(Vcache *dut, vluint64_t &sim_time){
     static int delta = 0;
+    static int read = 0;
+    if (read) {
+        printf("value read:%02x\n", device.data_read);
+        read = 0;
+    }
     switch(device_status) {
         case DEV_IDLE: if (delta < 5) {
             device.read_req = 1;
             device.address = 0x21 + delta;
             device_status = DEV_WAIT_READ_0;
             delta++;
+
         }
         break;
         case DEV_WAIT_READ_0: if (device.read_ack) {
             device_status = DEV_IDLE;
             device.read_req = 0;
+            read = 1;
         }
         break;
     }
