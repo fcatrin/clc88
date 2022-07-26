@@ -5,9 +5,11 @@
 #include <verilated_vcd_c.h>
 #include "Vcache.h"
 
-#define MAX_SIM_TIME 120
+#define MAX_SIM_TIME 200
 vluint64_t sim_time = 0;
 vluint64_t posedge_cnt = 0;
+
+vluint16_t memory[0x10000];
 
 typedef struct {
     vluint8_t  data_write;
@@ -77,16 +79,15 @@ void dut_update_device_sim(Vcache *dut, vluint64_t &sim_time){
     static int delta = 0;
     static int read = 0;
     if (read) {
-        printf("value read:%02x\n", device.data_read);
+        printf("value read:%02x %c\n", device.data_read, device.data_read);
         read = 0;
     }
     switch(device_status) {
-        case DEV_IDLE: if (delta < 5) {
+        case DEV_IDLE: {
             device.read_req = 1;
             device.address = 0x21 + delta;
             device_status = DEV_WAIT_READ_0;
             delta++;
-
         }
         break;
         case DEV_WAIT_READ_0: if (device.read_ack) {
@@ -101,8 +102,8 @@ void dut_update_device_sim(Vcache *dut, vluint64_t &sim_time){
 SDRAM_STATUS sdram_status = SDRAM_IDLE;
 void dut_update_sdram_sim(Vcache *dut, vluint64_t &sim_time){
     static vluint16_t count;
-    static vluint16_t sdram_data;
     static vluint8_t  burst_count;
+    static vluint32_t address;
 
     sdram.read_ack = 0;
     switch(sdram_status) {
@@ -110,7 +111,7 @@ void dut_update_sdram_sim(Vcache *dut, vluint64_t &sim_time){
             if (sdram.read_req) {
                 count = 3;
                 sdram_status = SDRAM_READ;
-                sdram_data   = 0x4A0 + sdram.address;
+                address = sdram.address;
                 burst_count = 8;
             }
             break;
@@ -119,7 +120,7 @@ void dut_update_sdram_sim(Vcache *dut, vluint64_t &sim_time){
                 count--;
                 if (count == 0) sdram.read_ack = 1;
             } else if (count == 0) {
-                sdram.data_read = sdram_data++ + burst_count * 256;
+                sdram.data_read = memory[address++];
                 burst_count--;
                 if (burst_count == 0) {
                     sdram_status = SDRAM_IDLE;
@@ -129,9 +130,17 @@ void dut_update_sdram_sim(Vcache *dut, vluint64_t &sim_time){
     }
 }
 
+void load_test_data() {
+    FILE *f = fopen("testdata.txt", "rb");
+    int n = fread(memory, 1, 0x20000, f);
+    printf("read %d bytes\n", n);
+    fclose(f);
+}
+
 int main(int argc, char** argv, char** env) {
     Verilated::commandArgs(argc, argv);
 
+    load_test_data();
     srand(time(NULL));
 
     Vcache *dut = new Vcache;
