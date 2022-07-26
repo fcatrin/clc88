@@ -82,7 +82,6 @@ reg               line_valid  [0:CACHE_MD-1];
 
 localparam CA_IDLE        =  0;
 localparam CA_READ_REQ    =  1;
-localparam CA_READ_DONE   =  2;
 localparam CA_READ_SDRAM  =  3;
 localparam CA_FETCH       =  4;
 localparam CA_FETCH_DONE  = 11;
@@ -147,7 +146,7 @@ always @ (posedge sys_clk or negedge reset_n) begin : cache_rw
             if (valid_w0 || valid_w1) begin
                 cache_way <= valid_w0 ? 0 : 1;
                 line_lru[index] <= !valid_w0;
-                ca_state <= CA_READ_DONE;
+                ca_state <= CA_IDLE;
                 read_ack <= 1'b1;
             end else if ((replace_w0 && line_dirty[index_0]) || (replace_w1 && line_dirty[index_1])) begin
                 ca_state <= CA_EVICT;
@@ -175,9 +174,6 @@ always @ (posedge sys_clk or negedge reset_n) begin : cache_rw
                 sdram_read_req <= 1'b1;
                 ca_state <= CA_READ_SDRAM;
             end
-        end
-        CA_READ_DONE: begin
-            ca_state <= CA_IDLE;
         end
         CA_WRITE_DONE: begin
             if (byte_low)
