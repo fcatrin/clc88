@@ -4,7 +4,7 @@
 #include <verilated_vcd_c.h>
 #include "Vcache.h"
 
-#define MAX_SIM_TIME 60
+#define MAX_SIM_TIME 120
 vluint64_t sim_time = 0;
 vluint64_t posedge_cnt = 0;
 
@@ -74,7 +74,7 @@ void dut_update_sdram_ports(Vcache *dut, vluint64_t &sim_time){
 void dut_update_device_sim(Vcache *dut, vluint64_t &sim_time){
     static int delta = 0;
     switch(device_status) {
-        case DEV_IDLE: if (posedge_cnt == 4 || posedge_cnt == 15) {
+        case DEV_IDLE: if (delta < 5) {
             device.read_req = 1;
             device.address = 0x21 + delta;
             device_status = DEV_WAIT_READ_0;
@@ -101,7 +101,7 @@ void dut_update_sdram_sim(Vcache *dut, vluint64_t &sim_time){
             if (sdram.read_req) {
                 count = 3;
                 sdram_status = SDRAM_READ;
-                sdram_data   = 0x500 + sdram.address;
+                sdram_data   = 0x5A0 + sdram.address;
                 burst_count = 8;
             }
             break;
