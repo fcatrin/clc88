@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.86 (w)1999-2017 BSI
-[*] Tue Jul 26 00:14:26 2022
+[*] Tue Jul 26 03:43:56 2022
 [*]
 [dumpfile] "/home/fcatrin/git-as/clc88/rtl/test/sdram/sim/waveform.vcd"
-[dumpfile_mtime] "Mon Jul 25 04:26:13 2022"
-[dumpfile_size] 10873
+[dumpfile_mtime] "Tue Jul 26 03:41:27 2022"
+[dumpfile_size] 15666
 [savefile] "/home/fcatrin/git-as/clc88/rtl/test/sdram/sim/cache.gtkw"
-[timestart] 0
+[timestart] 140
 [size] 1920 1023
-[pos] -1921 24
-*-2.715486 42 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[pos] -1 -1
+*-2.715486 153 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] TOP.
 [treeopen] TOP.cache.
 [sst_width] 256
@@ -20,18 +20,16 @@
 TOP.sys_clk
 @22
 TOP.address[16:0]
+TOP.cache.cache_rw.last_address[15:0]
 @28
 TOP.read_req
-@29
 TOP.read_ack
-@28
-TOP.cache.cache_rw.byte_low
 @22
 TOP.cache.data_read[7:0]
 TOP.cache.cache_address[7:0]
 @28
 TOP.cache.cache_data_mask[1:0]
-@22
+@820
 TOP.cache.cache_data_write[15:0]
 @28
 TOP.cache.cache_wr_en_w0
@@ -39,8 +37,8 @@ TOP.cache.cache_wr_en_w1
 @22
 TOP.cache.q0[15:0]
 TOP.cache.q1[15:0]
-TOP.cache.cache_rw.tag[7:0]
 TOP.cache.index[3:0]
+TOP.cache.cache_rw.tag[8:0]
 TOP.cache.index_0[4:0]
 TOP.cache.index_1[4:0]
 TOP.cache.data_write[7:0]
@@ -53,8 +51,8 @@ TOP.cache.cache_rw.fetch_count[3:0]
 @28
 TOP.cache.cache_rw.replace_w0
 TOP.cache.cache_rw.replace_w1
-TOP.cache.cache_rw.valid_w0
-TOP.cache.cache_rw.valid_w1
+TOP.cache.valid_w0
+TOP.cache.valid_w1
 @22
 TOP.cache.cache_rw.write_count[3:0]
 @28
@@ -62,16 +60,22 @@ TOP.sdram_read_req
 TOP.sdram_read_ack
 @22
 TOP.sdram_address[23:0]
+@821
 TOP.sdram_data_read[15:0]
 @28
-TOP.cache.line_dirty(2)
-TOP.cache.line_dirty(3)
-TOP.cache.line_lru(1)
+TOP.cache.line_lru(4)
+TOP.cache.line_lru(5)
+TOP.cache.line_lru(6)
+TOP.cache.line_lru(7)
 @22
-TOP.cache.line_tag(2)[7:0]
-TOP.cache.line_tag(3)[7:0]
+TOP.cache.line_tag(4)[8:0]
+TOP.cache.line_tag(5)[8:0]
+TOP.cache.line_tag(6)[8:0]
+TOP.cache.line_tag(7)[8:0]
 @28
-TOP.cache.line_valid(2)
-TOP.cache.line_valid(3)
+TOP.cache.line_valid(4)
+TOP.cache.line_valid(5)
+TOP.cache.line_valid(6)
+TOP.cache.line_valid(7)
 [pattern_trace] 1
 [pattern_trace] 0

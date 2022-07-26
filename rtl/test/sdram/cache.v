@@ -55,7 +55,7 @@ localparam CACHE_WAYS  = 2;
 localparam CACHE_MD    = CACHE_LINES * CACHE_WAYS;
 localparam LINE_SIZE   = 4; // 4 bits
 localparam INDEX_SIZE  = 4;
-localparam TAG_SIZE    = 16 - INDEX_SIZE - LINE_SIZE;
+localparam TAG_SIZE    = 17 - INDEX_SIZE - LINE_SIZE;
 
 reg[TAG_SIZE-1:0] line_tag    [0:CACHE_MD-1];
 reg               line_lru    [0:CACHE_LINES-1];  // 0 = w0, 1 = w1
@@ -126,18 +126,18 @@ always @ (posedge sys_clk or negedge reset_n) begin : cache_rw
         CA_IDLE: begin
             if ((read_req | write_req) && !read_ack) begin
                 /* verilator lint_off BLKSEQ */
-                index = address[8:5];
-                tag   = address[16:9];
-                valid_w0 <= line_valid[index_0] && line_tag[index_0] == tag;
-                valid_w1 <= line_valid[index_1] && line_tag[index_1] == tag;
+                index = address[7:4];
+                tag   = address[16:8];
+                valid_w0 <= line_valid[{index, 1'b0}] && line_tag[{index, 1'b0}] == tag;
+                valid_w1 <= line_valid[{index, 1'b1}] && line_tag[{index, 1'b1}] == tag;
 
-                replace_w0 = line_dirty[index_0] | !lru;
-                replace_w1 = line_dirty[index_1] | lru | !replace_w0;
+                replace_w0 = line_dirty[{index, 1'b0}] | !lru;
+                replace_w1 = line_dirty[{index, 1'b1}] | lru | !replace_w0;
 
                 byte_low <= !address[0];
 
                 // optimistic read
-                cache_address <= {index, address[4:1]};
+                cache_address <= {index, address[3:1]};
 
                 last_address <= address[16:1];
                 if (read_req && last_address == address[16:1]) begin
@@ -158,7 +158,7 @@ always @ (posedge sys_clk or negedge reset_n) begin : cache_rw
             end else if ((replace_w0 && line_dirty[index_0]) || (replace_w1 && line_dirty[index_1])) begin
                 ca_state <= CA_EVICT;
             end else begin
-                sdram_address <= {8'b0, tag, index, 4'b0};
+                sdram_address <= {8'b0, tag, index, 3'b0};
                 sdram_read_req <= 1'b1;
                 ca_state <= CA_READ_SDRAM;
                 ca_back  <= CA_READ_REQ;
@@ -177,7 +177,7 @@ always @ (posedge sys_clk or negedge reset_n) begin : cache_rw
             end else begin
                 valid_w0 <= cache_way == 0 ? 1 : 0;
                 valid_w1 <= cache_way == 1 ? 1 : 0;
-                sdram_address <= {8'b0, tag, index, 4'b0};
+                sdram_address <= {8'b0, tag, index, 3'b0};
                 sdram_read_req <= 1'b1;
                 ca_state <= CA_READ_SDRAM;
             end
@@ -200,7 +200,7 @@ always @ (posedge sys_clk or negedge reset_n) begin : cache_rw
         end
         CA_FETCH: begin
             if (fetch_count == 0) begin
-                cache_address <= {index, 4'b0};
+                cache_address <= {index, 3'b0};
             end else begin
                 cache_address <= cache_address + 1'b1;
             end
@@ -219,20 +219,20 @@ always @ (posedge sys_clk or negedge reset_n) begin : cache_rw
             end
         end
         CA_FETCH_DONE: begin
-            cache_address <= {index, address[4:1]};
+            cache_address <= {index, address[3:1]};
             ca_state <= ca_back;
         end
         CA_EVICT: begin
             cache_data_mask <= 2'b11;
             cache_way <= replace_w0 ? 0 : 1;
-            cache_address <= {index, 4'b0};
+            cache_address <= {index, 3'b0};
             ca_state <= CA_WAIT_BRAM;
         end
         CA_WAIT_BRAM: begin
             ca_state <= CA_WRITE_START;
         end
         CA_WRITE_START: begin
-            sdram_address <= {8'b0, line_tag[replace_w0 ? index_0 : index_1], index, 4'b0};
+            sdram_address <= {8'b0, line_tag[replace_w0 ? index_0 : index_1], index, 3'b0};
             sdram_data_write <= cache_way ? q1 : q0;
             sdram_write_req <= 1'b1;
             write_count <= 0;
@@ -252,7 +252,7 @@ always @ (posedge sys_clk or negedge reset_n) begin : cache_rw
     endcase
 end
 
-reg[7:0]  cache_address;
+reg[6:0]  cache_address;
 reg[15:0] cache_data_write;
 reg[1:0]  cache_data_mask;
 reg cache_wr_en_w0;
@@ -263,7 +263,7 @@ reg cache_wr_en_w1;
 wire[15:0] q0;
 wire[15:0] q1;
 
-spram #(256, 8, 16) cache_w0 (
+spram #(256, 7, 16) cache_w0 (
     .address(cache_address),
     .clock(sys_clk),
     .data(cache_data_write),
@@ -272,7 +272,7 @@ spram #(256, 8, 16) cache_w0 (
     .q(q0)
     );
 
-spram #(256, 8, 16) cache_w1 (
+spram #(256, 7, 16) cache_w1 (
     .address(cache_address),
     .clock(sys_clk),
     .data(cache_data_write),
@@ -283,13 +283,13 @@ spram #(256, 8, 16) cache_w1 (
 
 `else
 
-reg[15:0] mem0[0:255];
-reg[15:0] mem1[0:255];
+reg[15:0] mem0[0:127];
+reg[15:0] mem1[0:127];
 reg[15:0] q0;
 reg[15:0] q1;
 
 always @(posedge sys_clk) begin : cache_mem_0
-    reg[7:0] last_address;
+    reg[6:0] last_address;
     /* verilator lint_off CASEINCOMPLETE */
     if (cache_wr_en_w0) case(cache_data_mask)
         2'b01 : mem0[cache_address][7:0]  <= cache_data_write[7:0];
@@ -303,7 +303,7 @@ always @(posedge sys_clk) begin : cache_mem_0
 end
 
 always @(posedge sys_clk) begin : cache_mem_1
-    reg[7:0] last_address;
+    reg[6:0] last_address;
     /* verilator lint_off CASEINCOMPLETE */
     if (cache_wr_en_w1) case(cache_data_mask)
         2'b01 : mem1[cache_address][7:0]  <= cache_data_write[7:0];

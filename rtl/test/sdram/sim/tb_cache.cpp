@@ -79,7 +79,7 @@ void dut_update_device_sim(Vcache *dut, vluint64_t &sim_time){
     static int delta = 0;
     static int read = 0;
     if (read) {
-        printf("value read:%02x %c\n", device.data_read, device.data_read);
+        printf("value read [%04x] = %02x %c\n", device.address, device.data_read, device.data_read);
         read = 0;
     }
     switch(device_status) {
