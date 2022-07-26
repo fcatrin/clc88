@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <time.h>
 #include <iostream>
 #include <verilated.h>
 #include <verilated_vcd_c.h>
@@ -101,7 +102,7 @@ void dut_update_sdram_sim(Vcache *dut, vluint64_t &sim_time){
             if (sdram.read_req) {
                 count = 3;
                 sdram_status = SDRAM_READ;
-                sdram_data   = 0x5A0 + sdram.address;
+                sdram_data   = 0x4A0 + sdram.address;
                 burst_count = 8;
             }
             break;
@@ -110,7 +111,7 @@ void dut_update_sdram_sim(Vcache *dut, vluint64_t &sim_time){
                 count--;
                 if (count == 0) sdram.read_ack = 1;
             } else if (count == 0) {
-                sdram.data_read = sdram_data++;
+                sdram.data_read = sdram_data++ + burst_count * 256;
                 burst_count--;
                 if (burst_count == 0) {
                     sdram_status = SDRAM_IDLE;
@@ -122,6 +123,8 @@ void dut_update_sdram_sim(Vcache *dut, vluint64_t &sim_time){
 
 int main(int argc, char** argv, char** env) {
     Verilated::commandArgs(argc, argv);
+
+    srand(time(NULL));
 
     Vcache *dut = new Vcache;
 

@@ -8,7 +8,7 @@ module cache (
 
     // device interface (cpu/wopi)
     input[7:0]  data_write,
-    output reg[7:0] data_read,
+    output[7:0] data_read,
     input[16:0] address,
     input       read_req,
     input       write_req,
@@ -97,21 +97,24 @@ wire lru = line_lru[index];
 wire[4:0] index_0 = {index, 1'b0};
 wire[4:0] index_1 = {index, 1'b1};
 
+reg valid_w0;
+reg valid_w1;
+reg byte_low;
+reg data_from_sdram;
+wire[15:0] data = data_from_sdram ? sdram_data_read : (valid_w0 ? q0 : q1);
+assign data_read = byte_low ? data[7:0] : data[15:8];
+
 always @ (posedge sys_clk or negedge reset_n) begin : cache_rw
     reg[3:0] ca_state;
     reg[3:0] ca_back;
     reg[TAG_SIZE-1:0] tag;
-    reg valid_w0;
-    reg valid_w1;
-    reg[15:0] data;
-    reg byte_low;
     reg cache_way;
     reg[3:0]  fetch_count;
     reg[3:0]  write_count;
     reg replace_w0;
     reg replace_w1;
-    reg cache_read_wait;
 
+    data_from_sdram <= 0;
     read_ack <= 0;
     write_ack <= 0;
     cache_wr_en_w0 <= 0;
@@ -146,7 +149,6 @@ always @ (posedge sys_clk or negedge reset_n) begin : cache_rw
                 cache_way <= valid_w0 ? 0 : 1;
                 line_lru[index] <= !valid_w0;
                 ca_state <= CA_READ_DONE;
-                cache_read_wait <= 1;
             end else if ((replace_w0 && line_dirty[index_0]) || (replace_w1 && line_dirty[index_1])) begin
                 ca_state <= CA_EVICT;
             end else begin
@@ -174,13 +176,8 @@ always @ (posedge sys_clk or negedge reset_n) begin : cache_rw
             end
         end
         CA_READ_DONE: begin
-            if (cache_read_wait == 0) begin
-                data = valid_w0 ? q0 : q1;
-                data_read <= byte_low ? data[7:0] : data[15:8];
-                read_ack <= 1'b1;
-                ca_state <= CA_IDLE;
-            end
-            cache_read_wait <= 0;
+            read_ack <= 1'b1;
+            ca_state <= CA_IDLE;
         end
         CA_WRITE_DONE: begin
             if (byte_low)
@@ -212,7 +209,7 @@ always @ (posedge sys_clk or negedge reset_n) begin : cache_rw
 
             // output data as soon as it arrives
             if (fetch_count == address[4:1]) begin
-                data_read <= byte_low ? sdram_data_read[7:0] : sdram_data_read[15:8];
+                data_from_sdram <= 1;
                 read_ack <= 1'b1;
             end
 
