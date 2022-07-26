@@ -112,6 +112,7 @@ always @ (posedge sys_clk or negedge reset_n) begin : cache_rw
     reg[3:0]  write_count;
     reg replace_w0;
     reg replace_w1;
+    reg[15:0] last_address;
 
     read_ack <= 0;
     write_ack <= 0;
@@ -120,6 +121,7 @@ always @ (posedge sys_clk or negedge reset_n) begin : cache_rw
 
     if (!reset_n) begin
         ca_state <= CA_IDLE;
+        last_address <= 16'h1234; // just use a random number here. KISS
     end else case(ca_state)
         CA_IDLE: begin
             if ((read_req | write_req) && !read_ack) begin
@@ -137,7 +139,12 @@ always @ (posedge sys_clk or negedge reset_n) begin : cache_rw
                 // optimistic read
                 cache_address <= {index, address[4:1]};
 
-                ca_state <= read_req ? CA_READ_REQ : CA_WRITE_REQ;
+                last_address <= address[16:1];
+                if (read_req && last_address == address[16:1]) begin
+                    read_ack <= 1'b1;
+                end else begin
+                    ca_state <= read_req ? CA_READ_REQ : CA_WRITE_REQ;
+                end
             end
         end
         CA_READ_REQ: begin
