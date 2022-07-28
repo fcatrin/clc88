@@ -18,7 +18,7 @@ waves: waveform.vcd
 waveform.vcd: ./obj_dir/V$(MODULE)
 	@echo
 	@echo "### SIMULATING ###"
-	./obj_dir/V$(MODULE) +verilator+rand+reset+2
+	./obj_dir/V$(MODULE) 1 +verilator+rand+reset+2
 
 ./obj_dir/V$(MODULE): .stamp.verilate
 	@echo

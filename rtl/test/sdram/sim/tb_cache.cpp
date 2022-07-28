@@ -46,6 +46,8 @@ device_t device;
 sdram_t sdram;
 DEVICE_STATUS device_status = DEV_IDLE;
 
+int (*test_read_func)();
+
 void dut_reset(Vcache *dut, vluint64_t &sim_time){
     dut->reset_n = 1;
     if(sim_time < 2){
@@ -75,8 +77,12 @@ void dut_update_sdram_ports(Vcache *dut, vluint64_t &sim_time){
     sdram.write_req  = dut->sdram_write_req;
 }
 
-void dut_update_device_sim(Vcache *dut, vluint64_t &sim_time){
+int sequential_read_1() {
     static int delta = 0;
+    return 0x21 + delta++;
+}
+
+void dut_update_device_sim(Vcache *dut, vluint64_t &sim_time){
     static int read = 0;
     if (read) {
         printf("value read [%04x] = %02x %c\n", device.address, device.data_read, device.data_read);
@@ -85,9 +91,8 @@ void dut_update_device_sim(Vcache *dut, vluint64_t &sim_time){
     switch(device_status) {
         case DEV_IDLE: {
             device.read_req = 1;
-            device.address = 0x21 + delta;
+            device.address = test_read_func();
             device_status = DEV_WAIT_READ_0;
-            delta++;
         }
         break;
         case DEV_WAIT_READ_0: if (device.read_ack) {
@@ -137,8 +142,32 @@ void load_test_data() {
     fclose(f);
 }
 
+void print_usage(char *name) {
+    printf("Usage %s test_id\n", name);
+    printf("\n\nTest ids:\n");
+    printf("1 : sequential read, two lines\n");
+    printf("2 : sequential read, two lines, two ways for one line\n");
+    printf("3 : sequential read, two lines, one eviction\n");
+    printf("4 : cache write\n");
+    printf("5 : write back\n");
+}
+
 int main(int argc, char** argv, char** env) {
     Verilated::commandArgs(argc, argv);
+    if (argc < 2) {
+        print_usage(argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    int test_id = atoi(argv[1]);
+    if (test_id < 1 || test_id > 5) {
+        print_usage(argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    switch(test_id) {
+        case 1: test_read_func = sequential_read_1;
+    }
 
     load_test_data();
     srand(time(NULL));
