@@ -152,7 +152,7 @@ always @ (posedge sys_clk or negedge reset_n) begin : cache_rw
             cache_way <= replace_w0 ? 0 : 1;
             if (valid_w0 || valid_w1) begin
                 cache_way <= valid_w0 ? 0 : 1;
-                line_lru[index] <= !valid_w0;
+                line_lru[index] <= valid_w0;
                 ca_state <= CA_IDLE;
                 read_ack <= 1'b1;
             end else if ((replace_w0 && line_dirty[index_0]) || (replace_w1 && line_dirty[index_1])) begin
@@ -168,7 +168,7 @@ always @ (posedge sys_clk or negedge reset_n) begin : cache_rw
             ca_back  <= CA_WRITE_REQ;
             cache_way <= replace_w0 ? 0 : 1;
             if (valid_w0 || valid_w1) begin
-                line_lru[index] <= !valid_w0;
+                line_lru[index] <= valid_w0;
                 line_dirty[valid_w0 ? index_0 : index_1] = 1'b1;
                 ca_state <= CA_WRITE_DONE;
                 write_ack <= 1'b1;
