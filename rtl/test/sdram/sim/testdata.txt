@@ -1,3 +1,12 @@
 This is a test data file for read and write from or to memory.
 More and more text to check if writing back and evictions
-are working as expected.
+are working as expected. Here is more text so we can test that
+eviction or replacement of lines work. It seems that more
+text is required to fill the 256 bytes that the whole cache
+can hold.
+This is a test data file for read and write from or to memory.
+More and more text to check if writing back and evictions
+are working as expected. Here is more text so we can test that
+eviction or replacement of lines work. It seems that more
+text is required to fill the 256 bytes that the whole cache
+can hold.

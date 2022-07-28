@@ -84,7 +84,7 @@ int sequential_read_1() {
 
 int sequential_read_2() {
     static int index = 0;
-    static int addresses[] = {0, 1, 33, 34, 0, 1, 50, 51};
+    static int addresses[] = {0, 1, 262, 263, 514, 515, 262, 263};
     int address = addresses[index];
     if (++index >= 8) index = 0;
     return address;
