@@ -33,7 +33,8 @@ typedef struct {
 
 enum DEVICE_STATUS {
     DEV_IDLE,
-    DEV_WAIT_READ_0,
+    DEV_WAIT_READ,
+    DEV_WAIT_WRITE,
     DEV_READ
 };
 
@@ -103,7 +104,7 @@ int value_at(int address) {
     return (address & 1) ? ((value & 0xff00) >> 8) : (value & 0x00ff);
 }
 
-void dut_update_device_sim(Vcache *dut, vluint64_t &sim_time){
+void dut_update_device_sim_read(Vcache *dut, vluint64_t &sim_time){
     static int read = 0;
     static int check_value = 0;
     if (read) {
@@ -115,12 +116,12 @@ void dut_update_device_sim(Vcache *dut, vluint64_t &sim_time){
         case DEV_IDLE: {
             device.read_req = 1;
             device.address = test_read_func();
-            device_status = DEV_WAIT_READ_0;
+            device_status = DEV_WAIT_READ;
 
             check_value = value_at(device.address);
         }
         break;
-        case DEV_WAIT_READ_0: if (device.read_ack) {
+        case DEV_WAIT_READ: if (device.read_ack) {
             device_status = DEV_IDLE;
             device.read_req = 0;
             read = 1;
@@ -128,6 +129,50 @@ void dut_update_device_sim(Vcache *dut, vluint64_t &sim_time){
         break;
     }
 }
+
+void dut_update_device_sim_write(Vcache *dut, vluint64_t &sim_time){
+    static int read = 0;
+    static int check_value = 0;
+    static int cycles = 0;
+
+    if (read) {
+        printf("value read [%04x] = %02x %c == %02x %c %s\n", device.address, device.data_read, device.data_read,
+            check_value, check_value, device.data_read == check_value ? "" : "FAILED");
+        read = 0;
+    }
+
+    switch(device_status) {
+        case DEV_IDLE: {
+            if (cycles < 2) {
+                device.write_req = 1;
+                device.address = 11 + cycles;
+                device.data_write = 0x41 + cycles;
+                device_status = DEV_WAIT_WRITE;
+            }
+            if (cycles>=2 && cycles<=5) {
+                device.read_req = 1;
+                device.address = 8+cycles;
+                device_status = DEV_WAIT_READ;
+                check_value = value_at(device.address);
+            }
+            cycles++;
+        }
+        break;
+        case DEV_WAIT_WRITE: if (device.write_ack) {
+            device_status = DEV_IDLE;
+            device.write_req = 0;
+        }
+        break;
+        case DEV_WAIT_READ: if (device.read_ack) {
+            device_status = DEV_IDLE;
+            device.read_req = 0;
+            read = 1;
+        }
+        break;
+
+    }
+}
+
 
 SDRAM_STATUS sdram_status = SDRAM_IDLE;
 void dut_update_sdram_sim(Vcache *dut, vluint64_t &sim_time){
@@ -214,7 +259,10 @@ int main(int argc, char** argv, char** env) {
         dut_update_sdram_ports(dut, sim_time);
         if (dut->sys_clk) {
             posedge_cnt++;
-            dut_update_device_sim(dut, sim_time);
+            if (test_id < 4)
+                dut_update_device_sim_read(dut, sim_time);
+            else
+                dut_update_device_sim_write(dut, sim_time);
             dut_update_sdram_sim(dut, sim_time);
         }
         dut->eval();
