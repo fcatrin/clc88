@@ -84,6 +84,14 @@ int sequential_read_1() {
 
 int sequential_read_2() {
     static int index = 0;
+    static int addresses[] = {0, 1, 32, 33, 44, 45};
+    int address = addresses[index];
+    if (++index >= 6) index = 0;
+    return address;
+}
+
+int sequential_read_3() {
+    static int index = 0;
     static int addresses[] = {0, 1, 262, 263, 514, 515, 262, 263};
     int address = addresses[index];
     if (++index >= 8) index = 0;
@@ -185,6 +193,7 @@ int main(int argc, char** argv, char** env) {
     switch(test_id) {
         case 1: test_read_func = sequential_read_1; break;
         case 2: test_read_func = sequential_read_2; break;
+        case 3: test_read_func = sequential_read_3; break;
     }
 
     load_test_data();
