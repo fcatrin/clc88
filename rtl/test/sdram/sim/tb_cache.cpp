@@ -82,10 +82,25 @@ int sequential_read_1() {
     return 0x21 + delta++;
 }
 
+int sequential_read_2() {
+    static int index = 0;
+    static int addresses[] = {0, 1, 33, 34, 0, 1, 50, 51};
+    int address = addresses[index];
+    if (++index >= 8) index = 0;
+    return address;
+}
+
+int value_at(int address) {
+    vluint16_t value = memory[address >> 1];
+    return (address & 1) ? ((value & 0xff00) >> 8) : (value & 0x00ff);
+}
+
 void dut_update_device_sim(Vcache *dut, vluint64_t &sim_time){
     static int read = 0;
+    static int check_value = 0;
     if (read) {
-        printf("value read [%04x] = %02x %c\n", device.address, device.data_read, device.data_read);
+        printf("value read [%04x] = %02x %c == %02x %c %s\n", device.address, device.data_read, device.data_read,
+            check_value, check_value, device.data_read == check_value ? "" : "FAILED");
         read = 0;
     }
     switch(device_status) {
@@ -93,6 +108,8 @@ void dut_update_device_sim(Vcache *dut, vluint64_t &sim_time){
             device.read_req = 1;
             device.address = test_read_func();
             device_status = DEV_WAIT_READ_0;
+
+            check_value = value_at(device.address);
         }
         break;
         case DEV_WAIT_READ_0: if (device.read_ack) {
@@ -166,7 +183,8 @@ int main(int argc, char** argv, char** env) {
     }
 
     switch(test_id) {
-        case 1: test_read_func = sequential_read_1;
+        case 1: test_read_func = sequential_read_1; break;
+        case 2: test_read_func = sequential_read_2; break;
     }
 
     load_test_data();
