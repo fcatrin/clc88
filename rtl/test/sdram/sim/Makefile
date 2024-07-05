@@ -7,7 +7,7 @@ sim: waveform.vcd
 verilate: .stamp.verilate
 
 .PHONY:build
-build: obj_dir/Valu
+build: obj_dir/V${MODULE}
 
 .PHONY:waves
 waves: waveform.vcd
