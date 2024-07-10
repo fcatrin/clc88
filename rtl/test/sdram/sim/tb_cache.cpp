@@ -121,11 +121,12 @@ void dut_update_device_sim_read(Vcache *dut, vluint64_t &sim_time){
             check_value = value_at(device.address);
         }
         break;
-        case DEV_WAIT_READ: if (device.read_ack) {
-            device_status = DEV_IDLE;
+        case DEV_WAIT_READ:
             device.read_req = 0;
-            read = 1;
-        }
+            if (device.read_ack) {
+                device_status = DEV_IDLE;
+                read = 1;
+            }
         break;
     }
 }
