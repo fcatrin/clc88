@@ -1,7 +1,5 @@
 `timescale 1ns / 1ps
 
-//`define ALTSYNCRAM
-
 module cache (
     input sys_clk,
     input reset_n,
@@ -82,9 +80,9 @@ reg               line_valid  [0:CACHE_MD-1];
 
 localparam CA_IDLE        =  0;
 localparam CA_READ_REQ    =  1;
-localparam CA_READ_SDRAM  =  3;
-localparam CA_FETCH       =  4;
-localparam CA_FETCH_DONE  = 11;
+localparam CA_READ_SDRAM  =  2;
+localparam CA_FETCH       =  3;
+localparam CA_FETCH_DONE  =  4;
 localparam CA_EVICT       =  5;
 localparam CA_WRITE_REQ   =  6;
 localparam CA_WRITE_DONE  =  7;
@@ -140,6 +138,7 @@ always @ (posedge sys_clk or negedge reset_n) begin : cache_rw
                 cache_address <= {index, address[3:1]};
 
                 last_address <= address[16:1];
+                // if reading from the same word, the data is ready
                 if (read_req && last_address == address[16:1]) begin
                     read_ack <= 1'b1;
                 end else begin

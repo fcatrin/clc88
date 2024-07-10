@@ -1,5 +1,7 @@
 `timescale 1ns / 1ps
 
+//`define ALTSYNCRAM
+
 module compy (
    input clk50,
    input key_reset,
