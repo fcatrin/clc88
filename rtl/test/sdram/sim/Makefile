@@ -1,8 +1,5 @@
 MODULE=cache
 
-.PHONY:sim
-sim: waveform.vcd
-
 .PHONY:verilate
 verilate: .stamp.verilate
 
@@ -10,12 +7,13 @@ verilate: .stamp.verilate
 build: obj_dir/V${MODULE}
 
 .PHONY:waves
-waves: waveform.vcd
+waves: sim
 	@echo
 	@echo "### WAVES ###"
 	gtkwave waveform.vcd
 
-waveform.vcd: ./obj_dir/V$(MODULE)
+.PHONY:sim
+sim: ./obj_dir/V$(MODULE)
 	@echo
 	@echo "### SIMULATING ###"
 	@echo "Use TEST_ID=test_id make"

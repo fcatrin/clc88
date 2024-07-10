@@ -1,6 +1,8 @@
 # Using makefile
 
-Use TEST_ID=test_id make
+To run the simulation use 
+
+TEST_ID=test_id make sim
 
 ```
 Test ids:
@@ -11,6 +13,8 @@ Test ids:
 5 : write back
 ```
 
+To open the wave
+TEST_ID=test_id make wave
 
 # Original non automated instructions
 
