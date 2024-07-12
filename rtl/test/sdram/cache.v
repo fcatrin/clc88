@@ -78,17 +78,18 @@ reg               line_valid  [0:CACHE_MD-1];
 
 */
 
-localparam CA_IDLE        =  0;
-localparam CA_READ_REQ    =  1;
-localparam CA_READ_SDRAM  =  2;
-localparam CA_FETCH       =  3;
-localparam CA_FETCH_DONE  =  4;
-localparam CA_EVICT       =  5;
-localparam CA_WRITE_REQ   =  6;
-localparam CA_WRITE_DONE  =  7;
-localparam CA_WRITE_START =  8;
-localparam CA_WRITE_BACK  =  9;
-localparam CA_WAIT_BRAM   = 10;
+localparam CA_IDLE         =  0;
+localparam CA_READ_REQ     =  1;
+localparam CA_READ_SDRAM   =  2;
+localparam CA_FETCH        =  3;
+localparam CA_FETCH_DONE   =  4;
+localparam CA_EVICT        =  5;
+localparam CA_WRITE_REQ    =  6;
+localparam CA_WRITE_DONE   =  7;
+localparam CA_WRITE_START  =  8;
+localparam CA_WRITE_BACK   =  9;
+localparam CA_WRITE_BACK_W = 10;
+localparam CA_WAIT_BRAM    = 11;
 
 reg[3:0] index;
 wire lru = line_lru[index];
@@ -232,21 +233,26 @@ always @ (posedge sys_clk or negedge reset_n) begin : cache_rw
         end
         CA_WRITE_START: begin
             sdram_address <= {8'b0, line_tag[replace_w0 ? index_0 : index_1], index, 3'b0};
-            sdram_data_write <= cache_way ? q1 : q0;
-            sdram_write_req <= 1'b1;
+            cache_address <= cache_address + 1'b1;
             write_count <= 0;
-            ca_state <= CA_WRITE_BACK;
+            ca_state <= CA_WRITE_BACK_W;
         end
         CA_WRITE_BACK: if (sdram_write_ack) begin
             sdram_address <= sdram_address + 1'b1;
-            sdram_data_write <= cache_way ? q1 : q0;
-            sdram_write_req <= 1'b1;
+            cache_address <= cache_address + 1'b1;
+            sdram_write_req <= 1'b0;
             if (write_count == 4'd7) begin
                 line_dirty[cache_way ? index_1 : index_0] = 1'b0;
                 ca_state <= ca_back;
             end else begin
                 write_count <= write_count + 1'b1;
+                ca_state <= CA_WRITE_BACK_W;
             end
+        end
+        CA_WRITE_BACK_W : begin
+            sdram_data_write <= cache_way ? q1 : q0;
+            sdram_write_req <= 1'b1;
+            ca_state <= CA_WRITE_BACK;
         end
     endcase
 end

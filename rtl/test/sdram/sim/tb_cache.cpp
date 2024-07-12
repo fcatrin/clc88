@@ -155,6 +155,15 @@ vluint8_t* get_write_code() {
     return test_code;
 }
 
+vluint8_t* get_write_evict_code() {
+    static vluint8_t test_code[] = {
+        1, 0x41, 3, 0x21, 0x00,
+        1, 0x49, 3, 0x21, 0x01,
+        2, 0x21, 0x03,
+        2, 0x21, 0x04};
+    return test_code;
+}
+
 int value_at(int address) {
     vluint16_t value = memory[address >> 1];
     return (address & 1) ? ((value & 0xff00) >> 8) : (value & 0x00ff);
@@ -272,6 +281,13 @@ void dut_update_sdram_sim(Vcache *dut, vluint64_t &sim_time){
                 address = sdram.address;
                 burst_count = 8;
             }
+            if (sdram.write_req) {
+                address = sdram.address;
+                memory[address] = sdram.data_write;
+                sdram.write_ack = 1;
+            } else {
+                sdram.write_ack = 0;
+            }
             break;
         case SDRAM_READ:
             if (count > 0) {
@@ -305,6 +321,17 @@ void print_usage(char *name) {
     printf("5 : write back\n");
 }
 
+vluint8_t *get_test_code(int test_id) {
+    switch(test_id) {
+        case 1: return get_sequential_read_1_code();
+        case 2: return get_sequential_read_2_code();
+        case 3: return get_sequential_read_3_code();
+        case 4: return get_write_code();
+        case 5: return get_write_evict_code();
+    }
+    return NULL;
+}
+
 int main(int argc, char** argv, char** env) {
     Verilated::commandArgs(argc, argv);
     if (argc < 2) {
@@ -323,12 +350,7 @@ int main(int argc, char** argv, char** env) {
     memset(&sdram,  0, sizeof(sdram));
     memset(code,    0, sizeof(code));
 
-    switch(test_id) {
-        case 1: cpu.code = get_sequential_read_1_code(); break;
-        case 2: cpu.code = get_sequential_read_2_code(); break;
-        case 3: cpu.code = get_sequential_read_3_code(); break;
-        case 4: cpu.code = get_write_code(); break;
-    }
+    cpu.code = get_test_code(test_id);
 
     load_test_data();
     srand(time(NULL));
