@@ -30,6 +30,7 @@ typedef struct {
     vluint8_t  write_req;
     vluint8_t  read_ack;
     vluint8_t  write_ack;
+    vluint8_t  byte_en;
 } sdram_t;
 
 typedef struct {
@@ -110,6 +111,7 @@ void dut_update_sdram_ports(Vcache *dut, vluint64_t &sim_time){
     sdram.data_write = dut->sdram_data_write;
     sdram.read_req   = dut->sdram_read_req;
     sdram.write_req  = dut->sdram_write_req;
+    sdram.byte_en    = dut->sdram_byte_en;
 }
 #define DATA_SIZE_TEST_1 40
 vluint8_t* get_sequential_read_1_code() {
@@ -220,7 +222,7 @@ void cpu_exec() {
     }
 
     printf("CPU pc:%04X addr:%04X read_req:%d read_ack:%d write_req:%d write_ack:%d reg_a:%02X\n",
-        cpu.pc, cpu.address, cpu.read_req, cpu.read_ack, cpu.write_req, cpu.read_ack, cpu.reg_a
+        cpu.pc, cpu.address, cpu.read_req, cpu.read_ack, cpu.write_req, cpu.write_ack, cpu.reg_a
     );
 
 }
@@ -283,7 +285,15 @@ void dut_update_sdram_sim(Vcache *dut, vluint64_t &sim_time){
             }
             if (sdram.write_req) {
                 address = sdram.address;
-                memory[address] = sdram.data_write;
+                vluint16_t value = memory[address];
+                if (sdram.byte_en == 3) {
+                    value = sdram.data_write;
+                } else if (sdram.byte_en == 1) {
+                    value = (value & 0xFF00) | (sdram.data_write & 0x00FF);
+                } else {
+                    value = (value & 0x00FF) | (sdram.data_write & 0xFF00);
+                }
+                memory[address] = value;
                 sdram.write_ack = 1;
             } else {
                 sdram.write_ack = 0;
@@ -302,6 +312,11 @@ void dut_update_sdram_sim(Vcache *dut, vluint64_t &sim_time){
             }
             break;
     }
+
+    printf("SDRAM addr:%04X data_read:%04X data_write:%04X read_req:%d read_ack:%d write_req:%d write_ack:%d\n",
+        address, sdram.data_read, sdram.data_write, sdram.read_req, sdram.read_ack, sdram.write_req, sdram.write_ack
+    );
+
 }
 
 void load_test_data() {
