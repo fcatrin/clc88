@@ -216,7 +216,7 @@ void cpu_exec() {
 
 }
 
-void dut_update_device_sim_read(Vcache *dut, vluint64_t &sim_time){
+void dut_update_device_sim(Vcache *dut, vluint64_t &sim_time){
     static int read = 0;
     static int check_value = 0;
     if (read) {
@@ -349,7 +349,7 @@ int main(int argc, char** argv, char** env) {
         if (dut->sys_clk) {
             cpu_exec();
             posedge_cnt++;
-            dut_update_device_sim_read(dut, sim_time);
+            dut_update_device_sim(dut, sim_time);
             dut_update_sdram_sim(dut, sim_time);
         }
         dut->eval();
