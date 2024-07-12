@@ -96,7 +96,7 @@ void dut_update_device_ports(Vcache *dut, vluint64_t &sim_time){
     device.write_ack = dut->write_ack;
 
     cpu.read_ack  = device.read_ack;
-    cpu.write_ack = device.read_ack;
+    cpu.write_ack = device.write_ack;
     cpu.data_read = device.data_read;
     cpu.reset_n   = dut->reset_n;
 }
@@ -144,6 +144,17 @@ vluint8_t* get_sequential_read_3_code() {
     return code;
 }
 
+vluint8_t* get_write_code() {
+    static vluint8_t test_code[] = {
+        1, 0x41, 3, 0x21, 0x00,
+        1, 0x49, 3, 0x22, 0x00,
+        2, 0x20, 0x00,
+        2, 0x21, 0x00,
+        2, 0x22, 0x00,
+        2, 0x23, 0x00};
+    return test_code;
+}
+
 int value_at(int address) {
     vluint16_t value = memory[address >> 1];
     return (address & 1) ? ((value & 0xff00) >> 8) : (value & 0x00ff);
@@ -169,7 +180,7 @@ void cpu_exec_instruction(vluint8_t instruction) {
             cpu.data_write = cpu.reg_a;
             cpu.write_req = 1;
             cpu.pc += 2;
-            cpu.status = CPU_READ_WAIT;
+            cpu.status = CPU_WRITE_WAIT;
             break;
     }
 }
@@ -198,26 +209,30 @@ void cpu_exec() {
         case CPU_HALT:
             break;
     }
-    /*
+
     printf("CPU pc:%04X addr:%04X read_req:%d read_ack:%d write_req:%d write_ack:%d reg_a:%02X\n",
         cpu.pc, cpu.address, cpu.read_req, cpu.read_ack, cpu.write_req, cpu.read_ack, cpu.reg_a
     );
-    */
+
 }
 
 void dut_update_device_sim_read(Vcache *dut, vluint64_t &sim_time){
     static int read = 0;
     static int check_value = 0;
     if (read) {
-        printf("value read [%04x] = %02x %c == %02x %c %s\n", device.address, device.data_read, device.data_read,
-            check_value, check_value, device.data_read == check_value ? "" : "FAILED");
         read = 0;
+        printf("value read [%04x] = %02x(%c) == %02x(%c) %s\n",
+            device.address, device.data_read, device.data_read,
+            check_value, check_value, device.data_read == check_value ? "OK" : "FAILED");
     }
     switch(device_status) {
         case DEV_IDLE: {
             if (device.read_req) {
                 device_status = DEV_WAIT_READ;
                 check_value = value_at(device.address);
+            }
+            if (device.write_req) {
+                device_status = DEV_WAIT_WRITE;
             }
         }
         break;
@@ -228,49 +243,17 @@ void dut_update_device_sim_read(Vcache *dut, vluint64_t &sim_time){
                 read = 1;
             }
         break;
-    }
-}
-
-void dut_update_device_sim_write(Vcache *dut, vluint64_t &sim_time){
-    static int read = 0;
-    static int check_value = 0;
-    static int cycles = 0;
-
-    if (read) {
-        printf("value read [%04x] = %02x %c == %02x %c %s\n", device.address, device.data_read, device.data_read,
-            check_value, check_value, device.data_read == check_value ? "" : "FAILED");
-        read = 0;
-    }
-
-    switch(device_status) {
-        case DEV_IDLE: {
-            if (cycles < 2) {
-                device.write_req = 1;
-                device.address = 11 + cycles;
-                device.data_write = 0x41 + cycles;
-                device_status = DEV_WAIT_WRITE;
-            }
-            if (cycles>=2 && cycles<=5) {
-                device.read_req = 1;
-                device.address = 8+cycles;
-                device_status = DEV_WAIT_READ;
-                check_value = value_at(device.address);
-            }
-            cycles++;
-        }
-        break;
-        case DEV_WAIT_WRITE: if (device.write_ack) {
-            device_status = DEV_IDLE;
+        case DEV_WAIT_WRITE:
             device.write_req = 0;
-        }
+            if (device.write_ack) {
+                device_status = DEV_IDLE;
+            }
         break;
-        case DEV_WAIT_READ: if (device.read_ack) {
-            device_status = DEV_IDLE;
-            device.read_req = 0;
-            read = 1;
-        }
-        break;
+    }
 
+    if (device.write_ack) {
+        printf("value write [%04x] = %02x\n",
+            device.address, device.data_write);
     }
 }
 
@@ -344,6 +327,7 @@ int main(int argc, char** argv, char** env) {
         case 1: cpu.code = get_sequential_read_1_code(); break;
         case 2: cpu.code = get_sequential_read_2_code(); break;
         case 3: cpu.code = get_sequential_read_3_code(); break;
+        case 4: cpu.code = get_write_code(); break;
     }
 
     load_test_data();
@@ -365,10 +349,7 @@ int main(int argc, char** argv, char** env) {
         if (dut->sys_clk) {
             cpu_exec();
             posedge_cnt++;
-            if (test_id < 4)
-                dut_update_device_sim_read(dut, sim_time);
-            else
-                dut_update_device_sim_write(dut, sim_time);
+            dut_update_device_sim_read(dut, sim_time);
             dut_update_sdram_sim(dut, sim_time);
         }
         dut->eval();
